@@ -1,59 +1,30 @@
 # Installer
 
-Installer just installs `WixUI` whose job is to:
+The installer consists of two parts: `Setup.exe` (C++ bootstrapper) and `Update.exe` (C# Squirrel Client). There are several main design goals of the installer:
 
-1. Run the client code to unpack the latest full NuGet package and finish
-   initial install.
-1. Execute the uninstaller code when WiX goes to remove us, and remove the App
-   directory.
+* Run as quickly as possible, with as little user interface interaction as possible. The faster we can get into the application, the better. An ideal install experience is that once `Setup.exe` gets clicked, within 3sec the application is running on the user's machine. Double-clicking `Setup.exe` should feel like clicking the app shortcut.
 
-### So, on install:
+* `Setup.exe` should be written such that it does as little work as possible, because C++.
 
-1. WiX unpacks `WixUI` and runs it, and puts an entry in *Programs and
-   Features*.
-1. `WixUI` executes initial install using `Squirrel.Client` for the full
-   NuGet package, doing the update in-place so the installer never needs to be
-   rebuilt.
+* Running an older `Setup.exe` should simply execute the current app.
 
-### On Uninstall:
+* Support installation of non-C# applications
 
-1. WiX gets notified about the uninstall, calls `WixUI` to do app
-   uninstall via `Squirrel.Client`
-1. WiX then blows away `WixUI`, the "real" installed app.
+## Setup.exe
 
-## Bootstrap UI
+Setup.exe does the following operations:
 
-`WixUI` has an extremely simple UI when it does its work, it just pops
-up, shows a progress bar, a-la Chrome Installer:
+1. Determines if the .NET Framework is installed
+1. If not, relaunches itself with `/installfx45`, which opens a progress dialog which downloads the .NET Framework and silently invokes it.
+1. Extract `Update.exe` and `AppName-full.nupkg` to `%LocalAppData%\Squirrel\Temp` which are embedded as resources.
+1. Execute `Update.exe` with the `/install` switch, and apply any switches that were applied to Setup.exe
+1. Nuke the extracted temporary files from step 3.
 
-![](http://t0.gstatic.com/images?q=tbn:ANd9GcS_DuuEyOX1lfeo_jDetHLiE17pp_4M-Xerj2ieGEkvQQ4h83w57IL5KD6Kzw)
+## Update.exe
 
-On Uninstall, there is no UI, it's solely in the background.
+Update.exe is a generic client for Squirrel which supports several operations:
 
-If Setup.exe gets invoked with the 'Install' action, and the app is already
-installed, we just execute the app, a-la ClickOnce.
-
-## Generating the WiX installer
-
-The WiX install script is generated via a Mustache template, whose contents
-are primarily populated via the generated NuGet release package. WiX will end
-up installing `WixUI`, the latest NuGet package file, and a one-line
-RELEASES file (meaning that what WiX installs is technically a valid Squirrel
-remote update directory).
-
-## WiX Engine Events and what we should do about them
-
-* `DetectedPackage` - if we're installed (determine this by looking at the
-   NuGet package in the same directory as the app), we run the app and bail.
-
-* `DetectComplete` - Do what we're actually here to do (invoke the Squirrel
-  installer), then on the UI thread, tell WiX to finish up.
-
-* `PlanPackageBegin` - squelch installation of .NET 4
-
-* `PlanComplete` - Push WiX to to Apply state
-
-* `ApplyComplete` - If something bad happened, switch to UI Error state,
-  otherwise start the app if we're in Interactive Mode and call Shutdown()
-
-* `ExecuteError` - Switch to the UI Error state
+* `/install [File.nupkg] [/silent]` - Install the NuPkg file given (or any NuPkg files in the same directory as itself), and launch their applications. If `/silent` is given, don't launch anything. Copy `Update.exe` to the application root directory. Install also writes an entry in Programs and Features which will invoke `/uninstall`.
+* `/uninstall` - Completely uninstall the application associated with the directory in which `Update.exe` resides.
+* `/download URL` - Check for updates from the given URL and write information about available versions to standard output in JSON format.
+* `/update` - Updates the application to the latest version of the files in the packages directory associated with the directory in which `Update.exe` resides.
