@@ -15,3 +15,5 @@ This is Squirrel.Windows, rewritten to drop a lot of the things that caused the 
 * Squirrel.Windows was super IObservable-heavy, when the reality is that the vast majority of installer ops should just be synchronous. Ditch Rx completely and use async/await only when necessary.
 
 * We didn't get anything but suffering out of IO abstractions. Kill 'em all.
+
+* Squirrel got hella confused while walking the dependency tree by trying to detect which files in the NuGet package we were *actually* using (i.e. if you're a .NET 4.5 project, you could be using binaries from `Net20`, `Net35`, `Net45`, etc). Instead, write a Targets file which simply dumps the reference list to the output directory, and use that to inform which files should be in the final package.
