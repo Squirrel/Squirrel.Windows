@@ -2,11 +2,10 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reactive.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using ReactiveUIMicro;
-using Squirrel.Core;
+using Splat;
+using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 

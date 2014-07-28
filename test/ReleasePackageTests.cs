@@ -1,8 +1,7 @@
 ﻿using System.Runtime.Versioning;
 using MarkdownSharp;
 using NuGet;
-using ReactiveUIMicro;
-using Squirrel.Core;
+using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using System;
 using System.Collections.Generic;
@@ -10,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
+using Splat;
 using Xunit;
 
 namespace Squirrel.Tests.Core

@@ -1,11 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Reactive.Linq;
 using NuGet;
-using ReactiveUIMicro;
-using Squirrel.Client;
-using Squirrel.Core;
+using Splat;
+using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 
@@ -52,6 +50,9 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void ApplyMultipleDeltaPackagesGeneratesCorrectHash()
         {
+            Assert.False(true, "UpdateManager not ready yet");
+
+        /*
             var firstRelease = new ReleasePackage(IntegrationTestHelper.GetPath("fixtures", "SquirrelDesktopDemo-1.0.0-full.nupkg"), true);
             var secondRelease = new ReleasePackage(IntegrationTestHelper.GetPath("fixtures", "SquirrelDesktopDemo-1.1.0-full.nupkg"), true);
             var thirdRelease = new ReleasePackage(IntegrationTestHelper.GetPath("fixtures", "SquirrelDesktopDemo-1.2.0-full.nupkg"), true);
@@ -62,7 +63,6 @@ namespace Squirrel.Tests.Core
 
                 var firstDelta = Path.Combine(releasesDir, "SquirrelDesktopDemo-1.1.0-delta.nupkg");
                 var secondDelta = Path.Combine(releasesDir, "SquirrelDesktopDemo-1.2.0-delta.nupkg");
-
 
                 new[] { firstRelease, secondRelease, thirdRelease }
                 .ForEach(file =>
@@ -115,6 +115,7 @@ namespace Squirrel.Tests.Core
                     Assert.Empty(invalidFiles);
                 }
             }
+        */
         }
     }
 

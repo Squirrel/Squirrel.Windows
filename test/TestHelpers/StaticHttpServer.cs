@@ -1,10 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Net;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Squirrel.Tests
 {
@@ -30,9 +29,11 @@ namespace Squirrel.Tests
             server.Prefixes.Add(String.Format("http://+:{0}/", Port));
             server.Start();
 
-            var listener = Observable.Defer(() => Observable.FromAsyncPattern<HttpListenerContext>(server.BeginGetContext, server.EndGetContext)())
-                .Repeat()
-                .Subscribe(ctx => {
+            bool shouldStop = false;
+            var listener = Task.Run(async () => {
+                while (!shouldStop) {
+                    var ctx = await server.GetContextAsync();
+
                     if (ctx.Request.HttpMethod != "GET") {
                         closeResponseWith(ctx, 400, "GETs only");
                         return;
@@ -60,11 +61,14 @@ namespace Squirrel.Tests
                     } catch (Exception ex) {
                         closeResponseWith(ctx, 500, ex.ToString());
                     }
-                });
+                }
+            });
 
             var ret = Disposable.Create(() => {
-                listener.Dispose();
+                shouldStop = true;
                 server.Stop();
+                listener.Wait(2000);
+
                 inner = null;
             });
 

@@ -1,11 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using Moq;
-using Squirrel.Core;
+using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
-using Xunit.Extensions;
 
 namespace Squirrel.Tests.Core
 {
@@ -81,8 +79,7 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenCurrentReleaseMatchesLastReleaseReturnNull()
         {
-            var package = Mock.Of<IReleasePackage>(
-                r => r.InputPackageFile == "Espera-1.7.6-beta.nupkg");
+            var package = new ReleasePackage("Espera-1.7.6-beta.nupkg");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.6-beta.nupkg"))
@@ -95,8 +92,7 @@ namespace Squirrel.Tests.Core
         public void WhenMultipleReleaseMatchesReturnEarlierResult()
         {
             var expected = new Version("1.7.5");
-            var package = Mock.Of<IReleasePackage>(
-                r => r.InputPackageFile == "Espera-1.7.6-beta.nupkg");
+            var package = new ReleasePackage("Espera-1.7.6-beta.nupkg");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.6-beta.nupkg")),
@@ -115,8 +111,7 @@ namespace Squirrel.Tests.Core
         public void WhenMultipleReleasesFoundReturnPreviousVersion()
         {
             var expected = new Version("1.7.6");
-            var input = Mock.Of<IReleasePackage>(
-                r => r.InputPackageFile == "Espera-1.7.7-beta.nupkg");
+            var input = new ReleasePackage("Espera-1.7.7-beta.nupkg");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.6-beta.nupkg")),
@@ -135,8 +130,7 @@ namespace Squirrel.Tests.Core
         public void WhenMultipleReleasesFoundInOtherOrderReturnPreviousVersion()
         {
             var expected = new Version("1.7.6");
-            var input = Mock.Of<IReleasePackage>(
-                r => r.InputPackageFile == "Espera-1.7.7-beta.nupkg");
+            var input = new ReleasePackage("Espera-1.7.7-beta.nupkg");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.5-beta.nupkg")),

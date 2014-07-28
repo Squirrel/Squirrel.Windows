@@ -3,14 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reactive;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using System.Threading;
 using Ionic.Zip;
-using Squirrel.Core;
-using ReactiveUIMicro;
-using Squirrel.Tests.WiXUi;
+using Squirrel;
+using Splat;
 
 namespace Squirrel.Tests.TestHelpers
 {
@@ -73,7 +69,10 @@ namespace Squirrel.Tests.TestHelpers
             // like this, is to make sure that we don't have two tests registering
             // their Service Locators with RxApp.
             Monitor.Enter(gate);
-            return new CompositeDisposable(ret, Disposable.Create(() => Monitor.Exit(gate)));
+            return Disposable.Create(() => {
+                ret.Dispose();
+                Monitor.Exit(gate);
+            });
         }
 
         public static IDisposable WithFakeInstallDirectory(out string path)
@@ -94,7 +93,10 @@ namespace Squirrel.Tests.TestHelpers
             zf.ExtractAll(path);
 
             Monitor.Enter(gate);
-            return new CompositeDisposable(ret, Disposable.Create(() => Monitor.Exit(gate)));
+            return Disposable.Create(() => {
+                ret.Dispose();
+                Monitor.Exit(gate);
+            });
         }
     }
 }

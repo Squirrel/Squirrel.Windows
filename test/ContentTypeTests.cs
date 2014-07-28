@@ -4,12 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Squirrel.Core;
+using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
-using Xunit.Extensions;
-using Assert = Xunit.Assert;
 
 namespace Squirrel.Tests.Core
 {
