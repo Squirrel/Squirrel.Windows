@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Xml;
 
-namespace Squirrel.Core
+namespace Squirrel
 {
     internal static class ContentType
     {
@@ -25,16 +25,21 @@ namespace Squirrel.Core
                     k.GetAttribute("Extension").ToLowerInvariant(),
                     k.GetAttribute("ContentType").ToLowerInvariant()));
 
-            elements
+            var toAdd = elements
                 .Where(x => existingTypes.All(t => t.Item2 != x.Item2.ToLowerInvariant()))
                 .Select(element => {
                     var ret = doc.CreateElement(element.Item1, typesElement.NamespaceURI);
+
                     var ext = doc.CreateAttribute("Extension"); ext.Value = element.Item2;
                     var ct = doc.CreateAttribute("ContentType"); ct.Value = element.Item3;
-                    new[] { ext, ct }.ForEach(x => ret.Attributes.Append(x));
+
+                    ret.Attributes.Append(ext);
+                    ret.Attributes.Append(ct);
 
                     return ret;
-                }).ForEach(x => typesElement.AppendChild(x));
+                });
+
+            foreach (var v in toAdd) typesElement.AppendChild(v);
         }
     }
 }

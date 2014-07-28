@@ -4,21 +4,18 @@ using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Reactive;
-using System.Reactive.Concurrency;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Threading;
-using ReactiveUIMicro;
+using Splat;
 using System.Text;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
-namespace Squirrel.Core
+namespace Squirrel
 {
     public static class Utility
     {
@@ -58,7 +55,7 @@ namespace Squirrel.Core
             }
         }
 
-        public static IObservable<Unit> CopyToAsync(string from, string to)
+        public static async Task CopyToAsync(string from, string to)
         {
             Contract.Requires(!String.IsNullOrEmpty(from) && File.Exists(from));
             Contract.Requires(!String.IsNullOrEmpty(to));
@@ -67,11 +64,11 @@ namespace Squirrel.Core
                 Log().Warn("The file {0} does not exist", from);
 
                 // TODO: should we fail this operation?
-                return Observable.Return(Unit.Default);
+                return;
             }
 
             // XXX: SafeCopy
-            return Observable.Start(() => File.Copy(from, to, true), RxApp.TaskpoolScheduler);
+            await Task.Run(() => File.Copy(from, to, true));
         }
 
         public static void Retry(this Action block, int retries = 2)
@@ -105,14 +102,20 @@ namespace Squirrel.Core
             }
         }
 
-        public static IObservable<IList<TRet>> MapReduce<T, TRet>(this IObservable<T> This, Func<T, IObservable<TRet>> selector, int degreeOfParallelism = 4)
+        public static Task ForEachAsync<T>(this IEnumerable<T> source, Action<T> body, int degreeOfParallelism = 4)
         {
-            return This.Select(x => Observable.Defer(() => selector(x))).Merge(degreeOfParallelism).ToList();
+            return ForEachAsync(source, x => Task.Run(() => body(x)), degreeOfParallelism);
         }
 
-        public static IObservable<IList<TRet>> MapReduce<T, TRet>(this IEnumerable<T> This, Func<T, IObservable<TRet>> selector, int degreeOfParallelism = 4)
+        public static Task ForEachAsync<T>(this IEnumerable<T> source, Func<T, Task> body, int degreeOfParallelism = 4)
         {
-            return This.ToObservable().Select(x => Observable.Defer(() => selector(x))).Merge(degreeOfParallelism).ToList();
+            return Task.WhenAll(
+                from partition in Partitioner.Create(source).GetPartitions(degreeOfParallelism)
+                select Task.Run(async () => {
+                    using (partition)
+                        while (partition.MoveNext())
+                            await body(partition.Current);
+                }));
         }
 
         static string directoryChars;
@@ -147,17 +150,15 @@ namespace Squirrel.Core
                 DeleteDirectory(tempDir.FullName).Wait());
         }
 
-        public static IObservable<Unit> DeleteDirectory(string directoryPath, IScheduler scheduler = null)
+        public static async Task DeleteDirectory(string directoryPath)
         {
             Contract.Requires(!String.IsNullOrEmpty(directoryPath));
-
-            scheduler = scheduler ?? RxApp.TaskpoolScheduler;
 
             Log().Info("Starting to delete folder: {0}", directoryPath);
 
             if (!Directory.Exists(directoryPath)) {
                 Log().Warn("DeleteDirectory: does not exist - {0}", directoryPath);
-                return Observable.Return(Unit.Default);
+                return;
             }
 
             // From http://stackoverflow.com/questions/329355/cannot-delete-directory-with-directory-deletepath-true/329502#329502
@@ -177,34 +178,25 @@ namespace Squirrel.Core
                 Log().Warn(message, ex);
             }
 
-            var fileOperations = files.MapReduce(file =>
-                Observable.Start(() => {
-                    Log().Debug("Now deleting file: {0}", file);
-                    File.SetAttributes(file, FileAttributes.Normal);
-                    File.Delete(file);
-                }, scheduler))
-            .Select(_ => Unit.Default);
+            var fileOperations = files.ForEachAsync(file => {
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+            });
 
             var directoryOperations =
-                dirs.MapReduce(dir => DeleteDirectory(dir, scheduler)
-                    .Retry(3))
-                    .Select(_ => Unit.Default);
+                dirs.ForEachAsync(async dir => await DeleteDirectory(dir));
 
-            return fileOperations
-                .Merge(directoryOperations, scheduler)
-                .ToList() // still feeling a bit icky
-                .Select(_ => {
-                    Log().Debug("Now deleting folder: {0}", directoryPath);
-                    File.SetAttributes(directoryPath, FileAttributes.Normal);
+            await Task.WhenAll(fileOperations, directoryOperations);
 
-                    try {
-                        Directory.Delete(directoryPath, false);
-                    } catch (Exception ex) {
-                        var message = String.Format("DeleteDirectory: could not delete - {0}", directoryPath);
-                        Log().ErrorException(message, ex);
-                    }
-                    return Unit.Default;
-                });
+            Log().Debug("Now deleting folder: {0}", directoryPath);
+            File.SetAttributes(directoryPath, FileAttributes.Normal);
+
+            try {
+                Directory.Delete(directoryPath, false);
+            } catch (Exception ex) {
+                var message = String.Format("DeleteDirectory: could not delete - {0}", directoryPath);
+                Log().ErrorException(message, ex);
+            }
         }
 
         public static Tuple<string, Stream> CreateTempFile()
@@ -251,9 +243,11 @@ namespace Squirrel.Core
             Log().Error("safeDeleteFileAtNextReboot: failed - {0} - {1}", name, lastError);
         }
 
-        static IRxUIFullLogger Log()
+        static IFullLogger logger;
+        static IFullLogger Log()
         {
-            return LogManager.GetLogger(typeof(Utility));
+            return logger ??
+                (logger = Locator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(Utility)));
         }
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -271,6 +265,7 @@ namespace Squirrel.Core
         }
     }
 
+    /*
     public sealed class SingleGlobalInstance : IDisposable
     {
         readonly static object gate = 42;
@@ -329,6 +324,31 @@ namespace Squirrel.Core
             }
 
             lockScheduler.Dispose();
+        }
+    }
+    */
+
+    public static class Disposable
+    {
+        public static IDisposable Create(Action action)
+        {
+            return new AnonDisposable(action);
+        }
+
+        class AnonDisposable : IDisposable
+        {
+            static readonly Action dummyBlock = (() => { });
+            Action block;
+
+            public AnonDisposable(Action b)
+            {
+                block = b;
+            }
+
+            public void Dispose()
+            {
+                Interlocked.Exchange(ref block, dummyBlock)();
+            }
         }
     }
 }

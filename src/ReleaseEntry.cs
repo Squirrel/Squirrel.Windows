@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Reactive.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using NuGet;
-using ReactiveUIMicro;
-using Squirrel.Core.Extensions;
+using Splat;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
-namespace Squirrel.Core
+namespace Squirrel
 {
     public interface IReleaseEntry
     {
@@ -150,25 +150,24 @@ namespace Squirrel.Core
             }
         }
 
-        public static void BuildReleasesFile(string releasePackagesDir, IFileSystemFactory fileSystemFactory = null)
+        public static void BuildReleasesFile(string releasePackagesDir)
         {
-            fileSystemFactory = fileSystemFactory ?? AnonFileSystem.Default;
-            var packagesDir = fileSystemFactory.GetDirectoryInfo(releasePackagesDir);
+            var packagesDir = new DirectoryInfo(releasePackagesDir);
 
             // Generate release entries for all of the local packages
-            var entries = packagesDir.GetFiles("*.nupkg").MapReduce(x => Observable.Start(() => {
+            var entriesQueue = new ConcurrentQueue<ReleaseEntry>();
+            Parallel.ForEach(packagesDir.GetFiles("*.nupkg"), x => {
                 using (var file = x.OpenRead()) {
-                    return GenerateFromFile(file, x.Name);
+                    entriesQueue.Enqueue(GenerateFromFile(file, x.Name));
                 }
-            }, RxApp.TaskpoolScheduler)).First();
+            });
 
             // Write the new RELEASES file to a temp file then move it into
             // place
-            var tempFile = fileSystemFactory.CreateTempFile();
-            try {
-                if (entries.Count > 0) WriteReleaseFile(entries, tempFile.Item2);
-            } finally {
-                tempFile.Item2.Dispose();
+            var entries = entriesQueue.ToList();
+            var tempFile = Path.GetTempFileName();
+            using (var of = File.OpenWrite(tempFile)) {
+                if (entries.Count > 0) WriteReleaseFile(entries, of);
             }
 
             var target = Path.Combine(packagesDir.FullName, "RELEASES");
@@ -176,7 +175,7 @@ namespace Squirrel.Core
                 File.Delete(target);
             }
 
-            fileSystemFactory.GetFileInfo(tempFile.Item1).MoveTo(target);
+            File.Move(tempFile, target);
         }
 
         static bool filenameIsDeltaFile(string filename)

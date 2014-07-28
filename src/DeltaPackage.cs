@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Ionic.Zip;
-using ReactiveUIMicro;
+using Splat;
 
-namespace Squirrel.Core
+namespace Squirrel
 {
     public interface IDeltaPackageBuilder
     {
@@ -69,8 +69,9 @@ namespace Squirrel.Core
 
                 var newLibDir = tempInfo.GetDirectories().First(x => x.Name.ToLowerInvariant() == "lib");
 
-                newLibDir.GetAllFilesRecursively()
-                    .ForEach(libFile => createDeltaForSingleFile(libFile, tempInfo, baseLibFiles));
+                foreach (var libFile in newLibDir.GetAllFilesRecursively()) {
+                    createDeltaForSingleFile(libFile, tempInfo, baseLibFiles);
+                }
 
                 ReleasePackage.addDeltaFilesToContentTypes(tempInfo.FullName);
 

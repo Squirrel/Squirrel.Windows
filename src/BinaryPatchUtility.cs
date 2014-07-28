@@ -4,7 +4,7 @@ using Ionic.BZip2;
 
 // Adapted from https://github.com/LogosBible/bsdiff.net/blob/master/src/bsdiff/BinaryPatchUtility.cs
 
-namespace Squirrel.Core
+namespace Squirrel
 {
     /*
     The original bsdiff.c source code (http://www.daemonology.net/bsdiff/) is

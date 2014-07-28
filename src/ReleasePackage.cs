@@ -11,10 +11,9 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using Ionic.Zip;
 using NuGet;
-using ReactiveUIMicro;
-using Squirrel.Core.Extensions;
+using Splat;
 
-namespace Squirrel.Core
+namespace Squirrel
 {
     internal static class FrameworkTargetVersion
     {
