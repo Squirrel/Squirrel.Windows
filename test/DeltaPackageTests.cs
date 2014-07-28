@@ -124,6 +124,8 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void CreateDeltaPackageIntegrationTest()
         {
+            Assert.False(true, "Need to recreate the fixtures and checks for this class");
+
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nupkg");
 
@@ -194,6 +196,8 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenBasePackageIsNewerThanNewPackageThrowException()
         {
+            Assert.False(true, "Need to remake the fixture for this test");
+
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
 
@@ -207,8 +211,7 @@ namespace Squirrel.Tests.Core
                 .Select(_ => Path.GetTempPath() + Guid.NewGuid().ToString() + ".nupkg")
                 .ToArray();
 
-            try
-            {
+            try {
                 baseFixture.CreateReleasePackage(tempFiles[0], sourceDir);
                 fixture.CreateReleasePackage(tempFiles[1], sourceDir);
 
@@ -220,9 +223,7 @@ namespace Squirrel.Tests.Core
                     var deltaBuilder = new DeltaPackageBuilder();
                     deltaBuilder.CreateDeltaPackage(baseFixture, fixture, tempFiles[2]);
                 });
-            }
-            finally
-            {
+            } finally {
                 tempFiles.ForEach(File.Delete);
             }
         }
@@ -257,6 +258,8 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenBasePackageDoesNotExistThrowException()
         {
+            Assert.False(true, "Need to remake the fixture for this test");
+
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nupkg");
 
@@ -296,6 +299,8 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenNewPackageDoesNotExistThrowException()
         {
+            Assert.False(true, "Need to remake the fixture for this test");
+
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nupkg");
 

@@ -220,7 +220,7 @@ namespace Squirrel
             xdoc.Save(specPath);
         }
 
-        IEnumerable<IPackage> findAllDependentPackages(
+        internal IEnumerable<IPackage> findAllDependentPackages(
             IPackage package = null,
             IPackageRepository packageRepository = null,
             HashSet<string> packageCache = null,

@@ -19,6 +19,8 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void ReleasePackageIntegrationTest()
         {
+            Assert.False(true, "Need to recreate the fixtures for this test");
+
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
             var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
@@ -63,19 +65,23 @@ namespace Squirrel.Tests.Core
             IPackage result = fixture.matchPackage(new LocalPackageRepository(sourceDir), "xunit", VersionUtility.ParseVersionSpec("[1.0,2.0]"));
 
             result.Id.ShouldEqual("xunit");
-            result.Version.Version.Major.ShouldEqual(1);
-            result.Version.Version.Minor.ShouldEqual(9);
+            result.Version.Version.Major.ShouldEqual(2);
+            result.Version.Version.Minor.ShouldEqual(0);
         }
 
         [Fact]
         public void FindDependentPackagesForDummyPackage()
         {
+            // Find dependent packages for a package by looking in the
+            // 'packages' folder
+            Assert.False(true, "Need to fix the fixture");
+
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
-            var fixture = ExposedObject.From(new ReleasePackage(inputPackage));
+            var fixture = new ReleasePackage(inputPackage);
             var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
-            IEnumerable<IPackage> results = fixture.findAllDependentPackages(null, new LocalPackageRepository(sourceDir), null, null);
+            IEnumerable<IPackage> results = fixture.findAllDependentPackages(default(IPackage), (IPackageRepository)new LocalPackageRepository(sourceDir), default(HashSet<string>), default(FrameworkName));
             results.Count().ShouldBeGreaterThan(0);
         }
 
@@ -97,6 +103,8 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void CanResolveMultipleLevelsOfDependencies()
         {
+            Assert.False(true, "Need to remake the fixture for this test");
+
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "SampleUpdatingApp.1.0.0.0.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
             var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
@@ -236,49 +244,28 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void DependentPackageFoundAndIncludedInReleasePackage()
         {
-            var packagesDir = IntegrationTestHelper.GetPath("..", "packages");
-            var inputPackage = IntegrationTestHelper.GetPath("fixtures", "ProjectDependsOnJsonDotNet.1.0.nupkg");
-
-            var outputPackage = Path.GetTempFileName() + ".nupkg";
-
-            try {
-                var package = new ReleasePackage(inputPackage);
-                package.CreateReleasePackage(outputPackage, packagesDir);
-                Assert.True(File.Exists(outputPackage));
-            } finally {
-                File.Delete(outputPackage);
-            }
+            // Create a Release Package based on a package which has a dependency
+            // in the packages directory
+            Assert.False(true, "Rewrite this test");
         }
 
         [Fact]
-        public void WhenInputPackageTargetsMultipleFrameworksCrashHard()
-        {
-            var packagesDir = IntegrationTestHelper.GetPath("..", "packages");
-            var inputPackage = IntegrationTestHelper.GetPath("fixtures", "ProjectTargetingMultiplePlatforms.1.0.0.0.nupkg");
-
-            var outputPackage = Path.GetTempFileName() + ".nupkg";
-
-            var package = new ReleasePackage(inputPackage);
-            Assert.Throws<InvalidOperationException>(() => {
-                package.CreateReleasePackage(outputPackage, packagesDir);
-            });
-        }
-
-        [Fact(Skip="TODO")]
         public void DependentLocalPackageNotFoundAndThrowsError()
         {
             // copy ProjectDependsOnOtherProject to a temp folder
             // create a release package using it
             // should throw an exception indicating it can't find TheOtherProjectItDependsOn.1.0.nupkg
+            Assert.False(true, "Rewrite this test");
         }
 
-        [Fact(Skip = "TODO")]
+        [Fact]
         public void DependentLocalPackageFoundAndIncludedInReleasePackage()
         {
             // copy ProjectDependsOnOtherProject and TheOtherProjectItDependsOn to a temp folder
             // create a release package using it
             // should contain TheOtherProjectItDependsOn.dll
             // XXX: what about scenario where it is in another folder?
+            Assert.False(true, "Rewrite this test");
         }
 
         [Fact]
@@ -347,41 +334,6 @@ namespace Squirrel.Tests.Core
                     .FirstOrDefault(f => f.TargetFramework == FrameworkTargetVersion.Net45);
 
                 Assert.NotNull(dependency);
-            }
-            finally
-            {
-                File.Delete(outputPackage);
-            }
-        }
-
-        [Fact]
-        public void WhenAProjectContainsNet40BinariesItDoesntShipTheNet45Dependencies()
-        {
-            var outputPackage = Path.GetTempFileName() + ".nupkg";
-
-            var inputPackage = IntegrationTestHelper.GetPath("fixtures", "ThisShouldBeANet4Project.1.0.nupkg");
-
-            var rightPackage = "Caliburn.Micro.1.5.2.nupkg";
-            var rightPackagePath = IntegrationTestHelper.GetPath("fixtures", rightPackage);
-
-            try
-            {
-                var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
-                (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
-
-                File.Copy(rightPackagePath, Path.Combine(sourceDir, rightPackage), true);
-
-                var package = new ReleasePackage(inputPackage);
-                var outputFileName = package.CreateReleasePackage(outputPackage, sourceDir);
-
-                var zipPackage = new ZipPackage(outputFileName);
-
-                var dependency = zipPackage.GetLibFiles()
-                    .Where(f => f.Path.EndsWith("Caliburn.Micro.dll"))
-                    .FirstOrDefault(f => f.TargetFramework
-                        == new FrameworkName(".NETFramework,Version=v4.5"));
-
-                Assert.Null(dependency);
             }
             finally
             {
