@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "FxHelper.h"
-
-CFxHelper::CFxHelper() { }
-CFxHelper::~CFxHelper() { }
+#include "resource.h"
 
 // http://msdn.microsoft.com/en-us/library/hh925568(v=vs.110).aspx#net_b
 const wchar_t* ndpPath = L"SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full";
@@ -24,4 +22,33 @@ bool CFxHelper::IsDotNet45OrHigherInstalled(void)
 	}
 
 	return true;
+}
+
+
+void CFxHelper::HelpUserInstallDotNetFramework()
+{
+	CTaskDialog dlg;
+	TASKDIALOG_BUTTON buttons [] = {
+		{ 1, L"Install", },
+		{ 2, L"Cancel", },
+	};
+
+	dlg.SetButtons(buttons, 2);
+	dlg.SetMainInstructionText(L"Install .NET 4.5");
+	dlg.SetContentText(L"This application requires the .NET Framework 4.5. Click the Install button to get started.");
+
+	dlg.SetExpandedInformationText(
+		L"This application requires .NET Framework 4.5 or above. Click\n"
+		L"the 'Install' button in order to navigate to a website which\n"
+		L"will help you to install the latest version of .NET");
+
+	int nButton;
+	if (SUCCEEDED(dlg.DoModal(::GetActiveWindow(), &nButton)) && nButton == 1) {
+		CString url;
+		url.LoadString(IDS_FXDOWNLOADURL);
+
+		ShellExecute(NULL, NULL, url, NULL, NULL, SW_SHOW);
+	} else {
+		MessageBoxW(NULL, L"Don't do anything", L"Not Do it", MB_OK);
+	}
 }
