@@ -80,7 +80,7 @@
     <Compile Include="UtilityTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\Squirrel.csproj">
+    <ProjectReference Include="..\src\Squirrel\Squirrel.csproj">
       <Project>{1436e22a-fe3c-4d68-9a85-9e74df2e6a92}</Project>
       <Name>Squirrel</Name>
     </ProjectReference>
