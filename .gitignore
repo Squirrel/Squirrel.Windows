@@ -72,6 +72,7 @@ ipch/
 *.ncb
 *.opensdf
 *.sdf
+*.vcxproj.filters
 
 # Visual Studio profiler
 *.psess
