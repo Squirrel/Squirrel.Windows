@@ -18,8 +18,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AtlInitCommonControls(ICC_COOL_CLASSES | ICC_BAR_CLASSES);
 	hr = _Module.Init(NULL, hInstance);
 
+	CString cmdLine(lpCmdLine);
+	bool isQuiet = (cmdLine.Find(L"/quiet") >= 0);
+
 	if (!CFxHelper::IsDotNet45OrHigherInstalled()) {
-		CFxHelper::HelpUserInstallDotNetFramework();
+		CFxHelper::HelpUserInstallDotNetFramework(isQuiet);
 		goto out;
 	}
 

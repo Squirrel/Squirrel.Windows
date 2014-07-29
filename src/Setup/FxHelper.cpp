@@ -25,8 +25,10 @@ bool CFxHelper::IsDotNet45OrHigherInstalled(void)
 }
 
 
-void CFxHelper::HelpUserInstallDotNetFramework()
+void CFxHelper::HelpUserInstallDotNetFramework(bool isQuiet)
 {
+	if (isQuiet) return;
+
 	CTaskDialog dlg;
 	TASKDIALOG_BUTTON buttons [] = {
 		{ 1, L"Install", },
