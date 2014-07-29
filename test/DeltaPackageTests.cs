@@ -177,9 +177,9 @@ namespace Squirrel.Tests.Core
                 deltaPkg.GetFiles()
                     .Where(x => x.Path.ToLowerInvariant().EndsWith(".diff"))
                     .ForEach(x => {
-                                      var lookingFor = x.Path.Replace(".diff", ".shasum");
-                                      this.Log().Info("Looking for corresponding shasum file: {0}", lookingFor);
-                                      deltaPkg.GetFiles().Any(y => y.Path == lookingFor).ShouldBeTrue();
+                        var lookingFor = x.Path.Replace(".diff", ".shasum");
+                        this.Log().Info("Looking for corresponding shasum file: {0}", lookingFor);
+                        deltaPkg.GetFiles().Any(y => y.Path == lookingFor).ShouldBeTrue();
                     });
 
                 // Delta packages should be smaller than the original!
