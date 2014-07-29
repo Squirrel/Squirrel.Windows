@@ -19,9 +19,7 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void ReleasePackageIntegrationTest()
         {
-            Assert.False(true, "Need to recreate the fixtures for this test");
-
-            var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
+            var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
             var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
 
@@ -48,7 +46,7 @@ namespace Squirrel.Tests.Core
                     .ToList();
 
                 files.Any(x => nonDesktopPaths.Any(y => x.Path.ToLowerInvariant().Contains(y.ToLowerInvariant()))).ShouldBeFalse();
-                files.Any(x => x.Path.ToLowerInvariant().Contains(@".xml")).ShouldBeFalse();
+                files.Any(x => x.Path.ToLowerInvariant().EndsWith(@".xml")).ShouldBeFalse();
             } finally {
                 File.Delete(outputPackage);
             }
@@ -72,11 +70,7 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void FindDependentPackagesForDummyPackage()
         {
-            // Find dependent packages for a package by looking in the
-            // 'packages' folder
-            Assert.False(true, "Need to fix the fixture");
-
-            var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
+            var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var fixture = new ReleasePackage(inputPackage);
             var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
@@ -103,9 +97,7 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void CanResolveMultipleLevelsOfDependencies()
         {
-            Assert.False(true, "Need to remake the fixture for this test");
-
-            var inputPackage = IntegrationTestHelper.GetPath("fixtures", "SampleUpdatingApp.1.0.0.0.nupkg");
+            var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
             var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
 
@@ -126,10 +118,9 @@ namespace Squirrel.Tests.Core
                 pkg.GetFiles().ForEach(x => this.Log().Info(x.Path));
 
                 var filesToLookFor = new[] {
-                    "System.Reactive.Core.dll",
-                    "ReactiveUI.dll",
-                    "MarkdownSharp.dll",
-                    "SampleUpdatingApp.exe",
+                    "xunit.assert.dll",         // Tests => Xunit => Xunit.Assert
+                    "NuGet.Core.dll",           // Tests => NuGet
+                    "Squirrel.Tests.dll",
                 };
 
                 filesToLookFor.ForEach(name => {
@@ -239,14 +230,6 @@ namespace Squirrel.Tests.Core
                     File.Delete(outputPackage);
                 }
             }
-        }
-
-        [Fact]
-        public void DependentPackageFoundAndIncludedInReleasePackage()
-        {
-            // Create a Release Package based on a package which has a dependency
-            // in the packages directory
-            Assert.False(true, "Rewrite this test");
         }
 
         [Fact]
