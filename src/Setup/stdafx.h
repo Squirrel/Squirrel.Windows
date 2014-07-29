@@ -20,7 +20,7 @@
 
 #include <atlbase.h>
 #include <atlapp.h>
-
+#include <atldlgs.h>
 #include <atlwin.h>
 
 #if defined _M_IX86
