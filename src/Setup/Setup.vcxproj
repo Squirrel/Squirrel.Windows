@@ -92,10 +92,12 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="unzip.h" />
+    <ClInclude Include="UpdateRunner.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FxHelper.cpp" />
     <ClCompile Include="unzip.cpp" />
+    <ClCompile Include="UpdateRunner.cpp" />
     <ClCompile Include="winmain.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

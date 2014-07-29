@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Setup.h"
 #include "FxHelper.h"
+#include "UpdateRunner.h"
 
 CAppModule _Module;
 
@@ -12,6 +13,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_ LPWSTR lpCmdLine,
                       _In_ int nCmdShow)
 {
+	int exitCode = -1;
 	HRESULT hr = ::CoInitialize(NULL);
 	ATLASSERT(SUCCEEDED(hr));
 
@@ -26,10 +28,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		goto out;
 	}
 
-	// TODO: Unpack and run
+	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine);
 
 out:
 	_Module.Term();
 	::CoUninitialize();
-	return 0;
+	return exitCode;
 }
