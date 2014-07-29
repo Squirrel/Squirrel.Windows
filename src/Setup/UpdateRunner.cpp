@@ -18,6 +18,9 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage)
 
 int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 {
+	PROCESS_INFORMATION pi = { 0 };
+	STARTUPINFO si = { 0 };
+	CResource zipResource;
 	wchar_t targetDir[MAX_PATH];
 
 	ExpandEnvironmentStrings(L"%LocalAppData%\SquirrelTemp", targetDir, MAX_PATH);
@@ -27,7 +30,6 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 		}
 	}
 
-	CResource zipResource;
 	if (!zipResource.Load(L"DATA", IDR_UPDATE_ZIP)) {
 		goto failedExtract;
 	}
@@ -65,8 +67,6 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	}
 
 	// Run Update.exe
-	PROCESS_INFORMATION pi = { 0 };
-	STARTUPINFO si = { 0 };
 	si.cb = sizeof(STARTUPINFO);
 	si.wShowWindow = SW_SHOW;
 	si.dwFlags = STARTF_USESHOWWINDOW;
