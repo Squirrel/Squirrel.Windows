@@ -48,7 +48,5 @@ void CFxHelper::HelpUserInstallDotNetFramework()
 		url.LoadString(IDS_FXDOWNLOADURL);
 
 		ShellExecute(NULL, NULL, url, NULL, NULL, SW_SHOW);
-	} else {
-		MessageBoxW(NULL, L"Don't do anything", L"Not Do it", MB_OK);
 	}
 }
