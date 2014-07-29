@@ -209,10 +209,8 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenBasePackageIsNewerThanNewPackageThrowException()
         {
-            Assert.False(true, "Need to remake the fixture for this test");
-
-            var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nupkg");
-            var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
+            var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
+            var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
 
             var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
@@ -247,7 +245,7 @@ namespace Squirrel.Tests.Core
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nupkg");
 
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
             var baseFixture = new ReleasePackage(basePackage);
@@ -255,15 +253,12 @@ namespace Squirrel.Tests.Core
 
             var tempFile = Path.GetTempPath() + Guid.NewGuid() + ".nupkg";
 
-            try
-            {
-                Assert.Throws<ArgumentException>(() =>
-                {
+            try {
+                Assert.Throws<ArgumentException>(() => {
                     var deltaBuilder = new DeltaPackageBuilder();
                     deltaBuilder.CreateDeltaPackage(baseFixture, fixture, tempFile);
                 });
-            }
-            finally {
+            } finally {
                 File.Delete(tempFile);
             }
         }
@@ -271,12 +266,10 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenBasePackageDoesNotExistThrowException()
         {
-            Assert.False(true, "Need to remake the fixture for this test");
+            var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
+            var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
 
-            var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
-            var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nupkg");
-
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
             var baseFixture = new ReleasePackage(basePackage);
@@ -286,8 +279,7 @@ namespace Squirrel.Tests.Core
                 .Select(_ => Path.GetTempPath() + Guid.NewGuid().ToString() + ".nupkg")
                 .ToArray();
 
-            try
-            {
+            try {
                 baseFixture.CreateReleasePackage(tempFiles[0], sourceDir);
                 fixture.CreateReleasePackage(tempFiles[1], sourceDir);
 
@@ -297,14 +289,11 @@ namespace Squirrel.Tests.Core
                 // NOW WATCH AS THE FILE DISAPPEARS
                 File.Delete(baseFixture.ReleasePackageFile);
 
-                Assert.Throws<FileNotFoundException>(() =>
-                {
+                Assert.Throws<FileNotFoundException>(() => {
                     var deltaBuilder = new DeltaPackageBuilder();
                     deltaBuilder.CreateDeltaPackage(baseFixture, fixture, tempFiles[2]);
                 });
-            }
-            finally
-            {
+            } finally {
                 tempFiles.ForEach(File.Delete);
             }
         }
@@ -312,12 +301,10 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenNewPackageDoesNotExistThrowException()
         {
-            Assert.False(true, "Need to remake the fixture for this test");
+            var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
+            var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
 
-            var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
-            var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nupkg");
-
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
             var baseFixture = new ReleasePackage(basePackage);
@@ -327,8 +314,7 @@ namespace Squirrel.Tests.Core
                 .Select(_ => Path.GetTempPath() + Guid.NewGuid().ToString() + ".nupkg")
                 .ToArray();
 
-            try
-            {
+            try {
                 baseFixture.CreateReleasePackage(tempFiles[0], sourceDir);
                 fixture.CreateReleasePackage(tempFiles[1], sourceDir);
 
@@ -338,14 +324,11 @@ namespace Squirrel.Tests.Core
                 // NOW WATCH AS THE FILE DISAPPEARS
                 File.Delete(fixture.ReleasePackageFile);
 
-                Assert.Throws<FileNotFoundException>(() =>
-                {
+                Assert.Throws<FileNotFoundException>(() => {
                     var deltaBuilder = new DeltaPackageBuilder();
                     deltaBuilder.CreateDeltaPackage(baseFixture, fixture, tempFiles[2]);
                 });
-            }
-            finally
-            {
+            } finally {
                 tempFiles.ForEach(File.Delete);
             }
         }
