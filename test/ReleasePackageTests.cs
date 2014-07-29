@@ -23,7 +23,7 @@ namespace Squirrel.Tests.Core
 
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
 
             var fixture = new ReleasePackage(inputPackage);
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
@@ -58,7 +58,7 @@ namespace Squirrel.Tests.Core
         public void FindPackageInOurLocalPackageList()
         {
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
             var fixture = ExposedObject.From(new ReleasePackage(inputPackage));
@@ -78,7 +78,7 @@ namespace Squirrel.Tests.Core
 
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0.nupkg");
             var fixture = new ReleasePackage(inputPackage);
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
             IEnumerable<IPackage> results = fixture.findAllDependentPackages(default(IPackage), (IPackageRepository)new LocalPackageRepository(sourceDir), default(HashSet<string>), default(FrameworkName));
@@ -91,7 +91,7 @@ namespace Squirrel.Tests.Core
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.NoDependencies.1.0.0.0.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
             var fixture = new ReleasePackage(inputPackage);
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
             try {
                 fixture.CreateReleasePackage(outputPackage, sourceDir);
             }
@@ -107,7 +107,7 @@ namespace Squirrel.Tests.Core
 
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "SampleUpdatingApp.1.0.0.0.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
 
             var fixture = new ReleasePackage(inputPackage);
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
@@ -188,7 +188,7 @@ namespace Squirrel.Tests.Core
             var rightPackagePath = IntegrationTestHelper.GetPath("fixtures", rightPackage);
 
             try {
-                var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+                var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
                 (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
                 File.Copy(wrongPackagePath, Path.Combine(sourceDir, wrongPackage), true);
@@ -273,7 +273,7 @@ namespace Squirrel.Tests.Core
         {
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "ProjectWithContent.1.0.0.0-beta.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
 
             var fixture = new ReleasePackage(inputPackage);
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
@@ -319,7 +319,7 @@ namespace Squirrel.Tests.Core
 
             try
             {
-                var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+                var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
                 (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
                 File.Copy(rightPackagePath, Path.Combine(sourceDir, rightPackage), true);
