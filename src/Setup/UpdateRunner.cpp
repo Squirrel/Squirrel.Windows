@@ -23,7 +23,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	CResource zipResource;
 	wchar_t targetDir[MAX_PATH];
 
-	ExpandEnvironmentStrings(L"%LocalAppData%\SquirrelTemp", targetDir, MAX_PATH);
+	ExpandEnvironmentStrings(L"%LocalAppData%\\SquirrelTemp", targetDir, MAX_PATH);
 	if (GetFileAttributes(targetDir) == INVALID_FILE_ATTRIBUTES) {
 		if (!CreateDirectory(targetDir, NULL)) {
 			goto failedExtract;
@@ -48,11 +48,13 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	ZIPENTRY zentry;
 	int index = 0;
 	do {
-		zr = GetZipItem(zipFile, index++, &zentry);
+		zr = GetZipItem(zipFile, index, &zentry);
 		if (zr != ZR_OK && zr != ZR_MORE) {
 			break;
 		}
+
 		zr = UnzipItem(zipFile, index, zentry.name);
+		index++;
 	} while (zr == ZR_MORE);
 
 	CloseZip(zipFile);
@@ -60,7 +62,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 
 	// nfi if the zip extract actually worked, check for Update.exe
 	wchar_t updateExePath[MAX_PATH];
-	swprintf_s(updateExePath, sizeof(wchar_t)*MAX_PATH, L"%s\\%s", targetDir, L"Update.exe");
+	swprintf_s(updateExePath, L"%s\\%s", targetDir, L"Update.exe");
 
 	if (GetFileAttributes(updateExePath) == INVALID_FILE_ATTRIBUTES) {
 		goto failedExtract;
@@ -88,4 +90,5 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 
 failedExtract:
 	DisplayErrorMessage(CString(L"Failed to extract installer"));
+	return (int) dwExitCode;
 }
