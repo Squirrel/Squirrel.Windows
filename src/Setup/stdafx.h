@@ -11,6 +11,7 @@
 
 // Windows Header Files:
 #include <windows.h>
+#include <shellapi.h>
 
 // C RunTime Header Files
 #include <stdlib.h>
@@ -20,7 +21,8 @@
 
 #include <atlbase.h>
 #include <atlapp.h>
-
+#include <atlmisc.h>
+#include <atldlgs.h>
 #include <atlwin.h>
 
 #if defined _M_IX86

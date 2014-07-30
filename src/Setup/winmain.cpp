@@ -3,16 +3,35 @@
 
 #include "stdafx.h"
 #include "Setup.h"
+#include "FxHelper.h"
+#include "UpdateRunner.h"
+
+CAppModule _Module;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR lpCmdLine,
-                     _In_ int       nCmdShow)
+                      _In_opt_ HINSTANCE hPrevInstance,
+                      _In_ LPWSTR lpCmdLine,
+                      _In_ int nCmdShow)
 {
+	int exitCode = -1;
 	HRESULT hr = ::CoInitialize(NULL);
+	ATLASSERT(SUCCEEDED(hr));
 
-	MessageBoxW(NULL, L"This is a test", L"My message is here", MB_OK);
+	AtlInitCommonControls(ICC_COOL_CLASSES | ICC_BAR_CLASSES);
+	hr = _Module.Init(NULL, hInstance);
 
+	CString cmdLine(lpCmdLine);
+	bool isQuiet = (cmdLine.Find(L"/quiet") >= 0);
+
+	if (!CFxHelper::IsDotNet45OrHigherInstalled()) {
+		CFxHelper::HelpUserInstallDotNetFramework(isQuiet);
+		goto out;
+	}
+
+	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine);
+
+out:
+	_Module.Term();
 	::CoUninitialize();
-	return 0;
+	return exitCode;
 }
