@@ -23,11 +23,9 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	CResource zipResource;
 	wchar_t targetDir[MAX_PATH];
 
-	ExpandEnvironmentStrings(L"%LocalAppData%\\SquirrelTemp", targetDir, MAX_PATH);
-	if (GetFileAttributes(targetDir) == INVALID_FILE_ATTRIBUTES) {
-		if (!CreateDirectory(targetDir, NULL)) {
-			goto failedExtract;
-		}
+	ExpandEnvironmentStrings(L"%LocalAppData%\\SquirrelTemp", targetDir, _countof(targetDir));
+	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
+		goto failedExtract;
 	}
 
 	if (!zipResource.Load(L"DATA", IDR_UPDATE_ZIP)) {
@@ -45,9 +43,10 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 
 	// NB: This library is kind of a disaster
 	ZRESULT zr;
-	ZIPENTRY zentry;
 	int index = 0;
 	do {
+		ZIPENTRY zentry;
+
 		zr = GetZipItem(zipFile, index, &zentry);
 		if (zr != ZR_OK && zr != ZR_MORE) {
 			break;
