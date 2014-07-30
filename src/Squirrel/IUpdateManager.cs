@@ -20,7 +20,7 @@ namespace Squirrel
         /// will return values from 0-100 and Complete, or Throw</param>
         /// <returns>An UpdateInfo object representing the updates to install.
         /// </returns>
-        Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates, Action<int> progress);
+        Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates, Action<int> progress = null);
 
         /// <summary>
         /// Download a list of releases into the local package directory.
@@ -31,7 +31,7 @@ namespace Squirrel
         /// will return values from 0-100 and Complete, or Throw</param>
         /// <returns>A completion Observable - either returns a single 
         /// Unit.Default then Complete, or Throw</returns>
-        Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress);
+        Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null);
 
         /// <summary>
         /// Take an already downloaded set of releases and apply them, 
@@ -42,9 +42,7 @@ namespace Squirrel
         /// CheckForUpdate</param>
         /// <param name="progress">A Observer which can be used to report Progress - 
         /// will return values from 0-100 and Complete, or Throw</param>
-        /// <returns>A list of EXEs that should be started if this is a new 
-        /// installation.</returns>
-        Task<List<string>> ApplyReleases(UpdateInfo updateInfo, Action<int> progress);
+        Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null);
     }
 
     public static class EasyModeMixin
