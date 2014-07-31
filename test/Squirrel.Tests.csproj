@@ -66,8 +66,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplyReleasesTests.cs" />
+    <Compile Include="CheckForUpdateTests.cs" />
     <Compile Include="ContentTypeTests.cs" />
     <Compile Include="DeltaPackageTests.cs" />
+    <Compile Include="DownloadReleasesTests.cs" />
+    <Compile Include="InstallManagerTests.cs" />
+    <Compile Include="PackageExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReleaseEntryTests.cs" />
     <Compile Include="ReleasePackageTests.cs" />
@@ -77,6 +82,7 @@
     <Compile Include="TestHelpers\ExposedObjectHelper.cs" />
     <Compile Include="TestHelpers\IntegrationTestHelper.cs" />
     <Compile Include="TestHelpers\StaticHttpServer.cs" />
+    <Compile Include="UpdateManagerTests.cs" />
     <Compile Include="UtilityTests.cs" />
   </ItemGroup>
   <ItemGroup>
