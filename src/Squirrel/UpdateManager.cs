@@ -15,7 +15,6 @@ namespace Squirrel
 {
     public sealed class UpdateManager : IUpdateManager, IEnableLogger
     {
-        readonly IFullLogger log;
         readonly string rootAppDirectory;
         readonly string applicationName;
         readonly IFileDownloader urlDownloader;
@@ -66,7 +65,7 @@ namespace Squirrel
                 }
             } catch (Exception ex) {
                 // Something has gone wrong, we'll start from scratch.
-                log.WarnException("Failed to load local release list", ex);
+                this.Log().WarnException("Failed to load local release list", ex);
                 shouldInitialize = true;
             }
 
@@ -77,19 +76,19 @@ namespace Squirrel
             // Fetch the remote RELEASES file, whether it's a local dir or an 
             // HTTP URL
             if (isHttpUrl(updateUrlOrPath)) {
-                log.Info("Downloading RELEASES file from {0}", updateUrlOrPath);
+                this.Log().Info("Downloading RELEASES file from {0}", updateUrlOrPath);
 
                 try {
                     var data = await urlDownloader.DownloadUrl(String.Format("{0}/{1}", updateUrlOrPath, "RELEASES"));
                     releaseFile = Encoding.UTF8.GetString(data);
                 } catch (WebException ex) {
-                    log.InfoException("Download resulted in WebException (returning blank release list)", ex);
+                    this.Log().InfoException("Download resulted in WebException (returning blank release list)", ex);
                     releaseFile = String.Empty;
                 }
 
                 progress(33);
             } else {
-                log.Info("Reading RELEASES file from {0}", updateUrlOrPath);
+                this.Log().Info("Reading RELEASES file from {0}", updateUrlOrPath);
 
                 if (!Directory.Exists(updateUrlOrPath)) {
                     var message = String.Format(
@@ -105,7 +104,7 @@ namespace Squirrel
                         "The file {0} does not exist, something is probably broken with your application", 
                         fi.FullName);
 
-                    log.Warn(message);
+                    this.Log().Warn(message);
 
                     var packages = (new DirectoryInfo(updateUrlOrPath)).GetFiles("*.nupkg");
                     if (packages.Length == 0) {
@@ -186,7 +185,7 @@ namespace Squirrel
         public async Task FullUninstall(Version version = null)
         {
             version = version ?? new Version(255, 255, 255, 255);
-            log.Info("Uninstalling version '{0}'", version);
+            this.Log().Info("Uninstalling version '{0}'", version);
 
             await acquireUpdateLock();
             await fullUninstall(version);
@@ -284,7 +283,7 @@ namespace Squirrel
                 await Utility.DeleteDirectory(dir);
             } catch (UnauthorizedAccessException ex) {
                 var message = String.Format("Uninstall failed to delete dir '{0}', punting to next reboot", dir);
-                log.WarnException(message, ex);
+                this.Log().WarnException(message, ex);
 
                 Utility.DeleteDirectoryAtNextReboot(dir);
             }
@@ -311,12 +310,12 @@ namespace Squirrel
             localReleases = localReleases ?? Enumerable.Empty<ReleaseEntry>();
 
             if (remoteReleases == null) {
-                log.Warn("Release information couldn't be determined due to remote corrupt RELEASES file");
+                this.Log().Warn("Release information couldn't be determined due to remote corrupt RELEASES file");
                 throw new Exception("Corrupt remote RELEASES file");
             }
 
             if (localReleases.Count() == remoteReleases.Count()) {
-                log.Info("No updates, remote and local are the same");
+                this.Log().Info("No updates, remote and local are the same");
 
                 var latestFullRelease = findCurrentVersion(remoteReleases);
                 var currentRelease = findCurrentVersion(localReleases);
@@ -330,14 +329,14 @@ namespace Squirrel
             }
 
             if (!localReleases.Any()) {
-                log.Warn("First run or local directory is corrupt, starting from scratch");
+                this.Log().Warn("First run or local directory is corrupt, starting from scratch");
 
                 var latestFullRelease = findCurrentVersion(remoteReleases);
                 return UpdateInfo.Create(findCurrentVersion(localReleases), new[] {latestFullRelease}, PackageDirectory, appFrameworkVersion);
             }
 
             if (localReleases.Max(x => x.Version) > remoteReleases.Max(x => x.Version)) {
-                log.Warn("hwhat, local version is greater than remote version");
+                this.Log().Warn("hwhat, local version is greater than remote version");
 
                 var latestFullRelease = findCurrentVersion(remoteReleases);
                 return UpdateInfo.Create(findCurrentVersion(localReleases), new[] {latestFullRelease}, PackageDirectory, appFrameworkVersion);
@@ -381,13 +380,13 @@ namespace Squirrel
                 Path.Combine(rootAppDirectory, "packages", downloadedRelease.Filename));
 
             if (!targetPackage.Exists) {
-                log.Error("File {0} should exist but doesn't", targetPackage.FullName);
+                this.Log().Error("File {0} should exist but doesn't", targetPackage.FullName);
 
                 throw new Exception("Checksummed file doesn't exist: " + targetPackage.FullName);
             }
 
             if (targetPackage.Length != downloadedRelease.Filesize) {
-                log.Error("File Length should be {0}, is {1}", downloadedRelease.Filesize, targetPackage.Length);
+                this.Log().Error("File Length should be {0}, is {1}", downloadedRelease.Filesize, targetPackage.Length);
                 targetPackage.Delete();
 
                 throw new Exception("Checksummed file size doesn't match: " + targetPackage.FullName);
@@ -397,7 +396,7 @@ namespace Squirrel
                 var hash = Utility.CalculateStreamSHA1(file);
 
                 if (!hash.Equals(downloadedRelease.SHA1,StringComparison.OrdinalIgnoreCase)) {
-                    log.Error("File SHA1 should be {0}, is {1}", downloadedRelease.SHA1, hash);
+                    this.Log().Error("File SHA1 should be {0}, is {1}", downloadedRelease.SHA1, hash);
                     targetPackage.Delete();
                     throw new Exception("Checksum doesn't match: " + targetPackage.FullName);
                 }
@@ -426,7 +425,7 @@ namespace Squirrel
             // NB: We sort this list in order to guarantee that if a Net20
             // and a Net40 version of a DLL get shipped, we always end up
             // with the 4.0 version.
-            log.Info("Writing files to app directory: {0}", target.FullName);
+            this.Log().Info("Writing files to app directory: {0}", target.FullName);
 
             await pkg.GetLibFiles().Where(x => pathIsInFrameworkProfile(x, appFrameworkVersion))
                 .OrderBy(x => x.Path)
@@ -462,7 +461,7 @@ namespace Squirrel
         {
             fixPinnedExecutables(newCurrentVersion);
 
-            log.Info("runPostInstallAndCleanup: finished fixPinnedExecutables");
+            this.Log().Info("runPostInstallAndCleanup: finished fixPinnedExecutables");
             cleanUpOldVersions(newCurrentVersion);
         }
 
@@ -519,7 +518,7 @@ namespace Squirrel
         {
             var directory = new DirectoryInfo(rootAppDirectory);
             if (!directory.Exists) {
-                log.Warn("cleanUpOldVersions: the directory '{0}' does not exist", rootAppDirectory);
+                this.Log().Warn("cleanUpOldVersions: the directory '{0}' does not exist", rootAppDirectory);
                 return;
             }
             
@@ -531,7 +530,7 @@ namespace Squirrel
         void fixPinnedExecutables(Version newCurrentVersion) 
         {
             if (Environment.OSVersion.Version < new Version(6, 1)) {
-                log.Warn("fixPinnedExecutables: Found OS Version '{0}', exiting...", Environment.OSVersion.VersionString);
+                this.Log().Warn("fixPinnedExecutables: Found OS Version '{0}', exiting...", Environment.OSVersion.VersionString);
                 return;
             }
 
@@ -543,7 +542,7 @@ namespace Squirrel
                 .ToArray();
 
             if (!oldAppDirectories.Any()) {
-                log.Info("fixPinnedExecutables: oldAppDirectories is empty, this is pointless");
+                this.Log().Info("fixPinnedExecutables: oldAppDirectories is empty, this is pointless");
                 return;
             }
 
@@ -558,7 +557,7 @@ namespace Squirrel
                     return new ShellLink(file.FullName);
                 } catch (Exception ex) {
                     var message = String.Format("File '{0}' could not be converted into a valid ShellLink", file.FullName);
-                    log.WarnException(message, ex);
+                    this.Log().WarnException(message, ex);
                     return null;
                 }
             };
@@ -573,18 +572,18 @@ namespace Squirrel
                     updateLink(shortcut, oldAppDirectories, newAppPath);
                 } catch (Exception ex) {
                     var message = String.Format("fixPinnedExecutables: shortcut failed: {0}", shortcut.Target);
-                    log.ErrorException(message, ex);
+                    this.Log().ErrorException(message, ex);
                 }
             }
         }
 
         void updateLink(ShellLink shortcut, string[] oldAppDirectories, string newAppPath)
         {
-            log.Info("Processing shortcut '{0}'", shortcut.Target);
+            this.Log().Info("Processing shortcut '{0}'", shortcut.Target);
 
             foreach (var oldAppDirectory in oldAppDirectories) {
                 if (!shortcut.Target.StartsWith(oldAppDirectory, StringComparison.OrdinalIgnoreCase)) {
-                    log.Info("Does not match '{0}', continuing to next directory", oldAppDirectory);
+                    this.Log().Info("Does not match '{0}', continuing to next directory", oldAppDirectory);
                     continue;
                 }
 
@@ -596,7 +595,7 @@ namespace Squirrel
 
                     // replace working directory too if appropriate
                     if (shortcut.WorkingDirectory.StartsWith(oldAppDirectory, StringComparison.OrdinalIgnoreCase)) {
-                        log.Info("Changing new directory to '{0}'", newAppPath);
+                        this.Log().Info("Changing new directory to '{0}'", newAppPath);
                         shortcut.WorkingDirectory = Path.Combine(newAppPath,
                             shortcut.WorkingDirectory.Substring(oldAppDirectory.Length + 1));
                     }
@@ -604,7 +603,7 @@ namespace Squirrel
                     shortcut.Save();
                 }
                 else {
-                    log.Info("Unpinning {0} from taskbar", shortcut.Target);
+                    this.Log().Info("Unpinning {0} from taskbar", shortcut.Target);
                     TaskbarHelper.UnpinFromTaskbar(shortcut.Target);
                 }
 
@@ -626,12 +625,12 @@ namespace Squirrel
             var di = new DirectoryInfo(rootAppDirectory);
             if (!di.Exists) return;
 
-            log.Info("cleanDeadVersions: for version {0}", currentVersion);
+            this.Log().Info("cleanDeadVersions: for version {0}", currentVersion);
 
             string currentVersionFolder = null;
             if (currentVersion != null) {
                 currentVersionFolder = getDirectoryForRelease(currentVersion).Name;
-                log.Info("cleanDeadVersions: exclude folder {0}", currentVersionFolder);
+                this.Log().Info("cleanDeadVersions: exclude folder {0}", currentVersionFolder);
             }
 
             // NB: If we try to access a directory that has already been 
