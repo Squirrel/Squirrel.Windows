@@ -51,6 +51,7 @@ namespace Squirrel
 
         public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null)
         {
+            progress = progress ?? (_ => { });
             await acquireUpdateLock();
 
             var localReleases = Enumerable.Empty<ReleaseEntry>();
