@@ -233,25 +233,6 @@ namespace Squirrel.Tests.Core
         }
 
         [Fact]
-        public void DependentLocalPackageNotFoundAndThrowsError()
-        {
-            // copy ProjectDependsOnOtherProject to a temp folder
-            // create a release package using it
-            // should throw an exception indicating it can't find TheOtherProjectItDependsOn.1.0.nupkg
-            Assert.False(true, "Rewrite this test");
-        }
-
-        [Fact]
-        public void DependentLocalPackageFoundAndIncludedInReleasePackage()
-        {
-            // copy ProjectDependsOnOtherProject and TheOtherProjectItDependsOn to a temp folder
-            // create a release package using it
-            // should contain TheOtherProjectItDependsOn.dll
-            // XXX: what about scenario where it is in another folder?
-            Assert.False(true, "Rewrite this test");
-        }
-
-        [Fact]
         public void ContentFilesAreIncludedInCreatedPackage()
         {
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "ProjectWithContent.1.0.0.0-beta.nupkg");

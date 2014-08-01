@@ -212,7 +212,7 @@ namespace Squirrel.Tests.Core
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
 
-            var sourceDir = IntegrationTestHelper.GetPath("..", "packages");
+            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
             var baseFixture = new ReleasePackage(basePackage);
