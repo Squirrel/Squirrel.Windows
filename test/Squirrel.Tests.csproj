@@ -31,6 +31,15 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'CIBuild|AnyCPU'">
+    <OutputPath>bin\CIBuild\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Ionic.Zip">
       <HintPath>..\ext\Ionic.Zip.dll</HintPath>
@@ -104,7 +113,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\xunit.core.2.0.0-beta-build2700\build\portable-net45+win+wpa81+wp80\xunit.core.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\xunit.core.2.0.0-beta-build2700\build\portable-net45+win+wpa81+wp80\xunit.core.props'))" />
   </Target>
-  <PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' != 'CIBuild|AnyCPU'">
     <PostBuildEvent>"$(SolutionDir).nuget\NuGet.exe" pack "$(ProjectPath)" -OutputDirectory "$(ProjectDir)$(OutDir)." -Properties Configuration=$(Configuration)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
