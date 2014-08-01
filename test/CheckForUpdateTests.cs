@@ -12,6 +12,8 @@ namespace Squirrel.Tests
         [Fact]
         public void NewReleasesShouldBeDetected()
         {
+            Assert.False(true, "Rewrite this to be an integration test");
+            /*
             string localReleasesFile = Path.Combine(".", "theApp", "packages", "RELEASES");
 
             var fileInfo = new Mock<FileInfoBase>();
@@ -36,11 +38,14 @@ namespace Squirrel.Tests
             Assert.NotNull(result);
             Assert.Equal(1, result.ReleasesToApply.Single().Version.Major);
             Assert.Equal(1, result.ReleasesToApply.Single().Version.Minor);
+            */
         }
 
         [Fact]
         public void NoLocalReleasesFileMeansWeStartFromScratch()
         {
+            Assert.False(true, "Rewrite this to be an integration test");
+            /*
             string localPackagesDir = Path.Combine(".", "theApp",  "packages");
             string localReleasesFile = Path.Combine(localPackagesDir, "RELEASES");
 
@@ -68,11 +73,14 @@ namespace Squirrel.Tests
 
             fs.Verify(x => x.CreateDirectoryRecursive(localPackagesDir), Times.Once());
             fs.Verify(x => x.DeleteDirectoryRecursive(localPackagesDir), Times.Once());
+            */
         }
 
         [Fact]
         public void NoLocalDirectoryMeansWeStartFromScratch()
         {
+            Assert.False(true, "Rewrite this to be an integration test");
+            /*
             string localPackagesDir = Path.Combine(".", "theApp", "packages");
             string localReleasesFile = Path.Combine(localPackagesDir, "RELEASES");
 
@@ -98,11 +106,15 @@ namespace Squirrel.Tests
             }
 
             fs.Verify(x => x.CreateDirectoryRecursive(localPackagesDir), Times.Once());
+            */
         }
 
         [Fact]
         public void CorruptedReleaseFileMeansWeStartFromScratch()
         {
+            Assert.False(true, "Rewrite this to be an integration test");
+
+            /*
             string localPackagesDir = Path.Combine(".", "theApp", "packages");
             string localReleasesFile = Path.Combine(localPackagesDir, "RELEASES");
 
@@ -132,11 +144,15 @@ namespace Squirrel.Tests
 
             fs.Verify(x => x.CreateDirectoryRecursive(localPackagesDir), Times.Once());
             fs.Verify(x => x.DeleteDirectoryRecursive(localPackagesDir), Times.Once());
+            */
         }
 
         [Fact]
         public void CorruptRemoteFileShouldThrowOnCheck()
         {
+            Assert.False(true, "Rewrite this to be an integration test");
+
+            /*
             string localPackagesDir = Path.Combine(".", "theApp", "packages");
             string localReleasesFile = Path.Combine(localPackagesDir, "RELEASES");
 
@@ -161,6 +177,7 @@ namespace Squirrel.Tests
             using (fixture) {
                 Assert.Throws<Exception>(() => fixture.CheckForUpdate().First());   
             }
+            */
         }
 
         [Fact(Skip = "TODO")]

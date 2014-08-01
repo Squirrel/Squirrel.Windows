@@ -80,7 +80,6 @@
     <Compile Include="ContentTypeTests.cs" />
     <Compile Include="DeltaPackageTests.cs" />
     <Compile Include="DownloadReleasesTests.cs" />
-    <Compile Include="InstallManagerTests.cs" />
     <Compile Include="PackageExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReleaseEntryTests.cs" />

@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using Splat;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
@@ -14,6 +16,9 @@ namespace Squirrel.Tests
         [Fact]
         public void ChecksumShouldPassOnValidPackages()
         {
+            Assert.False(true, "Rewrite this to be an integration test");
+            
+            /*
             var filename = "Squirrel.Core.1.0.0.0.nupkg";
             var nuGetPkg = IntegrationTestHelper.GetPath("fixtures", filename);
             var fs = new Mock<IFileSystemFactory>();
@@ -35,11 +40,15 @@ namespace Squirrel.Tests
                 new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, ".", fs.Object, urlDownloader.Object));
 
             fixture.checksumPackage(entry);
+            */
         }
 
         [Fact]
         public void ChecksumShouldFailIfFilesAreMissing()
         {
+            Assert.False(true, "Rewrite this to be an integration test");
+
+            /*
             var filename = "Squirrel.Core.1.0.0.0.nupkg";
             var nuGetPkg = IntegrationTestHelper.GetPath("fixtures", filename);
             var fs = new Mock<IFileSystemFactory>();
@@ -69,11 +78,15 @@ namespace Squirrel.Tests
             }
 
             shouldDie.ShouldBeFalse();
+            */
         }
 
         [Fact]
         public void ChecksumShouldFailIfFilesAreBogus()
         {
+            Assert.False(true, "Rewrite this to be an integration test");
+
+            /*
             var filename = "Squirrel.Core.1.0.0.0.nupkg";
             var nuGetPkg = IntegrationTestHelper.GetPath("fixtures", filename);
             var fs = new Mock<IFileSystemFactory>();
@@ -105,10 +118,11 @@ namespace Squirrel.Tests
 
             shouldDie.ShouldBeFalse();
             fileInfo.Verify(x => x.Delete(), Times.Once());
+            */
         }
 
         [Fact]
-        public void DownloadReleasesFromHttpServerIntegrationTest()
+        public async Task DownloadReleasesFromHttpServerIntegrationTest()
         {
             string tempDir = null;
 
@@ -118,8 +132,7 @@ namespace Squirrel.Tests
             try {
                 var httpServer = new StaticHttpServer(30405, updateDir.FullName);
                 disp = httpServer.Start();
-            }
-            catch (HttpListenerException) {
+            } catch (HttpListenerException) {
                 Assert.False(true, @"Windows sucks, go run 'netsh http add urlacl url=http://+:30405/ user=MYMACHINE\MyUser");
                 return;
             }
@@ -138,13 +151,12 @@ namespace Squirrel.Tests
 
                 var fixture = new UpdateManager("http://localhost:30405", "SampleUpdatingApp", FrameworkVersion.Net40, tempDir);
                 using (fixture) {
-                    var progress = new ReplaySubject<int>();
+                    var progress = new List<int>();
+                    await fixture.DownloadReleases(entriesToDownload, progress.Add);
 
-                    fixture.DownloadReleases(entriesToDownload, progress).First();
-                    this.Log().Info("Progress: [{0}]", String.Join(",", progress));
-
-                    progress.Buffer(2,1).All(x => x.Count != 2 || x[1] > x[0]).First().ShouldBeTrue();
-                    progress.Last().ShouldEqual(100);
+                    progress
+                        .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
+                        .ShouldEqual(100);
                 }
 
                 entriesToDownload.ForEach(x => {
@@ -160,7 +172,7 @@ namespace Squirrel.Tests
         }
 
         [Fact]
-        public void DownloadReleasesFromFileDirectoryIntegrationTest()
+        public async Task DownloadReleasesFromFileDirectoryIntegrationTest()
         {
             string tempDir = null;
 
@@ -179,13 +191,14 @@ namespace Squirrel.Tests
 
                 var fixture = new UpdateManager(updateDir.FullName, "SampleUpdatingApp", FrameworkVersion.Net40, tempDir);
                 using (fixture) {
-                    var progress = new ReplaySubject<int>();
+                    var progress = new List<int>();
 
-                    fixture.DownloadReleases(entriesToDownload, progress).First();
+                    await fixture.DownloadReleases(entriesToDownload, progress.Add);
                     this.Log().Info("Progress: [{0}]", String.Join(",", progress));
 
-                    progress.Buffer(2,1).All(x => x.Count != 2 || x[1] > x[0]).First().ShouldBeTrue();
-                    progress.Last().ShouldEqual(100);
+                    progress
+                        .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
+                        .ShouldEqual(100);
                 }
 
                 entriesToDownload.ForEach(x => {
