@@ -23,18 +23,14 @@ namespace Squirrel
         {
             Contract.Requires(rootPath != null);
 
-            return rootPath.GetDirectories()
-                .SelectMany(GetAllFilesRecursively)
-                .Concat(rootPath.GetFiles());
+            return rootPath.EnumerateFiles("*", SearchOption.AllDirectories);
         }
 
         public static IEnumerable<string> GetAllFilePathsRecursively(string rootPath)
         {
             Contract.Requires(rootPath != null);
 
-            return Directory.GetDirectories(rootPath)
-                .SelectMany(GetAllFilePathsRecursively)
-                .Concat(Directory.GetFiles(rootPath));
+            return Directory.EnumerateFiles(rootPath, "*", SearchOption.AllDirectories);
         }
 
         public static string CalculateFileSHA1(string filePath)
