@@ -17,3 +17,7 @@ This is Squirrel.Windows, rewritten to drop a lot of the things that caused the 
 * We didn't get anything but suffering out of IO abstractions. Kill 'em all.
 
 * Squirrel got hella confused while walking the dependency tree by trying to detect which files in the NuGet package we were *actually* using (i.e. if you're a .NET 4.5 project, you could be using binaries from `Net20`, `Net35`, `Net45`, etc). Instead, write a Targets file which simply dumps the reference list to the output directory, and use that to inform which files should be in the final package. [Tools Spec](https://github.com/Squirrel/Squirrel.Windows.Next/blob/master/specs/Tools.md)
+
+### How can I get involved?
+
+Check out https://github.com/Squirrel/Squirrel.Windows.Next/issues/9 for more information about joining the Squirrel Slack room
