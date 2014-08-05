@@ -124,6 +124,9 @@ namespace Squirrel.Tests
         [Fact]
         public async Task DownloadReleasesFromHttpServerIntegrationTest()
         {
+            Assert.False(true, "Rewrite this to not use the SampleUpdatingApp");
+
+            /*
             string tempDir = null;
 
             var updateDir = new DirectoryInfo(IntegrationTestHelper.GetPath("..", "SampleUpdatingApp", "SampleReleasesFolder"));
@@ -169,11 +172,15 @@ namespace Squirrel.Tests
                     actualEntry.Version.ShouldEqual(x.Version);
                 });
             }
+            */
         }
 
         [Fact]
         public async Task DownloadReleasesFromFileDirectoryIntegrationTest()
         {
+            Assert.False(true, "Rewrite this to not use the SampleUpdatingApp");
+
+            /*
             string tempDir = null;
 
             var updateDir = new DirectoryInfo(IntegrationTestHelper.GetPath("..", "SampleUpdatingApp", "SampleReleasesFolder"));
@@ -211,6 +218,7 @@ namespace Squirrel.Tests
                     actualEntry.Version.ShouldEqual(x.Version);
                 });
             }
+            */
         }
     }
 }

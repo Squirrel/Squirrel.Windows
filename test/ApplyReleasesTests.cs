@@ -307,46 +307,5 @@ namespace Squirrel.Tests
                 }
             }
         }
-
-        [Fact]
-        public async Task ExecutablesPinnedToTaskbarShouldPointToNewVersion()
-        {
-            string tempDir;
-
-            using (Utility.WithTempDirectory(out tempDir)) {
-                string packagesDir = Path.Combine(tempDir, "theApp", "packages");
-                Directory.CreateDirectory(packagesDir);
-
-                new[] {
-                    "SampleUpdatingApp.1.0.0.0.nupkg",
-                    "SampleUpdatingApp.1.1.0.0.nupkg",
-                }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
-
-                var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader());
-
-                var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "SampleUpdatingApp.1.0.0.0.nupkg"));
-                var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "SampleUpdatingApp.1.1.0.0.nupkg"));
-
-                var updateInfo = UpdateInfo.Create(null, new[] { baseEntry }, packagesDir, FrameworkVersion.Net40);
-                using (fixture) {
-                    await fixture.ApplyReleases(updateInfo);
-                }
-
-                var oldExecutable = Path.Combine(tempDir, "theApp", "app-1.0.0.0", "SampleUpdatingApp.exe");
-                File.Exists(oldExecutable).ShouldBeTrue();
-                TaskbarHelper.PinToTaskbar(oldExecutable);
-
-                updateInfo = UpdateInfo.Create(baseEntry, new[] { latestFullEntry }, packagesDir, FrameworkVersion.Net40);
-                using (fixture) {
-                    await fixture.ApplyReleases(updateInfo);
-                }
-
-                var newExecutable = Path.Combine(tempDir, "theApp", "app-1.1.0.0", "SampleUpdatingApp.exe");
-                File.Exists(newExecutable).ShouldBeTrue();
-                TaskbarHelper.IsPinnedToTaskbar(newExecutable).ShouldBeTrue();
-
-                Utility.Retry(() => TaskbarHelper.UnpinFromTaskbar(newExecutable));
-            }
-        }
     }
 }
