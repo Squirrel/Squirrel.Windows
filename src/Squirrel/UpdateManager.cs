@@ -428,9 +428,14 @@ namespace Squirrel
             // with the 4.0 version.
             this.Log().Info("Writing files to app directory: {0}", target.FullName);
 
-            await pkg.GetLibFiles().Where(x => pathIsInFrameworkProfile(x, appFrameworkVersion))
+            var toWrite = pkg.GetLibFiles().Where(x => pathIsInFrameworkProfile(x, appFrameworkVersion))
                 .OrderBy(x => x.Path)
-                .ForEachAsync(x => CopyFileToLocation(target, x));
+                .ToList();
+
+            // NB: Because of the above NB, we cannot use ForEachAsync here, we 
+            // have to copy these files in-order. Once we fix assembly resolution, 
+            // we can kill both of these NBs.
+            await Task.Run(() => toWrite.ForEach(x => CopyFileToLocation(target, x)));
 
             await pkg.GetContentFiles().ForEachAsync(x => CopyFileToLocation(target, x));
 
