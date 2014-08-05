@@ -176,7 +176,7 @@ namespace Squirrel.Tests
             }
 
             [Fact]
-            public void WhenFolderDoesNotExistThrowHelpfulError()
+            public async Task WhenFolderDoesNotExistThrowHelpfulError()
             {
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir)) {
@@ -184,28 +184,26 @@ namespace Squirrel.Tests
                     var fixture = new UpdateManager(directory, "MyAppName", FrameworkVersion.Net40);
 
                     using (fixture) {
-                        Assert.Throws<Exception>(
-                            () => fixture.CheckForUpdate().Wait());
+                        await Assert.ThrowsAsync<Exception>(() => fixture.CheckForUpdate());
                     }
                 }
             }
 
             [Fact]
-            public void WhenReleasesFileDoesntExistThrowACustomError()
+            public async Task WhenReleasesFileDoesntExistThrowACustomError()
             {
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir)) {
                     var fixture = new UpdateManager(tempDir, "MyAppName", FrameworkVersion.Net40);
 
                     using (fixture) {
-                        Assert.Throws<Exception>(
-                            () => fixture.CheckForUpdate().Wait());
+                        await Assert.ThrowsAsync<Exception>(() => fixture.CheckForUpdate());
                     }
                 }
             }
 
             [Fact]
-            public void WhenReleasesFileIsBlankReturnNull()
+            public async Task WhenReleasesFileIsBlankReturnNull()
             {
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir)) {
@@ -213,19 +211,19 @@ namespace Squirrel.Tests
                     File.WriteAllText(Path.Combine(tempDir, "RELEASES"), "");
 
                     using (fixture) {
-                        Assert.Null(fixture.CheckForUpdate().Result);
+                        Assert.Null(await fixture.CheckForUpdate());
                     }
                 }
             }
 
             [Fact]
-            public void WhenUrlResultsInWebExceptionReturnNull()
+            public async Task WhenUrlResultsInWebExceptionReturnNull()
             {
                 // This should result in a WebException (which gets caught) unless you can actually access http://lol
 
                 var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45);
 
-                var updateInfo = fixture.CheckForUpdate().Result;
+                var updateInfo = await fixture.CheckForUpdate();
 
                 Assert.Null(updateInfo);
             }
