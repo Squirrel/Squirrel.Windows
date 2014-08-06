@@ -41,21 +41,26 @@ namespace Squirrel
             this.urlDownloader = urlDownloader ?? new FileDownloader();
         }
 
-        public string PackageDirectory {
-            get { return Path.Combine(rootAppDirectory, "packages"); }
-        }
-
-        public string LocalReleaseFile {
-            get { return Path.Combine(PackageDirectory, "RELEASES"); }
-        }
-
-        public async Task FullUninstall(Version version = null)
+        public Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates, Action<int> progress = null)
         {
-            version = version ?? new Version(255, 255, 255, 255);
-            this.Log().Info("Uninstalling version '{0}'", version);
+            var checkForUpdate = new CheckForUpdates(rootAppDirectory);
+            return checkForUpdate.CheckForUpdate(Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader);
+        }
 
+        public Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task FullUninstall()
+        {
             await acquireUpdateLock();
-            await fullUninstall(version);
+            await fullUninstall();
         }
 
         IEnumerable<DirectoryInfo> getReleases()
@@ -75,18 +80,22 @@ namespace Squirrel
                 .ToArray();
         }
 
-        async Task fullUninstall(Version version)
+        async Task fullUninstall(Version version = null)
         {
+            version = version ?? new Version(255, 255, 255, 255);
+            this.Log().Info("Uninstalling version '{0}'", version);
+
+
             // find all the old releases (and this one)
             var directoriesToDelete = getOldReleases(version)
                 .Concat(new [] { getDirectoryForRelease(version) })
                 .Where(d => d.Exists)
                 .Select(d => d.FullName);
 
-            await directoriesToDelete.ForEachAsync(x => deleteDirectoryWithFallbackToNextReboot(x));
+            await directoriesToDelete.ForEachAsync(x => Utility.DeleteDirectoryWithFallbackToNextReboot(x));
 
             if (!getReleases().Any()) {
-                await deleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
+                await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
             }
         }
 
@@ -142,18 +151,6 @@ namespace Squirrel
         DirectoryInfo getDirectoryForRelease(Version releaseVersion)
         {
             return new DirectoryInfo(Path.Combine(rootAppDirectory, "app-" + releaseVersion));
-        }
-
-        async Task deleteDirectoryWithFallbackToNextReboot(string dir)
-        {
-            try {
-                await Utility.DeleteDirectory(dir);
-            } catch (UnauthorizedAccessException ex) {
-                var message = String.Format("Uninstall failed to delete dir '{0}', punting to next reboot", dir);
-                this.Log().WarnException(message, ex);
-
-                Utility.DeleteDirectoryAtNextReboot(dir);
-            }
         }
     }
 }

@@ -9,7 +9,7 @@ namespace Squirrel
 {
     public sealed partial class UpdateManager
     {
-		class DownloadReleases : IEnableLogger
+        class DownloadReleases : IEnableLogger
         {
 			public async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
 			{
@@ -31,16 +31,6 @@ namespace Squirrel
 							Path.Combine(rootAppDirectory, "packages", x.Filename));
 						lock (progress) progress(current += toIncrement);
 					});
-				}
-			}
-        
-			static bool isHttpUrl(string urlOrPath)
-			{
-				try {
-					var url = new Uri(urlOrPath);
-					return new[] {"https", "http"}.Contains(url.Scheme.ToLowerInvariant());
-				} catch (Exception) {
-					return false;
 				}
 			}
 

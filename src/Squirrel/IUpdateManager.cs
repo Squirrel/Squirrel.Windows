@@ -43,6 +43,12 @@ namespace Squirrel
         /// <param name="progress">A Observer which can be used to report Progress - 
         /// will return values from 0-100 and Complete, or Throw</param>
         Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null);
+
+        /// <summary>
+        /// Completely uninstalls the targeted app
+        /// </summary>
+        /// <returns>Completion</returns>
+        async Task FullUninstall();
     }
 
     public static class EasyModeMixin
