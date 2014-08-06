@@ -7,6 +7,7 @@ using System.Threading;
 using Ionic.Zip;
 using Squirrel;
 using Splat;
+using Xunit;
 
 namespace Squirrel.Tests.TestHelpers
 {
@@ -65,14 +66,7 @@ namespace Squirrel.Tests.TestHelpers
             var rp = ReleaseEntry.GenerateFromFile(Path.Combine(path, packageFileName));
             ReleaseEntry.WriteReleaseFile(new[] { rp }, Path.Combine(path, "RELEASES"));
 
-            // NB: This is a temporary hack. The reason we serialize the tests
-            // like this, is to make sure that we don't have two tests registering
-            // their Service Locators with RxApp.
-            Monitor.Enter(gate);
-            return Disposable.Create(() => {
-                ret.Dispose();
-                Monitor.Exit(gate);
-            });
+            return ret;
         }
 
         public static IDisposable WithFakeInstallDirectory(out string path)
@@ -89,14 +83,15 @@ namespace Squirrel.Tests.TestHelpers
         {
             var ret = Utility.WithTempDirectory(out path);
 
-            var zf = new ZipFile(GetPath("fixtures", zipFile));
+            // NB: Apparently Ionic.Zip is perfectly content to extract a Zip
+            // file that doesn't actually exist, without failing.
+            var zipPath = GetPath("fixtures", zipFile);
+            Assert.True(File.Exists(zipPath));
+
+            var zf = new ZipFile(zipPath);
             zf.ExtractAll(path);
 
-            Monitor.Enter(gate);
-            return Disposable.Create(() => {
-                ret.Dispose();
-                Monitor.Exit(gate);
-            });
+            return ret;
         }
     }
 }
