@@ -45,6 +45,12 @@ namespace Squirrel
         Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null);
 
         /// <summary>
+        /// Completely Installs a targeted app
+        /// </summary>
+        /// <returns>Completion</returns>
+        Task FullInstall();
+
+        /// <summary>
         /// Completely uninstalls the targeted app
         /// </summary>
         /// <returns>Completion</returns>

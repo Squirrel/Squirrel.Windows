@@ -53,9 +53,7 @@ namespace Squirrel.Tests
                     }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(remotePackageDir.FullName, x)));
 
                     using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", FrameworkVersion.Net45, tempDir)) {
-                        var updateInfo = await fixture.CheckForUpdate();
-                        await fixture.DownloadReleases(updateInfo.ReleasesToApply);
-                        await fixture.ApplyReleases(updateInfo);
+                        await fixture.FullInstall();
                     }
 
                     var releasePath = Path.Combine(localAppDir, "packages", "RELEASES");

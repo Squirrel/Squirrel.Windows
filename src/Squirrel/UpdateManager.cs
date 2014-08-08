@@ -65,6 +65,13 @@ namespace Squirrel
             await applyReleases.ApplyReleases(updateInfo, progress);
         }
 
+        public async Task FullInstall()
+        {
+            var updateInfo = await CheckForUpdate();
+            await DownloadReleases(updateInfo.ReleasesToApply);
+            await ApplyReleases(updateInfo);
+        }
+
         public async Task FullUninstall()
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
