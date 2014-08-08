@@ -13,14 +13,14 @@ namespace Squirrel
 {
     public sealed partial class UpdateManager
     {
-        class ApplyReleases : IEnableLogger
+        class ApplyReleasesImpl : IEnableLogger
         {
             // TODO: Kill this entire concept
             readonly FrameworkVersion appFrameworkVersion = FrameworkVersion.Net45;
 
             readonly string rootAppDirectory;
 
-            public ApplyReleases(string rootAppDirectory)
+            public ApplyReleasesImpl(string rootAppDirectory)
             {
                 this.rootAppDirectory = rootAppDirectory;
             }
@@ -329,11 +329,6 @@ namespace Squirrel
                 return getReleases()
                     .Where(x => x.Name.ToVersion() < version)
                     .ToArray();
-            }
-
-            static string getLocalAppDataDirectory()
-            {
-                return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             }
 
             DirectoryInfo getDirectoryForRelease(Version releaseVersion)

@@ -10,11 +10,11 @@ namespace Squirrel
 {
     public sealed partial class UpdateManager
     {
-        class DownloadReleases : IEnableLogger
+        class DownloadReleasesImpl : IEnableLogger
         {
             readonly string rootAppDirectory;
 
-            public DownloadReleases(string rootAppDirectory)
+            public DownloadReleasesImpl(string rootAppDirectory)
             {
                 this.rootAppDirectory = rootAppDirectory;
             }

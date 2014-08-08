@@ -11,14 +11,14 @@ namespace Squirrel
 {
     public sealed partial class UpdateManager
     {
-        class CheckForUpdates : IEnableLogger
+        class CheckForUpdateImpl : IEnableLogger
         {
             readonly string rootAppDirectory;
 
             // TODO: rip this out
             readonly FrameworkVersion appFrameworkVersion = FrameworkVersion.Net45;
 
-            public CheckForUpdates(string rootAppDirectory)
+            public CheckForUpdateImpl(string rootAppDirectory)
             {
                 this.rootAppDirectory = rootAppDirectory;
             }

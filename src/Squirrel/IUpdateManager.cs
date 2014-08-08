@@ -48,7 +48,7 @@ namespace Squirrel
         /// Completely uninstalls the targeted app
         /// </summary>
         /// <returns>Completion</returns>
-        async Task FullUninstall();
+        Task FullUninstall();
     }
 
     public static class EasyModeMixin

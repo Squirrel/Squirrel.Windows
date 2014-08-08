@@ -43,7 +43,7 @@ namespace Squirrel
 
         public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates, Action<int> progress = null)
         {
-            var checkForUpdate = new CheckForUpdates(rootAppDirectory);
+            var checkForUpdate = new CheckForUpdateImpl(rootAppDirectory);
 
             await acquireUpdateLock();
             return await checkForUpdate.CheckForUpdate(Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader);
@@ -51,7 +51,7 @@ namespace Squirrel
 
         public async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
         {
-            var downloadReleases = new DownloadReleases(rootAppDirectory);
+            var downloadReleases = new DownloadReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
             await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
@@ -59,7 +59,7 @@ namespace Squirrel
 
         public async Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
-            var applyReleases = new ApplyReleases(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
             await applyReleases.ApplyReleases(updateInfo, progress);
@@ -67,7 +67,7 @@ namespace Squirrel
 
         public async Task FullUninstall()
         {
-            var applyReleases = new ApplyReleases(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
             await applyReleases.FullUninstall();
