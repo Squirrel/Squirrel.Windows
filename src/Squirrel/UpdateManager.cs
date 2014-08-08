@@ -41,63 +41,36 @@ namespace Squirrel
             this.urlDownloader = urlDownloader ?? new FileDownloader();
         }
 
-        public Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates, Action<int> progress = null)
+        public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates, Action<int> progress = null)
         {
             var checkForUpdate = new CheckForUpdates(rootAppDirectory);
-            return checkForUpdate.CheckForUpdate(Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader);
+
+            await acquireUpdateLock();
+            return await checkForUpdate.CheckForUpdate(Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader);
         }
 
-        public Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
+        public async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
         {
             var downloadReleases = new DownloadReleases(rootAppDirectory);
-            return downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
+            await acquireUpdateLock();
+
+            await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
         }
 
-        public Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
+        public async Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
-            throw new NotImplementedException();
+            var applyReleases = new ApplyReleases(rootAppDirectory);
+            await acquireUpdateLock();
+
+            await applyReleases.ApplyReleases(updateInfo, progress);
         }
 
         public async Task FullUninstall()
         {
+            var applyReleases = new ApplyReleases(rootAppDirectory);
             await acquireUpdateLock();
-            await fullUninstall();
-        }
 
-        IEnumerable<DirectoryInfo> getReleases()
-        {
-            var rootDirectory = new DirectoryInfo(rootAppDirectory);
-
-            if (!rootDirectory.Exists) return Enumerable.Empty<DirectoryInfo>();
-
-            return rootDirectory.GetDirectories()
-                .Where(x => x.Name.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase));
-        }
-
-        IEnumerable<DirectoryInfo> getOldReleases(Version version)
-        {
-            return getReleases()
-                .Where(x => x.Name.ToVersion() < version)
-                .ToArray();
-        }
-
-        async Task fullUninstall(Version version = null)
-        {
-            version = version ?? new Version(255, 255, 255, 255);
-            this.Log().Info("Uninstalling version '{0}'", version);
-
-
-            // find all the old releases (and this one)
-            var directoriesToDelete = getOldReleases(version)
-                .Concat(new [] { getDirectoryForRelease(version) })
-                .Where(d => d.Exists)
-                .Select(d => d.FullName);
-
-            await directoriesToDelete.ForEachAsync(x => Utility.DeleteDirectoryWithFallbackToNextReboot(x));
-
-            if (!getReleases().Any()) {
-                await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
-            }
+            await applyReleases.FullUninstall();
         }
 
         public void Dispose()
@@ -147,11 +120,6 @@ namespace Squirrel
         static string getLocalAppDataDirectory()
         {
             return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        }
-
-        DirectoryInfo getDirectoryForRelease(Version releaseVersion)
-        {
-            return new DirectoryInfo(Path.Combine(rootAppDirectory, "app-" + releaseVersion));
         }
     }
 }

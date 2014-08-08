@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using NuGet;
 using Splat;
 
 namespace Squirrel
@@ -11,6 +15,16 @@ namespace Squirrel
     {
         class ApplyReleases : IEnableLogger
         {
+            // TODO: Kill this entire concept
+            readonly FrameworkVersion appFrameworkVersion = FrameworkVersion.Net45;
+
+            readonly string rootAppDirectory;
+
+            public ApplyReleases(string rootAppDirectory)
+            {
+                this.rootAppDirectory = rootAppDirectory;
+            }
+
             public async Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
             {
                 progress = progress ?? (_ => { });
@@ -26,6 +40,25 @@ namespace Squirrel
 
                 await updateLocalReleasesFile();
                 progress(100);
+            }
+
+            public async Task FullUninstall(Version version = null)
+            {
+                version = version ?? new Version(255, 255, 255, 255);
+                this.Log().Info("Uninstalling version '{0}'", version);
+
+
+                // find all the old releases (and this one)
+                var directoriesToDelete = getOldReleases(version)
+                    .Concat(new [] { getDirectoryForRelease(version) })
+                    .Where(d => d.Exists)
+                    .Select(d => d.FullName);
+
+                await directoriesToDelete.ForEachAsync(x => Utility.DeleteDirectoryWithFallbackToNextReboot(x));
+
+                if (!getReleases().Any()) {
+                    await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
+                }
             }
 
             async Task installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
@@ -278,7 +311,34 @@ namespace Squirrel
 
             async Task updateLocalReleasesFile()
             {
-                await Task.Run(() => ReleaseEntry.BuildReleasesFile(PackageDirectory));
+                await Task.Run(() => ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(rootAppDirectory)));
+            }
+
+            IEnumerable<DirectoryInfo> getReleases()
+            {
+                var rootDirectory = new DirectoryInfo(rootAppDirectory);
+
+                if (!rootDirectory.Exists) return Enumerable.Empty<DirectoryInfo>();
+
+                return rootDirectory.GetDirectories()
+                    .Where(x => x.Name.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase));
+            }
+
+            IEnumerable<DirectoryInfo> getOldReleases(Version version)
+            {
+                return getReleases()
+                    .Where(x => x.Name.ToVersion() < version)
+                    .ToArray();
+            }
+
+            static string getLocalAppDataDirectory()
+            {
+                return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            }
+
+            DirectoryInfo getDirectoryForRelease(Version releaseVersion)
+            {
+                return new DirectoryInfo(Path.Combine(rootAppDirectory, "app-" + releaseVersion));
             }
         }
     }
