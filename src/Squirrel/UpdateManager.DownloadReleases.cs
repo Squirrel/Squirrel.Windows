@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,13 +12,22 @@ namespace Squirrel
     {
         class DownloadReleases : IEnableLogger
         {
-            public async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
+            readonly string rootAppDirectory;
+
+            public DownloadReleases(string rootAppDirectory)
+            {
+                this.rootAppDirectory = rootAppDirectory;
+            }
+
+            public async Task DownloadReleases(string updateUrlOrPath, IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null, IFileDownloader urlDownloader = null)
             {
                 progress = progress ?? (_ => { });
+                urlDownloader = urlDownloader ?? new FileDownloader();
+
                 int current = 0;
                 int toIncrement = (int)(100.0 / releasesToDownload.Count());
 
-                if (isHttpUrl(updateUrlOrPath)) {
+                if (Utility.IsHttpUrl(updateUrlOrPath)) {
                     await releasesToDownload.ForEachAsync(async x => {
                         await urlDownloader.DownloadFile(
                             String.Format("{0}/{1}", updateUrlOrPath, x.Filename),

@@ -49,7 +49,8 @@ namespace Squirrel
 
         public Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
         {
-            throw new NotImplementedException();
+            var downloadReleases = new DownloadReleases(rootAppDirectory);
+            return downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
         }
 
         public Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
