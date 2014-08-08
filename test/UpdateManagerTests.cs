@@ -41,6 +41,37 @@ namespace Squirrel.Tests
             }
 
             [Fact]
+            public async Task InitialInstallSmokeTest()
+            {
+                string tempDir;
+                using (Utility.WithTempDirectory(out tempDir)) {
+                    var remotePackageDir = Directory.CreateDirectory(Path.Combine(tempDir, "remotePackages"));
+                    var localAppDir = Path.Combine(tempDir, "theApp");
+
+                    new[] {
+                        "Squirrel.Core.1.0.0.0-full.nupkg",
+                    }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(remotePackageDir.FullName, x)));
+
+                    using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", FrameworkVersion.Net45, tempDir)) {
+                        var updateInfo = await fixture.CheckForUpdate();
+                        await fixture.DownloadReleases(updateInfo.ReleasesToApply);
+                        await fixture.ApplyReleases(updateInfo);
+                    }
+
+                    var releasePath = Path.Combine(localAppDir, "packages", "RELEASES");
+                    File.Exists(releasePath).ShouldBeTrue();
+
+                    var entries = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasePath, Encoding.UTF8));
+                    entries.Count().ShouldEqual(1);
+
+                    new[] {
+                        "ReactiveUI.dll",
+                        "NSync.Core.dll",
+                    }.ForEach(x => File.Exists(Path.Combine(localAppDir, "app-1.0.0.0", x)).ShouldBeTrue());
+                }
+            }
+
+            [Fact]
             public async Task WhenBothFilesAreInSyncNoUpdatesAreApplied()
             {
                 string tempDir;
