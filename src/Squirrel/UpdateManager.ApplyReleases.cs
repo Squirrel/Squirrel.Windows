@@ -29,16 +29,16 @@ namespace Squirrel
             {
                 progress = progress ?? (_ => { });
 
-                await cleanDeadVersions(updateInfo.CurrentlyInstalledVersion != null ? updateInfo.CurrentlyInstalledVersion.Version : null);
+                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
                 progress(10);
 
-                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
+                await installPackageToAppDir(updateInfo, release);
                 progress(50);
 
-                await installPackageToAppDir(updateInfo, release);
-                progress(95);
+                var currentReleases = await updateLocalReleasesFile();
+                progress(75);
 
-                await updateLocalReleasesFile();
+                await cleanDeadVersions(currentReleases.MaxBy(x => x.Version).First().Version);
                 progress(100);
             }
 
@@ -46,7 +46,6 @@ namespace Squirrel
             {
                 version = version ?? new Version(255, 255, 255, 255);
                 this.Log().Info("Uninstalling version '{0}'", version);
-
 
                 // find all the old releases (and this one)
                 var directoriesToDelete = getOldReleases(version)
@@ -302,16 +301,16 @@ namespace Squirrel
 
                 await toCleanup.ForEachAsync(async x => {
                     try {
-                        await Utility.DeleteDirectory(x.FullName);
+                        await Utility.DeleteDirectoryWithFallbackToNextReboot(x.FullName);
                     } catch (UnauthorizedAccessException ex) {
                         this.Log().WarnException("Couldn't delete directory: " + x.FullName, ex);
                     }
                 });
             }
 
-            internal async Task updateLocalReleasesFile()
+            internal async Task<List<ReleaseEntry>> updateLocalReleasesFile()
             {
-                await Task.Run(() => ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(rootAppDirectory)));
+                return await Task.Run(() => ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(rootAppDirectory)));
             }
 
             IEnumerable<DirectoryInfo> getReleases()
