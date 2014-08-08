@@ -90,7 +90,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.1.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader());
+                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
@@ -98,16 +98,14 @@ namespace Squirrel.Tests
                 var updateInfo = UpdateInfo.Create(baseEntry, new[] { latestFullEntry }, packagesDir, FrameworkVersion.Net40);
                 updateInfo.ReleasesToApply.Contains(latestFullEntry).ShouldBeTrue();
 
-                using (fixture) {
-                    var progress = new List<int>();
+                var progress = new List<int>();
 
-                    await fixture.ApplyReleases(updateInfo, progress.Add);
-                    this.Log().Info("Progress: [{0}]", String.Join(",", progress));
+                await fixture.ApplyReleases(updateInfo, progress.Add);
+                this.Log().Info("Progress: [{0}]", String.Join(",", progress));
 
-                    progress
-                        .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
-                        .ShouldEqual(100);
-                }
+                progress
+                    .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
+                    .ShouldEqual(100);
 
                 var filesToFind = new[] {
                     new {Name = "NLog.dll", Version = new Version("2.0.0.0")},
@@ -141,7 +139,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.2.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader());
+                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.2.0.0-full.nupkg"));
@@ -149,15 +147,13 @@ namespace Squirrel.Tests
                 var updateInfo = UpdateInfo.Create(baseEntry, new[] { latestFullEntry }, packagesDir, FrameworkVersion.Net40);
                 updateInfo.ReleasesToApply.Contains(latestFullEntry).ShouldBeTrue();
 
-                using (fixture) {
-                    var progress = new List<int>();
-                    await fixture.ApplyReleases(updateInfo, progress.Add);
-                    this.Log().Info("Progress: [{0}]", String.Join(",", progress));
+                var progress = new List<int>();
+                await fixture.ApplyReleases(updateInfo, progress.Add);
+                this.Log().Info("Progress: [{0}]", String.Join(",", progress));
 
-                    progress
-                        .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
-                        .ShouldEqual(100);
-                }
+                progress
+                    .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
+                    .ShouldEqual(100);
 
                 var rootDirectory = Path.Combine(tempDir, "theApp", "app-1.2.0.0");
 
@@ -191,7 +187,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.3.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader());
+                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.3.0.0-full.nupkg"));
@@ -199,15 +195,13 @@ namespace Squirrel.Tests
                 var updateInfo = UpdateInfo.Create(baseEntry, new[] { latestFullEntry }, packagesDir, FrameworkVersion.Net40);
                 updateInfo.ReleasesToApply.Contains(latestFullEntry).ShouldBeTrue();
 
-                using (fixture) {
-                    var progress = new List<int>();
-                    await fixture.ApplyReleases(updateInfo, progress.Add);
-                    this.Log().Info("Progress: [{0}]", String.Join(",", progress));
+                var progress = new List<int>();
+                await fixture.ApplyReleases(updateInfo, progress.Add);
+                this.Log().Info("Progress: [{0}]", String.Join(",", progress));
 
-                    progress
-                        .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
-                        .ShouldEqual(100);
-                }
+                progress
+                    .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
+                    .ShouldEqual(100);
 
                 var rootDirectory = Path.Combine(tempDir, "theApp", "app-1.3.0.0");
 
@@ -243,7 +237,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.1.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader());
+                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-delta.nupkg"));
@@ -252,16 +246,14 @@ namespace Squirrel.Tests
                 var updateInfo = UpdateInfo.Create(baseEntry, new[] { deltaEntry, latestFullEntry }, packagesDir, FrameworkVersion.Net40);
                 updateInfo.ReleasesToApply.Contains(deltaEntry).ShouldBeTrue();
 
-                using (fixture) {
-                    var progress = new List<int>();
+                var progress = new List<int>();
 
-                    await fixture.ApplyReleases(updateInfo, progress.Add);
-                    this.Log().Info("Progress: [{0}]", String.Join(",", progress));
+                await fixture.ApplyReleases(updateInfo, progress.Add);
+                this.Log().Info("Progress: [{0}]", String.Join(",", progress));
 
-                    progress
-                        .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
-                        .ShouldEqual(100);
-                }
+                progress
+                    .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
+                    .ShouldEqual(100);
 
                 var filesToFind = new[] {
                     new {Name = "NLog.dll", Version = new Version("2.0.0.0")},
@@ -294,17 +286,17 @@ namespace Squirrel.Tests
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
                 var urlDownloader = new FakeUrlDownloader();
-                using (var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, tempDir, urlDownloader)) {
-                    var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.0.0.0-full.nupkg"));
-                    var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.1.0.0-delta.nupkg"));
+                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
 
-                    var resultObs = (Task<ReleaseEntry>)fixture.GetType().GetMethod("createFullPackagesFromDeltas", BindingFlags.NonPublic | BindingFlags.Instance)
-                        .Invoke(fixture, new object[] { new[] {deltaEntry}, baseEntry });
+                var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.0.0.0-full.nupkg"));
+                var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.1.0.0-delta.nupkg"));
 
-                    var result = await resultObs;
-                    var zp = new ZipPackage(Path.Combine(tempDir, "theApp", "packages", result.Filename));
-                    zp.Version.ToString().ShouldEqual("1.1.0.0");
-                }
+                var resultObs = (Task<ReleaseEntry>)fixture.GetType().GetMethod("createFullPackagesFromDeltas", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(fixture, new object[] { new[] {deltaEntry}, baseEntry });
+
+                var result = await resultObs;
+                var zp = new ZipPackage(Path.Combine(tempDir, "theApp", "packages", result.Filename));
+                zp.Version.ToString().ShouldEqual("1.1.0.0");
             }
         }
     }

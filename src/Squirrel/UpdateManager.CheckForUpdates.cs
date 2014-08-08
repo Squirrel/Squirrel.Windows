@@ -11,7 +11,7 @@ namespace Squirrel
 {
     public sealed partial class UpdateManager
     {
-        class CheckForUpdateImpl : IEnableLogger
+        internal class CheckForUpdateImpl : IEnableLogger
         {
             readonly string rootAppDirectory;
 

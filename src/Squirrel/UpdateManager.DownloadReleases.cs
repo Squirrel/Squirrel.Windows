@@ -10,7 +10,7 @@ namespace Squirrel
 {
     public sealed partial class UpdateManager
     {
-        class DownloadReleasesImpl : IEnableLogger
+        internal class DownloadReleasesImpl : IEnableLogger
         {
             readonly string rootAppDirectory;
 

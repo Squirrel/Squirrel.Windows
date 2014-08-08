@@ -20,7 +20,7 @@ namespace Squirrel
         /// will return values from 0-100 and Complete, or Throw</param>
         /// <returns>An UpdateInfo object representing the updates to install.
         /// </returns>
-        Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates, Action<int> progress = null);
+        Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null);
 
         /// <summary>
         /// Download a list of releases into the local package directory.

@@ -41,7 +41,7 @@ namespace Squirrel
             this.urlDownloader = urlDownloader ?? new FileDownloader();
         }
 
-        public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates, Action<int> progress = null)
+        public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null)
         {
             var checkForUpdate = new CheckForUpdateImpl(rootAppDirectory);
 

@@ -13,7 +13,7 @@ namespace Squirrel
 {
     public sealed partial class UpdateManager
     {
-        class ApplyReleasesImpl : IEnableLogger
+        internal class ApplyReleasesImpl : IEnableLogger
         {
             // TODO: Kill this entire concept
             readonly FrameworkVersion appFrameworkVersion = FrameworkVersion.Net45;
@@ -309,7 +309,7 @@ namespace Squirrel
                 });
             }
 
-            async Task updateLocalReleasesFile()
+            internal async Task updateLocalReleasesFile()
             {
                 await Task.Run(() => ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(rootAppDirectory)));
             }

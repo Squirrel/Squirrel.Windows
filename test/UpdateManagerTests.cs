@@ -27,11 +27,9 @@ namespace Squirrel.Tests
                         "Squirrel.Core.1.1.0.0-full.nupkg",
                     }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
-                    var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader());
+                    var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
 
-                    using (fixture) {
-                        await fixture.UpdateLocalReleasesFile();
-                    }
+                    await fixture.updateLocalReleasesFile();
 
                     var releasePath = Path.Combine(packageDir.FullName, "RELEASES");
                     File.Exists(releasePath).ShouldBeTrue();
@@ -63,17 +61,16 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager(remotePackages, "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader());
+                    var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                        
+                    // sync both release files
+                    await fixture.updateLocalReleasesFile();
+                    ReleaseEntry.BuildReleasesFile(remotePackages);
 
+                    // check for an update
                     UpdateInfo updateInfo;
-                    using (fixture)
-                    {
-                        // sync both release files
-                        await fixture.UpdateLocalReleasesFile();
-                        ReleaseEntry.BuildReleasesFile(remotePackages);
-
-                        // check for an update
-                        updateInfo = await fixture.CheckForUpdate();
+                    using (var mgr = new UpdateManager(remotePackages, "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader())) {
+                        updateInfo = await mgr.CheckForUpdate();
                     }
 
                     Assert.NotNull(updateInfo);
@@ -111,17 +108,15 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager(remotePackages, "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader());
+                    var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+
+                    // sync both release files
+                    await fixture.updateLocalReleasesFile();
+                    ReleaseEntry.BuildReleasesFile(remotePackages);
 
                     UpdateInfo updateInfo;
-                    using (fixture)
-                    {
-                        // sync both release files
-                        await fixture.UpdateLocalReleasesFile();
-                        ReleaseEntry.BuildReleasesFile(remotePackages);
-
-                        // check for an update
-                        updateInfo = await fixture.CheckForUpdate();
+                    using (var mgr = new UpdateManager(remotePackages, "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader())) {
+                        updateInfo = await mgr.CheckForUpdate();
                     }
 
                     Assert.NotNull(updateInfo);
@@ -154,25 +149,21 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager(remotePackages, "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader());
+                    var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
 
-                    UpdateInfo updateInfo;
-                    using (fixture)
-                    {
-                        // sync both release files
-                        await fixture.UpdateLocalReleasesFile();
-                        ReleaseEntry.BuildReleasesFile(remotePackages);
+                    // sync both release files
+                    await fixture.updateLocalReleasesFile();
+                    ReleaseEntry.BuildReleasesFile(remotePackages);
 
-                        updateInfo = await fixture.CheckForUpdate();
-
+                    using (var mgr = new UpdateManager(remotePackages, "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader())) {
+                        UpdateInfo updateInfo;
+                        updateInfo = await mgr.CheckForUpdate();
                         Assert.True(updateInfo.ReleasesToApply.First().IsDelta);
 
-                        updateInfo = await fixture.CheckForUpdate(ignoreDeltaUpdates: true);
-
+                        updateInfo = await mgr.CheckForUpdate(ignoreDeltaUpdates: true);
                         Assert.False(updateInfo.ReleasesToApply.First().IsDelta);
                     }
                 }
-
             }
 
             [Fact]
@@ -220,11 +211,8 @@ namespace Squirrel.Tests
             public async Task WhenUrlResultsInWebExceptionReturnNull()
             {
                 // This should result in a WebException (which gets caught) unless you can actually access http://lol
-
                 var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45);
-
                 var updateInfo = await fixture.CheckForUpdate();
-
                 Assert.Null(updateInfo);
             }
         }
