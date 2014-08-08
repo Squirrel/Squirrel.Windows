@@ -19,7 +19,8 @@ namespace Squirrel.Tests
             {
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir)) {
-                    var packageDir = Directory.CreateDirectory(Path.Combine(tempDir, "theApp", "packages"));
+                    var appDir = Path.Combine(tempDir, "theApp");
+                    var packageDir = Directory.CreateDirectory(Path.Combine(appDir, "packages"));
 
                     new[] {
                         "Squirrel.Core.1.0.0.0-full.nupkg",
@@ -27,7 +28,7 @@ namespace Squirrel.Tests
                         "Squirrel.Core.1.1.0.0-full.nupkg",
                     }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
 
                     await fixture.updateLocalReleasesFile();
 
@@ -45,7 +46,8 @@ namespace Squirrel.Tests
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir))
                 {
-                    var localPackages = Path.Combine(tempDir, "theApp", "packages");
+                    var appDir = Path.Combine(tempDir, "theApp");
+                    var localPackages = Path.Combine(appDir, "packages");
                     var remotePackages = Path.Combine(tempDir, "releases");
                     Directory.CreateDirectory(localPackages);
                     Directory.CreateDirectory(remotePackages);
@@ -61,7 +63,7 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
                         
                     // sync both release files
                     await fixture.updateLocalReleasesFile();
@@ -84,7 +86,8 @@ namespace Squirrel.Tests
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir))
                 {
-                    var localPackages = Path.Combine(tempDir, "theApp", "packages");
+                    var appDir = Path.Combine(tempDir, "theApp");
+                    var localPackages = Path.Combine(appDir, "packages");
                     var remotePackages = Path.Combine(tempDir, "releases");
                     Directory.CreateDirectory(localPackages);
                     Directory.CreateDirectory(remotePackages);
@@ -108,7 +111,7 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
 
                     // sync both release files
                     await fixture.updateLocalReleasesFile();
@@ -130,7 +133,8 @@ namespace Squirrel.Tests
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir))
                 {
-                    var localPackages = Path.Combine(tempDir, "theApp", "packages");
+                    var appDir = Path.Combine(tempDir, "theApp");
+                    var localPackages = Path.Combine(appDir, "packages");
                     var remotePackages = Path.Combine(tempDir, "releases");
                     Directory.CreateDirectory(localPackages);
                     Directory.CreateDirectory(remotePackages);
@@ -149,7 +153,7 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
 
                     // sync both release files
                     await fixture.updateLocalReleasesFile();

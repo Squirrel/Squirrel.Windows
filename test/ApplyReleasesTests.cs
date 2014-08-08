@@ -33,8 +33,8 @@ namespace Squirrel.Tests
         {
             string tempDir;
             using (Utility.WithTempDirectory(out tempDir)) {
-                Directory.CreateDirectory(Path.Combine(tempDir, "theApp"));
-                var packages = Path.Combine(tempDir, "theApp", "packages");
+                var appDir = Directory.CreateDirectory(Path.Combine(tempDir, "theApp"));
+                var packages = Path.Combine(appDir.FullName, "packages");
                 Directory.CreateDirectory(packages);
 
                 var package = "Squirrel.Core.1.0.0.0-full.nupkg";
@@ -55,8 +55,8 @@ namespace Squirrel.Tests
             string tempDir;
             using (Utility.WithTempDirectory(out tempDir))
             {
-                Directory.CreateDirectory(Path.Combine(tempDir, "theApp"));
-                var packages = Path.Combine(tempDir, "theApp", "packages");
+                var appDir = Directory.CreateDirectory(Path.Combine(tempDir, "theApp"));
+                var packages = Path.Combine(appDir.FullName, "packages");
                 Directory.CreateDirectory(packages);
 
                 var baseFile = "Squirrel.Core.1.0.0.0-full.nupkg";
@@ -82,7 +82,8 @@ namespace Squirrel.Tests
             string tempDir;
 
             using (Utility.WithTempDirectory(out tempDir)) {
-                string packagesDir = Path.Combine(tempDir, "theApp", "packages");
+                string appDir = Path.Combine(tempDir, "theApp");
+                string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
 
                 new[] {
@@ -90,7 +91,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.1.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
@@ -131,7 +132,8 @@ namespace Squirrel.Tests
             string tempDir;
 
             using (Utility.WithTempDirectory(out tempDir)) {
-                string packagesDir = Path.Combine(tempDir, "theApp", "packages");
+                string appDir = Path.Combine(tempDir, "theApp");
+                string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
 
                 new[] {
@@ -139,7 +141,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.2.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.2.0.0-full.nupkg"));
@@ -179,7 +181,8 @@ namespace Squirrel.Tests
 
             using (Utility.WithTempDirectory(out tempDir))
             {
-                string packagesDir = Path.Combine(tempDir, "theApp", "packages");
+                string appDir = Path.Combine(tempDir, "theApp");
+                string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
 
                 new[] {
@@ -187,7 +190,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.3.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.3.0.0-full.nupkg"));
@@ -228,7 +231,8 @@ namespace Squirrel.Tests
             string tempDir;
 
             using (Utility.WithTempDirectory(out tempDir)) {
-                string packagesDir = Path.Combine(tempDir, "theApp", "packages");
+                string appDir = Path.Combine(tempDir, "theApp");
+                string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
 
                 new[] {
@@ -237,7 +241,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.1.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-delta.nupkg"));
@@ -278,7 +282,9 @@ namespace Squirrel.Tests
         {
             string tempDir;
             using (Utility.WithTempDirectory(out tempDir)) {
-                Directory.CreateDirectory(Path.Combine(tempDir, "theApp", "packages"));
+                string appDir = Path.Combine(tempDir, "theApp");
+                string packagesDir = Path.Combine(appDir, "packages");
+                Directory.CreateDirectory(packagesDir);
 
                 new[] {
                     "Squirrel.Core.1.0.0.0-full.nupkg",
@@ -286,7 +292,7 @@ namespace Squirrel.Tests
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
                 var urlDownloader = new FakeUrlDownloader();
-                var fixture = new UpdateManager.ApplyReleasesImpl(tempDir);
+                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.1.0.0-delta.nupkg"));
