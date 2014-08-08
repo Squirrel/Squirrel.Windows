@@ -150,7 +150,7 @@ namespace Squirrel
             }
         }
 
-        public static void BuildReleasesFile(string releasePackagesDir)
+        public static List<ReleaseEntry> BuildReleasesFile(string releasePackagesDir)
         {
             var packagesDir = new DirectoryInfo(releasePackagesDir);
 
@@ -176,6 +176,7 @@ namespace Squirrel
             }
 
             File.Move(tempFile, target);
+            return entries;
         }
 
         static bool filenameIsDeltaFile(string filename)

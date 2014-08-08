@@ -20,7 +20,7 @@ namespace Squirrel
         /// will return values from 0-100 and Complete, or Throw</param>
         /// <returns>An UpdateInfo object representing the updates to install.
         /// </returns>
-        Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates, Action<int> progress = null);
+        Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null);
 
         /// <summary>
         /// Download a list of releases into the local package directory.
@@ -43,6 +43,18 @@ namespace Squirrel
         /// <param name="progress">A Observer which can be used to report Progress - 
         /// will return values from 0-100 and Complete, or Throw</param>
         Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null);
+
+        /// <summary>
+        /// Completely Installs a targeted app
+        /// </summary>
+        /// <returns>Completion</returns>
+        Task FullInstall();
+
+        /// <summary>
+        /// Completely uninstalls the targeted app
+        /// </summary>
+        /// <returns>Completion</returns>
+        Task FullUninstall();
     }
 
     public static class EasyModeMixin
