@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Ionic.Zip;
 using Splat;
 
 namespace Squirrel
@@ -51,13 +51,9 @@ namespace Squirrel
                 var baseTempInfo = new DirectoryInfo(baseTempPath);
                 var tempInfo = new DirectoryInfo(tempPath);
 
-                using (var zf = new ZipFile(basePackage.ReleasePackageFile)) {
-                    zf.ExtractAll(baseTempInfo.FullName);
-                }
+                ZipFile.ExtractToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName);
 
-                using (var zf = new ZipFile(newPackage.ReleasePackageFile)) {
-                    zf.ExtractAll(tempInfo.FullName);
-                }
+                ZipFile.ExtractToDirectory(newPackage.ReleasePackageFile, tempInfo.FullName);
 
                 // Collect a list of relative paths under 'lib' and map them
                 // to their full name. We'll use this later to determine in
@@ -75,10 +71,7 @@ namespace Squirrel
 
                 ReleasePackage.addDeltaFilesToContentTypes(tempInfo.FullName);
 
-                using (var zf = new ZipFile(outputFile)) {
-                    zf.AddDirectory(tempInfo.FullName);
-                    zf.Save();
-                }
+                ZipFile.CreateFromDirectory(tempInfo.FullName, outputFile);
             }
 
             return new ReleasePackage(outputFile);
@@ -93,12 +86,10 @@ namespace Squirrel
             string deltaPath;
 
             using (Utility.WithTempDirectory(out deltaPath))
-            using (Utility.WithTempDirectory(out workingPath))
-            using (var deltaZip = new ZipFile(deltaPackage.InputPackageFile))
-            using (var baseZip = new ZipFile(basePackage.InputPackageFile)) {
-                deltaZip.ExtractAll(deltaPath);
-                baseZip.ExtractAll(workingPath);
-
+            using (Utility.WithTempDirectory(out workingPath)) {
+                ZipFile.ExtractToDirectory(deltaPackage.InputPackageFile, deltaPath);
+                ZipFile.ExtractToDirectory(basePackage.InputPackageFile, workingPath);
+            
                 var pathsVisited = new List<string>();
 
                 var deltaPathRelativePaths = new DirectoryInfo(deltaPath).GetAllFilesRecursively()
@@ -132,10 +123,8 @@ namespace Squirrel
                         File.Copy(Path.Combine(deltaPath, x), Path.Combine(workingPath, x), true);
                     });
 
-                using (var zf = new ZipFile(outputFile)) {
-                    zf.AddDirectory(workingPath);
-                    zf.Save();
-                }
+                ZipFile.CreateFromDirectory(workingPath, outputFile);
+
             }
 
             return new ReleasePackage(outputFile);
