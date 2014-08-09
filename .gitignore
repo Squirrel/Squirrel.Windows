@@ -64,7 +64,7 @@ local.properties
 *.vspscc
 .builds
 **/*.dotCover
-**/packages/
+packages/
 
 # Visual C++ cache files
 ipch/

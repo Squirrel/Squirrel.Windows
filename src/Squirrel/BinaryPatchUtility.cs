@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using Ionic.BZip2;
+using System.IO.Compression;
 
 // Adapted from https://github.com/LogosBible/bsdiff.net/blob/master/src/bsdiff/BinaryPatchUtility.cs
 
@@ -85,7 +85,7 @@ namespace Squirrel
             int eblen = 0;
 
             using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(wrappingStream))
+            using (GZipStream gzipStream = new GZipStream(wrappingStream, CompressionMode.Compress))
             {
                 // compute the differences, writing ctrl as we go
                 int scan = 0;
@@ -182,13 +182,13 @@ namespace Squirrel
 
                         byte[] buf = new byte[8];
                         WriteInt64(lenf, buf, 0);
-                        bz2Stream.Write(buf, 0, 8);
+                        gzipStream.Write(buf, 0, 8);
 
                         WriteInt64((scan - lenb) - (lastscan + lenf), buf, 0);
-                        bz2Stream.Write(buf, 0, 8);
+                        gzipStream.Write(buf, 0, 8);
 
                         WriteInt64((pos - lenb) - (lastpos + lenf), buf, 0);
-                        bz2Stream.Write(buf, 0, 8);
+                        gzipStream.Write(buf, 0, 8);
 
                         lastscan = scan - lenb;
                         lastpos = pos - lenb;
@@ -203,9 +203,9 @@ namespace Squirrel
 
             // write compressed diff data
             using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(wrappingStream))
+            using (GZipStream gzipStream = new GZipStream(wrappingStream, CompressionMode.Compress))
             {
-                bz2Stream.Write(db, 0, dblen);
+                gzipStream.Write(db, 0, dblen);
             }
 
             // compute size of compressed diff data
@@ -214,9 +214,9 @@ namespace Squirrel
 
             // write compressed extra data
             using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(wrappingStream))
+            using (GZipStream gzipStream = new GZipStream(wrappingStream, CompressionMode.Compress))
             {
-                bz2Stream.Write(eb, 0, eblen);
+                gzipStream.Write(eb, 0, eblen);
             }
 
             // seek to the beginning, write the header, then seek back to end
@@ -299,9 +299,9 @@ namespace Squirrel
                 compressedExtraStream.Seek(c_headerSize + controlLength + diffLength, SeekOrigin.Current);
 
                 // decompress each part (to read it)
-                using (BZip2InputStream controlStream = new BZip2InputStream(compressedControlStream))
-                using (BZip2InputStream diffStream = new BZip2InputStream(compressedDiffStream))
-                using (BZip2InputStream extraStream = new BZip2InputStream(compressedExtraStream))
+                using (GZipStream controlStream = new GZipStream(compressedControlStream, CompressionMode.Decompress))
+                using (GZipStream diffStream = new GZipStream(compressedDiffStream, CompressionMode.Decompress))
+                using (GZipStream extraStream = new GZipStream(compressedExtraStream, CompressionMode.Decompress))
                 {
                     long[] control = new long[3];
                     byte[] buffer = new byte[8];

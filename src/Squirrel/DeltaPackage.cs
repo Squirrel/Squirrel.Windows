@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Ionic.Zip;
 using Splat;
 
 namespace Squirrel
@@ -51,13 +51,9 @@ namespace Squirrel
                 var baseTempInfo = new DirectoryInfo(baseTempPath);
                 var tempInfo = new DirectoryInfo(tempPath);
 
-                using (var zf = new ZipFile(basePackage.ReleasePackageFile)) {
-                    zf.ExtractAll(baseTempInfo.FullName);
-                }
+                ZipFile.ExtractToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName);
 
-                using (var zf = new ZipFile(newPackage.ReleasePackageFile)) {
-                    zf.ExtractAll(tempInfo.FullName);
-                }
+                ZipFile.ExtractToDirectory(newPackage.ReleasePackageFile, tempInfo.FullName);
 
                 // Collect a list of relative paths under 'lib' and map them
                 // to their full name. We'll use this later to determine in
@@ -75,9 +71,9 @@ namespace Squirrel
 
                 ReleasePackage.addDeltaFilesToContentTypes(tempInfo.FullName);
 
-                using (var zf = new ZipFile(outputFile)) {
-                    zf.AddDirectory(tempInfo.FullName);
-                    zf.Save();
+                using (var zf = new FileStream(outputFile, FileMode.Create))
+                using (var archive = new ZipArchive(zf, ZipArchiveMode.Create)) {
+                    archive.CreateDirectory(tempInfo.FullName);
                 }
             }
 
@@ -93,49 +89,47 @@ namespace Squirrel
             string deltaPath;
 
             using (Utility.WithTempDirectory(out deltaPath))
-            using (Utility.WithTempDirectory(out workingPath))
-            using (var deltaZip = new ZipFile(deltaPackage.InputPackageFile))
-            using (var baseZip = new ZipFile(basePackage.InputPackageFile)) {
-                deltaZip.ExtractAll(deltaPath);
-                baseZip.ExtractAll(workingPath);
+            using (Utility.WithTempDirectory(out workingPath)) {
+                ZipFile.ExtractToDirectory(deltaPackage.InputPackageFile, deltaPath);
+                ZipFile.ExtractToDirectory(basePackage.InputPackageFile, workingPath);
+            }
 
-                var pathsVisited = new List<string>();
+            var pathsVisited = new List<string>();
 
-                var deltaPathRelativePaths = new DirectoryInfo(deltaPath).GetAllFilesRecursively()
-                    .Select(x => x.FullName.Replace(deltaPath + Path.DirectorySeparatorChar, ""))
-                    .ToArray();
+            var deltaPathRelativePaths = new DirectoryInfo(deltaPath).GetAllFilesRecursively()
+                .Select(x => x.FullName.Replace(deltaPath + Path.DirectorySeparatorChar, ""))
+                .ToArray();
 
-                // Apply all of the .diff files
-                deltaPathRelativePaths
-                    .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
-                    .ForEach(file => {
-                        pathsVisited.Add(Regex.Replace(file, @".diff$", "").ToLowerInvariant());
-                        applyDiffToFile(deltaPath, file, workingPath);
-                    });
+            // Apply all of the .diff files
+            deltaPathRelativePaths
+                .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                .ForEach(file => {
+                    pathsVisited.Add(Regex.Replace(file, @".diff$", "").ToLowerInvariant());
+                    applyDiffToFile(deltaPath, file, workingPath);
+                });
 
-                // Delete all of the files that were in the old package but
-                // not in the new one.
-                new DirectoryInfo(workingPath).GetAllFilesRecursively()
-                    .Select(x => x.FullName.Replace(workingPath + Path.DirectorySeparatorChar, "").ToLowerInvariant())
-                    .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase) && !pathsVisited.Contains(x))
-                    .ForEach(x => {
-                        this.Log().Info("{0} was in old package but not in new one, deleting", x);
-                        File.Delete(Path.Combine(workingPath, x));
-                    });
+            // Delete all of the files that were in the old package but
+            // not in the new one.
+            new DirectoryInfo(workingPath).GetAllFilesRecursively()
+                .Select(x => x.FullName.Replace(workingPath + Path.DirectorySeparatorChar, "").ToLowerInvariant())
+                .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase) && !pathsVisited.Contains(x))
+                .ForEach(x => {
+                    this.Log().Info("{0} was in old package but not in new one, deleting", x);
+                    File.Delete(Path.Combine(workingPath, x));
+                });
 
-                // Update all the files that aren't in 'lib' with the delta
-                // package's versions (i.e. the nuspec file, etc etc).
-                deltaPathRelativePaths
-                    .Where(x => !x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
-                    .ForEach(x => {
-                        this.Log().Info("Updating metadata file: {0}", x);
-                        File.Copy(Path.Combine(deltaPath, x), Path.Combine(workingPath, x), true);
-                    });
+            // Update all the files that aren't in 'lib' with the delta
+            // package's versions (i.e. the nuspec file, etc etc).
+            deltaPathRelativePaths
+                .Where(x => !x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                .ForEach(x => {
+                    this.Log().Info("Updating metadata file: {0}", x);
+                    File.Copy(Path.Combine(deltaPath, x), Path.Combine(workingPath, x), true);
+                });
 
-                using (var zf = new ZipFile(outputFile)) {
-                    zf.AddDirectory(workingPath);
-                    zf.Save();
-                }
+            using (var zf = new FileStream(outputFile, FileMode.Create))
+            using (var archive = new ZipArchive(zf, ZipArchiveMode.Create)) {
+                archive.CreateDirectory(workingPath);
             }
 
             return new ReleasePackage(outputFile);
