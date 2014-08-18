@@ -17,7 +17,7 @@ using System.Collections.Concurrent;
 
 namespace Squirrel
 {
-    public static class Utility
+    static class Utility
     {
         public static IEnumerable<FileInfo> GetAllFilesRecursively(this DirectoryInfo rootPath)
         {
@@ -201,6 +201,16 @@ namespace Squirrel
             return Tuple.Create(path, (Stream) File.OpenWrite(path));
         }
 
+        public static string PackageDirectoryForAppDir(string rootAppDirectory) 
+        {
+            return Path.Combine(rootAppDirectory, "packages");
+        }
+
+        public static string LocalReleaseFileForAppDir(string rootAppDirectory)
+        {
+            return Path.Combine(PackageDirectoryForAppDir(rootAppDirectory), "RELEASES");
+        }
+
         static TAcc scan<T, TAcc>(this IEnumerable<T> This, TAcc initialValue, Func<TAcc, T, TAcc> accFunc)
         {
             TAcc acc = initialValue;
@@ -211,6 +221,28 @@ namespace Squirrel
             }
 
             return acc;
+        }
+
+        public static bool IsHttpUrl(string urlOrPath)
+        {
+            try {
+                var url = new Uri(urlOrPath);
+                return new[] {"https", "http"}.Contains(url.Scheme.ToLowerInvariant());
+            } catch (Exception) {
+                return false;
+            }
+        }
+
+        public static async Task DeleteDirectoryWithFallbackToNextReboot(string dir)
+        {
+            try {
+                await Utility.DeleteDirectory(dir);
+            } catch (UnauthorizedAccessException ex) {
+                var message = String.Format("Uninstall failed to delete dir '{0}', punting to next reboot", dir);
+                LogHost.Default.WarnException(message, ex);
+
+                Utility.DeleteDirectoryAtNextReboot(dir);
+            }
         }
 
         public static void DeleteDirectoryAtNextReboot(string directoryPath)
