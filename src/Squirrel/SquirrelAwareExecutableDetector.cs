@@ -12,6 +12,17 @@ namespace Squirrel
 {
     static class SquirrelAwareExecutableDetector
     {
+        public static List<string> GetAllSquirrelAwareApps(string directory, int minimumVersion = 1)
+        {
+            var di = new DirectoryInfo(directory);
+
+            return di.EnumerateFiles()
+                .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                .Select(x => x.FullName)
+                .Where(x => (GetPESquirrelAwareVersion(x) ?? -1) >= minimumVersion)
+                .ToList();
+        }
+
         public static int? GetPESquirrelAwareVersion(string executable)
         {
             if (!File.Exists(executable)) return null;
