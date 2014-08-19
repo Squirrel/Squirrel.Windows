@@ -42,22 +42,19 @@ namespace Squirrel
                 progress(100);
             }
 
-            public async Task FullUninstall(Version version = null)
+            public async Task FullUninstall()
             {
-                version = version ?? new Version(255, 255, 255, 255);
-                this.Log().Info("Uninstalling version '{0}'", version);
+                var currentRelease = getReleases().MaxBy(x => x.Name.ToVersion()).FirstOrDefault();
 
-                // find all the old releases (and this one)
-                var directoriesToDelete = getOldReleases(version)
-                    .Concat(new [] { getDirectoryForRelease(version) })
-                    .Where(d => d.Exists)
-                    .Select(d => d.FullName);
+                if (currentRelease.Exists) 
+                {
+                    var version = currentRelease.Name.ToVersion();
 
-                await directoriesToDelete.ForEachAsync(x => Utility.DeleteDirectoryWithFallbackToNextReboot(x));
-
-                if (!getReleases().Any()) {
-                    await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
+                    await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName)
+                        .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("/squirrel-uninstall {0}", version)), 1);
                 }
+
+                await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
             }
 
             async Task installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
