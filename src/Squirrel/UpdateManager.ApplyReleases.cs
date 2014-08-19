@@ -33,12 +33,16 @@ namespace Squirrel
                 progress(10);
 
                 await installPackageToAppDir(updateInfo, release);
-                progress(50);
+                progress(30);
 
                 var currentReleases = await updateLocalReleasesFile();
+                progress(50);
+
+                var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
+                await invokePostInstall(newVersion, currentReleases.Count == 1);
                 progress(75);
 
-                await cleanDeadVersions(currentReleases.MaxBy(x => x.Version).First().Version);
+                await cleanDeadVersions(newVersion);
                 progress(100);
             }
 
@@ -180,6 +184,17 @@ namespace Squirrel
                 foreach (var v in getOldReleases(newCurrentVersion)) {
                     Utility.DeleteDirectoryAtNextReboot(v.FullName);
                 }
+            }
+
+            async Task invokePostInstall(Version currentVersion, bool isInitialInstall)
+            {
+                var targetDir = getDirectoryForRelease(currentVersion);
+                var args = isInitialInstall ?
+                    String.Format("/squirrel-install {0}", currentVersion) :
+                    String.Format("/squirrel-updated {0}", currentVersion);
+
+                await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName)
+                    .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1);
             }
 
             void fixPinnedExecutables(Version newCurrentVersion) 
