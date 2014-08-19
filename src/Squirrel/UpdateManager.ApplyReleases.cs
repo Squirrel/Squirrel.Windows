@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
@@ -193,8 +194,14 @@ namespace Squirrel
                     String.Format("/squirrel-install {0}", currentVersion) :
                     String.Format("/squirrel-updated {0}", currentVersion);
 
-                await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName)
-                    .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1);
+                var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName);
+
+                // For each app, run the install command in-order and wait
+                await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1);
+
+                // If this is the first run, we run the apps with first-run and 
+                // *don't* wait for them, since they're probably the main EXE
+                squirrelApps.ForEach(exe => Process.Start(exe, "/squirrel-firstrun"));
             }
 
             void fixPinnedExecutables(Version newCurrentVersion) 
