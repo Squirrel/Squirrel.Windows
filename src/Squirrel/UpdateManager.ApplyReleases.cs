@@ -199,8 +199,19 @@ namespace Squirrel
                 // For each app, run the install command in-order and wait
                 await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1);
 
+                if (!isInitialInstall) return;
+
                 // If this is the first run, we run the apps with first-run and 
                 // *don't* wait for them, since they're probably the main EXE
+                if (squirrelApps.Count == 0) {
+                    this.Log().Warn("No apps are marked as Squirrel-aware! Going to run them all");
+
+                    squirrelApps = targetDir.EnumerateFiles()
+                        .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        .Select(x => x.FullName)
+                        .ToList();
+                }
+
                 squirrelApps.ForEach(exe => Process.Start(exe, "/squirrel-firstrun"));
             }
 
