@@ -49,5 +49,14 @@ namespace Squirrel.Tests
             var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
             Assert.Null(ret);
         }
+
+        [Fact]
+        public void SquirrelAwareTestAppShouldBeSquirrelAware()
+        {
+            var target = IntegrationTestHelper.GetPath("fixtures", "SquirrelAwareApp.exe");
+            Assert.True(File.Exists(target));
+
+            Assert.NotNull(SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target));
+        }
     }
 }
