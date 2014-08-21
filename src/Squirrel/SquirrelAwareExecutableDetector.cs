@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using Mono.Cecil;
 
 namespace Squirrel
 {
@@ -35,11 +36,13 @@ namespace Squirrel
         {
             try 
             {
-                var assembly = Assembly.ReflectionOnlyLoadFrom(executable);
-                var attrs = assembly.GetCustomAttributesData();
+                var assembly = AssemblyDefinition.ReadAssembly(executable);
+                if (!assembly.HasCustomAttributes) return null;
+
+                var attrs = assembly.CustomAttributes;
                 var attribute = attrs.FirstOrDefault(x => 
                 {
-                    if (x.AttributeType != typeof(AssemblyMetadataAttribute)) return false;
+                    if (x.AttributeType.FullName != typeof(AssemblyMetadataAttribute).FullName) return false;
                     if (x.ConstructorArguments.Count != 2) return false;
                     return x.ConstructorArguments[0].Value.ToString() == "SquirrelAwareVersion";
                 });
