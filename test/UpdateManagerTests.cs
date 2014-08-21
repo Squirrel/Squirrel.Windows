@@ -85,8 +85,7 @@ namespace Squirrel.Tests
                         "Squirrel.Core.1.0.0.0-full.nupkg",
                         "Squirrel.Core.1.1.0.0-delta.nupkg",
                         "Squirrel.Core.1.1.0.0-full.nupkg",
-                    }.ForEach(x =>
-                    {
+                    }.ForEach(x => {
                         var path = IntegrationTestHelper.GetPath("fixtures", x);
                         File.Copy(path, Path.Combine(localPackages, x));
                         File.Copy(path, Path.Combine(remotePackages, x));
@@ -125,8 +124,7 @@ namespace Squirrel.Tests
                         "Squirrel.Core.1.0.0.0-full.nupkg",
                         "Squirrel.Core.1.1.0.0-delta.nupkg",
                         "Squirrel.Core.1.1.0.0-full.nupkg",
-                    }.ForEach(x =>
-                    {
+                    }.ForEach(x => {
                         var path = IntegrationTestHelper.GetPath("fixtures", x);
                         File.Copy(path, Path.Combine(localPackages, x));
                     });
@@ -134,8 +132,7 @@ namespace Squirrel.Tests
                     new[] {
                         "Squirrel.Core.1.0.0.0-full.nupkg",
                         "Squirrel.Core.1.1.0.0-full.nupkg",
-                    }.ForEach(x =>
-                    {
+                    }.ForEach(x => {
                         var path = IntegrationTestHelper.GetPath("fixtures", x);
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });

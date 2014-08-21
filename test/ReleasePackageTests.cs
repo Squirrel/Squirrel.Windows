@@ -205,8 +205,7 @@ namespace Squirrel.Tests.Core
                 var assemblyName = AssemblyName.GetAssemblyName(outputFile);
                 Assert.Equal(1, assemblyName.Version.Major);
                 Assert.Equal(5, assemblyName.Version.Minor);
-            }
-            finally {
+            } finally {
                 File.Delete(outputPackage);
                 File.Delete(outputFile);
             }
@@ -242,8 +241,7 @@ namespace Squirrel.Tests.Core
             var fixture = new ReleasePackage(inputPackage);
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
-            try
-            {
+            try {
                 fixture.CreateReleasePackage(outputPackage, sourceDir);
 
                 this.Log().Info("Resulting package is at {0}", outputPackage);
@@ -264,9 +262,7 @@ namespace Squirrel.Tests.Core
                 Assert.Contains("dir\\item-in-subdirectory.txt", contentFilePaths);
 
                 Assert.Equal(1, pkg.GetLibFiles().Count());
-            }
-            finally
-            {
+            } finally {
                 File.Delete(outputPackage);
             }
         }
@@ -281,8 +277,7 @@ namespace Squirrel.Tests.Core
             var rightPackage = "Caliburn.Micro.1.5.2.nupkg";
             var rightPackagePath = IntegrationTestHelper.GetPath("fixtures", rightPackage);
 
-            try
-            {
+            try {
                 var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
                 (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
@@ -298,9 +293,7 @@ namespace Squirrel.Tests.Core
                     .FirstOrDefault(f => f.TargetFramework == FrameworkTargetVersion.Net45);
 
                 Assert.NotNull(dependency);
-            }
-            finally
-            {
+            } finally {
                 File.Delete(outputPackage);
             }
         }
