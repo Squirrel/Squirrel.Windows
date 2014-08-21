@@ -51,8 +51,7 @@ namespace Squirrel
             {
                 var currentRelease = getReleases().MaxBy(x => x.Name.ToVersion()).FirstOrDefault();
 
-                if (currentRelease.Exists) 
-                {
+                if (currentRelease.Exists) {
                     var version = currentRelease.Name.ToVersion();
 
                     await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName)

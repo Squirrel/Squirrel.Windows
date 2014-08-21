@@ -32,9 +32,10 @@ namespace Squirrel
             // NB: When bootstrapping, CurrentlyInstalledVersion is null!
             CurrentlyInstalledVersion = currentlyInstalledVersion;
             ReleasesToApply = (releasesToApply ?? Enumerable.Empty<ReleaseEntry>()).ToList();
-            FutureReleaseEntry = ReleasesToApply.Any()
-                    ? ReleasesToApply.MaxBy(x => x.Version).FirstOrDefault()
-                    : null;
+            FutureReleaseEntry = ReleasesToApply.Any() ? 
+                ReleasesToApply.MaxBy(x => x.Version).FirstOrDefault() : 
+                null;
+
             AppFrameworkVersion = appFrameworkVersion;
 
             this.PackageDirectory = packageDirectory;
@@ -65,13 +66,15 @@ namespace Squirrel
                 return new UpdateInfo(currentVersion, Enumerable.Empty<ReleaseEntry>(), packageDirectory, appFrameworkVersion);
             }
 
-            var newerThanUs = availableReleases.Where(x => x.Version > currentVersion.Version)
-                                               .OrderBy(v => v.Version);
+            var newerThanUs = availableReleases
+                .Where(x => x.Version > currentVersion.Version)
+                .OrderBy(v => v.Version);
+
             var deltasSize = newerThanUs.Where(x => x.IsDelta).Sum(x => x.Filesize);
 
-            return (deltasSize < latestFull.Filesize && deltasSize > 0)
-                ? new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory, appFrameworkVersion)
-                : new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory, appFrameworkVersion);
+            return (deltasSize < latestFull.Filesize && deltasSize > 0) ? 
+                new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory, appFrameworkVersion) : 
+                new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory, appFrameworkVersion);
         }
     }
 }

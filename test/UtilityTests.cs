@@ -30,7 +30,6 @@ namespace Squirrel.Tests.Core
         {
             string tempDir;
             using (Utility.WithTempDirectory(out tempDir)) {
-
                 for (var i = 0; i < 50; i++) {
                     var directory = Path.Combine(tempDir, newId());
                     CreateSampleDirectory(directory);
@@ -64,6 +63,7 @@ namespace Squirrel.Tests.Core
 
         static void CreateSampleDirectory(string directory)
         {
+            Random prng = new Random();
             while (true) {
                 Directory.CreateDirectory(directory);
 
@@ -73,12 +73,13 @@ namespace Squirrel.Tests.Core
                     File.WriteAllText(file, Guid.NewGuid().ToString());
                 }
 
-                if (new Random().NextDouble() > 0.5) {
+                if (prng.NextDouble() > 0.5) {
                     var childDirectory = Path.Combine(directory, newId());
                     if (childDirectory.Length > 248) return;
                     directory = childDirectory;
                     continue;
                 }
+
                 break;
             }
         }

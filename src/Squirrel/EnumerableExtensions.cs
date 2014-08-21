@@ -53,12 +53,9 @@ namespace Squirrel
         /// <returns>List with the elements that share the same maximum key value.</returns>
         public static IList<TSource> MaxBy<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, IComparer<TKey> comparer)
         {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (keySelector == null)
-                throw new ArgumentNullException("keySelector");
-            if (comparer == null)
-                throw new ArgumentNullException("comparer");
+            if (source == null) throw new ArgumentNullException("source");
+            if (keySelector == null) throw new ArgumentNullException("keySelector");
+            if (comparer == null) throw new ArgumentNullException("comparer");
 
             return ExtremaBy(source, keySelector, (key, minValue) => comparer.Compare(key, minValue));
         }
@@ -67,27 +64,21 @@ namespace Squirrel
         {
             var result = new List<TSource>();
 
-            using (var e = source.GetEnumerator())
-            {
-                if (!e.MoveNext())
-                    throw new InvalidOperationException("Source sequence doesn't contain any elements.");
+            using (var e = source.GetEnumerator()) {
+                if (!e.MoveNext()) throw new InvalidOperationException("Source sequence doesn't contain any elements.");
 
                 var current = e.Current;
                 var resKey = keySelector(current);
                 result.Add(current);
 
-                while (e.MoveNext())
-                {
+                while (e.MoveNext()) {
                     var cur = e.Current;
                     var key = keySelector(cur);
 
                     var cmp = compare(key, resKey);
-                    if (cmp == 0)
-                    {
+                    if (cmp == 0) {
                         result.Add(cur);
-                    }
-                    else if (cmp > 0)
-                    {
+                    } else if (cmp > 0) {
                         result = new List<TSource> { cur };
                         resKey = key;
                     }
@@ -106,10 +97,8 @@ namespace Squirrel
         /// <returns>Sequence exhibiting the specified side-effects upon enumeration.</returns>
         public static IEnumerable<TSource> Do<TSource>(this IEnumerable<TSource> source, Action<TSource> onNext)
         {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (onNext == null)
-                throw new ArgumentNullException("onNext");
+            if (source == null) throw new ArgumentNullException("source");
+            if (onNext == null) throw new ArgumentNullException("onNext");
 
             return DoHelper(source, onNext, _ => { }, () => { });
         }
@@ -124,12 +113,9 @@ namespace Squirrel
         /// <returns>Sequence exhibiting the specified side-effects upon enumeration.</returns>
         public static IEnumerable<TSource> Do<TSource>(this IEnumerable<TSource> source, Action<TSource> onNext, Action onCompleted)
         {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (onNext == null)
-                throw new ArgumentNullException("onNext");
-            if (onCompleted == null)
-                throw new ArgumentNullException("onCompleted");
+            if (source == null) throw new ArgumentNullException("source");
+            if (onNext == null) throw new ArgumentNullException("onNext");
+            if (onCompleted == null) throw new ArgumentNullException("onCompleted");
 
             return DoHelper(source, onNext, _ => { }, onCompleted);
         }
@@ -144,12 +130,9 @@ namespace Squirrel
         /// <returns>Sequence exhibiting the specified side-effects upon enumeration.</returns>
         public static IEnumerable<TSource> Do<TSource>(this IEnumerable<TSource> source, Action<TSource> onNext, Action<Exception> onError)
         {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (onNext == null)
-                throw new ArgumentNullException("onNext");
-            if (onError == null)
-                throw new ArgumentNullException("onError");
+            if (source == null) throw new ArgumentNullException("source");
+            if (onNext == null) throw new ArgumentNullException("onNext");
+            if (onError == null) throw new ArgumentNullException("onError");
 
             return DoHelper(source, onNext, onError, () => { });
         }
@@ -165,34 +148,25 @@ namespace Squirrel
         /// <returns>Sequence exhibiting the specified side-effects upon enumeration.</returns>
         public static IEnumerable<TSource> Do<TSource>(this IEnumerable<TSource> source, Action<TSource> onNext, Action<Exception> onError, Action onCompleted)
         {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (onNext == null)
-                throw new ArgumentNullException("onNext");
-            if (onError == null)
-                throw new ArgumentNullException("onError");
-            if (onCompleted == null)
-                throw new ArgumentNullException("onCompleted");
+            if (source == null) throw new ArgumentNullException("source");
+            if (onNext == null) throw new ArgumentNullException("onNext");
+            if (onError == null) throw new ArgumentNullException("onError");
+            if (onCompleted == null) throw new ArgumentNullException("onCompleted");
 
             return DoHelper(source, onNext, onError, onCompleted);
         }
 
         private static IEnumerable<TSource> DoHelper<TSource>(this IEnumerable<TSource> source, Action<TSource> onNext, Action<Exception> onError, Action onCompleted)
         {
-            using (var e = source.GetEnumerator())
-            {
-                while (true)
-                {
+            using (var e = source.GetEnumerator()) {
+                while (true) {
                     var current = default(TSource);
-                    try
-                    {
+                    try {
                         if (!e.MoveNext())
                             break;
 
                         current = e.Current;
-                    }
-                    catch (Exception ex)
-                    {
+                    } catch (Exception ex) {
                         onError(ex);
                         throw;
                     }
@@ -214,19 +188,16 @@ namespace Squirrel
         /// <returns>Sequence starting with the specified prefix value, followed by the source sequence.</returns>
         public static IEnumerable<TSource> StartWith<TSource>(this IEnumerable<TSource> source, params TSource[] values)
         {
-            if (source == null)
-                throw new ArgumentNullException("source");
+            if (source == null) throw new ArgumentNullException("source");
 
             return source.StartWith_(values);
         }
 
         static IEnumerable<TSource> StartWith_<TSource>(this IEnumerable<TSource> source, params TSource[] values)
         {
-            foreach (var x in values)
-                yield return x;
+            foreach (var x in values) yield return x;
 
-            foreach (var item in source)
-                yield return item;
+            foreach (var item in source) yield return item;
         }
 
         /// <summary>
@@ -239,10 +210,8 @@ namespace Squirrel
         /// <returns>Sequence that contains the elements from the source sequence with distinct key values.</returns>
         public static IEnumerable<TSource> Distinct<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
         {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (keySelector == null)
-                throw new ArgumentNullException("keySelector");
+            if (source == null) throw new ArgumentNullException("source");
+            if (keySelector == null) throw new ArgumentNullException("keySelector");
 
             return source.Distinct_(keySelector, EqualityComparer<TKey>.Default);
         }
@@ -258,12 +227,9 @@ namespace Squirrel
         /// <returns>Sequence that contains the elements from the source sequence with distinct key values.</returns>
         public static IEnumerable<TSource> Distinct<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector, IEqualityComparer<TKey> comparer)
         {
-            if (source == null)
-                throw new ArgumentNullException("source");
-            if (keySelector == null)
-                throw new ArgumentNullException("keySelector");
-            if (comparer == null)
-                throw new ArgumentNullException("comparer");
+            if (source == null) throw new ArgumentNullException("source");
+            if (keySelector == null) throw new ArgumentNullException("keySelector");
+            if (comparer == null) throw new ArgumentNullException("comparer");
 
             return source.Distinct_(keySelector, comparer);
         }
@@ -272,11 +238,10 @@ namespace Squirrel
         {
             var set = new HashSet<TKey>(comparer);
 
-            foreach (var item in source)
-            {
+            foreach (var item in source) {
                 var key = keySelector(item);
-                if (set.Add(key))
-                    yield return item;
+
+                if (set.Add(key)) yield return item;
             }
         }
     }
