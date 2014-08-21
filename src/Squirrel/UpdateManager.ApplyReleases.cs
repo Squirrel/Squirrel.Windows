@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
@@ -33,31 +34,32 @@ namespace Squirrel
                 progress(10);
 
                 await installPackageToAppDir(updateInfo, release);
-                progress(50);
+                progress(30);
 
                 var currentReleases = await updateLocalReleasesFile();
+                progress(50);
+
+                var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
+                await invokePostInstall(newVersion, currentReleases.Count == 1);
                 progress(75);
 
-                await cleanDeadVersions(currentReleases.MaxBy(x => x.Version).First().Version);
+                await cleanDeadVersions(newVersion);
                 progress(100);
             }
 
-            public async Task FullUninstall(Version version = null)
+            public async Task FullUninstall()
             {
-                version = version ?? new Version(255, 255, 255, 255);
-                this.Log().Info("Uninstalling version '{0}'", version);
+                var currentRelease = getReleases().MaxBy(x => x.Name.ToVersion()).FirstOrDefault();
 
-                // find all the old releases (and this one)
-                var directoriesToDelete = getOldReleases(version)
-                    .Concat(new [] { getDirectoryForRelease(version) })
-                    .Where(d => d.Exists)
-                    .Select(d => d.FullName);
+                if (currentRelease.Exists) 
+                {
+                    var version = currentRelease.Name.ToVersion();
 
-                await directoriesToDelete.ForEachAsync(x => Utility.DeleteDirectoryWithFallbackToNextReboot(x));
-
-                if (!getReleases().Any()) {
-                    await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
+                    await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName)
+                        .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("/squirrel-uninstall {0}", version)), 1);
                 }
+
+                await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
             }
 
             async Task installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
@@ -183,6 +185,34 @@ namespace Squirrel
                 foreach (var v in getOldReleases(newCurrentVersion)) {
                     Utility.DeleteDirectoryAtNextReboot(v.FullName);
                 }
+            }
+
+            async Task invokePostInstall(Version currentVersion, bool isInitialInstall)
+            {
+                var targetDir = getDirectoryForRelease(currentVersion);
+                var args = isInitialInstall ?
+                    String.Format("/squirrel-install {0}", currentVersion) :
+                    String.Format("/squirrel-updated {0}", currentVersion);
+
+                var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName);
+
+                // For each app, run the install command in-order and wait
+                await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1 /* at a time */);
+
+                if (!isInitialInstall) return;
+
+                // If this is the first run, we run the apps with first-run and 
+                // *don't* wait for them, since they're probably the main EXE
+                if (squirrelApps.Count == 0) {
+                    this.Log().Warn("No apps are marked as Squirrel-aware! Going to run them all");
+
+                    squirrelApps = targetDir.EnumerateFiles()
+                        .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        .Select(x => x.FullName)
+                        .ToList();
+                }
+
+                squirrelApps.ForEach(exe => Process.Start(exe, "/squirrel-firstrun"));
             }
 
             void fixPinnedExecutables(Version newCurrentVersion) 

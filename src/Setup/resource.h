@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by Setup.rc
 //
+#define VS_VERSION_INFO                 1
 #define IDC_MYICON                      2
 #define IDD_SETUP_DIALOG                102
 #define IDS_APP_TITLE                   103
@@ -10,7 +11,7 @@
 #define IDI_SMALL                       108
 #define IDC_SETUP                       109
 #define IDR_MAINFRAME                   128
-#define IDR_UPDATE_ZIP			131
+#define IDR_UPDATE_ZIP                  131
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

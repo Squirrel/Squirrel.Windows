@@ -84,6 +84,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReleaseEntryTests.cs" />
     <Compile Include="ReleasePackageTests.cs" />
+    <Compile Include="SquirrelAwareExecutableDetectorTests.cs" />
     <Compile Include="TestHelpers\AssertExtensions.cs" />
     <Compile Include="TestHelpers\ExposedClass.cs" />
     <Compile Include="TestHelpers\ExposedObject.cs" />
@@ -97,6 +98,10 @@
     <ProjectReference Include="..\src\Squirrel\Squirrel.csproj">
       <Project>{1436e22a-fe3c-4d68-9a85-9e74df2e6a92}</Project>
       <Name>Squirrel</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\src\Update\Update.csproj">
+      <Project>{1eebacbc-6982-4696-bd4e-899ed0ac6cd2}</Project>
+      <Name>Update</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

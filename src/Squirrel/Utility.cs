@@ -14,6 +14,7 @@ using Splat;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Squirrel
 {
@@ -96,6 +97,24 @@ namespace Squirrel
                     Thread.Sleep(250);
                 }
             }
+        }
+
+        public static Task<int> InvokeProcessAsync(string fileName, string arguments)
+        {
+            var psi = new ProcessStartInfo(fileName, arguments);
+            psi.UseShellExecute = false;
+            psi.WindowStyle = ProcessWindowStyle.Hidden;
+            psi.ErrorDialog = false;
+
+            return InvokeProcessAsync(psi);
+        }
+
+        public static async Task<int> InvokeProcessAsync(ProcessStartInfo psi)
+        {
+            var pi = Process.Start(psi);
+
+            await Task.Run(() => pi.WaitForExit());
+            return pi.ExitCode;
         }
 
         public static Task ForEachAsync<T>(this IEnumerable<T> source, Action<T> body, int degreeOfParallelism = 4)
