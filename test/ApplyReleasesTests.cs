@@ -29,6 +29,32 @@ namespace Squirrel.Tests
     public class ApplyReleasesTests : IEnableLogger
     {
         [Fact]
+        public async Task CleanInstallRunsSquirrelAwareAppsWithInstallFlag()
+        {
+            string tempDir;
+            string remotePkgDir;
+
+            using (Utility.WithTempDirectory(out tempDir))
+            using (Utility.WithTempDirectory(out remotePkgDir)) {
+                IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
+                var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
+                ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
+
+                using (var fixture = new UpdateManager(remotePkgDir, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.FullInstall();
+
+                    // NB: We execute the Squirrel-aware apps, so we need to give
+                    // them a minute to settle or else the using statement will
+                    // try to blow away a running process
+                    await Task.Delay(1000);
+
+                    Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.1.0", "args2.txt")));
+                    Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "app-0.1.0", "args.txt")));
+                }
+            }
+        }
+
+        [Fact]
         public void WhenNoNewReleasesAreAvailableTheListIsEmpty()
         {
             string tempDir;
