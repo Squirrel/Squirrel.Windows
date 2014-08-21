@@ -34,14 +34,12 @@ namespace Squirrel
 
         static int? GetAssemblySquirrelAwareVersion(string executable)
         {
-            try 
-            {
+            try {
                 var assembly = AssemblyDefinition.ReadAssembly(executable);
                 if (!assembly.HasCustomAttributes) return null;
 
                 var attrs = assembly.CustomAttributes;
-                var attribute = attrs.FirstOrDefault(x => 
-                {
+                var attribute = attrs.FirstOrDefault(x => {
                     if (x.AttributeType.FullName != typeof(AssemblyMetadataAttribute).FullName) return false;
                     if (x.ConstructorArguments.Count != 2) return false;
                     return x.ConstructorArguments[0].Value.ToString() == "SquirrelAwareVersion";
@@ -50,8 +48,7 @@ namespace Squirrel
                 if (attribute == null) return null;
 
                 int result;
-                if (!Int32.TryParse(attribute.ConstructorArguments[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out result)) 
-                {
+                if (!Int32.TryParse(attribute.ConstructorArguments[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out result)) {
                     return null;
                 }
 
@@ -72,8 +69,7 @@ namespace Squirrel
             if (!NativeMethods.GetFileVersionInfo(executable, IntPtr.Zero, size, buf)) return null;
 
             IntPtr result; int resultSize;
-            if (!NativeMethods.VerQueryValue(buf, "\\StringFileInfo\\040904B0\\SquirrelAwareVersion", out result, out resultSize)) 
-            {
+            if (!NativeMethods.VerQueryValue(buf, "\\StringFileInfo\\040904B0\\SquirrelAwareVersion", out result, out resultSize)) {
                 return null;
             }
 

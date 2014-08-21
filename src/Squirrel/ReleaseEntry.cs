@@ -54,19 +54,17 @@ namespace Squirrel
 
         [IgnoreDataMember]
         public string PackageName {
-            get {
-                return Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' }));
-            }
+            get { return Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' })); }
         }
 
         public string GetReleaseNotes(string packageDirectory)
         {
             var zp = new ZipPackage(Path.Combine(packageDirectory, Filename));
-
             var t = zp.Id;
 
-            if (String.IsNullOrWhiteSpace(zp.ReleaseNotes))
+            if (String.IsNullOrWhiteSpace(zp.ReleaseNotes)) {
                 throw new Exception(String.Format("Invalid 'ReleaseNotes' value in nuspec file at '{0}'", Path.Combine(packageDirectory, Filename)));
+            }
 
             return zp.ReleaseNotes;
         }
@@ -186,15 +184,14 @@ namespace Squirrel
 
         public static ReleasePackage GetPreviousRelease(IEnumerable<ReleaseEntry> releaseEntries, IReleasePackage package, string targetDir)
         {
-            if (releaseEntries == null || !releaseEntries.Any())
-                return null;
+            if (releaseEntries == null || !releaseEntries.Any()) return null;
 
             return releaseEntries
-                    .Where(x => x.IsDelta == false)
-                    .Where(x => x.Version < package.ToVersion())
-                    .OrderByDescending(x => x.Version)
-                    .Select(x => new ReleasePackage(Path.Combine(targetDir, x.Filename), true))
-                    .FirstOrDefault();
+                .Where(x => x.IsDelta == false)
+                .Where(x => x.Version < package.ToVersion())
+                .OrderByDescending(x => x.Version)
+                .Select(x => new ReleasePackage(Path.Combine(targetDir, x.Filename), true))
+                .FirstOrDefault();
         }
     }
 }

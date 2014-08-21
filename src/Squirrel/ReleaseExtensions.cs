@@ -17,8 +17,8 @@ namespace Squirrel
         public static Version ToVersion(this string fileName)
         {
             var parts = (new FileInfo(fileName)).Name
-                    .Replace(".nupkg", "").Replace("-delta", "")
-                    .Split('.', '-').Reverse();
+                .Replace(".nupkg", "").Replace("-delta", "")
+                .Split('.', '-').Reverse();
 
             var numberRegex = new Regex(@"^\d+$");
 
@@ -28,13 +28,11 @@ namespace Squirrel
                 .Reverse()
                 .ToArray();
 
-            if (versionFields.Length < 2 || versionFields.Length > 4)
-            {
+            if (versionFields.Length < 2 || versionFields.Length > 4) {
                 return null;
             }
 
-            switch (versionFields.Length)
-            {
+            switch (versionFields.Length) {
             case 2:
                 return new Version(versionFields[0], versionFields[1]);
             case 3:
