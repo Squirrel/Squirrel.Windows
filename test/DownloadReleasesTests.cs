@@ -14,36 +14,6 @@ namespace Squirrel.Tests
     public class DownloadReleasesTests : IEnableLogger
     {
         [Fact]
-        public void ChecksumShouldPassOnValidPackages()
-        {
-            Assert.False(true, "Rewrite this to be an integration test");
-            
-            /*
-            var filename = "Squirrel.Core.1.0.0.0.nupkg";
-            var nuGetPkg = IntegrationTestHelper.GetPath("fixtures", filename);
-            var fs = new Mock<IFileSystemFactory>();
-            var urlDownloader = new Mock<IUrlDownloader>();
-
-            ReleaseEntry entry;
-            using (var f = File.OpenRead(nuGetPkg)) {
-                entry = ReleaseEntry.GenerateFromFile(f, filename);
-            }
-
-            var fileInfo = new Mock<FileInfoBase>();
-            fileInfo.Setup(x => x.OpenRead()).Returns(File.OpenRead(nuGetPkg));
-            fileInfo.Setup(x => x.Exists).Returns(true);
-            fileInfo.Setup(x => x.Length).Returns(new FileInfo(nuGetPkg).Length);
-
-            fs.Setup(x => x.GetFileInfo(Path.Combine(".", "theApp", "packages", filename))).Returns(fileInfo.Object);
-
-            var fixture = ExposedObject.From(
-                new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, ".", fs.Object, urlDownloader.Object));
-
-            fixture.checksumPackage(entry);
-            */
-        }
-
-        [Fact]
         public void ChecksumShouldFailIfFilesAreMissing()
         {
             Assert.False(true, "Rewrite this to be an integration test");
