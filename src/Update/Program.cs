@@ -9,6 +9,8 @@ namespace Update
 {
     class Program
     {
+        static OptionSet opts;
+
         static int Main(string[] args)
         {
             if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
@@ -17,8 +19,12 @@ namespace Update
                 return 0;
             }
 
-            var opts = new OptionSet() {
-                { "h|?|help", v => ShowHelp() }
+            opts = new OptionSet() {
+                "Usage: Update.exe command [OPTS]",
+                "Manages Squirrel packages",
+                "",
+                "Options:",
+                { "h|?|help", "Display Help and exit", v => ShowHelp() }
             };
 
             opts.Parse(args);
@@ -28,7 +34,8 @@ namespace Update
 
         static void ShowHelp()
         {
-            Console.WriteLine("Help!");
+            opts.WriteOptionDescriptions(Console.Out);
+            Environment.Exit(0);
         }
     }
 }
