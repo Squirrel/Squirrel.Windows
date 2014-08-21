@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet;
@@ -50,7 +51,46 @@ namespace Squirrel.Tests
 
                     Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.1.0", "args2.txt")));
                     Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "app-0.1.0", "args.txt")));
+
+                    var text = File.ReadAllText(Path.Combine(tempDir, "theApp", "app-0.1.0", "args.txt"), Encoding.UTF8);
+                    Assert.Contains("firstrun", text);
                 }
+            }
+        }
+
+        [Fact]
+        public async Task UpgradeRunsSquirrelAwareAppsWithUpgradeFlag()
+        {
+            string tempDir;
+            string remotePkgDir;
+
+            using (Utility.WithTempDirectory(out tempDir))
+            using (Utility.WithTempDirectory(out remotePkgDir)) {
+                IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
+                var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
+                ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
+
+                using (var fixture = new UpdateManager(remotePkgDir, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.FullInstall();
+                }
+
+                await Task.Delay(1000);
+
+                IntegrationTestHelper.CreateFakeInstalledApp("0.2.0", remotePkgDir);
+                pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
+                ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
+
+                using (var fixture = new UpdateManager(remotePkgDir, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.UpdateApp();
+                }
+
+                await Task.Delay(1000);
+
+                Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", "args2.txt")));
+                Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt")));
+
+                var text = File.ReadAllText(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt"), Encoding.UTF8);
+                Assert.Contains("updated|0.2.0", text);
             }
         }
 
