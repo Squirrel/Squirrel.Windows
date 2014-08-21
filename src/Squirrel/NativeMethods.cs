@@ -10,7 +10,7 @@ namespace Squirrel
     static class NativeMethods
     {
         [DllImport("version.dll", SetLastError = true)]
-        public static extern bool GetFileVersionInfo(
+        [return:MarshalAs(UnmanagedType.Bool)] public static extern bool GetFileVersionInfo(
             string lpszFileName, 
             IntPtr dwHandleIgnored,
             int dwLen, 
@@ -22,6 +22,10 @@ namespace Squirrel
             IntPtr dwHandleIgnored);
 
         [DllImport("version.dll")]
-        public static extern bool VerQueryValue(byte[] pBlock, string pSubBlock, out IntPtr pValue, out int len);
+        [return:MarshalAs(UnmanagedType.Bool)] public static extern bool VerQueryValue(
+            byte[] pBlock, 
+            string pSubBlock, 
+            out IntPtr pValue, 
+            out int len);
     }
 }
