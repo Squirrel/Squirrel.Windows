@@ -197,7 +197,7 @@ namespace Squirrel
                 var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName);
 
                 // For each app, run the install command in-order and wait
-                await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1);
+                await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1 /* at a time */);
 
                 if (!isInitialInstall) return;
 
