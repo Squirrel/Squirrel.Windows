@@ -95,6 +95,44 @@ namespace Squirrel.Tests
         }
 
         [Fact]
+        public async Task FullUninstallRemovesAllVersions()
+        {
+            string tempDir;
+            string remotePkgDir;
+
+            using (Utility.WithTempDirectory(out tempDir))
+            using (Utility.WithTempDirectory(out remotePkgDir)) {
+                IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
+                var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
+                ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
+
+                using (var fixture = new UpdateManager(remotePkgDir, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.FullInstall();
+                }
+
+                await Task.Delay(1000);
+
+                IntegrationTestHelper.CreateFakeInstalledApp("0.2.0", remotePkgDir);
+                pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
+                ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
+
+                using (var fixture = new UpdateManager(remotePkgDir, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.UpdateApp();
+                }
+
+                await Task.Delay(1000);
+
+                using (var fixture = new UpdateManager(remotePkgDir, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.FullUninstall();
+                }
+
+                Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.1.0", "args.txt")));
+                Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt")));
+                Assert.False(Directory.Exists(Path.Combine(tempDir, "theApp")));
+            }
+        }
+
+        [Fact]
         public void WhenNoNewReleasesAreAvailableTheListIsEmpty()
         {
             string tempDir;
