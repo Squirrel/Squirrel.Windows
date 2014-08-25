@@ -2,45 +2,45 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 
 namespace Squirrel.Tests
 {
-    public class CheckForUpdateTests
+    public class ActionFileDownloader : IFileDownloader
     {
-        [Fact]
-        public void NewReleasesShouldBeDetected()
+        Func<string, string, Task> downloadFile;
+        Func<string, Task<byte[]>> downloadUrl;
+
+        public ActionFileDownloader(Func<string, string, Task> downloadFile, Func<string, Task<byte[]>> downloadUrl)
         {
-            Assert.False(true, "Rewrite this to be an integration test");
-            /*
-            string localReleasesFile = Path.Combine(".", "theApp", "packages", "RELEASES");
-
-            var fileInfo = new Mock<FileInfoBase>();
-            fileInfo.Setup(x => x.OpenRead())
-                .Returns(File.OpenRead(IntegrationTestHelper.GetPath("fixtures", "RELEASES-OnePointOh")));
-
-            var fs = new Mock<IFileSystemFactory>();
-            fs.Setup(x => x.GetFileInfo(localReleasesFile)).Returns(fileInfo.Object);
-
-            var urlDownloader = new Mock<IUrlDownloader>();
-            var dlPath = IntegrationTestHelper.GetPath("fixtures", "RELEASES-OnePointOne");
-            urlDownloader.Setup(x => x.DownloadUrl(It.IsAny<string>(), It.IsAny<IObserver<int>>()))
-                .Returns(Observable.Return(File.ReadAllText(dlPath, Encoding.UTF8)));
-
-            var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, ".", fs.Object, urlDownloader.Object);
-            var result = default(UpdateInfo);
-
-            using (fixture) {
-                result = fixture.CheckForUpdate().First();
-            }
-
-            Assert.NotNull(result);
-            Assert.Equal(1, result.ReleasesToApply.Single().Version.Major);
-            Assert.Equal(1, result.ReleasesToApply.Single().Version.Minor);
-            */
+            this.downloadFile = downloadFile;
+            this.downloadUrl = downloadUrl;
         }
 
+        public async Task DownloadFile(string url, string targetFile)
+        {
+            if (downloadFile != null) {
+                await downloadFile(url, targetFile);
+                return;
+            }
+
+            throw new NotImplementedException();
+        }
+
+        public async Task<byte[]> DownloadUrl(string url)
+        {
+            if (downloadUrl != null) {
+                return await downloadUrl(url);
+            }
+
+            throw new NotImplementedException();
+        }
+    }
+
+    public class CheckForUpdateTests
+    {
         [Fact]
         public void CorruptedReleaseFileMeansWeStartFromScratch()
         {

@@ -144,51 +144,5 @@ namespace Squirrel.Tests
             }
             */
         }
-
-        [Fact]
-        public async Task DownloadReleasesFromFileDirectoryIntegrationTest()
-        {
-            Assert.False(true, "Rewrite this to not use the SampleUpdatingApp");
-
-            /*
-            string tempDir = null;
-
-            var updateDir = new DirectoryInfo(IntegrationTestHelper.GetPath("..", "SampleUpdatingApp", "SampleReleasesFolder"));
-
-            var entriesToDownload = updateDir.GetFiles("*.nupkg")
-                .Select(x => ReleaseEntry.GenerateFromFile(x.FullName))
-                .ToArray();
-
-            entriesToDownload.Count().ShouldBeGreaterThan(0);
-
-            using (Utility.WithTempDirectory(out tempDir)) {
-                // NB: This is normally done by CheckForUpdates, but since 
-                // we're skipping that in the test we have to do it ourselves
-                Directory.CreateDirectory(Path.Combine(tempDir, "SampleUpdatingApp", "packages"));
-
-                var fixture = new UpdateManager(updateDir.FullName, "SampleUpdatingApp", FrameworkVersion.Net40, tempDir);
-                using (fixture) {
-                    var progress = new List<int>();
-
-                    await fixture.DownloadReleases(entriesToDownload, progress.Add);
-                    this.Log().Info("Progress: [{0}]", String.Join(",", progress));
-
-                    progress
-                        .Aggregate(0, (acc, x) => { x.ShouldBeGreaterThan(acc); return x; })
-                        .ShouldEqual(100);
-                }
-
-                entriesToDownload.ForEach(x => {
-                    this.Log().Info("Looking for {0}", x.Filename);
-                    var actualFile = Path.Combine(tempDir, "SampleUpdatingApp", "packages", x.Filename);
-                    File.Exists(actualFile).ShouldBeTrue();
-
-                    var actualEntry = ReleaseEntry.GenerateFromFile(actualFile);
-                    actualEntry.SHA1.ShouldEqual(x.SHA1);
-                    actualEntry.Version.ShouldEqual(x.Version);
-                });
-            }
-            */
-        }
     }
 }
