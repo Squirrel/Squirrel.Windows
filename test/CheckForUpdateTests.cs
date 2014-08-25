@@ -42,9 +42,39 @@ namespace Squirrel.Tests
     public class CheckForUpdateTests
     {
         [Fact]
-        public void CorruptedReleaseFileMeansWeStartFromScratch()
+        public async Task CorruptedReleaseFileMeansWeStartFromScratch()
         {
-            Assert.False(true, "Rewrite this to be an integration test");
+            string tempDir;
+            using (Utility.WithTempDirectory(out tempDir)) {
+                var remotePackageDir = Directory.CreateDirectory(Path.Combine(tempDir, "remotePackages"));
+                var localAppDir = Path.Combine(tempDir, "theApp");
+                string localPackagesDir = Path.Combine(tempDir, "theApp", "packages");
+                string localReleasesFile = Path.Combine(localPackagesDir, "RELEASES");
+
+                new[] {
+                    "Squirrel.Core.1.0.0.0-full.nupkg",
+                }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(remotePackageDir.FullName, x)));
+
+                using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.FullInstall();
+                }
+
+                new[] {
+                    "Squirrel.Core.1.1.0.0-full.nupkg",
+                }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(remotePackageDir.FullName, x)));
+
+                ReleaseEntry.WriteReleaseFile(ReleaseEntry.BuildReleasesFile(remotePackageDir.FullName), Path.Combine(remotePackageDir.FullName, "RELEASES"));
+
+                File.WriteAllText(localReleasesFile, "lol not right");
+
+                using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.UpdateApp();
+                }
+
+                File.ReadAllLines(Path.Combine(localPackagesDir, "RELEASES")).Count().ShouldEqual(1);
+                File.Exists(Path.Combine(localAppDir, "app-1.1.0.0", "NSync.Core.dll")).ShouldBeTrue();
+            }
+
 
             /*
             string localPackagesDir = Path.Combine(".", "theApp", "packages");
