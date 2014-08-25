@@ -70,7 +70,7 @@ namespace Squirrel.Tests.TestHelpers
             return ret;
         }
 
-        public static string CreateFakeInstalledApp(string version, string outputDir, string nuspecFile = null)
+        public static string CreateFakeAppPackage(string version, string outputDir, string nuspecFile = null)
         {
             var targetDir = default(string);
 

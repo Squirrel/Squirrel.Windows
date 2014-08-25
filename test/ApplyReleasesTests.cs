@@ -37,7 +37,7 @@ namespace Squirrel.Tests
 
             using (Utility.WithTempDirectory(out tempDir))
             using (Utility.WithTempDirectory(out remotePkgDir)) {
-                IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
+                IntegrationTestHelper.CreateFakeAppPackage("0.1.0", remotePkgDir);
                 var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
                 ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
 
@@ -66,7 +66,7 @@ namespace Squirrel.Tests
 
             using (Utility.WithTempDirectory(out tempDir))
             using (Utility.WithTempDirectory(out remotePkgDir)) {
-                IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
+                IntegrationTestHelper.CreateFakeAppPackage("0.1.0", remotePkgDir);
                 var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
                 ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
 
@@ -76,7 +76,7 @@ namespace Squirrel.Tests
 
                 await Task.Delay(1000);
 
-                IntegrationTestHelper.CreateFakeInstalledApp("0.2.0", remotePkgDir);
+                IntegrationTestHelper.CreateFakeAppPackage("0.2.0", remotePkgDir);
                 pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
                 ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
 
@@ -102,7 +102,7 @@ namespace Squirrel.Tests
 
             using (Utility.WithTempDirectory(out tempDir))
             using (Utility.WithTempDirectory(out remotePkgDir)) {
-                IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
+                IntegrationTestHelper.CreateFakeAppPackage("0.1.0", remotePkgDir);
                 var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
                 ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
 
@@ -112,7 +112,7 @@ namespace Squirrel.Tests
 
                 await Task.Delay(1000);
 
-                IntegrationTestHelper.CreateFakeInstalledApp("0.2.0", remotePkgDir);
+                IntegrationTestHelper.CreateFakeAppPackage("0.2.0", remotePkgDir);
                 pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
                 ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
 

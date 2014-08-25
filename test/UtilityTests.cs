@@ -56,7 +56,7 @@ namespace Squirrel.Tests.Core
         {
             string path;
             using (Utility.WithTempDirectory(out path)) {
-                var output = IntegrationTestHelper.CreateFakeInstalledApp("0.3.0", path);
+                var output = IntegrationTestHelper.CreateFakeAppPackage("0.3.0", path);
                 Assert.True(File.Exists(output));
             }
         }
