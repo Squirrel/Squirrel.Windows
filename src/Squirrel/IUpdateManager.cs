@@ -47,8 +47,9 @@ namespace Squirrel
         /// <summary>
         /// Completely Installs a targeted app
         /// </summary>
+        /// <param name="silentInstall">If true, don't run the app once install completes.</param>
         /// <returns>Completion</returns>
-        Task FullInstall();
+        Task FullInstall(bool silentInstall);
 
         /// <summary>
         /// Completely uninstalls the targeted app

@@ -26,7 +26,7 @@ namespace Squirrel
                 this.rootAppDirectory = rootAppDirectory;
             }
 
-            public async Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
+            public async Task ApplyReleases(UpdateInfo updateInfo, bool silentInstall, Action<int> progress = null)
             {
                 progress = progress ?? (_ => { });
 
@@ -40,7 +40,7 @@ namespace Squirrel
                 progress(50);
 
                 var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
-                await invokePostInstall(newVersion, currentReleases.Count == 1);
+                await invokePostInstall(newVersion, currentReleases.Count == 1 && !silentInstall);
                 progress(75);
 
                 await cleanDeadVersions(newVersion);
