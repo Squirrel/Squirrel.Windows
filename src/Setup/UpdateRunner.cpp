@@ -52,9 +52,9 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 			break;
 		}
 
-		zr = UnzipItem(zipFile, index, zentry.name);
+		if (UnzipItem(zipFile, index, zentry.name) != ZR_OK) break;
 		index++;
-	} while (zr == ZR_MORE);
+	} while (zr == ZR_MORE || zr == ZR_OK);
 
 	CloseZip(zipFile);
 	zipResource.Release();
@@ -72,7 +72,14 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	si.wShowWindow = SW_SHOW;
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
-	if (!CreateProcess(updateExePath, lpCommandLine, NULL, NULL, false, 0, NULL, NULL, &si, &pi)) {
+	if (!lpCommandLine || wcsnlen_s(lpCommandLine, MAX_PATH) < 1) {
+		lpCommandLine = L"--install .";
+	}
+
+	wchar_t cmd[MAX_PATH];
+	swprintf_s(cmd, L"%s %s", updateExePath, lpCommandLine);
+
+	if (!CreateProcess(NULL, cmd, NULL, NULL, false, 0, NULL, targetDir, &si, &pi)) {
 		goto failedExtract;
 	}
 
