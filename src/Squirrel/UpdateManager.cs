@@ -90,7 +90,8 @@ namespace Squirrel
         const string uninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
         public async Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
         {
-            var releases = ReleaseEntry.ParseReleaseFile(Path.Combine(rootAppDirectory, "packages", "RELEASES"));
+            var releaseContent = File.ReadAllText(Path.Combine(rootAppDirectory, "packages", "RELEASES"), Encoding.UTF8);
+            var releases = ReleaseEntry.ParseReleaseFile(releaseContent);
             var latest = releases.OrderByDescending(x => x.Version).First();
 
             // Download the icon and PNG => ICO it. If this doesn't work, who cares
@@ -99,6 +100,10 @@ namespace Squirrel
                 
             var targetPng = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
             var targetIco = Path.Combine(rootAppDirectory, "app.ico");
+
+            var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                .CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
+
             try {
                 var wc = new WebClient();
 
@@ -107,6 +112,7 @@ namespace Squirrel
                 using (var bmp = (Bitmap)Image.FromFile(targetPng))
                 using (var ico = Icon.FromHandle(bmp.GetHicon())) {
                     ico.Save(fs);
+                    key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
                 }
             } catch(Exception ex) {
                 this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
@@ -115,7 +121,6 @@ namespace Squirrel
             }
 
             var stringsToWrite = new[] {
-                new { Key = "DisplayIcon", Value = "targetIco" },
                 new { Key = "DisplayName", Value = zp.Description ?? zp.Summary },
                 new { Key = "DisplayVersion", Value = zp.Version.ToString() },
                 new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyymmdd") },
@@ -131,9 +136,6 @@ namespace Squirrel
                 new { Key = "NoRepair", Value = 1 },
                 new { Key = "Language", Value = 0x0409 },
             };
-
-            var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
-                .CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
 
             foreach (var kvp in stringsToWrite) {
                 key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.String);

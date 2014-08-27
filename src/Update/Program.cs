@@ -54,7 +54,7 @@ namespace Squirrel.Update
 
             switch (updateAction) {
             case UpdateAction.Install:
-                Install(silentInstall, target).Wait();
+                Install(silentInstall, Path.GetFullPath(target)).Wait();
                 break;
             case UpdateAction.Uninstall:
                 Uninstall().Wait();
@@ -83,7 +83,9 @@ namespace Squirrel.Update
                 ReleaseEntry.WriteReleaseFile(nupkgs, releasesPath);
             }
 
-            var ourAppName = ReleaseEntry.ParseReleaseFile(releasesPath).First().PackageName;
+            var ourAppName = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesPath, Encoding.UTF8))
+                .First().PackageName;
+
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
                 await mgr.FullInstall(silentInstall);
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
