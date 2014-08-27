@@ -7,7 +7,7 @@
     <ProjectGuid>{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Update</RootNamespace>
+    <RootNamespace>Squirrel.Update</RootNamespace>
     <AssemblyName>Update</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -66,6 +66,7 @@
     <Compile Include="Mono.Options\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SimpleJson.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

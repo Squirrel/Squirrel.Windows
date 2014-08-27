@@ -59,6 +59,9 @@ namespace Squirrel.Update
             case UpdateAction.Uninstall:
                 Uninstall().Wait();
                 break;
+            case UpdateAction.Download:
+                Console.WriteLine(Download(target).Result);
+                break;
             case UpdateAction.Update:
                 Update(target).Wait();
                 break;
@@ -101,6 +104,18 @@ namespace Squirrel.Update
             }
             
             // TODO: Update our installer entry
+        }
+
+        public static async Task<string> Download(string updateUrl, string appName = null)
+        {
+            appName = appName ?? getAppNameFromDirectory();
+
+            using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
+                var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
+                await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
+
+                return SimpleJson.SerializeObject(updateInfo);
+            }
         }
 
         public static async Task Uninstall(string appName = null)
