@@ -26,14 +26,14 @@ namespace Squirrel
                 this.rootAppDirectory = rootAppDirectory;
             }
 
-            public async Task ApplyReleases(UpdateInfo updateInfo, bool silentInstall, Action<int> progress = null)
+            public async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall, Action<int> progress = null)
             {
                 progress = progress ?? (_ => { });
 
                 var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
                 progress(10);
 
-                await installPackageToAppDir(updateInfo, release);
+                var ret = await installPackageToAppDir(updateInfo, release);
                 progress(30);
 
                 var currentReleases = await updateLocalReleasesFile();
@@ -45,6 +45,8 @@ namespace Squirrel
 
                 await cleanDeadVersions(newVersion);
                 progress(100);
+
+                return ret;
             }
 
             public async Task FullUninstall()
@@ -61,7 +63,7 @@ namespace Squirrel
                 await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
             }
 
-            async Task installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
+            async Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
             {
                 var pkg = new ZipPackage(Path.Combine(updateInfo.PackageDirectory, release.Filename));
                 var target = getDirectoryForRelease(release.Version);
@@ -98,6 +100,7 @@ namespace Squirrel
                 // which shortcuts to install, and nuking them. Then, run the app's
                 // post install and set up shortcuts.
                 runPostInstallAndCleanup(newCurrentVersion, updateInfo.IsBootstrapping);
+                return target.FullName;
             }
 
             void CopyFileToLocation(FileSystemInfo target, IPackageFile x)

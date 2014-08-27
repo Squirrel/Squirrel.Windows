@@ -60,12 +60,12 @@ namespace Squirrel
             await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
         }
 
-        public async Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
+        public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
-            await applyReleases.ApplyReleases(updateInfo, false, progress);
+            return await applyReleases.ApplyReleases(updateInfo, false, progress);
         }
 
         public async Task FullInstall(bool silentInstall = false)
@@ -150,6 +150,10 @@ namespace Squirrel
             var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
                 .OpenSubKey(uninstallRegSubKey);
             key.DeleteSubKeyTree(applicationName);
+        }
+
+        public string RootAppDirectory {
+            get { return rootAppDirectory; }
         }
 
         public void Dispose()
