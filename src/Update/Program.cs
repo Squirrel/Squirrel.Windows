@@ -56,6 +56,9 @@ namespace Squirrel.Update
             case UpdateAction.Install:
                 Install(silentInstall, target).Wait();
                 break;
+            case UpdateAction.Uninstall:
+                Uninstall().Wait();
+                break;
             case UpdateAction.Update:
                 Update(target).Wait();
                 break;
@@ -81,6 +84,8 @@ namespace Squirrel.Update
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
                 await mgr.FullInstall(silentInstall);
             }
+
+            // TODO: Write the installer entry
         }
 
         public static async Task Update(string updateUrl, string appName = null)
@@ -92,6 +97,18 @@ namespace Squirrel.Update
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
                 await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(66 + x / 3));
             }
+            
+            // TODO: Update our installer entry
+        }
+
+        public static async Task Uninstall(string appName = null)
+        {
+            appName = appName ?? getAppNameFromDirectory();
+            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+                await mgr.FullUninstall();
+            }
+
+            // TODO: Remove the installer entry
         }
 
         public static void ShowHelp()
