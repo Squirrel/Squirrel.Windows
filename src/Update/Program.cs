@@ -83,9 +83,11 @@ namespace Squirrel.Update
             var ourAppName = ReleaseEntry.ParseReleaseFile(releasesPath).First().PackageName;
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
                 await mgr.FullInstall(silentInstall);
-            }
+                var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
+                File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget);
 
-            // TODO: Write the installer entry
+                await mgr.CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateTarget), "-s");
+            }
         }
 
         public static async Task Update(string updateUrl, string appName = null)
@@ -106,9 +108,8 @@ namespace Squirrel.Update
             appName = appName ?? getAppNameFromDirectory();
             using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
                 await mgr.FullUninstall();
+                mgr.RemoveUninstallerRegistryEntry();
             }
-
-            // TODO: Remove the installer entry
         }
 
         public static void ShowHelp()
