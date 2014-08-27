@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Security.AccessControl;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Win32;
 using NuGet;
 using Splat;
 
@@ -82,6 +85,64 @@ namespace Squirrel
             await acquireUpdateLock();
 
             await applyReleases.FullUninstall();
+        }
+
+        const string uninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
+        public async Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
+        {
+            var releases = ReleaseEntry.ParseReleaseFile(Path.Combine(rootAppDirectory, "packages", "RELEASES"));
+            var latest = releases.OrderByDescending(x => x.Version).First();
+
+            // Download the icon and PNG => ICO it. If this doesn't work, who cares
+            var pkgPath = Path.Combine(rootAppDirectory, "packages", latest.Filename);
+            var zp = new ZipPackage(pkgPath);
+                
+            var targetPng = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
+            var targetIco = Path.Combine(rootAppDirectory, "app.ico");
+            try {
+                var wc = new WebClient();
+
+                await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
+                using (var fs = new FileStream(targetIco, FileMode.Create)) 
+                using (var bmp = (Bitmap)Image.FromFile(targetPng))
+                using (var ico = Icon.FromHandle(bmp.GetHicon())) {
+                    ico.Save(fs);
+                }
+            } catch(Exception ex) {
+                this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
+            } finally {
+                File.Delete(targetPng);
+            }
+
+            var stringsToWrite = new[] {
+                new { Key = "DisplayIcon", Value = "targetIco" },
+                new { Key = "DisplayName", Value = zp.Description ?? zp.Summary },
+                new { Key = "DisplayVersion", Value = zp.Version.ToString() },
+                new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyymmdd") },
+                new { Key = "InstallLocation", Value = rootAppDirectory },
+                new { Key = "Publisher", Value = zp.Authors.First() },
+                new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
+                new { Key = "UninstallString", Value = uninstallCmd },
+            };
+
+            var dwordsToWrite = new[] {
+                new { Key = "EstimatedSize", Value = (int)((new FileInfo(pkgPath)).Length / 1024) },
+                new { Key = "NoModify", Value = 1 },
+                new { Key = "NoRepair", Value = 1 },
+                new { Key = "Language", Value = 0x0409 },
+            };
+
+            var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                .CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
+
+            foreach (var kvp in stringsToWrite) {
+                key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.String);
+            }
+            foreach (var kvp in dwordsToWrite) {
+                key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.DWord);
+            }
+
+            return key;
         }
 
         public void Dispose()

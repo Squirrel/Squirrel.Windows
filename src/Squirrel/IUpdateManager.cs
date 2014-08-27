@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Win32;
 
 namespace Squirrel
 {
@@ -56,6 +57,15 @@ namespace Squirrel
         /// </summary>
         /// <returns>Completion</returns>
         Task FullUninstall();
+
+        /// <summary>
+        /// Creates an entry in Programs and Features based on the currently 
+        /// applied package
+        /// </summary>
+        /// <param name="uninstallCmd">The command to run to uninstall, usually update.exe --uninstall</param>
+        /// <param name="quietSwitch">The switch for silent uninstall, usually --silent</param>
+        /// <returns>The registry key that was created</returns>
+        Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch);
     }
 
     public static class EasyModeMixin
