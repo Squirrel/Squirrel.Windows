@@ -150,7 +150,7 @@ namespace Squirrel
         public void RemoveUninstallerRegistryEntry()
         {
             var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
-                .OpenSubKey(uninstallRegSubKey);
+                .OpenSubKey(uninstallRegSubKey, true);
             key.DeleteSubKeyTree(applicationName);
         }
 
