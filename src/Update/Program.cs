@@ -89,7 +89,7 @@ namespace Squirrel.Update
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
                 await mgr.FullInstall(silentInstall);
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
-                File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget);
+                File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true);
 
                 await mgr.CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateTarget), "-s");
             }
