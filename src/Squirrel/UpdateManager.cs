@@ -145,6 +145,13 @@ namespace Squirrel
             return key;
         }
 
+        public void RemoveUninstallerRegistryEntry()
+        {
+            var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                .OpenSubKey(uninstallRegSubKey);
+            key.DeleteSubKeyTree(applicationName);
+        }
+
         public void Dispose()
         {
             var disp = Interlocked.Exchange(ref updateLock, null);

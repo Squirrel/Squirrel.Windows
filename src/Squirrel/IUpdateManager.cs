@@ -66,6 +66,12 @@ namespace Squirrel
         /// <param name="quietSwitch">The switch for silent uninstall, usually --silent</param>
         /// <returns>The registry key that was created</returns>
         Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch);
+
+        /// <summary>
+        /// Removes the entry in Programs and Features created via 
+        /// CreateUninstallerRegistryEntry
+        /// </summary>
+        void RemoveUninstallerRegistryEntry();
     }
 
     public static class EasyModeMixin
