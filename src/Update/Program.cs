@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Mono.Options;
 using Squirrel;
@@ -67,6 +69,7 @@ namespace Squirrel.Update
                 break;
             }
 
+            Console.WriteLine("\n");
             return 0;
         }
 
@@ -110,6 +113,7 @@ namespace Squirrel.Update
 
         public static async Task<string> Download(string updateUrl, string appName = null)
         {
+            ensureConsole();
             appName = appName ?? getAppNameFromDirectory();
 
             using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
@@ -131,8 +135,9 @@ namespace Squirrel.Update
 
         public static void ShowHelp()
         {
+            ensureConsole();
             opts.WriteOptionDescriptions(Console.Out);
-            Environment.Exit(0);
+            Environment.Exit(1);
         }
 
         static string getAppNameFromDirectory(string path = null)
@@ -140,5 +145,37 @@ namespace Squirrel.Update
             path = path ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             return (new DirectoryInfo(path)).Name;
         }
+
+        static int consoleCreated = 0;
+        static void ensureConsole()
+        {
+            if (Interlocked.CompareExchange(ref consoleCreated, 1, 0) == 1) return;
+
+            if (!NativeMethods.AttachConsole(-1)) {
+                NativeMethods.AllocConsole();
+            }
+
+            NativeMethods.GetStdHandle(StandardHandles.STD_ERROR_HANDLE);
+            NativeMethods.GetStdHandle(StandardHandles.STD_OUTPUT_HANDLE);
+        }
+    }
+
+    enum StandardHandles : int {
+        STD_INPUT_HANDLE = -10,
+        STD_OUTPUT_HANDLE = -11,
+        STD_ERROR_HANDLE = -12,
+    }
+
+    static class NativeMethods
+    {
+        [DllImport("kernel32.dll", EntryPoint = "GetStdHandle")]
+        public static extern IntPtr GetStdHandle(StandardHandles nStdHandle);
+
+        [DllImport("kernel32.dll", EntryPoint = "AllocConsole")]
+        [return: MarshalAs(UnmanagedType.Bool)] 
+        public static extern bool AllocConsole();
+ 
+        [DllImport("kernel32.dll")]
+        public static extern bool AttachConsole(int pid);
     }
 }
