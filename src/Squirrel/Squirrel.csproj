@@ -77,6 +77,13 @@
   <ItemGroup>
     <Compile Include="BinaryPatchUtility.cs" />
     <Compile Include="ArchiveExtensions.cs" />
+    <Compile Include="Bzip2\BitWriter.cs" />
+    <Compile Include="Bzip2\BZip2Compressor.cs" />
+    <Compile Include="Bzip2\BZip2InputStream.cs" />
+    <Compile Include="Bzip2\BZip2OutputStream.cs" />
+    <Compile Include="Bzip2\CRC32.cs" />
+    <Compile Include="Bzip2\ParallelBZip2OutputStream.cs" />
+    <Compile Include="Bzip2\Rand.cs" />
     <Compile Include="ContentType.cs" />
     <Compile Include="DeltaPackage.cs" />
     <Compile Include="EnumerableExtensions.cs" />
