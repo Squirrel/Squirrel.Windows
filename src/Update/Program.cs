@@ -37,6 +37,7 @@ namespace Squirrel.Update
             string target = default(string);
             string releaseDir = default(string);
             string packagesDir = default(string);
+            string bootstrapperExe = default(string);
 
             opts = new OptionSet() {
                 "Usage: Update.exe command [OPTS]",
@@ -53,6 +54,7 @@ namespace Squirrel.Update
                 { "h|?|help", "Display Help and exit", _ => ShowHelp() },
                 { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
                 { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
+                { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                 { "s|silent", "Silent install", _ => silentInstall = true},
             };
 
@@ -76,7 +78,7 @@ namespace Squirrel.Update
                 Update(target).Wait();
                 break;
             case UpdateAction.Releasify:
-                Releasify(target, releaseDir, packagesDir);
+                Releasify(target, releaseDir, packagesDir, bootstrapperExe);
                 break;
             }
 
