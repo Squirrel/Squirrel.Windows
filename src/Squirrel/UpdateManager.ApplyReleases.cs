@@ -57,7 +57,7 @@ namespace Squirrel
                     var version = currentRelease.Name.ToVersion();
 
                     await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName)
-                        .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("/squirrel-uninstall {0}", version)), 1);
+                        .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("--squirrel-uninstall {0}", version)), 1);
                 }
 
                 await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
@@ -193,8 +193,8 @@ namespace Squirrel
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
                 var args = isInitialInstall ?
-                    String.Format("/squirrel-install {0}", currentVersion) :
-                    String.Format("/squirrel-updated {0}", currentVersion);
+                    String.Format("--squirrel-install {0}", currentVersion) :
+                    String.Format("--squirrel-updated {0}", currentVersion);
 
                 var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName);
 
@@ -214,7 +214,7 @@ namespace Squirrel
                         .ToList();
                 }
 
-                squirrelApps.ForEach(exe => Process.Start(exe, "/squirrel-firstrun"));
+                squirrelApps.ForEach(exe => Process.Start(exe, "--squirrel-firstrun"));
             }
 
             void fixPinnedExecutables(Version newCurrentVersion) 
