@@ -31,8 +31,10 @@ namespace Squirrel.Update
 
             bool silentInstall = false;
             var updateAction = default(UpdateAction);
+
             string target = default(string);
             string releaseDir = default(string);
+            string packagesDir = default(string);
 
             opts = new OptionSet() {
                 "Usage: Update.exe command [OPTS]",
@@ -48,6 +50,7 @@ namespace Squirrel.Update
                 "Options:",
                 { "h|?|help", "Display Help and exit", _ => ShowHelp() },
                 { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
+                { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                 { "s|silent", "Silent install", _ => silentInstall = true},
             };
 
@@ -134,6 +137,46 @@ namespace Squirrel.Update
                 await mgr.FullUninstall();
                 mgr.RemoveUninstallerRegistryEntry();
             }
+        }
+
+        public static void Releasify(string package, string targetDir = null, string packagesDir = null)
+        {
+            targetDir = targetDir ?? ".\\Releases";
+            if (!Directory.Exists(targetDir)) {
+                Directory.CreateDirectory(targetDir);
+            }
+
+            var di = new DirectoryInfo(targetDir);
+            File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)));
+
+            var allNuGetFiles = di.EnumerateFiles()
+                .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase));
+
+            var toProcess = allNuGetFiles.Where(x => !x.Name.Contains("-delta") && !x.Name.Contains("-full"));
+
+            var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
+            var previousReleases = Enumerable.Empty<ReleaseEntry>();
+            if (File.Exists(releaseFilePath)) {
+                previousReleases = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8));
+            }
+
+            foreach (var file in toProcess) {
+                var rp = new ReleasePackage(file.FullName);
+                rp.CreateReleasePackage(rp.SuggestedReleaseFileName, packagesDir);
+
+                var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
+                if (prev != null) {
+                    var deltaBuilder = new DeltaPackageBuilder();
+
+                    deltaBuilder.CreateDeltaPackage(prev, rp,
+                        Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                }
+            }
+
+            foreach (var file in toProcess) { File.Delete(file.FullName); }
+
+            var releaseEntries = allNuGetFiles.Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
+            ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
         }
 
         public static void ShowHelp()
