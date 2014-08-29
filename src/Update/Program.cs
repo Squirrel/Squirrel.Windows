@@ -73,6 +73,9 @@ namespace Squirrel.Update
             case UpdateAction.Update:
                 Update(target).Wait();
                 break;
+            case UpdateAction.Releasify:
+                Releasify(target, releaseDir, packagesDir);
+                break;
             }
 
             Console.WriteLine("\n");
@@ -142,12 +145,14 @@ namespace Squirrel.Update
         public static void Releasify(string package, string targetDir = null, string packagesDir = null)
         {
             targetDir = targetDir ?? ".\\Releases";
+            packagesDir = packagesDir ?? ".";
+
             if (!Directory.Exists(targetDir)) {
                 Directory.CreateDirectory(targetDir);
             }
 
             var di = new DirectoryInfo(targetDir);
-            File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)));
+            File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
 
             var allNuGetFiles = di.EnumerateFiles()
                 .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase));
@@ -162,7 +167,7 @@ namespace Squirrel.Update
 
             foreach (var file in toProcess) {
                 var rp = new ReleasePackage(file.FullName);
-                rp.CreateReleasePackage(rp.SuggestedReleaseFileName, packagesDir);
+                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir);
 
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
                 if (prev != null) {
