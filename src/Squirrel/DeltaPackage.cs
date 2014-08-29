@@ -92,44 +92,44 @@ namespace Squirrel
             using (Utility.WithTempDirectory(out workingPath)) {
                 ZipFile.ExtractToDirectory(deltaPackage.InputPackageFile, deltaPath);
                 ZipFile.ExtractToDirectory(basePackage.InputPackageFile, workingPath);
-            }
 
-            var pathsVisited = new List<string>();
+                var pathsVisited = new List<string>();
 
-            var deltaPathRelativePaths = new DirectoryInfo(deltaPath).GetAllFilesRecursively()
-                .Select(x => x.FullName.Replace(deltaPath + Path.DirectorySeparatorChar, ""))
-                .ToArray();
+                var deltaPathRelativePaths = new DirectoryInfo(deltaPath).GetAllFilesRecursively()
+                    .Select(x => x.FullName.Replace(deltaPath + Path.DirectorySeparatorChar, ""))
+                    .ToArray();
 
-            // Apply all of the .diff files
-            deltaPathRelativePaths
-                .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
-                .ForEach(file => {
-                    pathsVisited.Add(Regex.Replace(file, @".diff$", "").ToLowerInvariant());
-                    applyDiffToFile(deltaPath, file, workingPath);
-                });
+                // Apply all of the .diff files
+                deltaPathRelativePaths
+                    .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                    .ForEach(file => {
+                        pathsVisited.Add(Regex.Replace(file, @".diff$", "").ToLowerInvariant());
+                        applyDiffToFile(deltaPath, file, workingPath);
+                    });
 
-            // Delete all of the files that were in the old package but
-            // not in the new one.
-            new DirectoryInfo(workingPath).GetAllFilesRecursively()
-                .Select(x => x.FullName.Replace(workingPath + Path.DirectorySeparatorChar, "").ToLowerInvariant())
-                .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase) && !pathsVisited.Contains(x))
-                .ForEach(x => {
-                    this.Log().Info("{0} was in old package but not in new one, deleting", x);
-                    File.Delete(Path.Combine(workingPath, x));
-                });
+                // Delete all of the files that were in the old package but
+                // not in the new one.
+                new DirectoryInfo(workingPath).GetAllFilesRecursively()
+                    .Select(x => x.FullName.Replace(workingPath + Path.DirectorySeparatorChar, "").ToLowerInvariant())
+                    .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase) && !pathsVisited.Contains(x))
+                    .ForEach(x => {
+                        this.Log().Info("{0} was in old package but not in new one, deleting", x);
+                        File.Delete(Path.Combine(workingPath, x));
+                    });
 
-            // Update all the files that aren't in 'lib' with the delta
-            // package's versions (i.e. the nuspec file, etc etc).
-            deltaPathRelativePaths
-                .Where(x => !x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
-                .ForEach(x => {
-                    this.Log().Info("Updating metadata file: {0}", x);
-                    File.Copy(Path.Combine(deltaPath, x), Path.Combine(workingPath, x), true);
-                });
+                // Update all the files that aren't in 'lib' with the delta
+                // package's versions (i.e. the nuspec file, etc etc).
+                deltaPathRelativePaths
+                    .Where(x => !x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                    .ForEach(x => {
+                        this.Log().Info("Updating metadata file: {0}", x);
+                        File.Copy(Path.Combine(deltaPath, x), Path.Combine(workingPath, x), true);
+                    });
 
-            using (var zf = new FileStream(outputFile, FileMode.Create))
-            using (var archive = new ZipArchive(zf, ZipArchiveMode.Create)) {
-                archive.CreateDirectory(workingPath);
+                using (var zf = new FileStream(outputFile, FileMode.Create))
+                using (var archive = new ZipArchive(zf, ZipArchiveMode.Create)) {
+                    archive.CreateDirectory(workingPath);
+                }
             }
 
             return new ReleasePackage(outputFile);
