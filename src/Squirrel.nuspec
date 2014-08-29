@@ -1,0 +1,27 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <version>0.4.90</version>
+    <authors>GitHub</authors>
+    <owners>Paul Betts</owners>
+    <licenseUrl>https://github.com/squirrel/Squirrel.Windows.Next/blob/master/COPYING</licenseUrl>
+    <projectUrl>https://github.com/squirrel/Squirrel.Windows.Next</projectUrl>
+
+    <dependencies>
+      <dependency id="NuGet.Core" version="2.8.2" />
+      <dependency id="Mono.Cecil" version="0.9.5.4" />
+      <dependency id="Splat" version="1.4.0" />
+    </dependencies>
+
+    <id>squirrel.windows</id>
+    <title>Squirrel for Windows</title>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>An installation and update framework for Windows applications</description>
+    <copyright>Copyright GitHub© 2014</copyright>
+  </metadata>
+  <files>
+    <file src="Squirrel\bin\Release\Squirrel.*" target="lib\Net45" />
+    <file src="Setup\bin\Release\Setup.exe" target="tools" />
+    <file src="Update\bin\Release\Update.*" target="tools" />
+  </files>
+</package>
