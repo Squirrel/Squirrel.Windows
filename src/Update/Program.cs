@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -142,10 +144,11 @@ namespace Squirrel.Update
             }
         }
 
-        public static void Releasify(string package, string targetDir = null, string packagesDir = null)
+        public static void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null)
         {
             targetDir = targetDir ?? ".\\Releases";
             packagesDir = packagesDir ?? ".";
+            bootstrapperExe = bootstrapperExe ?? ".\\Setup.exe";
 
             if (!Directory.Exists(targetDir)) {
                 Directory.CreateDirectory(targetDir);
@@ -182,13 +185,57 @@ namespace Squirrel.Update
 
             var releaseEntries = allNuGetFiles.Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
+
+            var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
+            var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
+
+            File.Copy(bootstrapperExe, targetSetupExe, true);
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName);
+
+            try {
+                var zip = File.ReadAllBytes(zipPath);
+
+                IntPtr handle = NativeMethods.BeginUpdateResource(targetSetupExe, false);
+                if (handle == IntPtr.Zero) {
+                    throw new Win32Exception();
+                }
+
+                if (!NativeMethods.UpdateResource(handle, "DATA", new IntPtr(131), 0x0409, zip, zip.Length)) {
+                    throw new Win32Exception();
+                }
+
+                if (!NativeMethods.EndUpdateResource(handle, false)) {
+                    throw new Win32Exception();
+                }
+            } finally {
+                File.Delete(zipPath);
+            }
         }
+
 
         public static void ShowHelp()
         {
             ensureConsole();
             opts.WriteOptionDescriptions(Console.Out);
             Environment.Exit(1);
+        }
+
+        static string createSetupEmbeddedZip(string fullPackage, string releasesDir)
+        {
+            string tempPath;
+            using (Utility.WithTempDirectory(out tempPath)) {
+                File.Copy(Assembly.GetEntryAssembly().Location, Path.Combine(tempPath, "Update.exe"));
+                File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
+
+                var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
+                ReleaseEntry.WriteReleaseFile(releases, Path.Combine(tempPath, "RELEASES"));
+
+                var target = Path.GetTempFileName();
+                File.Delete(target);
+
+                ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false);
+                return target;
+            }
         }
 
         static string getAppNameFromDirectory(string path = null)
@@ -228,5 +275,14 @@ namespace Squirrel.Update
  
         [DllImport("kernel32.dll")]
         public static extern bool AttachConsole(int pid);
+
+        [DllImport("Kernel32.dll", SetLastError=true)]
+        public static extern IntPtr BeginUpdateResource(string pFileName, bool bDeleteExistingResources);
+
+        [DllImport("Kernel32.dll", SetLastError=true)]
+        public static extern bool UpdateResource(IntPtr handle, string pType, IntPtr pName, short language, [MarshalAs(UnmanagedType.LPArray)] byte[] pData, int dwSize);
+
+        [DllImport("Kernel32.dll", SetLastError=true)]
+        public static extern bool EndUpdateResource(IntPtr handle, bool discard);
     }
 }
