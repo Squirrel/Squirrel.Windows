@@ -33,6 +33,11 @@ namespace Squirrel
                 var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
                 progress(10);
 
+                if (release == null) {
+                    await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, true, true);
+                    return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
+                }
+
                 var ret = await installPackageToAppDir(updateInfo, release);
                 progress(30);
 
@@ -40,7 +45,7 @@ namespace Squirrel
                 progress(50);
 
                 var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
-                await invokePostInstall(newVersion, currentReleases.Count == 1 && !silentInstall);
+                await invokePostInstall(newVersion, currentReleases.Count == 1 && !silentInstall, false);
                 progress(75);
 
                 await cleanDeadVersions(newVersion);
@@ -145,8 +150,13 @@ namespace Squirrel
             {
                 Contract.Requires(releasesToApply != null);
 
+                // If there are no remote releases at all, bail
+                if (!releasesToApply.Any()) {
+                    return null;
+                }
+
                 // If there are no deltas in our list, we're already done
-                if (!releasesToApply.Any() || releasesToApply.All(x => !x.IsDelta)) {
+                if (releasesToApply.All(x => !x.IsDelta)) {
                     return releasesToApply.MaxBy(x => x.Version).FirstOrDefault();
                 }
 
@@ -189,7 +199,7 @@ namespace Squirrel
                 }
             }
 
-            async Task invokePostInstall(Version currentVersion, bool isInitialInstall)
+            async Task invokePostInstall(Version currentVersion, bool isInitialInstall, bool firstRunOnly)
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
                 var args = isInitialInstall ?
@@ -199,7 +209,7 @@ namespace Squirrel
                 var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName);
 
                 // For each app, run the install command in-order and wait
-                await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1 /* at a time */);
+                if (!firstRunOnly) await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1 /* at a time */);
 
                 if (!isInitialInstall) return;
 
