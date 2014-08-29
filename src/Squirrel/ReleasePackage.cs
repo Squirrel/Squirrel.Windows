@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Ionic.Zip;
+using MarkdownSharp;
 using NuGet;
 using Splat;
 
@@ -87,6 +88,7 @@ namespace Squirrel
         public string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(outputFile));
+            releaseNotesProcessor = releaseNotesProcessor ?? (x => (new Markdown()).Transform(x));
 
             if (ReleasePackageFile != null) {
                 return ReleasePackageFile;

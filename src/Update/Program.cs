@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -14,7 +16,7 @@ using Squirrel;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update,
+        Unset = 0, Install, Uninstall, Download, Update, Releasify,
     }
 
     class Program
@@ -31,7 +33,11 @@ namespace Squirrel.Update
 
             bool silentInstall = false;
             var updateAction = default(UpdateAction);
+
             string target = default(string);
+            string releaseDir = default(string);
+            string packagesDir = default(string);
+            string bootstrapperExe = default(string);
 
             opts = new OptionSet() {
                 "Usage: Update.exe command [OPTS]",
@@ -42,9 +48,13 @@ namespace Squirrel.Update
                 { "uninstall", "Uninstall the app the same dir as Update.exe", v => updateAction = UpdateAction.Uninstall},
                 { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
                 { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
+                { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
                 "",
                 "Options:",
                 { "h|?|help", "Display Help and exit", _ => ShowHelp() },
+                { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
+                { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
+                { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                 { "s|silent", "Silent install", _ => silentInstall = true},
             };
 
@@ -66,6 +76,9 @@ namespace Squirrel.Update
                 break;
             case UpdateAction.Update:
                 Update(target).Wait();
+                break;
+            case UpdateAction.Releasify:
+                Releasify(target, releaseDir, packagesDir, bootstrapperExe);
                 break;
             }
 
@@ -133,11 +146,98 @@ namespace Squirrel.Update
             }
         }
 
+        public static void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null)
+        {
+            targetDir = targetDir ?? ".\\Releases";
+            packagesDir = packagesDir ?? ".";
+            bootstrapperExe = bootstrapperExe ?? ".\\Setup.exe";
+
+            if (!Directory.Exists(targetDir)) {
+                Directory.CreateDirectory(targetDir);
+            }
+
+            var di = new DirectoryInfo(targetDir);
+            File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
+
+            var allNuGetFiles = di.EnumerateFiles()
+                .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase));
+
+            var toProcess = allNuGetFiles.Where(x => !x.Name.Contains("-delta") && !x.Name.Contains("-full"));
+
+            var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
+            var previousReleases = Enumerable.Empty<ReleaseEntry>();
+            if (File.Exists(releaseFilePath)) {
+                previousReleases = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8));
+            }
+
+            foreach (var file in toProcess) {
+                var rp = new ReleasePackage(file.FullName);
+                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir);
+
+                var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
+                if (prev != null) {
+                    var deltaBuilder = new DeltaPackageBuilder();
+
+                    deltaBuilder.CreateDeltaPackage(prev, rp,
+                        Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                }
+            }
+
+            foreach (var file in toProcess) { File.Delete(file.FullName); }
+
+            var releaseEntries = allNuGetFiles.Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
+            ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
+
+            var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
+            var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
+
+            File.Copy(bootstrapperExe, targetSetupExe, true);
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName);
+
+            try {
+                var zip = File.ReadAllBytes(zipPath);
+
+                IntPtr handle = NativeMethods.BeginUpdateResource(targetSetupExe, false);
+                if (handle == IntPtr.Zero) {
+                    throw new Win32Exception();
+                }
+
+                if (!NativeMethods.UpdateResource(handle, "DATA", new IntPtr(131), 0x0409, zip, zip.Length)) {
+                    throw new Win32Exception();
+                }
+
+                if (!NativeMethods.EndUpdateResource(handle, false)) {
+                    throw new Win32Exception();
+                }
+            } finally {
+                File.Delete(zipPath);
+            }
+        }
+
+
         public static void ShowHelp()
         {
             ensureConsole();
             opts.WriteOptionDescriptions(Console.Out);
             Environment.Exit(1);
+        }
+
+        static string createSetupEmbeddedZip(string fullPackage, string releasesDir)
+        {
+            string tempPath;
+            using (Utility.WithTempDirectory(out tempPath)) {
+                File.Copy(Assembly.GetEntryAssembly().Location, Path.Combine(tempPath, "Update.exe"));
+                File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
+
+                var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
+                ReleaseEntry.WriteReleaseFile(releases, Path.Combine(tempPath, "RELEASES"));
+
+                var target = Path.GetTempFileName();
+                File.Delete(target);
+
+                ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false);
+                return target;
+            }
         }
 
         static string getAppNameFromDirectory(string path = null)
@@ -177,5 +277,14 @@ namespace Squirrel.Update
  
         [DllImport("kernel32.dll")]
         public static extern bool AttachConsole(int pid);
+
+        [DllImport("Kernel32.dll", SetLastError=true)]
+        public static extern IntPtr BeginUpdateResource(string pFileName, bool bDeleteExistingResources);
+
+        [DllImport("Kernel32.dll", SetLastError=true)]
+        public static extern bool UpdateResource(IntPtr handle, string pType, IntPtr pName, short language, [MarshalAs(UnmanagedType.LPArray)] byte[] pData, int dwSize);
+
+        [DllImport("Kernel32.dll", SetLastError=true)]
+        public static extern bool EndUpdateResource(IntPtr handle, bool discard);
     }
 }
