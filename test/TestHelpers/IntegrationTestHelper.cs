@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading;
-using Ionic.Zip;
 using Squirrel;
 using Splat;
 using Xunit;
@@ -131,8 +131,7 @@ namespace Squirrel.Tests.TestHelpers
             var zipPath = GetPath("fixtures", zipFile);
             Assert.True(File.Exists(zipPath));
 
-            var zf = new ZipFile(zipPath);
-            zf.ExtractAll(path);
+            ZipFile.ExtractToDirectory(zipPath, path);
 
             return ret;
         }
