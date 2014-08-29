@@ -147,7 +147,7 @@ namespace Squirrel
 
                 // If there are no deltas in our list, we're already done
                 if (!releasesToApply.Any() || releasesToApply.All(x => !x.IsDelta)) {
-                    return releasesToApply.MaxBy(x => x.Version).First();
+                    return releasesToApply.MaxBy(x => x.Version).FirstOrDefault();
                 }
 
                 if (!releasesToApply.All(x => x.IsDelta)) {
