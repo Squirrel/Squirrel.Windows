@@ -156,6 +156,12 @@ namespace Squirrel.Update
                 Directory.CreateDirectory(targetDir);
             }
 
+            if (!File.Exists(bootstrapperExe)) {
+                bootstrapperExe = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),
+                    "Setup.exe");
+            }
+
             var di = new DirectoryInfo(targetDir);
             File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
 
