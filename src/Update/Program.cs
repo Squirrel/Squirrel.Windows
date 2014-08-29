@@ -14,7 +14,7 @@ using Squirrel;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update,
+        Unset = 0, Install, Uninstall, Download, Update, Releasify,
     }
 
     class Program
@@ -32,6 +32,7 @@ namespace Squirrel.Update
             bool silentInstall = false;
             var updateAction = default(UpdateAction);
             string target = default(string);
+            string releaseDir = default(string);
 
             opts = new OptionSet() {
                 "Usage: Update.exe command [OPTS]",
@@ -42,9 +43,11 @@ namespace Squirrel.Update
                 { "uninstall", "Uninstall the app the same dir as Update.exe", v => updateAction = UpdateAction.Uninstall},
                 { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
                 { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
+                { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
                 "",
                 "Options:",
                 { "h|?|help", "Display Help and exit", _ => ShowHelp() },
+                { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
                 { "s|silent", "Silent install", _ => silentInstall = true},
             };
 
