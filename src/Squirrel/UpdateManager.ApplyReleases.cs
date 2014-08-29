@@ -26,25 +26,27 @@ namespace Squirrel
                 this.rootAppDirectory = rootAppDirectory;
             }
 
-            public async Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
+            public async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall, Action<int> progress = null)
             {
                 progress = progress ?? (_ => { });
 
                 var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
                 progress(10);
 
-                await installPackageToAppDir(updateInfo, release);
+                var ret = await installPackageToAppDir(updateInfo, release);
                 progress(30);
 
                 var currentReleases = await updateLocalReleasesFile();
                 progress(50);
 
                 var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
-                await invokePostInstall(newVersion, currentReleases.Count == 1);
+                await invokePostInstall(newVersion, currentReleases.Count == 1 && !silentInstall);
                 progress(75);
 
                 await cleanDeadVersions(newVersion);
                 progress(100);
+
+                return ret;
             }
 
             public async Task FullUninstall()
@@ -55,13 +57,13 @@ namespace Squirrel
                     var version = currentRelease.Name.ToVersion();
 
                     await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName)
-                        .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("/squirrel-uninstall {0}", version)), 1);
+                        .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("--squirrel-uninstall {0}", version)), 1);
                 }
 
                 await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
             }
 
-            async Task installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
+            async Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
             {
                 var pkg = new ZipPackage(Path.Combine(updateInfo.PackageDirectory, release.Filename));
                 var target = getDirectoryForRelease(release.Version);
@@ -98,6 +100,7 @@ namespace Squirrel
                 // which shortcuts to install, and nuking them. Then, run the app's
                 // post install and set up shortcuts.
                 runPostInstallAndCleanup(newCurrentVersion, updateInfo.IsBootstrapping);
+                return target.FullName;
             }
 
             void CopyFileToLocation(FileSystemInfo target, IPackageFile x)
@@ -190,8 +193,8 @@ namespace Squirrel
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
                 var args = isInitialInstall ?
-                    String.Format("/squirrel-install {0}", currentVersion) :
-                    String.Format("/squirrel-updated {0}", currentVersion);
+                    String.Format("--squirrel-install {0}", currentVersion) :
+                    String.Format("--squirrel-updated {0}", currentVersion);
 
                 var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName);
 
@@ -211,7 +214,7 @@ namespace Squirrel
                         .ToList();
                 }
 
-                squirrelApps.ForEach(exe => Process.Start(exe, "/squirrel-firstrun"));
+                squirrelApps.ForEach(exe => Process.Start(exe, "--squirrel-firstrun"));
             }
 
             void fixPinnedExecutables(Version newCurrentVersion) 

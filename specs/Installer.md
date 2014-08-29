@@ -24,7 +24,7 @@ Setup.exe does the following operations:
 
 Update.exe is a generic client for Squirrel which supports several operations:
 
-* `/install [File.nupkg] [/silent]` - Install the NuPkg file given (or any NuPkg files in the same directory as itself), and launch their applications. If `/silent` is given, don't launch anything. Copy `Update.exe` to the application root directory. Install also writes an entry in Programs and Features which will invoke `/uninstall`.
-* `/uninstall` - Completely uninstall the application associated with the directory in which `Update.exe` resides.
-* `/download URL` - Check for updates from the given URL and write information about available versions to standard output in JSON format.
-* `/update` - Updates the application to the latest version of the files in the packages directory associated with the directory in which `Update.exe` resides.
+* `--install [directory] [/silent]` - Install the NuPkg file given (or any NuPkg files in the same directory as itself), and launch their applications. If `/silent` is given, don't launch anything. Copy `Update.exe` to the application root directory. Install also writes an entry in Programs and Features which will invoke `/uninstall`.
+* `--uninstall` - Completely uninstall the application associated with the directory in which `Update.exe` resides.
+* `--download URL` - Check for updates from the given URL and write information about available versions to standard output in JSON format.
+* `--update URL` - Updates the application to the latest version from the remote URL
