@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Security.AccessControl;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -159,6 +161,18 @@ namespace Squirrel
             var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
                 .OpenSubKey(uninstallRegSubKey, true);
             key.DeleteSubKeyTree(applicationName);
+        }
+
+        public Version CurrentlyInstalledVersion(string executable = null)
+        {
+            executable = executable ??
+                Path.GetDirectoryName(typeof(UpdateManager).Assembly.Location);
+
+            var appDirName = executable.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
+
+            if (appDirName == null) return null;
+            return appDirName.ToVersion();
         }
 
         public string RootAppDirectory {
