@@ -168,6 +168,10 @@ namespace Squirrel
             executable = executable ??
                 Path.GetDirectoryName(typeof(UpdateManager).Assembly.Location);
 
+            if (!executable.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) {
+                return null;
+            }
+
             var appDirName = executable.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                 .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
 
