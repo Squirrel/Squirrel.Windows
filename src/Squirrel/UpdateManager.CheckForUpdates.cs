@@ -36,15 +36,10 @@ namespace Squirrel
 
                 bool shouldInitialize = false;
                 try {
-                    var file = File.OpenRead(localReleaseFile);
-
-                    // NB: sr disposes file
-                    using (var sr = new StreamReader(file, Encoding.UTF8)) {
-                        localReleases = ReleaseEntry.ParseReleaseFile(sr.ReadToEnd());
-                    }
+                    localReleases = LoadLocalReleases(localReleaseFile);
                 } catch (Exception ex) {
-                    // Something has gone wrong, we'll start from scratch.
-                    this.Log().WarnException("Failed to load local release list", ex);
+                    // Something has gone pear-shaped, let's start from scratch
+                    this.Log().WarnException("Failed to load local releases, starting from scratch", ex);
                     shouldInitialize = true;
                 }
 
@@ -110,6 +105,17 @@ namespace Squirrel
                 progress(100);
                 return ret;
             }
+
+            public IEnumerable<ReleaseEntry> LoadLocalReleases(string localReleaseFile)
+            {
+                var file = File.OpenRead(localReleaseFile);
+
+                // NB: sr disposes file
+                using (var sr = new StreamReader(file, Encoding.UTF8)) {
+                    return ReleaseEntry.ParseReleaseFile(sr.ReadToEnd());
+                }
+            }
+
 
             async Task initializeClientAppDirectory()
             {
