@@ -314,31 +314,21 @@ namespace Squirrel
 
     public sealed class SingleGlobalInstance : IDisposable
     {
-        readonly static object gate = 42;
-        readonly ConcurrentExclusiveSchedulerPair lockScheduler = 
-            new ConcurrentExclusiveSchedulerPair();
-
         bool HasHandle = false;
         Mutex mutex;
 
         public SingleGlobalInstance(string key, int timeOut)
         {
             if (ModeDetector.InUnitTestRunner()) {
-                HasHandle = runExclusive(() => Monitor.TryEnter(gate, timeOut)).Result;
-
-                if (HasHandle == false) {
-                    throw new TimeoutException("Timeout waiting for exclusive access on SingleInstance");
-                }
-
                 return;
             }
 
             initMutex(key);
             try {
                 if (timeOut <= 0) {
-                    HasHandle = runExclusive(() => mutex.WaitOne(Timeout.Infinite, false)).Result;
+                    HasHandle = mutex.WaitOne(Timeout.Infinite, false);
                 } else {
-                    HasHandle = runExclusive(() => mutex.WaitOne(timeOut, false)).Result;
+                    HasHandle = mutex.WaitOne(timeOut, false);
                 }
 
                 if (HasHandle == false) {
@@ -351,18 +341,20 @@ namespace Squirrel
 
         public void Dispose()
         {
-            if (HasHandle && ModeDetector.InUnitTestRunner()) {
-                runExclusive(() => Monitor.Exit(gate)).Wait();
-                HasHandle = false;
+            if (ModeDetector.InUnitTestRunner()) {
+                return;
             }
 
             if (HasHandle && mutex != null) {
-                runExclusive(() => mutex.ReleaseMutex()).Wait();
+                mutex.ReleaseMutex();
                 HasHandle = false;
             }
+        }
 
-            lockScheduler.Complete();
-            lockScheduler.Completion.Wait();
+        ~SingleGlobalInstance()
+        {
+            if (!HasHandle) return;
+            throw new AbandonedMutexException("Leaked a Mutex!");
         }
 
         void initMutex(string key)
@@ -374,16 +366,6 @@ namespace Squirrel
             var securitySettings = new MutexSecurity();
             securitySettings.AddAccessRule(allowEveryoneRule);
             mutex.SetAccessControl(securitySettings);
-        }
-
-        Task runExclusive(Action block, CancellationToken token = default(CancellationToken))
-        {
-            return Task.Factory.StartNew(block, token, TaskCreationOptions.None, lockScheduler.ExclusiveScheduler);
-        }
-
-        Task<T> runExclusive<T>(Func<T> block, CancellationToken token = default(CancellationToken))
-        {
-            return Task.Factory.StartNew(block, token, TaskCreationOptions.None, lockScheduler.ExclusiveScheduler);
         }
     }
 
