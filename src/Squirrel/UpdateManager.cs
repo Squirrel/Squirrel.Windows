@@ -203,19 +203,15 @@ namespace Squirrel
             if (updateLock != null) return Task.FromResult(updateLock);
 
             return Task.Run(() => {
-                // TODO: We'll bring this back later
                 var key = Utility.CalculateStreamSHA1(new MemoryStream(Encoding.UTF8.GetBytes(rootAppDirectory)));
-                var theLock = Disposable.Create(() => { });
 
-                /*
                 IDisposable theLock;
                 try {
-                    theLock = RxApp.InUnitTestRunner() ?
-                        Disposable.Empty : new SingleGlobalInstance(key, 2000);
+                    theLock = ModeDetector.InUnitTestRunner() ?
+                        Disposable.Create(() => {}) : new SingleGlobalInstance(key, 2000);
                 } catch (TimeoutException) {
                     throw new TimeoutException("Couldn't acquire update lock, another instance may be running updates");
                 }
-                */
 
                 var ret = Disposable.Create(() => {
                     theLock.Dispose();
