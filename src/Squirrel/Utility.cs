@@ -312,42 +312,60 @@ namespace Squirrel
         }
     }
 
-    /*
     public sealed class SingleGlobalInstance : IDisposable
     {
         readonly static object gate = 42;
+        readonly ConcurrentExclusiveSchedulerPair lockScheduler = 
+            new ConcurrentExclusiveSchedulerPair();
+
         bool HasHandle = false;
         Mutex mutex;
-        EventLoopScheduler lockScheduler = new EventLoopScheduler();
 
         public SingleGlobalInstance(string key, int timeOut)
         {
-            if (RxApp.InUnitTestRunner()) {
-                HasHandle = Observable.Start(() => Monitor.TryEnter(gate, timeOut), lockScheduler).First();
+            if (ModeDetector.InUnitTestRunner()) {
+                HasHandle = runExclusive(() => Monitor.TryEnter(gate, timeOut)).Result;
 
-                if (HasHandle == false)
+                if (HasHandle == false) {
                     throw new TimeoutException("Timeout waiting for exclusive access on SingleInstance");
+                }
+
                 return;
             }
 
             initMutex(key);
-            try
-            {
-                if (timeOut <= 0)
-                    HasHandle = Observable.Start(() => mutex.WaitOne(Timeout.Infinite, false), lockScheduler).First();
-                else
-                    HasHandle = Observable.Start(() => mutex.WaitOne(timeOut, false), lockScheduler).First();
+            try {
+                if (timeOut <= 0) {
+                    HasHandle = runExclusive(() => mutex.WaitOne(Timeout.Infinite, false)).Result;
+                } else {
+                    HasHandle = runExclusive(() => mutex.WaitOne(timeOut, false)).Result;
+                }
 
-                if (HasHandle == false)
+                if (HasHandle == false) {
                     throw new TimeoutException("Timeout waiting for exclusive access on SingleInstance");
-            }
-            catch (AbandonedMutexException)
-            {
+                }
+            } catch (AbandonedMutexException) {
                 HasHandle = true;
             }
         }
 
-        private void initMutex(string key)
+        public void Dispose()
+        {
+            if (HasHandle && ModeDetector.InUnitTestRunner()) {
+                runExclusive(() => Monitor.Exit(gate)).Wait();
+                HasHandle = false;
+            }
+
+            if (HasHandle && mutex != null) {
+                runExclusive(() => mutex.ReleaseMutex()).Wait();
+                HasHandle = false;
+            }
+
+            lockScheduler.Complete();
+            lockScheduler.Completion.Wait();
+        }
+
+        void initMutex(string key)
         {
             string mutexId = string.Format("Global\\{{{0}}}", key);
             mutex = new Mutex(false, mutexId);
@@ -358,22 +376,16 @@ namespace Squirrel
             mutex.SetAccessControl(securitySettings);
         }
 
-        public void Dispose()
+        Task runExclusive(Action block, CancellationToken token = default(CancellationToken))
         {
-            if (HasHandle && RxApp.InUnitTestRunner()) {
-                Observable.Start(() => Monitor.Exit(gate), lockScheduler).First();
-                HasHandle = false;
-            }
+            return Task.Factory.StartNew(block, token, TaskCreationOptions.None, lockScheduler.ExclusiveScheduler);
+        }
 
-            if (HasHandle && mutex != null) {
-                Observable.Start(() => mutex.ReleaseMutex(), lockScheduler).First();
-                HasHandle = false;
-            }
-
-            lockScheduler.Dispose();
+        Task<T> runExclusive<T>(Func<T> block, CancellationToken token = default(CancellationToken))
+        {
+            return Task.Factory.StartNew(block, token, TaskCreationOptions.None, lockScheduler.ExclusiveScheduler);
         }
     }
-    */
 
     public static class Disposable
     {
