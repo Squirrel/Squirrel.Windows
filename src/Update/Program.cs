@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Mono.Options;
+using Splat;
 using Squirrel;
 
 namespace Squirrel.Update
@@ -19,67 +20,73 @@ namespace Squirrel.Update
         Unset = 0, Install, Uninstall, Download, Update, Releasify,
     }
 
-    class Program
+    class Program : IEnableLogger 
     {
         static OptionSet opts;
 
         static int Main(string[] args)
         {
-            if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
-                // NB: We're marked as Squirrel-aware, but we don't want to do
-                // anything in response to these events
-                return 0;
-            }
+            using (var logger = new SetupLogLogger() { Level = Splat.LogLevel.Info }) {
+                Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
 
-            bool silentInstall = false;
-            var updateAction = default(UpdateAction);
+                LogHost.Default.Info("Starting Squirrel Updater: " + String.Join(" ", args));
 
-            string target = default(string);
-            string releaseDir = default(string);
-            string packagesDir = default(string);
-            string bootstrapperExe = default(string);
+                if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
+                    // NB: We're marked as Squirrel-aware, but we don't want to do
+                    // anything in response to these events
+                    return 0;
+                }
 
-            opts = new OptionSet() {
-                "Usage: Update.exe command [OPTS]",
-                "Manages Squirrel packages",
-                "",
-                "Commands",
-                { "install=", "Install the app whose package is in the specified directory", v => { updateAction = UpdateAction.Install; target = v; } },
-                { "uninstall", "Uninstall the app the same dir as Update.exe", v => updateAction = UpdateAction.Uninstall},
-                { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
-                { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
-                { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
-                "",
-                "Options:",
-                { "h|?|help", "Display Help and exit", _ => ShowHelp() },
-                { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
-                { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
-                { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
-                { "s|silent", "Silent install", _ => silentInstall = true},
-            };
+                bool silentInstall = false;
+                var updateAction = default(UpdateAction);
 
-            opts.Parse(args);
+                string target = default(string);
+                string releaseDir = default(string);
+                string packagesDir = default(string);
+                string bootstrapperExe = default(string);
 
-            if (updateAction == UpdateAction.Unset) {
-                ShowHelp();
-            }
+                opts = new OptionSet() {
+                    "Usage: Update.exe command [OPTS]",
+                    "Manages Squirrel packages",
+                    "",
+                    "Commands",
+                    { "install=", "Install the app whose package is in the specified directory", v => { updateAction = UpdateAction.Install; target = v; } },
+                    { "uninstall", "Uninstall the app the same dir as Update.exe", v => updateAction = UpdateAction.Uninstall},
+                    { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
+                    { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
+                    { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
+                    "",
+                    "Options:",
+                    { "h|?|help", "Display Help and exit", _ => ShowHelp() },
+                    { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
+                    { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
+                    { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
+                    { "s|silent", "Silent install", _ => silentInstall = true},
+                };
 
-            switch (updateAction) {
-            case UpdateAction.Install:
-                Install(silentInstall, Path.GetFullPath(target)).Wait();
-                break;
-            case UpdateAction.Uninstall:
-                Uninstall().Wait();
-                break;
-            case UpdateAction.Download:
-                Console.WriteLine(Download(target).Result);
-                break;
-            case UpdateAction.Update:
-                Update(target).Wait();
-                break;
-            case UpdateAction.Releasify:
-                Releasify(target, releaseDir, packagesDir, bootstrapperExe);
-                break;
+                opts.Parse(args);
+
+                if (updateAction == UpdateAction.Unset) {
+                    ShowHelp();
+                }
+
+                switch (updateAction) {
+                case UpdateAction.Install:
+                    Install(silentInstall, Path.GetFullPath(target)).Wait();
+                    break;
+                case UpdateAction.Uninstall:
+                    Uninstall().Wait();
+                    break;
+                case UpdateAction.Download:
+                    Console.WriteLine(Download(target).Result);
+                    break;
+                case UpdateAction.Update:
+                    Update(target).Wait();
+                    break;
+                case UpdateAction.Releasify:
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe);
+                    break;
+                }
             }
 
             return 0;
@@ -224,7 +231,6 @@ namespace Squirrel.Update
         {
             ensureConsole();
             opts.WriteOptionDescriptions(Console.Out);
-            Environment.Exit(1);
         }
 
         static string createSetupEmbeddedZip(string fullPackage, string releasesDir)
@@ -291,5 +297,34 @@ namespace Squirrel.Update
 
         [DllImport("Kernel32.dll", SetLastError=true)]
         public static extern bool EndUpdateResource(IntPtr handle, bool discard);
+    }
+
+    class SetupLogLogger : Splat.ILogger, IDisposable
+    {
+        StreamWriter inner;
+        public Splat.LogLevel Level { get; set; }
+
+        public SetupLogLogger()
+        {
+            var dir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            var file = Path.Combine(dir, "setup.log");
+            if (File.Exists(file)) File.Delete(file);
+
+            inner = new StreamWriter(file, false, Encoding.UTF8);
+        }
+
+        public void Write(string message, Splat.LogLevel logLevel)
+        {
+            if (logLevel < Level) {
+                return;
+            }
+
+            inner.WriteLine(message);
+        }
+
+        public void Dispose()
+        {
+            inner.Dispose();
+        }
     }
 }
