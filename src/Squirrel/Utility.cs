@@ -312,7 +312,7 @@ namespace Squirrel
         }
     }
 
-    public sealed class SingleGlobalInstance : IDisposable
+    sealed class SingleGlobalInstance : IDisposable
     {
         bool HasHandle = false;
         Mutex mutex;
@@ -369,7 +369,68 @@ namespace Squirrel
         }
     }
 
-    public static class Disposable
+    class EventLoopScheduler : IDisposable
+    {
+        readonly CancellationTokenSource shouldBail = new CancellationTokenSource();
+        readonly BlockingCollection<Tuple<Action, TaskCompletionSource<bool>>> queue = new BlockingCollection<Tuple<Action, TaskCompletionSource<bool>>>();
+        readonly Thread loop;
+        IDisposable inner;
+
+        public EventLoopScheduler()
+        {
+            loop = new Thread(() => {
+                var token = shouldBail.Token;
+
+                while (!token.IsCancellationRequested) {
+                    Tuple<Action, TaskCompletionSource<bool>> action;
+
+                    try {
+                        action = queue.Take(token);
+                    } catch (OperationCanceledException ex) {
+                        continue;
+                    }
+
+                    try {
+                        action.Item1();
+                        action.Item2.TrySetResult(true);
+                    } catch (Exception ex) {
+                        action.Item2.TrySetException(ex);
+                    }
+                }
+            });
+
+            loop.Start();
+
+            inner = Disposable.Create(() => {
+                shouldBail.Cancel();
+                loop.Join();
+            });
+        }
+
+        public async Task<T> Enqueue<T>(Func<T> block)
+        {
+            T result = default(T);
+            var tcs = new TaskCompletionSource<bool>();
+            queue.Add(Tuple.Create(new Action(() => result = block()), tcs));
+            await tcs.Task;
+
+            return result;
+        }
+
+        public async Task Enqueue(Action block)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            queue.Add(Tuple.Create(block, tcs));
+            await tcs.Task;
+        }
+
+        public void Dispose()
+        {
+            inner.Dispose();
+        }
+    }
+
+    static class Disposable
     {
         public static IDisposable Create(Action action)
         {
