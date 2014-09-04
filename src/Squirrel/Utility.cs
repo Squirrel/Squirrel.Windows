@@ -316,6 +316,7 @@ namespace Squirrel
     {
         bool HasHandle = false;
         Mutex mutex;
+        EventLoopScheduler scheduler; 
 
         public SingleGlobalInstance(string key, int timeOut)
         {
@@ -323,12 +324,14 @@ namespace Squirrel
                 return;
             }
 
+            scheduler = new EventLoopScheduler();
+
             initMutex(key);
             try {
                 if (timeOut <= 0) {
-                    HasHandle = mutex.WaitOne(Timeout.Infinite, false);
+                    HasHandle = scheduler.Enqueue(() => mutex.WaitOne(Timeout.Infinite, false)).Result;
                 } else {
-                    HasHandle = mutex.WaitOne(timeOut, false);
+                    HasHandle = scheduler.Enqueue(() => mutex.WaitOne(timeOut, false)).Result;
                 }
 
                 if (HasHandle == false) {
@@ -346,9 +349,11 @@ namespace Squirrel
             }
 
             if (HasHandle && mutex != null) {
-                mutex.ReleaseMutex();
+                scheduler.Enqueue(() => mutex.ReleaseMutex()).Wait();
                 HasHandle = false;
             }
+
+            scheduler.Dispose();
         }
 
         ~SingleGlobalInstance()
