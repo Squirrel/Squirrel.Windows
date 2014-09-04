@@ -241,9 +241,24 @@ namespace Squirrel.Tests
             public async Task WhenUrlResultsInWebExceptionReturnNull()
             {
                 // This should result in a WebException (which gets caught) unless you can actually access http://lol
-                var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45);
-                var updateInfo = await fixture.CheckForUpdate();
-                Assert.Null(updateInfo);
+                using (var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45)) {
+                    var updateInfo = await fixture.CheckForUpdate();
+                    Assert.Null(updateInfo);
+                }
+            }
+
+            [Theory]
+            [InlineData("C:\\Foo\\Bar\\Test.exe", default(string))]
+            [InlineData("%LocalAppData%\\theApp\\app-1.0.0.1\\Test.exe", "1.0.0.1")]
+            [InlineData("%LocalAppData%\\aDifferentApp\\app-1.0.0.1\\Test.exe", default(string))]
+            public void CurrentlyInstalledVersionTests(string input, string expectedVersion)
+            {
+                input = Environment.ExpandEnvironmentVariables(input);
+                var expected = expectedVersion != null ? new Version(expectedVersion) : default(Version);
+
+                using (var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45)) {
+                    Assert.Equal(expected, fixture.CurrentlyInstalledVersion(input));
+                }
             }
         }
     }
