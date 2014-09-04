@@ -82,7 +82,6 @@ namespace Squirrel.Update
                 break;
             }
 
-            Console.WriteLine("\n");
             return 0;
         }
 
