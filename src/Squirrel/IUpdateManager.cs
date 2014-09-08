@@ -5,10 +5,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
+using Splat;
 
 namespace Squirrel
 {
-    public interface IUpdateManager : IDisposable
+    public interface IUpdateManager : IDisposable, IEnableLogger
     {
         /// <summary>
         /// Fetch the remote store for updates and compare against the current 
@@ -92,9 +93,18 @@ namespace Squirrel
         {
             progress = progress ?? (_ => {});
 
-            var updateInfo = await This.CheckForUpdate(false, x => progress(x / 3));
-            await This.DownloadReleases(updateInfo.ReleasesToApply, x => progress(x / 3 + 33));
-            await This.ApplyReleases(updateInfo, x => progress(x / 3 + 66));
+            This.Log().Info("Starting automatic update");
+
+            var updateInfo = await This.ErrorIfThrows(() => This.CheckForUpdate(false, x => progress(x / 3)),
+                "Failed to check for updates");
+
+            await This.ErrorIfThrows(() =>
+                This.DownloadReleases(updateInfo.ReleasesToApply, x => progress(x / 3 + 33)),
+                "Failed to download updates");
+
+            await This.ErrorIfThrows(() =>
+                This.ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
+                "Failed to apply updates");
 
             return updateInfo.ReleasesToApply.MaxBy(x => x.Version).LastOrDefault();
         }

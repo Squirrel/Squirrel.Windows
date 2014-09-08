@@ -3,17 +3,30 @@
 #include "Resource.h"
 #include "UpdateRunner.h"
 
-void CUpdateRunner::DisplayErrorMessage(CString& errorMessage)
+void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 {
 	CTaskDialog dlg;
+	TASKDIALOG_BUTTON buttons[] = {
+		{ 1, L"Open Setup Log", },
+		{ 2, L"Close", },
+	};
 
 	// TODO: Something about contacting support?
-	dlg.SetCommonButtons(TDCBF_OK_BUTTON);
+	dlg.SetButtons(buttons, 2, 1);
 	dlg.SetMainInstructionText(L"Installation has failed");
 	dlg.SetContentText(errorMessage);
 	dlg.SetMainIcon(TD_ERROR_ICON);
+	dlg.EnableButton(1, logFile != NULL);
 
-	dlg.DoModal();
+	int nButton;
+
+	if (FAILED(dlg.DoModal(::GetActiveWindow(), &nButton))) {
+		return;
+	}
+
+	if (nButton == 1) {
+		ShellExecute(NULL, NULL, logFile, NULL, NULL, SW_SHOW);
+	}
 }
 
 int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
@@ -22,11 +35,14 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	STARTUPINFO si = { 0 };
 	CResource zipResource;
 	wchar_t targetDir[MAX_PATH];
+	wchar_t logFile[MAX_PATH];
 
 	ExpandEnvironmentStrings(L"%LocalAppData%\\SquirrelTemp", targetDir, _countof(targetDir));
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		goto failedExtract;
 	}
+
+	swprintf_s(logFile, L"%s\\SquirrelSetup.log", targetDir);
 
 	if (!zipResource.Load(L"DATA", IDR_UPDATE_ZIP)) {
 		goto failedExtract;
@@ -90,11 +106,16 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 		dwExitCode = (DWORD)-1;
 	}
 
+	if (dwExitCode != 0) {
+		DisplayErrorMessage(CString(L"There was an error while installing the application. "
+			L"Check the setup log for more information and contact the author."), logFile);
+	}
+
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
 	return (int) dwExitCode;
 
 failedExtract:
-	DisplayErrorMessage(CString(L"Failed to extract installer"));
+	DisplayErrorMessage(CString(L"Failed to extract installer"), NULL);
 	return (int) dwExitCode;
 }

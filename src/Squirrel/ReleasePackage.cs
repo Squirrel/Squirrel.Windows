@@ -113,6 +113,7 @@ namespace Squirrel
 
             // Recursively walk the dependency tree and extract all of the
             // dependent packages into the a temporary directory
+            this.Log().Info("Creating release package: {0} => {1}", InputPackageFile, outputFile);
             var dependencies = findAllDependentPackages(
                 package,
                 new LocalPackageRepository(packagesRootDir),
@@ -127,10 +128,12 @@ namespace Squirrel
                     zf.ExtractAll(tempPath);
                 }
 
+                this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
 
                 var specPath = tempDir.GetFiles("*.nuspec").First().FullName;
 
+                this.Log().Info("Removing unnecessary data");
                 removeDependenciesFromPackageSpec(specPath);
                 removeDeveloperDocumentation(tempDir);
 
@@ -141,6 +144,7 @@ namespace Squirrel
                 addDeltaFilesToContentTypes(tempDir.FullName);
 
                 using (var zf = new ZipFile(outputFile)) {
+                    this.Log().Info("Succeeeded, saving to " + outputFile);
                     zf.AddDirectory(tempPath);
                     zf.Save();
                 }
