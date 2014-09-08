@@ -24,12 +24,22 @@ namespace Squirrel.Update
     {
         static OptionSet opts;
 
-        static int Main(string[] args)
+        public static int Main(string[] args)
         {
-            using (var logger = new SetupLogLogger() { Level = Splat.LogLevel.Info }) {
+            var pg = new Program();
+            return pg.main(args);
+        }
+
+        int main(string[] args)
+        {
+            // NB: Trying to delete the app directory while we have Setup.log 
+            // open will actually crash the uninstaller
+            bool isUninstalling = args.Any(x => x.Contains("uninstall"));
+
+            using (var logger = new SetupLogLogger(isUninstalling) { Level = Splat.LogLevel.Info }) {
                 Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
 
-                LogHost.Default.Info("Starting Squirrel Updater: " + String.Join(" ", args));
+                this.Log().Info("Starting Squirrel Updater: " + String.Join(" ", args));
 
                 if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
                     // NB: We're marked as Squirrel-aware, but we don't want to do
@@ -92,14 +102,15 @@ namespace Squirrel.Update
             return 0;
         }
 
-        public static async Task Install(bool silentInstall, string sourceDirectory = null)
+        public async Task Install(bool silentInstall, string sourceDirectory = null)
         {
             sourceDirectory = sourceDirectory ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
 
-            LogHost.Default.Info("Starting install, writing to {0}", sourceDirectory);
+            this.Log().Info("Starting install, writing to {0}", sourceDirectory);
 
             if (!File.Exists(releasesPath)) {
+                this.Log().Info("RELEASES doesn't exist, creating it at " + releasesPath);
                 var nupkgs = (new DirectoryInfo(sourceDirectory)).GetFiles()
                     .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
                     .Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
@@ -113,16 +124,21 @@ namespace Squirrel.Update
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
                 await mgr.FullInstall(silentInstall);
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
-                File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true);
 
-                await mgr.CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateTarget), "-s");
+                this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
+                    "Failed to copy Update.exe to " + updateTarget);
+
+                await this.ErrorIfThrows(() =>
+                    mgr.CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateTarget), "-s"),
+                    "Failed to create uninstaller registry entry");
             }
         }
 
-        public static async Task Update(string updateUrl, string appName = null)
+        public async Task Update(string updateUrl, string appName = null)
         {
             appName = appName ?? getAppNameFromDirectory();
 
+            this.Log().Info("Starting update, downloading from " + updateUrl);
             using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
                 var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
@@ -132,11 +148,12 @@ namespace Squirrel.Update
             // TODO: Update our installer entry
         }
 
-        public static async Task<string> Download(string updateUrl, string appName = null)
+        public async Task<string> Download(string updateUrl, string appName = null)
         {
             ensureConsole();
             appName = appName ?? getAppNameFromDirectory();
 
+            this.Log().Info("Fetching update information, downloading from " + updateUrl);
             using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
                 var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
@@ -145,8 +162,10 @@ namespace Squirrel.Update
             }
         }
 
-        public static async Task Uninstall(string appName = null)
+        public async Task Uninstall(string appName = null)
         {
+            this.Log().Info("Starting uninstall for app: " + appName);
+
             appName = appName ?? getAppNameFromDirectory();
             using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
                 await mgr.FullUninstall();
@@ -154,7 +173,7 @@ namespace Squirrel.Update
             }
         }
 
-        public static void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null)
         {
             targetDir = targetDir ?? ".\\Releases";
             packagesDir = packagesDir ?? ".";
@@ -169,6 +188,8 @@ namespace Squirrel.Update
                     Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),
                     "Setup.exe");
             }
+
+            this.Log().Info("Bootstrapper EXE found at:" + bootstrapperExe);
 
             var di = new DirectoryInfo(targetDir);
             File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
@@ -185,6 +206,8 @@ namespace Squirrel.Update
             }
 
             foreach (var file in toProcess) {
+                this.Log().Info("Creating release package: " + file.FullName);
+
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir);
 
@@ -223,24 +246,30 @@ namespace Squirrel.Update
                 if (!NativeMethods.EndUpdateResource(handle, false)) {
                     throw new Win32Exception();
                 }
+            } catch (Exception ex) {
+                this.Log().ErrorException("Failed to update Setup.exe with new Zip file", ex);
             } finally {
                 File.Delete(zipPath);
             }
         }
 
 
-        public static void ShowHelp()
+        public void ShowHelp()
         {
             ensureConsole();
             opts.WriteOptionDescriptions(Console.Out);
         }
 
-        static string createSetupEmbeddedZip(string fullPackage, string releasesDir)
+        string createSetupEmbeddedZip(string fullPackage, string releasesDir)
         {
             string tempPath;
+
+            this.Log().Info("Building embedded zip file for Setup.exe");
             using (Utility.WithTempDirectory(out tempPath)) {
-                File.Copy(Assembly.GetEntryAssembly().Location, Path.Combine(tempPath, "Update.exe"));
-                File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
+                this.ErrorIfThrows(() => {
+                    File.Copy(Assembly.GetEntryAssembly().Location, Path.Combine(tempPath, "Update.exe"));
+                    File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
+                }, "Failed to write package files to temp dir: " + tempPath);
 
                 var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
                 ReleaseEntry.WriteReleaseFile(releases, Path.Combine(tempPath, "RELEASES"));
@@ -248,7 +277,10 @@ namespace Squirrel.Update
                 var target = Path.GetTempFileName();
                 File.Delete(target);
 
-                ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false);
+                this.ErrorIfThrows(() =>
+                    ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
+                    "Failed to create Zip file from directory: " + tempPath);
+
                 return target;
             }
         }
@@ -306,10 +338,13 @@ namespace Squirrel.Update
         StreamWriter inner;
         public Splat.LogLevel Level { get; set; }
 
-        public SetupLogLogger()
+        public SetupLogLogger(bool saveInTemp)
         {
-            var dir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            var file = Path.Combine(dir, "setup.log");
+            var dir = saveInTemp ?
+                Path.GetTempPath() : 
+                Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+
+            var file = Path.Combine(dir, "SquirrelSetup.log");
             if (File.Exists(file)) File.Delete(file);
 
             inner = new StreamWriter(file, false, Encoding.UTF8);
