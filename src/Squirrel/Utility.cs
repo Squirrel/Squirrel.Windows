@@ -256,7 +256,7 @@ namespace Squirrel
         {
             try {
                 await Utility.DeleteDirectory(dir);
-            } catch (UnauthorizedAccessException ex) {
+            } catch (Exception ex) {
                 var message = String.Format("Uninstall failed to delete dir '{0}', punting to next reboot", dir);
                 LogHost.Default.WarnException(message, ex);
 
@@ -491,7 +491,7 @@ namespace Squirrel
 
                     try {
                         action = queue.Take(token);
-                    } catch (OperationCanceledException ex) {
+                    } catch (OperationCanceledException) {
                         continue;
                     }
 
