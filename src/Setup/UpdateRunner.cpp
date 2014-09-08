@@ -104,7 +104,9 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	DWORD dwExitCode;
 	if (!GetExitCodeProcess(pi.hProcess, &dwExitCode)) {
 		dwExitCode = (DWORD)-1;
+	}
 
+	if (dwExitCode != 0) {
 		DisplayErrorMessage(CString(L"There was an error while installing the application. "
 			L"Check the setup log for more information and contact the author."), logFile);
 	}
