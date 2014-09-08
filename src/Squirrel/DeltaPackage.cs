@@ -51,6 +51,9 @@ namespace Squirrel
                 var baseTempInfo = new DirectoryInfo(baseTempPath);
                 var tempInfo = new DirectoryInfo(tempPath);
 
+                this.Log().Info("Extracting {0} and {1} into {2}", 
+                    basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
+
                 using (var zf = new ZipFile(basePackage.ReleasePackageFile)) {
                     zf.ExtractAll(baseTempInfo.FullName);
                 }
@@ -133,6 +136,7 @@ namespace Squirrel
                     });
 
                 using (var zf = new ZipFile(outputFile)) {
+                    this.Log().Info("Repacking into full package: {0}", outputFile);
                     zf.AddDirectory(workingPath);
                     zf.Save();
                 }

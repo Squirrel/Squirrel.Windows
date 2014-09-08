@@ -95,7 +95,9 @@ namespace Squirrel.Update
         public static async Task Install(bool silentInstall, string sourceDirectory = null)
         {
             sourceDirectory = sourceDirectory ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var releasesPath = Path.Combine(sourceDirectory, "RELEASES"); 
+            var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
+
+            LogHost.Default.Info("Starting install, writing to {0}", sourceDirectory);
 
             if (!File.Exists(releasesPath)) {
                 var nupkgs = (new DirectoryInfo(sourceDirectory)).GetFiles()

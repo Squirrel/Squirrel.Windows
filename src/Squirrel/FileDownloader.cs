@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Splat;
 
 namespace Squirrel
 {
@@ -13,18 +14,26 @@ namespace Squirrel
         Task<byte[]> DownloadUrl(string url);
     }
 
-    class FileDownloader : IFileDownloader
+    class FileDownloader : IFileDownloader, IEnableLogger
     {
-        public async Task DownloadFile(string url, string targetFile)
+        public Task DownloadFile(string url, string targetFile)
         {
             var wc = new WebClient();
-            await wc.DownloadFileTaskAsync(url, targetFile);
+
+            this.Log().Info("Downloading file: " + url);
+
+            return this.WarnIfThrows(() => wc.DownloadFileTaskAsync(url, targetFile),
+                "Failed downloading URL: " + url);
         }
 
         public Task<byte[]> DownloadUrl(string url)
         {
             var wc = new WebClient();
-            return wc.DownloadDataTaskAsync(url);
+
+            this.Log().Info("Downloading url: " + url);
+
+            return this.WarnIfThrows(() => wc.DownloadDataTaskAsync(url),
+                "Failed to download url: " + url);
         }
     }
 }

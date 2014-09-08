@@ -34,21 +34,29 @@ namespace Squirrel
                 progress(10);
 
                 if (release == null) {
+                    this.Log().Info("No release to install, running the app");
                     await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, true, true);
                     return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
                 }
 
-                var ret = await installPackageToAppDir(updateInfo, release);
+                var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release), 
+                    "Failed to install package to app dir");
                 progress(30);
 
-                var currentReleases = await updateLocalReleasesFile();
+                var currentReleases = await this.ErrorIfThrows(() => updateLocalReleasesFile(),
+                    "Failed to update local releases file");
                 progress(50);
 
                 var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
-                await invokePostInstall(newVersion, currentReleases.Count == 1 && !silentInstall, false);
+                await this.ErrorIfThrows(() => invokePostInstall(newVersion, currentReleases.Count == 1 && !silentInstall, false),
+                    "Failed to invoke post-install");
                 progress(75);
 
-                await cleanDeadVersions(newVersion);
+                try {
+                    await cleanDeadVersions(newVersion);
+                } catch (Exception ex) {
+                    this.Log().WarnException("Failed to clean dead versions, continuing anyways", ex);
+                }
                 progress(100);
 
                 return ret;
@@ -58,14 +66,20 @@ namespace Squirrel
             {
                 var currentRelease = getReleases().MaxBy(x => x.Name.ToVersion()).FirstOrDefault();
 
+                this.Log().Info("Starting full uninstall");
                 if (currentRelease.Exists) {
                     var version = currentRelease.Name.ToVersion();
 
-                    await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName)
-                        .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("--squirrel-uninstall {0}", version)), 1);
+                    try {
+                        await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName)
+                            .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("--squirrel-uninstall {0}", version)), 1);
+                    } catch (Exception ex) {
+                        this.Log().WarnException("Failed to run pre-uninstall hooks, uninstalling anyways", ex);
+                    }
                 }
 
-                await Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory);
+                await this.ErrorIfThrows(() => Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory),
+                    "Failed to delete app directory: " + rootAppDirectory);
             }
 
             async Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
@@ -75,6 +89,7 @@ namespace Squirrel
 
                 // NB: This might happen if we got killed partially through applying the release
                 if (target.Exists) {
+                    this.Log().Warn("Found partially applied release folder, killing it: " + target.FullName);
                     await Utility.DeleteDirectory(target.FullName);
                 }
 
@@ -95,20 +110,21 @@ namespace Squirrel
                 // NB: Because of the above NB, we cannot use ForEachAsync here, we 
                 // have to copy these files in-order. Once we fix assembly resolution, 
                 // we can kill both of these NBs.
-                await Task.Run(() => toWrite.ForEach(x => CopyFileToLocation(target, x)));
+                await Task.Run(() => toWrite.ForEach(x => copyFileToLocation(target, x)));
 
-                await pkg.GetContentFiles().ForEachAsync(x => CopyFileToLocation(target, x));
+                await pkg.GetContentFiles().ForEachAsync(x => copyFileToLocation(target, x));
 
                 var newCurrentVersion = updateInfo.FutureReleaseEntry.Version;
 
                 // Perform post-install; clean up the previous version by asking it
                 // which shortcuts to install, and nuking them. Then, run the app's
                 // post install and set up shortcuts.
-                runPostInstallAndCleanup(newCurrentVersion, updateInfo.IsBootstrapping);
+                this.ErrorIfThrows(() => runPostInstallAndCleanup(newCurrentVersion, updateInfo.IsBootstrapping));
+
                 return target.FullName;
             }
 
-            void CopyFileToLocation(FileSystemInfo target, IPackageFile x)
+            void copyFileToLocation(FileSystemInfo target, IPackageFile x)
             {
                 var targetPath = Path.Combine(target.FullName, x.EffectivePath);
 
@@ -118,10 +134,12 @@ namespace Squirrel
                 var dir = new DirectoryInfo(Path.GetDirectoryName(targetPath));
                 if (!dir.Exists) dir.Create();
 
-                using (var inf = x.GetStream())
-                using (var of = fi.Open(FileMode.CreateNew, FileAccess.Write)) {
-                    inf.CopyTo(of);
-                }
+                this.ErrorIfThrows(() => {
+                    using (var inf = x.GetStream())
+                    using (var of = fi.Open(FileMode.CreateNew, FileAccess.Write)) {
+                        inf.CopyTo(of);
+                    }
+                }, "Failed to write file: " + target.FullName);
             }
 
             void runPostInstallAndCleanup(Version newCurrentVersion, bool isBootstrapping)
@@ -207,6 +225,8 @@ namespace Squirrel
                     String.Format("--squirrel-updated {0}", currentVersion);
 
                 var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName);
+
+                this.Log().Info("Squirrel Enabled Apps: [{0}]", String.Join(",", squirrelApps));
 
                 // For each app, run the install command in-order and wait
                 if (!firstRunOnly) await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1 /* at a time */);
