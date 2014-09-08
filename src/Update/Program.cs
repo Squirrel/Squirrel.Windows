@@ -27,7 +27,14 @@ namespace Squirrel.Update
         public static int Main(string[] args)
         {
             var pg = new Program();
-            return pg.main(args);
+            try {
+                return pg.main(args);
+            } catch (Exception ex) {
+                // NB: Normally this is a terrible idea but we want to make
+                // sure Setup.exe above us gets the nonzero error code
+                Console.Error.WriteLine(ex);
+                return -1;
+            }
         }
 
         int main(string[] args)
