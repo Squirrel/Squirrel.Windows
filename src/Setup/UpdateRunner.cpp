@@ -42,7 +42,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 		goto failedExtract;
 	}
 
-	swprintf_s(logFile, L"%s\\setup.log", targetDir);
+	swprintf_s(logFile, L"%s\\SquirrelSetup.log", targetDir);
 
 	if (!zipResource.Load(L"DATA", IDR_UPDATE_ZIP)) {
 		goto failedExtract;
