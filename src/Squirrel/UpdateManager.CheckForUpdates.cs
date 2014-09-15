@@ -108,6 +108,11 @@ namespace Squirrel
 
             public IEnumerable<ReleaseEntry> LoadLocalReleases(string localReleaseFile)
             {
+                if (!File.Exists(localReleaseFile))
+                {
+                    return Enumerable.Empty<ReleaseEntry>();
+                }
+
                 var file = File.OpenRead(localReleaseFile);
 
                 // NB: sr disposes file
