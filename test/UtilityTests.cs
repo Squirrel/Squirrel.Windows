@@ -28,6 +28,13 @@ namespace Squirrel.Tests.Core
             var utf16LeHelloWorld = combine(utf16Le, Encoding.UTF8.GetBytes("hello world"));
             var utf8HelloWorld = combine(utf8, Encoding.UTF8.GetBytes("hello world"));
 
+            var emptyString = string.Empty;
+            string nullString = null;
+            byte[] nullByteArray = {};
+            Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(emptyString));
+            Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(nullString));
+            Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(nullByteArray));
+
             Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(utf32Be));
             Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(utf32Le));
             Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(utf16Be));

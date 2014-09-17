@@ -22,7 +22,8 @@ namespace Squirrel
     {
         public static string RemoveByteOrderMarkerIfPresent(string content)
         {
-            return RemoveByteOrderMarkerIfPresent(Encoding.UTF8.GetBytes(content));
+            return string.IsNullOrEmpty(content) ? 
+                string.Empty : RemoveByteOrderMarkerIfPresent(Encoding.UTF8.GetBytes(content));
         }
 
         public static string RemoveByteOrderMarkerIfPresent(byte[] content)
