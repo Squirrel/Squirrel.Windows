@@ -100,6 +100,8 @@ namespace Squirrel
                 return new ReleaseEntry[0];
             }
 
+            fileContents = Utility.RemoveByteOrderMarkerIfPresent(fileContents);
+
             var ret = fileContents.Split('\n')
                 .Where(x => !String.IsNullOrWhiteSpace(x))
                 .Select(ParseReleaseEntry)
