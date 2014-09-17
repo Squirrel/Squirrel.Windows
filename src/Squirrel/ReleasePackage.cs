@@ -107,6 +107,11 @@ namespace Squirrel
 
                 throw new InvalidOperationException(String.Format(
                     "The input package file {0} targets multiple platforms - {1} - and cannot be transformed into a release package.", InputPackageFile, platforms));
+
+            } else if (!frameworks.Any()) {
+
+                throw new InvalidOperationException(String.Format(
+                    "The input package file {0} targets no platform and cannot be transformed into a release package.", InputPackageFile));
             }
 
             var targetFramework = frameworks.Single();
