@@ -14,6 +14,34 @@ namespace Squirrel.Tests.Core
     public class UtilityTests : IEnableLogger
     {
         [Fact]
+        public void RemoveByteOrderMarkerIfPresent()
+        {
+            var utf32Be = new byte[] { 0x00, 0x00, 0xFE, 0xFF };
+            var utf32Le = new byte[] { 0xFF, 0xFE, 0x00, 0x00 };
+            var utf16Be = new byte[] { 0xFE, 0xFF };
+            var utf16Le = new byte[] { 0xFF, 0xFE };
+            var utf8 = new byte[] { 0xEF, 0xBB, 0xBF };
+
+            var utf32BeHelloWorld = combine(utf32Be, Encoding.UTF8.GetBytes("hello world"));
+            var utf32LeHelloWorld = combine(utf32Le, Encoding.UTF8.GetBytes("hello world"));
+            var utf16BeHelloWorld = combine(utf16Be, Encoding.UTF8.GetBytes("hello world"));
+            var utf16LeHelloWorld = combine(utf16Le, Encoding.UTF8.GetBytes("hello world"));
+            var utf8HelloWorld = combine(utf8, Encoding.UTF8.GetBytes("hello world"));
+
+            Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(utf32Be));
+            Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(utf32Le));
+            Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(utf16Be));
+            Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(utf16Le));
+            Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(utf8));
+
+            Assert.Equal("hello world", Utility.RemoveByteOrderMarkerIfPresent(utf32BeHelloWorld));
+            Assert.Equal("hello world", Utility.RemoveByteOrderMarkerIfPresent(utf32LeHelloWorld));
+            Assert.Equal("hello world", Utility.RemoveByteOrderMarkerIfPresent(utf16BeHelloWorld));
+            Assert.Equal("hello world", Utility.RemoveByteOrderMarkerIfPresent(utf16LeHelloWorld));
+            Assert.Equal("hello world", Utility.RemoveByteOrderMarkerIfPresent(utf8HelloWorld));
+        }
+
+        [Fact]
         public void ShaCheckShouldBeCaseInsensitive()
         {
             var sha1FromExternalTool = "75255cfd229a1ed1447abe1104f5635e69975d30";
@@ -101,5 +129,18 @@ namespace Squirrel.Tests.Core
 
             return hashString;
         }
+
+        static byte[] combine(params byte[][] arrays)
+        {
+            var rv = new byte[arrays.Sum(a => a.Length)];
+            var offset = 0;
+            foreach (var array in arrays)
+            {
+                Buffer.BlockCopy(array, 0, rv, offset, array.Length);
+                offset += array.Length;
+            }
+            return rv;
+        }
+
     }
 }
