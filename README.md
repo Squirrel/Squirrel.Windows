@@ -1,8 +1,12 @@
+# Squirrel
+
 ## Squirrel.Windows: The Next Generation
 
 The dream of Squirrel.Windows, risen from the ashes.
 
-#### What even is this?
+See [GETTING-STARTED](doc/GETTING-STARTED.md) for instructions on getting started.
+
+### What even is this?
 
 This is Squirrel.Windows, rewritten to drop a lot of the things that caused the original (never finished) version of Squirrel for Windows. Here's a few examples:
 
@@ -20,4 +24,4 @@ This is Squirrel.Windows, rewritten to drop a lot of the things that caused the 
 
 ### How can I get involved?
 
-Check out https://github.com/Squirrel/Squirrel.Windows.Next/issues/9 for more information about joining the Squirrel Slack room
+See [CONTRIBUTING](doc/CONTRIBUTING.md) if you want to contribute to this project.
