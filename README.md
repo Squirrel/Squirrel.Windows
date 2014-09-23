@@ -25,7 +25,7 @@ See [GETTING-STARTED](doc/GETTING-STARTED.md) for a walkthrough!
 * [Installer](doc/INSTALLER.md)
 * [API](doc/API.md)
 * [History](doc/HISTORY.md)
-* [History](doc/HOW-DOES-IT-WORK.md)
+* [How does it work?](doc/HOW-DOES-IT-WORK.md)
 
 ## How Can I Get Involved?
 
