@@ -10,9 +10,13 @@ Here's a step by step overview of how to create an installer for your applicatio
 
 ## Setup your Project
 
-Add the squirrel.windows nuget package (type `Install-Package squirrel.windows` in Package Manager)
+First add the `squirrel.windows` nuget package. You can type this in the Package Manager:
 
-Add a reference Ionic.Zip to your project at `packages\Squirrel.Core.0.7.5\lib\net40\Ionic.Zip.dll`
+```posh
+Install-Package squirrel.windows
+```
+
+Also add a reference to `Ionic.Zip.dll` to your project. The file can be found at `(your project)\packages\Squirrel.Core.0.7.5\lib\net40\Ionic.Zip.dll`
 
 ## Creating a NuGet package for your app
 
@@ -20,30 +24,32 @@ You can use [NuGet Package Explorer](https://npe.codeplex.com/) or the command l
 
 Here is an example of a `.nuspec` file. You can find more information on the `.nuspec` format here: [Nuspec Reference](http://docs.nuget.org/docs/reference/nuspec-reference)
 
-    <?xml version="1.0" encoding="utf-8"?>
-    <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
-        <metadata>
-            <id>MyApp</id>
-            <version>1.0.0</version>
-            <frameworkAssemblies>
-                <frameworkAssembly assemblyName="System" targetFramework="net45" />
-            </frameworkAssemblies>
-        </metadata>
-        <files>
-            <file src="MyApp\bin\Release\MyApp.exe" target="lib\net45\MyApp.exe" />
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+	<metadata>
+		<id>MyApp</id>
+		<version>1.0.0</version>
+		<frameworkAssemblies>
+			<frameworkAssembly assemblyName="System" targetFramework="net45" />
+		</frameworkAssemblies>
+	</metadata>
+	<files>
+		<file src="MyApp\bin\Release\MyApp.exe" target="lib\net45\MyApp.exe" />
 
-			<!-- Don't forget to bundle Squirrel dependencies if you want to do in-app updates -->
-			<file src="GoToWindow\bin\Release\Microsoft.Web.XmlTransform.dll" target="lib\net45\Microsoft.Web.XmlTransform.dll" />
-			<file src="GoToWindow\bin\Release\Mono.Cecil.dll" target="lib\net45\Mono.Cecil.dll" />
-			<file src="GoToWindow\bin\Release\Mono.Cecil.Mdb.dll" target="lib\net45\Mono.Cecil.Mdb.dll" />
-			<file src="GoToWindow\bin\Release\Mono.Cecil.Pdb.dll" target="lib\net45\Mono.Cecil.Pdb.dll" />
-			<file src="GoToWindow\bin\Release\Mono.Cecil.Rocks.dll" target="lib\net45\Mono.Cecil.Rocks.dll" />
-			<file src="GoToWindow\bin\Release\NuGet.Core.dll" target="lib\net45\NuGet.Core.dll" />
-			<file src="GoToWindow\bin\Release\Splat.dll" target="lib\net45\Splat.dll" />
-			<file src="GoToWindow\bin\Release\Squirrel.dll" target="lib\net45\Squirrel.dll" />
-			<file src="GoToWindow\bin\Release\Ionic.Zip.dll" target="lib\net45\Ionic.Zip.dll" />
-        </files>
-    </package>
+		<!-- Don't forget to bundle Squirrel dependencies if you want to do in-app updates -->
+		<file src="GoToWindow\bin\Release\Microsoft.Web.XmlTransform.dll" target="lib\net45\Microsoft.Web.XmlTransform.dll" />
+		<file src="GoToWindow\bin\Release\Mono.Cecil.dll" target="lib\net45\Mono.Cecil.dll" />
+		<file src="GoToWindow\bin\Release\Mono.Cecil.Mdb.dll" target="lib\net45\Mono.Cecil.Mdb.dll" />
+		<file src="GoToWindow\bin\Release\Mono.Cecil.Pdb.dll" target="lib\net45\Mono.Cecil.Pdb.dll" />
+		<file src="GoToWindow\bin\Release\Mono.Cecil.Rocks.dll" target="lib\net45\Mono.Cecil.Rocks.dll" />
+		<file src="GoToWindow\bin\Release\NuGet.Core.dll" target="lib\net45\NuGet.Core.dll" />
+		<file src="GoToWindow\bin\Release\Splat.dll" target="lib\net45\Splat.dll" />
+		<file src="GoToWindow\bin\Release\Squirrel.dll" target="lib\net45\Squirrel.dll" />
+		<file src="GoToWindow\bin\Release\Ionic.Zip.dll" target="lib\net45\Ionic.Zip.dll" />
+	</files>
+</package>
+```
 
 ## Handling Squirrel Events
 
@@ -51,7 +57,7 @@ Squirrel events are optional, but they can be super useful, as it gives you a ch
 
 In your app's `AssemblyInfo.cs`, add the following line:
 
-```
+```csharp
 [assembly: AssemblyMetadata("SquirrelAwareVersion", "1")]
 ```
 
@@ -68,19 +74,21 @@ Simply deploy the content of the `Releases` folder to your web server (or, when 
 
 Here is simplified sample code you can use 
 
-    using(updateManager = new UpdateManager(@"http://your-server/releases", "GoToWindow", FrameworkVersion.Net45))
-    {
-	    var updateInfo = await updateManager.CheckForUpdate();
+```csharp
+using(var updateManager = new UpdateManager(@"http://your-server/releases", "YourAppName", FrameworkVersion.Net45))
+{
+ var updateInfo = await updateManager.CheckForUpdate();
 
-        if (updateInfo == null || !updateInfo.ReleasesToApply.Any())
-            return;
+    if (updateInfo == null || !updateInfo.ReleasesToApply.Any())
+        return;
 
-        // To get the latest version information:
-        //   updateInfo.ReleasesToApply.OrderBy(x => x.Version).Last();
+    // To get the latest version information:
+    //   updateInfo.ReleasesToApply.OrderBy(x => x.Version).Last();
 
-        await _updateManager.DownloadReleases(updateInfo.ReleasesToApply);
-        await _updateManager.ApplyReleases(updateInfo);
-    }
+    await _updateManager.DownloadReleases(updateInfo.ReleasesToApply);
+    await _updateManager.ApplyReleases(updateInfo);
+}
+```
 
 ## Create your Installer
 
@@ -103,3 +111,7 @@ A log file will be generated at `(Your Project)\packages\squirrel.windows.(versi
 
 * Even though the Auto Update example runs synchronously for simplicity, you should use `Task.ContinueWith` to avoid blocking your application.
 * If you implement `ApplyReleases` asynchronously, and then want to exit your WPF application, keep in mind that you'll have to call `Application.Exit` using `Application.Current.Dispatcher.InvokeAsync`.
+
+## A note about Reactive Extensions
+
+Squirrel uses Reactive Extensions (Rx) heavily as the process necessary to retrieve, download and apply updates is best done asynchronously. If you are using the `Microsoft.Bcl.Async` package (which Squirrel also uses) you can combine the Rx APIs with the TPL async/await keywords, for maximum simplicity.

@@ -29,7 +29,7 @@ Update.exe is a generic client for Squirrel which supports several operations:
 * `--download URL` - Check for updates from the given URL and write information about available versions to standard output in JSON format.
 * `--update URL` - Updates the application to the latest version from the remote URL
 
-## Sample JSON output
+## Sample Update.exe --download JSON output
 
 ```
 {
