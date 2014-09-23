@@ -39,9 +39,13 @@ namespace Squirrel.Update
 
         int main(string[] args)
         {
+            var animatedGifWindowToken = new CancellationTokenSource();
+
             // NB: Trying to delete the app directory while we have Setup.log 
             // open will actually crash the uninstaller
             bool isUninstalling = args.Any(x => x.Contains("uninstall"));
+
+            Thread.Sleep(60 * 1000);
 
             using (var logger = new SetupLogLogger(isUninstalling) { Level = Splat.LogLevel.Info }) {
                 Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
@@ -89,6 +93,7 @@ namespace Squirrel.Update
 
                 switch (updateAction) {
                 case UpdateAction.Install:
+                    AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(8), animatedGifWindowToken.Token);
                     Install(silentInstall, Path.GetFullPath(target)).Wait();
                     break;
                 case UpdateAction.Uninstall:
@@ -106,6 +111,7 @@ namespace Squirrel.Update
                 }
             }
 
+            animatedGifWindowToken.Cancel();
             return 0;
         }
 
