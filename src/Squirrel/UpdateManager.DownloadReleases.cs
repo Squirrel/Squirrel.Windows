@@ -23,22 +23,27 @@ namespace Squirrel
             {
                 progress = progress ?? (_ => { });
                 urlDownloader = urlDownloader ?? new FileDownloader();
+                var packagesDirectory = Path.Combine(rootAppDirectory, "packages");
 
                 int current = 0;
                 int toIncrement = (int)(100.0 / releasesToDownload.Count());
 
                 if (Utility.IsHttpUrl(updateUrlOrPath)) {
                     await releasesToDownload.ForEachAsync(async x => {
+                        var targetFile = Path.Combine(packagesDirectory, x.Filename);
+                        File.Delete(targetFile);
                         await urlDownloader.DownloadFile(
                             String.Format("{0}/{1}", updateUrlOrPath, x.Filename),
-                            Path.Combine(rootAppDirectory, "packages", x.Filename));
+                            targetFile);
                         lock (progress) progress(current += toIncrement);
                     });
                 } else {
                     await releasesToDownload.ForEachAsync(x => {
+                        var targetFile = Path.Combine(packagesDirectory, x.Filename);
                         File.Copy(
                             Path.Combine(updateUrlOrPath, x.Filename),
-                            Path.Combine(rootAppDirectory, "packages", x.Filename));
+                            targetFile,
+                            true);
                         lock (progress) progress(current += toIncrement);
                     });
                 }
