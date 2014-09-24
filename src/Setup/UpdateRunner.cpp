@@ -62,11 +62,16 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	int index = 0;
 	do {
 		ZIPENTRY zentry;
+		wchar_t targetFile[MAX_PATH];
 
 		zr = GetZipItem(zipFile, index, &zentry);
 		if (zr != ZR_OK && zr != ZR_MORE) {
 			break;
 		}
+
+		// NB: UnzipItem won't overwrite data, we need to do it ourselves
+		swprintf_s(targetFile, L"%s\\%s", targetDir, zentry.name);
+		DeleteFile(targetFile);
 
 		if (UnzipItem(zipFile, index, zentry.name) != ZR_OK) break;
 		index++;
