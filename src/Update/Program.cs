@@ -360,6 +360,7 @@ namespace Squirrel.Update
     class SetupLogLogger : Splat.ILogger, IDisposable
     {
         StreamWriter inner;
+        readonly object gate = 42;
         public Splat.LogLevel Level { get; set; }
 
         public SetupLogLogger(bool saveInTemp)
@@ -380,12 +381,12 @@ namespace Squirrel.Update
                 return;
             }
 
-            inner.WriteLine(message);
+            lock (gate) inner.WriteLine(message);
         }
 
         public void Dispose()
         {
-            inner.Dispose();
+            lock(gate) inner.Dispose();
         }
     }
 }
