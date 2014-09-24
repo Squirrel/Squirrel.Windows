@@ -39,9 +39,15 @@ namespace Squirrel.Update
 
         int main(string[] args)
         {
+            var animatedGifWindowToken = new CancellationTokenSource();
+
             // NB: Trying to delete the app directory while we have Setup.log 
             // open will actually crash the uninstaller
             bool isUninstalling = args.Any(x => x.Contains("uninstall"));
+
+            // Uncomment to test Gifs
+            //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
+            //Thread.Sleep(10 * 60 * 1000);
 
             using (var logger = new SetupLogLogger(isUninstalling) { Level = Splat.LogLevel.Info }) {
                 Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
@@ -61,6 +67,7 @@ namespace Squirrel.Update
                 string releaseDir = default(string);
                 string packagesDir = default(string);
                 string bootstrapperExe = default(string);
+                string backgroundGif = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Update.exe command [OPTS]",
@@ -78,6 +85,7 @@ namespace Squirrel.Update
                     { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
                     { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
+                    { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                 };
 
@@ -89,6 +97,7 @@ namespace Squirrel.Update
 
                 switch (updateAction) {
                 case UpdateAction.Install:
+                    AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token);
                     Install(silentInstall, Path.GetFullPath(target)).Wait();
                     break;
                 case UpdateAction.Uninstall:
@@ -101,9 +110,11 @@ namespace Squirrel.Update
                     Update(target).Wait();
                     break;
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif);
                     break;
                 }
+            
+                animatedGifWindowToken.Cancel();
             }
 
             return 0;
@@ -180,7 +191,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null)
         {
             targetDir = targetDir ?? ".\\Releases";
             packagesDir = packagesDir ?? ".";
@@ -236,7 +247,7 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName);
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif);
 
             try {
                 var zip = File.ReadAllBytes(zipPath);
@@ -267,7 +278,7 @@ namespace Squirrel.Update
             opts.WriteOptionDescriptions(Console.Out);
         }
 
-        string createSetupEmbeddedZip(string fullPackage, string releasesDir)
+        string createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif)
         {
             string tempPath;
 
@@ -277,6 +288,12 @@ namespace Squirrel.Update
                     File.Copy(Assembly.GetEntryAssembly().Location, Path.Combine(tempPath, "Update.exe"));
                     File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
                 }, "Failed to write package files to temp dir: " + tempPath);
+
+                if (!String.IsNullOrWhiteSpace(backgroundGif)) {
+                    this.ErrorIfThrows(() => {
+                        File.Copy(backgroundGif, Path.Combine(tempPath, "background.gif"));
+                    }, "Failed to write animated GIF to temp dir: " + tempPath);
+                }
 
                 var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
                 ReleaseEntry.WriteReleaseFile(releases, Path.Combine(tempPath, "RELEASES"));
