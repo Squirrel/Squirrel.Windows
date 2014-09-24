@@ -39,9 +39,9 @@ namespace Squirrel.Update
             this.Width = src.Width;
             this.Height = src.Height;
             this.AllowsTransparency = true;
-            this.Topmost = true;
             this.WindowStyle = WindowStyle.None;
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            this.ShowInTaskbar = false;
             this.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         }
 

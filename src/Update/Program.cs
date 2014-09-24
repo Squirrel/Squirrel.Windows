@@ -113,9 +113,10 @@ namespace Squirrel.Update
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif);
                     break;
                 }
+            
+                animatedGifWindowToken.Cancel();
             }
 
-            animatedGifWindowToken.Cancel();
             return 0;
         }
 
