@@ -45,7 +45,9 @@ namespace Squirrel.Update
             // open will actually crash the uninstaller
             bool isUninstalling = args.Any(x => x.Contains("uninstall"));
 
-            Thread.Sleep(60 * 1000);
+            // Uncomment to test Gifs
+            //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
+            //Thread.Sleep(10 * 60 * 1000);
 
             using (var logger = new SetupLogLogger(isUninstalling) { Level = Splat.LogLevel.Info }) {
                 Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
