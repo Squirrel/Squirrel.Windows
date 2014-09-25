@@ -30,7 +30,7 @@ namespace Squirrel
         {
             byte[] output = { };
 
-            if (content == null || content.Length < 2)
+            if (content == null)
             {
                 goto done;
             }
