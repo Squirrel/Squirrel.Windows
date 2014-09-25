@@ -169,9 +169,14 @@ namespace Squirrel.Update
                 var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
                 await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(66 + x / 3));
+
+                var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
+
+                await this.ErrorIfThrows(() =>
+                    mgr.CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateTarget), "-s"),
+                    "Failed to create uninstaller registry entry");
             }
             
-            // TODO: Update our installer entry
         }
 
         public async Task<string> Download(string updateUrl, string appName = null)
