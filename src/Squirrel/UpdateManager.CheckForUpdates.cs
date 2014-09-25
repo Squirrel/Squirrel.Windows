@@ -36,7 +36,7 @@ namespace Squirrel
 
                 bool shouldInitialize = false;
                 try {
-                    localReleases = LoadLocalReleases(localReleaseFile);
+                    localReleases = Utility.LoadLocalReleases(localReleaseFile);
                 } catch (Exception ex) {
                     // Something has gone pear-shaped, let's start from scratch
                     this.Log().WarnException("Failed to load local releases, starting from scratch", ex);
@@ -106,17 +106,6 @@ namespace Squirrel
                 return ret;
             }
 
-            public IEnumerable<ReleaseEntry> LoadLocalReleases(string localReleaseFile)
-            {
-                var file = File.OpenRead(localReleaseFile);
-
-                // NB: sr disposes file
-                using (var sr = new StreamReader(file, Encoding.UTF8)) {
-                    return ReleaseEntry.ParseReleaseFile(sr.ReadToEnd());
-                }
-            }
-
-
             async Task initializeClientAppDirectory()
             {
                 // On bootstrap, we won't have any of our directories, create them
@@ -141,8 +130,8 @@ namespace Squirrel
                 if (localReleases.Count() == remoteReleases.Count()) {
                     this.Log().Info("No updates, remote and local are the same");
 
-                    var latestFullRelease = findCurrentVersion(remoteReleases);
-                    var currentRelease = findCurrentVersion(localReleases);
+                    var latestFullRelease = Utility.FindCurrentVersion(remoteReleases);
+                    var currentRelease = Utility.FindCurrentVersion(localReleases);
 
                     var info = UpdateInfo.Create(currentRelease, new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
                     return info;
@@ -155,27 +144,18 @@ namespace Squirrel
                 if (!localReleases.Any()) {
                     this.Log().Warn("First run or local directory is corrupt, starting from scratch");
 
-                    var latestFullRelease = findCurrentVersion(remoteReleases);
-                    return UpdateInfo.Create(findCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
+                    var latestFullRelease = Utility.FindCurrentVersion(remoteReleases);
+                    return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
                 }
 
                 if (localReleases.Max(x => x.Version) > remoteReleases.Max(x => x.Version)) {
                     this.Log().Warn("hwhat, local version is greater than remote version");
 
-                    var latestFullRelease = findCurrentVersion(remoteReleases);
-                    return UpdateInfo.Create(findCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
+                    var latestFullRelease = Utility.FindCurrentVersion(remoteReleases);
+                    return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
                 }
 
-                return UpdateInfo.Create(findCurrentVersion(localReleases), remoteReleases, packageDirectory, appFrameworkVersion);
-            }
-
-            static ReleaseEntry findCurrentVersion(IEnumerable<ReleaseEntry> localReleases)
-            {
-                if (!localReleases.Any()) {
-                    return null;
-                }
-
-                return localReleases.MaxBy(x => x.Version).SingleOrDefault(x => !x.IsDelta);
+                return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), remoteReleases, packageDirectory, appFrameworkVersion);
             }
         }
     }

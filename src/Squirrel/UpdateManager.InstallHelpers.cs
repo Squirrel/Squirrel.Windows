@@ -98,6 +98,11 @@ namespace Squirrel
 					.OpenSubKey(uninstallRegSubKey, true);
 				key.DeleteSubKeyTree(applicationName);
 			}
+
+            public void CreateShortcutsForExecutable(string exeName)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

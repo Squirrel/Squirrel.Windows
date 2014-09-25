@@ -293,6 +293,25 @@ namespace Squirrel
             return Path.Combine(PackageDirectoryForAppDir(rootAppDirectory), "RELEASES");
         }
 
+        public static IEnumerable<ReleaseEntry> LoadLocalReleases(string localReleaseFile)
+        {
+            var file = File.OpenRead(localReleaseFile);
+
+            // NB: sr disposes file
+            using (var sr = new StreamReader(file, Encoding.UTF8)) {
+                return ReleaseEntry.ParseReleaseFile(sr.ReadToEnd());
+            }
+        }
+            
+        public static ReleaseEntry FindCurrentVersion(IEnumerable<ReleaseEntry> localReleases)
+        {
+            if (!localReleases.Any()) {
+                return null;
+            }
+
+            return localReleases.MaxBy(x => x.Version).SingleOrDefault(x => !x.IsDelta);
+        }
+
         static TAcc scan<T, TAcc>(this IEnumerable<T> This, TAcc initialValue, Func<TAcc, T, TAcc> accFunc)
         {
             TAcc acc = initialValue;
