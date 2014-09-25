@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
@@ -85,6 +87,16 @@ namespace Squirrel
         /// CreateUninstallerRegistryEntry
         /// </summary>
         void RemoveUninstallerRegistryEntry();
+
+        /// <summary>
+        /// Create a shortcut on the Desktop / Start Menu for the given 
+        /// executable. Metadata from the currently installed NuGet package 
+        /// and information from the Version Header of the EXE will be used
+        /// to construct the shortcut folder / name.
+        /// </summary>
+        /// <param name="exeName">The name of the executable, relative to the 
+        /// app install directory.</param>
+        void CreateShortcutsForExecutable(string exeName);
     }
 
     public static class EasyModeMixin
@@ -107,6 +119,11 @@ namespace Squirrel
                 "Failed to apply updates");
 
             return updateInfo.ReleasesToApply.MaxBy(x => x.Version).LastOrDefault();
+        }
+
+        public static void CreateShortcutForThisExe(this IUpdateManager This)
+        {
+            This.CreateShortcutsForExecutable(Path.GetFileName(Assembly.GetEntryAssembly().Location));
         }
     }
 }
