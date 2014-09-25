@@ -49,27 +49,29 @@ namespace Squirrel
                 var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
                     .CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
 
-                try {
-                    var wc = new WebClient();
+                if (!File.Exists(targetIco)) {
+                    try {
+                        var wc = new WebClient();
 
-                    await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
-                    using (var fs = new FileStream(targetIco, FileMode.Create)) {
-                        if (zp.IconUrl.AbsolutePath.EndsWith("ico")) {
-                            var bytes = File.ReadAllBytes(targetPng);
-                            fs.Write(bytes, 0, bytes.Length);
-                        } else {
-                            using (var bmp = (Bitmap)Image.FromFile(targetPng))
-                            using (var ico = Icon.FromHandle(bmp.GetHicon())) {
-                                ico.Save(fs);
+                        await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
+                        using (var fs = new FileStream(targetIco, FileMode.Create)) {
+                            if (zp.IconUrl.AbsolutePath.EndsWith("ico")) {
+                                var bytes = File.ReadAllBytes(targetPng);
+                                fs.Write(bytes, 0, bytes.Length);
+                            } else {
+                                using (var bmp = (Bitmap)Image.FromFile(targetPng))
+                                using (var ico = Icon.FromHandle(bmp.GetHicon())) {
+                                    ico.Save(fs);
+                                }
                             }
-                        }
 
-                        key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
+                            key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
+                        }
+                    } catch(Exception ex) {
+                        this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
+                    } finally {
+                        File.Delete(targetPng);
                     }
-                } catch(Exception ex) {
-                    this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
-                } finally {
-                    File.Delete(targetPng);
                 }
 
                 var stringsToWrite = new[] {
