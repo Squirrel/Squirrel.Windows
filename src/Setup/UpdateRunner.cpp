@@ -2,6 +2,7 @@
 #include "unzip.h"
 #include "Resource.h"
 #include "UpdateRunner.h"
+#include <vector>
 
 void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 {
@@ -36,6 +37,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	CResource zipResource;
 	wchar_t targetDir[MAX_PATH];
 	wchar_t logFile[MAX_PATH];
+	std::vector<CString> to_delete;
 
 	ExpandEnvironmentStrings(L"%LocalAppData%\\SquirrelTemp", targetDir, _countof(targetDir));
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
@@ -62,13 +64,19 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	int index = 0;
 	do {
 		ZIPENTRY zentry;
+		wchar_t targetFile[MAX_PATH];
 
 		zr = GetZipItem(zipFile, index, &zentry);
 		if (zr != ZR_OK && zr != ZR_MORE) {
 			break;
 		}
 
+		// NB: UnzipItem won't overwrite data, we need to do it ourselves
+		swprintf_s(targetFile, L"%s\\%s", targetDir, zentry.name);
+		DeleteFile(targetFile);
+
 		if (UnzipItem(zipFile, index, zentry.name) != ZR_OK) break;
+		to_delete.push_back(CString(targetFile));
 		index++;
 	} while (zr == ZR_MORE || zr == ZR_OK);
 
@@ -109,6 +117,10 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	if (dwExitCode != 0) {
 		DisplayErrorMessage(CString(L"There was an error while installing the application. "
 			L"Check the setup log for more information and contact the author."), logFile);
+	}
+
+	for (unsigned int i = 0; i < to_delete.size(); i++) {
+		DeleteFile(to_delete[i]);
 	}
 
 	CloseHandle(pi.hProcess);
