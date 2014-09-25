@@ -475,34 +475,43 @@ namespace Squirrel
         }
     }
 
-    sealed class SingleGlobalInstance : IDisposable
+    sealed class SingleGlobalInstance : IDisposable, IEnableLogger
     {
-        bool HasHandle = false;
-        Mutex mutex;
-        EventLoopScheduler scheduler; 
+        IDisposable handle = null;
 
-        public SingleGlobalInstance(string key, int timeOut)
+        public SingleGlobalInstance(string key, TimeSpan timeOut)
         {
             if (ModeDetector.InUnitTestRunner()) {
                 return;
             }
 
-            scheduler = new EventLoopScheduler();
+            var path = Path.Combine(Path.GetTempPath(), ".squirrel-lock-" + key);
 
-            initMutex(key);
-            try {
-                if (timeOut <= 0) {
-                    HasHandle = scheduler.Enqueue(() => mutex.WaitOne(Timeout.Infinite, false)).Result;
-                } else {
-                    HasHandle = scheduler.Enqueue(() => mutex.WaitOne(timeOut, false)).Result;
-                }
+            var st = new Stopwatch();
+            st.Start();
 
-                if (HasHandle == false) {
-                    throw new TimeoutException("Timeout waiting for exclusive access on SingleInstance");
+            var fh = default(FileStream);
+            while (st.Elapsed < timeOut) {
+                try {
+                    fh = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Delete);
+                    fh.Write(new byte[] { 0xba, 0xad, 0xf0, 0x0d, }, 0, 4);
+                    break;
+                } catch (Exception ex) {
+                    this.Log().WarnException("Failed to grab lockfile, will retry: " + path, ex);
+                    Thread.Sleep(250);
                 }
-            } catch (AbandonedMutexException) {
-                HasHandle = true;
             }
+
+            st.Stop();
+
+            if (fh == null) {
+                throw new Exception("Couldn't acquire lock, is another instance running");
+            }
+
+            var handle = Disposable.Create(() => {
+                fh.Dispose();
+                File.Delete(path);
+            });
         }
 
         public void Dispose()
@@ -511,90 +520,14 @@ namespace Squirrel
                 return;
             }
 
-            if (HasHandle && mutex != null) {
-                scheduler.Enqueue(() => mutex.ReleaseMutex()).Wait();
-                HasHandle = false;
-            }
-
-            scheduler.Dispose();
+            var disp = Interlocked.Exchange(ref handle, null);
+            if (disp != null) disp.Dispose();
         }
 
         ~SingleGlobalInstance()
         {
-            if (!HasHandle) return;
+            if (handle == null) return;
             throw new AbandonedMutexException("Leaked a Mutex!");
-        }
-
-        void initMutex(string key)
-        {
-            string mutexId = string.Format("Global\\{{{0}}}", key);
-            mutex = new Mutex(false, mutexId);
-
-            var allowEveryoneRule = new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), MutexRights.FullControl, AccessControlType.Allow);
-            var securitySettings = new MutexSecurity();
-            securitySettings.AddAccessRule(allowEveryoneRule);
-            mutex.SetAccessControl(securitySettings);
-        }
-    }
-
-    class EventLoopScheduler : IDisposable
-    {
-        readonly CancellationTokenSource shouldBail = new CancellationTokenSource();
-        readonly BlockingCollection<Tuple<Action, TaskCompletionSource<bool>>> queue = new BlockingCollection<Tuple<Action, TaskCompletionSource<bool>>>();
-        readonly Thread loop;
-        IDisposable inner;
-
-        public EventLoopScheduler()
-        {
-            loop = new Thread(() => {
-                var token = shouldBail.Token;
-
-                while (!token.IsCancellationRequested) {
-                    Tuple<Action, TaskCompletionSource<bool>> action;
-
-                    try {
-                        action = queue.Take(token);
-                    } catch (OperationCanceledException) {
-                        continue;
-                    }
-
-                    try {
-                        action.Item1();
-                        action.Item2.TrySetResult(true);
-                    } catch (Exception ex) {
-                        action.Item2.TrySetException(ex);
-                    }
-                }
-            });
-
-            loop.Start();
-
-            inner = Disposable.Create(() => {
-                shouldBail.Cancel();
-                loop.Join();
-            });
-        }
-
-        public async Task<T> Enqueue<T>(Func<T> block)
-        {
-            T result = default(T);
-            var tcs = new TaskCompletionSource<bool>();
-            queue.Add(Tuple.Create(new Action(() => result = block()), tcs));
-            await tcs.Task;
-
-            return result;
-        }
-
-        public async Task Enqueue(Action block)
-        {
-            var tcs = new TaskCompletionSource<bool>();
-            queue.Add(Tuple.Create(block, tcs));
-            await tcs.Task;
-        }
-
-        public void Dispose()
-        {
-            inner.Dispose();
         }
     }
 
