@@ -26,7 +26,7 @@ namespace Squirrel
                 this.rootAppDirectory = rootAppDirectory;
             }
 
-            public async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall, Action<int> progress = null)
+            public async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall, bool attemptingFullInstall, Action<int> progress = null)
             {
                 progress = progress ?? (_ => { });
 
@@ -34,8 +34,11 @@ namespace Squirrel
                 progress(10);
 
                 if (release == null) {
-                    this.Log().Info("No release to install, running the app");
-                    await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, true, true);
+                    if (attemptingFullInstall) {
+                        this.Log().Info("No release to install, running the app");
+                        await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, true, true);
+                    }
+
                     return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
                 }
 

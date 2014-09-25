@@ -67,7 +67,7 @@ namespace Squirrel
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
-            return await applyReleases.ApplyReleases(updateInfo, false, progress);
+            return await applyReleases.ApplyReleases(updateInfo, false, false, progress);
         }
 
         public async Task FullInstall(bool silentInstall = false)
@@ -78,7 +78,7 @@ namespace Squirrel
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
-            await applyReleases.ApplyReleases(updateInfo, silentInstall);
+            await applyReleases.ApplyReleases(updateInfo, silentInstall, true);
         }
 
         public async Task FullUninstall()
