@@ -1,6 +1,6 @@
 # Squirrel.Windows
 
-_It's a installer and updating framework for desktop applications on Windows_
+_It's an installer and updating framework for desktop applications on Windows_
 
 No installer UI, no UAC, just double click and launch.
 

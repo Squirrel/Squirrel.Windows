@@ -9,12 +9,12 @@ To contribute, please join the `#squirrel` [Slack](http://slack.com) room. Check
 
 ## Tests
 
-[xunit](http://xunit.github.io/) is used in thie project. Make sure all tests run before creating pull requests, or that the test fails with a clear `TODO`.
+[xunit](http://xunit.github.io/) is used in this project. Make sure all tests run before creating pull requests, or that the test fails with a clear `TODO`.
 
 To run the tests, first open command prompt (or PowerShell) and navigate to the Squirrel repository root. Then run:
 
 ```posh
-.\packages\xunit.runners.2.0.0-beta-build2700\tools\xunit.console.exe .\test\bin\Debug\Squirrel.Tests.dll
+.\packages\xunit.runners.(version)\tools\xunit.console.exe .\test\bin\Debug\Squirrel.Tests.dll
 ```
 
 See [Getting started with xunit](http://xunit.github.io/doc/getting-started.html) for more details.

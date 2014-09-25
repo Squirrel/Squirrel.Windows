@@ -16,8 +16,6 @@ First add the `squirrel.windows` nuget package. You can type this in the Package
 Install-Package squirrel.windows
 ```
 
-Also add a reference to `Ionic.Zip.dll` to your project. The file can be found at `(your project)\packages\Squirrel.Core.0.7.5\lib\net40\Ionic.Zip.dll`
-
 ## Creating a NuGet package for your app
 
 You can use [NuGet Package Explorer](https://npe.codeplex.com/) or the command line.
@@ -63,8 +61,8 @@ In your app's `AssemblyInfo.cs`, add the following line:
 
 This means that your app will be executed by the installer, in a number of different scenarios, with special flags - you should handle them correctly:
 
-* `--squirrel-install x.y.z.m` - called when your app is installed. Exit as soon as you're finished setting up the app
-* `--squirrel-firstrun` - called after everything is set up. You should treat this like a normal app run (maybe show the "Welcome" screen)
+* `--squirrel-install x.y.z.m` - called when your app is installed. Exit as soon as you're finished setting up the app.
+* `--squirrel-firstrun` - called after everything is set up. You should treat this like a normal app run (maybe show the "Welcome" screen).
 * `--squirrel-updated x.y.z.m` - called when your app is updated to the given version. Exit as soon as you're finished.
 * `--squirrel-uninstall` - called when your app is uninstalled. Exit as soon as you're finished.
 
@@ -72,7 +70,7 @@ This means that your app will be executed by the installer, in a number of diffe
 
 Simply deploy the content of the `Releases` folder to your web server (or, when developing, you can also use a directory path).
 
-Here is simplified sample code you can use 
+Here is simplified sample code you can use:
 
 ```csharp
 using(var updateManager = new UpdateManager(@"http://your-server/releases", "YourAppName", FrameworkVersion.Net45))
