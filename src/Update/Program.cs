@@ -17,7 +17,7 @@ using Squirrel;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, Deshortcut,
     }
 
     class Program : IEnableLogger 
@@ -80,6 +80,7 @@ namespace Squirrel.Update
                     { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
                     { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
+                    { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
                     "",
                     "Options:",
                     { "h|?|help", "Display Help and exit", _ => ShowHelp() },
@@ -115,6 +116,9 @@ namespace Squirrel.Update
                     break;
                 case UpdateAction.Shortcut:
                     Shortcut(target);
+                    break;
+                case UpdateAction.Deshortcut:
+                    Deshortcut(target);
                     break;
                 }
             
@@ -285,6 +289,19 @@ namespace Squirrel.Update
             var appName = getAppNameFromDirectory();
             using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
                 mgr.CreateShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
+            }
+        }
+
+        public void Deshortcut(string exeName)
+        {
+            if (String.IsNullOrWhiteSpace(exeName)) {
+                ShowHelp();
+                return;
+            }
+
+            var appName = getAppNameFromDirectory();
+            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+                mgr.RemoveShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
             }
         }
 
