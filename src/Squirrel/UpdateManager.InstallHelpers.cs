@@ -17,8 +17,8 @@ namespace Squirrel
     {
         internal class InstallHelperImpl : IEnableLogger
         {
-			readonly string applicationName;
-			readonly string rootAppDirectory;
+            readonly string applicationName;
+            readonly string rootAppDirectory;
 
             public InstallHelperImpl(string applicationName, string rootAppDirectory)
             {
@@ -26,79 +26,85 @@ namespace Squirrel
                 this.rootAppDirectory = rootAppDirectory;
             }
 
-			const string uninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
-			public async Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
+            const string currentVersionRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
+            const string uninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
+            public async Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
             {
-				var releaseContent = File.ReadAllText(Path.Combine(rootAppDirectory, "packages", "RELEASES"), Encoding.UTF8);
-				var releases = ReleaseEntry.ParseReleaseFile(releaseContent);
-				var latest = releases.OrderByDescending(x => x.Version).First();
+                var releaseContent = File.ReadAllText(Path.Combine(rootAppDirectory, "packages", "RELEASES"), Encoding.UTF8);
+                var releases = ReleaseEntry.ParseReleaseFile(releaseContent);
+                var latest = releases.OrderByDescending(x => x.Version).First();
 
-				// Download the icon and PNG => ICO it. If this doesn't work, who cares
-				var pkgPath = Path.Combine(rootAppDirectory, "packages", latest.Filename);
-				var zp = new ZipPackage(pkgPath);
-					
-				var targetPng = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
-				var targetIco = Path.Combine(rootAppDirectory, "app.ico");
+                // Download the icon and PNG => ICO it. If this doesn't work, who cares
+                var pkgPath = Path.Combine(rootAppDirectory, "packages", latest.Filename);
+                var zp = new ZipPackage(pkgPath);
+                    
+                var targetPng = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
+                var targetIco = Path.Combine(rootAppDirectory, "app.ico");
 
-				var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
-					.CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
+                // NB: Sometimes the Uninstall key doesn't exist
+                using (var parentKey =
+                    RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                        .CreateSubKey("Uninstall", RegistryKeyPermissionCheck.ReadWriteSubTree)) { ; }
 
-				try {
-					var wc = new WebClient();
+                var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                    .CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
 
-					await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
-					using (var fs = new FileStream(targetIco, FileMode.Create)) {
-						if (zp.IconUrl.AbsolutePath.EndsWith("ico")) {
-							var bytes = File.ReadAllBytes(targetPng);
-							fs.Write(bytes, 0, bytes.Length);
-						} else {
-							using (var bmp = (Bitmap)Image.FromFile(targetPng))
-							using (var ico = Icon.FromHandle(bmp.GetHicon())) {
-								ico.Save(fs);
-							}
-						}
+                try {
+                    var wc = new WebClient();
 
-						key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
-					}
-				} catch(Exception ex) {
-					this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
-				} finally {
-					File.Delete(targetPng);
-				}
+                    await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
+                    using (var fs = new FileStream(targetIco, FileMode.Create)) {
+                        if (zp.IconUrl.AbsolutePath.EndsWith("ico")) {
+                            var bytes = File.ReadAllBytes(targetPng);
+                            fs.Write(bytes, 0, bytes.Length);
+                        } else {
+                            using (var bmp = (Bitmap)Image.FromFile(targetPng))
+                            using (var ico = Icon.FromHandle(bmp.GetHicon())) {
+                                ico.Save(fs);
+                            }
+                        }
 
-				var stringsToWrite = new[] {
-					new { Key = "DisplayName", Value = zp.Description ?? zp.Summary },
-					new { Key = "DisplayVersion", Value = zp.Version.ToString() },
-					new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyymmdd") },
-					new { Key = "InstallLocation", Value = rootAppDirectory },
-					new { Key = "Publisher", Value = zp.Authors.First() },
-					new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
-					new { Key = "UninstallString", Value = uninstallCmd },
-				};
+                        key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
+                    }
+                } catch(Exception ex) {
+                    this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
+                } finally {
+                    File.Delete(targetPng);
+                }
 
-				var dwordsToWrite = new[] {
-					new { Key = "EstimatedSize", Value = (int)((new FileInfo(pkgPath)).Length / 1024) },
-					new { Key = "NoModify", Value = 1 },
-					new { Key = "NoRepair", Value = 1 },
-					new { Key = "Language", Value = 0x0409 },
-				};
+                var stringsToWrite = new[] {
+                    new { Key = "DisplayName", Value = zp.Description ?? zp.Summary },
+                    new { Key = "DisplayVersion", Value = zp.Version.ToString() },
+                    new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyymmdd") },
+                    new { Key = "InstallLocation", Value = rootAppDirectory },
+                    new { Key = "Publisher", Value = zp.Authors.First() },
+                    new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
+                    new { Key = "UninstallString", Value = uninstallCmd },
+                };
 
-				foreach (var kvp in stringsToWrite) {
-					key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.String);
-				}
-				foreach (var kvp in dwordsToWrite) {
-					key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.DWord);
-				}
+                var dwordsToWrite = new[] {
+                    new { Key = "EstimatedSize", Value = (int)((new FileInfo(pkgPath)).Length / 1024) },
+                    new { Key = "NoModify", Value = 1 },
+                    new { Key = "NoRepair", Value = 1 },
+                    new { Key = "Language", Value = 0x0409 },
+                };
 
-				return key;
-			}
+                foreach (var kvp in stringsToWrite) {
+                    key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.String);
+                }
+                foreach (var kvp in dwordsToWrite) {
+                    key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.DWord);
+                }
 
-			public void RemoveUninstallerRegistryEntry()
-			{
-				var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
-					.OpenSubKey(uninstallRegSubKey, true);
-				key.DeleteSubKeyTree(applicationName);
-			}
+                return key;
+            }
+
+            public void RemoveUninstallerRegistryEntry()
+            {
+                var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                    .OpenSubKey(uninstallRegSubKey, true);
+                key.DeleteSubKeyTree(applicationName);
+            }
 
             public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations)
             {
