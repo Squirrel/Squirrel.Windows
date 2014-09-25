@@ -17,7 +17,7 @@ using Squirrel;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify,
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut
     }
 
     class Program : IEnableLogger 
@@ -79,6 +79,7 @@ namespace Squirrel.Update
                     { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
                     { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
+                    { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
                     "",
                     "Options:",
                     { "h|?|help", "Display Help and exit", _ => ShowHelp() },
@@ -111,6 +112,9 @@ namespace Squirrel.Update
                     break;
                 case UpdateAction.Releasify:
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif);
+                    break;
+                case UpdateAction.Shortcut:
+                    Shortcut(target);
                     break;
                 }
             
@@ -271,6 +275,18 @@ namespace Squirrel.Update
             }
         }
 
+        public void Shortcut(string exeName)
+        {
+            if (String.IsNullOrWhiteSpace(exeName)) {
+                ShowHelp();
+                return;
+            }
+
+            var appName = getAppNameFromDirectory();
+            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+                mgr.CreateShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
+            }
+        }
 
         public void ShowHelp()
         {
