@@ -11,6 +11,12 @@ using Splat;
 
 namespace Squirrel
 {
+    [Flags]
+    public enum ShortcutLocation {
+        StartMenu = 1<<0,
+        Desktop = 1<<1,
+    }
+
     public interface IUpdateManager : IDisposable, IEnableLogger
     {
         /// <summary>
@@ -96,7 +102,16 @@ namespace Squirrel
         /// </summary>
         /// <param name="exeName">The name of the executable, relative to the 
         /// app install directory.</param>
-        void CreateShortcutsForExecutable(string exeName);
+        /// <param name="locations">The locations to install the shortcut</param>
+        void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations);
+
+        /// <summary>
+        /// Removes shortcuts created by CreateShortcutsForExecutable
+        /// </summary>
+        /// <param name="exeName">The name of the executable, relative to the
+        /// app install directory.</param>
+        /// <param name="locations">The locations to install the shortcut</param>
+        void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations);
     }
 
     public static class EasyModeMixin
@@ -123,7 +138,8 @@ namespace Squirrel
 
         public static void CreateShortcutForThisExe(this IUpdateManager This)
         {
-            This.CreateShortcutsForExecutable(Path.GetFileName(Assembly.GetEntryAssembly().Location));
+            This.CreateShortcutsForExecutable(Path.GetFileName(Assembly.GetEntryAssembly().Location),
+                ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
         }
     }
 }
