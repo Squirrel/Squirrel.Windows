@@ -73,13 +73,14 @@ namespace Squirrel
                 }
 
                 var stringsToWrite = new[] {
-                    new { Key = "DisplayName", Value = zp.Description ?? zp.Summary },
+                    new { Key = "DisplayName", Value = zp.Title ?? zp.Description ?? zp.Summary },
                     new { Key = "DisplayVersion", Value = zp.Version.ToString() },
                     new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyymmdd") },
                     new { Key = "InstallLocation", Value = rootAppDirectory },
                     new { Key = "Publisher", Value = zp.Authors.First() },
                     new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
                     new { Key = "UninstallString", Value = uninstallCmd },
+                    new { Key = "URLUpdateInfo", Value = zp.ProjectUrl != null ? zp.ProjectUrl.ToString() : "", }
                 };
 
                 var dwordsToWrite = new[] {
