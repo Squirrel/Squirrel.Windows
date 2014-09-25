@@ -36,7 +36,7 @@ namespace Squirrel
                 if (release == null) {
                     if (attemptingFullInstall) {
                         this.Log().Info("No release to install, running the app");
-                        await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, true, true);
+                        await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, false, true);
                     }
 
                     return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
@@ -247,7 +247,8 @@ namespace Squirrel
                         .ToList();
                 }
 
-                squirrelApps.ForEach(exe => Process.Start(exe, "--squirrel-firstrun"));
+                var firstRunParam = isInitialInstall ? "--squirrel-firstrun" : "";
+                squirrelApps.ForEach(exe => Process.Start(exe, firstRunParam));
             }
 
             void fixPinnedExecutables(Version newCurrentVersion) 
