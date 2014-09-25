@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -99,9 +100,18 @@ namespace Squirrel
 				key.DeleteSubKeyTree(applicationName);
 			}
 
-            public void CreateShortcutsForExecutable(string exeName)
+            public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations)
             {
-                throw new NotImplementedException();
+                var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
+                var thisRelease = Utility.FindCurrentVersion(releases);
+
+                var zf = new ZipPackage(thisRelease.Filename);
+                var fileVerInfo = FileVersionInfo.GetVersionInfo(
+                    Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName));
+            }
+
+            public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
+            {
             }
         }
     }

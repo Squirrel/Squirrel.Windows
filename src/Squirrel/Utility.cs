@@ -283,6 +283,11 @@ namespace Squirrel
             return Tuple.Create(path, (Stream) File.OpenWrite(path));
         }
 
+        public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
+        {
+            return Path.Combine(rootAppDirectory, "app-" + entry.Version.ToString());
+        }
+
         public static string PackageDirectoryForAppDir(string rootAppDirectory) 
         {
             return Path.Combine(rootAppDirectory, "packages");

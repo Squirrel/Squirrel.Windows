@@ -101,10 +101,16 @@ namespace Squirrel
             installHelpers.RemoveUninstallerRegistryEntry();
         }
 
-        public void CreateShortcutsForExecutable(string exeName)
+        public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations)
         {
             var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
-            installHelpers.CreateShortcutsForExecutable(exeName);
+            installHelpers.CreateShortcutsForExecutable(exeName, locations);
+        }
+
+        public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
+        {
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            installHelpers.RemoveShortcutsForExecutable(exeName, locations);
         }
 
         public Version CurrentlyInstalledVersion(string executable = null)
