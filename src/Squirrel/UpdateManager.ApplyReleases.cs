@@ -73,8 +73,17 @@ namespace Squirrel
                     var version = currentRelease.Name.ToVersion();
 
                     try {
-                        await SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName)
-                            .ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("--squirrel-uninstall {0}", version)), 1);
+                        var squirrelAwareApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName);
+
+                        if (squirrelAwareApps.Count > 0) {
+                            await squirrelAwareApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("--squirrel-uninstall {0}", version)), 1);
+                        } else {
+                            var allApps = currentRelease.EnumerateFiles()
+                                .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                                .ToList();
+
+                            allApps.ForEach(x => RemoveShortcutsForExecutable(x.Name, ShortcutLocation.StartMenu | ShortcutLocation.Desktop));
+                        }
                     } catch (Exception ex) {
                         this.Log().WarnException("Failed to run pre-uninstall hooks, uninstalling anyways", ex);
                     }
@@ -299,6 +308,10 @@ namespace Squirrel
                         .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                         .Select(x => x.FullName)
                         .ToList();
+
+                    // Create shortcuts for apps automatically if they didn't
+                    // create any Squirrel-aware apps
+                    squirrelApps.ForEach(x => CreateShortcutsForExecutable(Path.GetFileName(x), ShortcutLocation.Desktop | ShortcutLocation.StartMenu, isInitialInstall));
                 }
 
                 squirrelApps.ForEach(exe => Process.Start(exe, "--squirrel-firstrun"));
