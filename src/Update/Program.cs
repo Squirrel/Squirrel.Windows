@@ -377,8 +377,15 @@ namespace Squirrel.Update
                 if (!File.Exists(exe)) exe = "signtool.exe";
             }
 
-            await Utility.InvokeProcessAsync(exe,
-                String.Format("{0} {1}", signingOpts, exePath));
+            int exitCode = await Utility.InvokeProcessAsync(exe,
+                String.Format("sign {0} {1}", signingOpts, exePath));
+
+            if (exitCode != 0) {
+                var msg = String.Format(
+                    "Failed to sign, command invoked was: '{0} sign {1} {2}'", 
+                    exe, signingOpts, exePath);
+                throw new Exception(msg);
+            }
         }
 
         static string getAppNameFromDirectory(string path = null)
