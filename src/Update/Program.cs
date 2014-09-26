@@ -68,6 +68,7 @@ namespace Squirrel.Update
                 string packagesDir = default(string);
                 string bootstrapperExe = default(string);
                 string backgroundGif = default(string);
+                string signingParameters = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Update.exe command [OPTS]",
@@ -88,6 +89,7 @@ namespace Squirrel.Update
                     { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
+                    { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                 };
 
@@ -112,7 +114,7 @@ namespace Squirrel.Update
                     Update(target).Wait();
                     break;
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters);
                     break;
                 case UpdateAction.Shortcut:
                     Shortcut(target);
@@ -176,7 +178,6 @@ namespace Squirrel.Update
                     mgr.CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateTarget), "-s"),
                     "Failed to create uninstaller registry entry");
             }
-            
         }
 
         public async Task<string> Download(string updateUrl, string appName = null)
@@ -204,7 +205,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null)
         {
             targetDir = targetDir ?? ".\\Releases";
             packagesDir = packagesDir ?? ".";
