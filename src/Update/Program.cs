@@ -283,6 +283,10 @@ namespace Squirrel.Update
             } finally {
                 File.Delete(zipPath);
             }
+
+            if (signingOpts != null) {
+                signPEFile(targetSetupExe, signingOpts).Wait();
+            }
         }
 
         public void Shortcut(string exeName)
@@ -346,6 +350,23 @@ namespace Squirrel.Update
 
                 return target;
             }
+        }
+
+        static async Task signPEFile(string exePath, string signingOpts)
+        {
+            // Try to find SignTool.exe
+            var exe = @".\signtool.exe";
+            if (!File.Exists(exe)) {
+                exe = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    "signtool.exe");
+
+                // Run down PATH and hope for the best
+                if (!File.Exists(exe)) exe = "signtool.exe";
+            }
+
+            await Utility.InvokeProcessAsync(exe,
+                String.Format("{0} {1}", signingOpts, exePath));
         }
 
         static string getAppNameFromDirectory(string path = null)
