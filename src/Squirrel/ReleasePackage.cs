@@ -28,7 +28,7 @@ namespace Squirrel
         string ReleasePackageFile { get; }
         string SuggestedReleaseFileName { get; }
 
-        string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null);
+        string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null, Action<string> contentsPostProcessHook = null);
     }
 
     public static class VersionComparer
@@ -85,7 +85,7 @@ namespace Squirrel
 
         public Version Version { get { return InputPackageFile.ToVersion(); } }
 
-        public string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null)
+        public string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null, Action<string> contentsPostProcessHook = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(outputFile));
             releaseNotesProcessor = releaseNotesProcessor ?? (x => (new Markdown()).Transform(x));
@@ -147,6 +147,10 @@ namespace Squirrel
                 }
 
                 addDeltaFilesToContentTypes(tempDir.FullName);
+
+                if (contentsPostProcessHook != null) {
+                    contentsPostProcessHook(tempPath);
+                }
 
                 using (var zf = new ZipFile(outputFile)) {
                     this.Log().Info("Succeeeded, saving to " + outputFile);
