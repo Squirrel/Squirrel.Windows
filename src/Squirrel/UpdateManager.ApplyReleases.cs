@@ -20,9 +20,11 @@ namespace Squirrel
             readonly FrameworkVersion appFrameworkVersion = FrameworkVersion.Net45;
 
             readonly string rootAppDirectory;
+            readonly string applicationName;
 
-            public ApplyReleasesImpl(string rootAppDirectory)
+            public ApplyReleasesImpl(string applicationName, string rootAppDirectory)
             {
+                this.applicationName = applicationName;
                 this.rootAppDirectory = rootAppDirectory;
             }
 
@@ -80,6 +82,58 @@ namespace Squirrel
 
                 await this.ErrorIfThrows(() => Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
+            }
+
+            public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly)
+            {
+                var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
+                var thisRelease = Utility.FindCurrentVersion(releases);
+
+                var zf = new ZipPackage(thisRelease.Filename);
+                var exePath = Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName);
+                var fileVerInfo = FileVersionInfo.GetVersionInfo(exePath);
+
+                foreach (var f in new[] { ShortcutLocation.StartMenu, ShortcutLocation.Desktop, }) {
+                    if (!locations.HasFlag(f)) continue;
+
+                    var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
+                    var fileExists = File.Exists(file);
+
+                    // NB: If we've already installed the app, but the shortcut
+                    // is no longer there, we have to assume that the user didn't
+                    // want it there and explicitly deleted it, so we shouldn't
+                    // annoy them by recreating it.
+                    if (!fileExists && updateOnly) continue;
+
+                    if (fileExists) File.Delete(file);
+
+                    var sl = new ShellLink {
+                        Target = exePath,
+                        IconPath = exePath,
+                        IconIndex = 0,
+                        WorkingDirectory = Path.GetDirectoryName(exePath),
+                        Description = zf.Description,
+                    };
+
+                    sl.Save(file);
+                }
+            }
+
+            public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
+            {
+                var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
+                var thisRelease = Utility.FindCurrentVersion(releases);
+
+                var zf = new ZipPackage(thisRelease.Filename);
+                var fileVerInfo = FileVersionInfo.GetVersionInfo(
+                    Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName));
+
+                foreach (var f in new[] { ShortcutLocation.StartMenu, ShortcutLocation.Desktop, }) {
+                    if (!locations.HasFlag(f)) continue;
+
+                    var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
+                    if (File.Exists(file)) File.Delete(file);
+                }
             }
 
             async Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
@@ -406,6 +460,32 @@ namespace Squirrel
             {
                 return new DirectoryInfo(Path.Combine(rootAppDirectory, "app-" + releaseVersion));
             }
+
+            string linkTargetForVersionInfo(ShortcutLocation location, IPackage package, FileVersionInfo versionInfo)
+            {
+                return getLinkTarget(location, package.Title, versionInfo.ProductName);
+            }
+
+            string getLinkTarget(ShortcutLocation location, string title, string applicationName, bool createDirectoryIfNecessary = true)
+            {
+                var dir = default(string);
+
+                switch (location) {
+                case ShortcutLocation.Desktop:
+                    dir = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                    break;
+                case ShortcutLocation.StartMenu:
+                    dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), applicationName);
+                    break;
+                }
+
+                if (createDirectoryIfNecessary && Directory.Exists(dir)) {
+                    Directory.CreateDirectory(dir);
+                }
+
+                return Path.Combine(dir, title + ".lnk");
+            }
+
         }
     }
 }

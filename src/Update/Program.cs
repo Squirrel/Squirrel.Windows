@@ -293,7 +293,7 @@ namespace Squirrel.Update
 
             var appName = getAppNameFromDirectory();
             using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
-                mgr.CreateShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
+                mgr.CreateShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu, false);
             }
         }
 
