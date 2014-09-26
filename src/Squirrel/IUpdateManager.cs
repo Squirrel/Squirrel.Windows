@@ -131,20 +131,33 @@ namespace Squirrel
 
             This.Log().Info("Starting automatic update");
 
-            var updateInfo = await This.ErrorIfThrows(() => This.CheckForUpdate(false, x => progress(x / 3)),
-                "Failed to check for updates");
+        retry:
+            bool ignoreDeltaUpdates = false;
+            var updateInfo = default(UpdateInfo);
 
-            await This.ErrorIfThrows(() =>
-                This.DownloadReleases(updateInfo.ReleasesToApply, x => progress(x / 3 + 33)),
-                "Failed to download updates");
+            try {
+                updateInfo = await This.ErrorIfThrows(() => This.CheckForUpdate(ignoreDeltaUpdates, x => progress(x / 3)),
+                    "Failed to check for updates");
 
-            await This.ErrorIfThrows(() =>
-                This.ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
-                "Failed to apply updates");
+                await This.ErrorIfThrows(() =>
+                    This.DownloadReleases(updateInfo.ReleasesToApply, x => progress(x / 3 + 33)),
+                    "Failed to download updates");
 
-            await This.ErrorIfThrows(() => 
-                This.CreateUninstallerRegistryEntry(),
-                "Failed to set up uninstaller");
+                await This.ErrorIfThrows(() =>
+                    This.ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
+                    "Failed to apply updates");
+
+                await This.ErrorIfThrows(() => 
+                    This.CreateUninstallerRegistryEntry(),
+                    "Failed to set up uninstaller");
+            } catch (Exception ex) {
+                if (ignoreDeltaUpdates == false) {
+                    ignoreDeltaUpdates = true;
+                    goto retry;
+                }
+
+                throw;
+            }
 
             return updateInfo.ReleasesToApply.MaxBy(x => x.Version).LastOrDefault();
         }
