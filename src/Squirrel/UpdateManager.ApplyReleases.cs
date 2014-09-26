@@ -362,6 +362,16 @@ namespace Squirrel
                     .Where(x => x.Name != currentVersionFolder);
 
                 await toCleanup.ForEachAsync(async x => {
+                    var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(x.FullName);
+                    var args = String.Format("--squirrel-obsolete {0}", x.Name.Replace("app-", ""));
+
+                    if (squirrelApps.Count > 0) {
+                        // For each app, run the install command in-order and wait
+                        await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1 /* at a time */);
+                    }
+                });
+
+                await toCleanup.ForEachAsync(async x => {
                     try {
                         await Utility.DeleteDirectoryWithFallbackToNextReboot(x.FullName);
                     } catch (UnauthorizedAccessException ex) {
