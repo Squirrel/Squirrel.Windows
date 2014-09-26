@@ -69,7 +69,7 @@ namespace Squirrel.Tests
                         "Squirrel.Core.1.1.0.0-full.nupkg",
                     }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl("theApp", appDir);
 
                     await fixture.updateLocalReleasesFile();
 
@@ -132,7 +132,7 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl("theApp", appDir);
                         
                     // sync both release files
                     await fixture.updateLocalReleasesFile();
@@ -178,7 +178,7 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl("theApp", appDir);
 
                     // sync both release files
                     await fixture.updateLocalReleasesFile();
@@ -220,7 +220,7 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl("theApp", appDir);
 
                     // sync both release files
                     await fixture.updateLocalReleasesFile();
