@@ -68,6 +68,7 @@ namespace Squirrel.Update
                 string packagesDir = default(string);
                 string bootstrapperExe = default(string);
                 string backgroundGif = default(string);
+                string signingParameters = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Update.exe command [OPTS]",
@@ -88,6 +89,7 @@ namespace Squirrel.Update
                     { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
+                    { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                 };
 
@@ -112,7 +114,7 @@ namespace Squirrel.Update
                     Update(target).Wait();
                     break;
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters);
                     break;
                 case UpdateAction.Shortcut:
                     Shortcut(target);
@@ -176,7 +178,6 @@ namespace Squirrel.Update
                     mgr.CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateTarget), "-s"),
                     "Failed to create uninstaller registry entry");
             }
-            
         }
 
         public async Task<string> Download(string updateUrl, string appName = null)
@@ -204,7 +205,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null)
         {
             targetDir = targetDir ?? ".\\Releases";
             packagesDir = packagesDir ?? ".";
@@ -240,7 +241,14 @@ namespace Squirrel.Update
                 this.Log().Info("Creating release package: " + file.FullName);
 
                 var rp = new ReleasePackage(file.FullName);
-                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir);
+                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+                    if (signingOpts == null) return;
+
+                    new DirectoryInfo(pkgPath).GetAllFilesRecursively()
+                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
+                        .Wait();
+                });
 
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
                 if (prev != null) {
@@ -260,7 +268,7 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif);
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
 
             try {
                 var zip = File.ReadAllBytes(zipPath);
@@ -281,6 +289,10 @@ namespace Squirrel.Update
                 this.Log().ErrorException("Failed to update Setup.exe with new Zip file", ex);
             } finally {
                 File.Delete(zipPath);
+            }
+
+            if (signingOpts != null) {
+                signPEFile(targetSetupExe, signingOpts).Wait();
             }
         }
 
@@ -316,7 +328,7 @@ namespace Squirrel.Update
             opts.WriteOptionDescriptions(Console.Out);
         }
 
-        string createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif)
+        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts)
         {
             string tempPath;
 
@@ -339,11 +351,47 @@ namespace Squirrel.Update
                 var target = Path.GetTempFileName();
                 File.Delete(target);
 
+                // Sign Update.exe so that virus scanners don't think we're
+                // pulling one over on them
+                if (signingOpts != null) {
+                    var di = new DirectoryInfo(tempPath);
+
+                    var files = di.EnumerateFiles()
+                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .Select(x => x.FullName);
+
+                    await files.ForEachAsync(x => signPEFile(x, signingOpts));
+                }
+
                 this.ErrorIfThrows(() =>
                     ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
                     "Failed to create Zip file from directory: " + tempPath);
 
                 return target;
+            }
+        }
+
+        static async Task signPEFile(string exePath, string signingOpts)
+        {
+            // Try to find SignTool.exe
+            var exe = @".\signtool.exe";
+            if (!File.Exists(exe)) {
+                exe = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    "signtool.exe");
+
+                // Run down PATH and hope for the best
+                if (!File.Exists(exe)) exe = "signtool.exe";
+            }
+
+            int exitCode = await Utility.InvokeProcessAsync(exe,
+                String.Format("sign {0} {1}", signingOpts, exePath));
+
+            if (exitCode != 0) {
+                var msg = String.Format(
+                    "Failed to sign, command invoked was: '{0} sign {1} {2}'", 
+                    exe, signingOpts, exePath);
+                throw new Exception(msg);
             }
         }
 
