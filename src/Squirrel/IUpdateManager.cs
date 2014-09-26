@@ -89,7 +89,7 @@ namespace Squirrel
         Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch);
 
         /// <summary>
-        /// Creates an entry in Programs and Features based on the currently
+        /// Creates an entry in Programs and Features based on the currently 
         /// applied package. Uses the built-in Update.exe to handle uninstall.
         /// </summary>
         /// <returns>The registry key that was created</returns>
@@ -139,6 +139,10 @@ namespace Squirrel
             await This.ErrorIfThrows(() =>
                 This.ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
                 "Failed to apply updates");
+
+            await This.ErrorIfThrows(() => 
+                This.CreateUninstallerRegistryEntry(),
+                "Failed to set up uninstaller");
 
             return updateInfo.ReleasesToApply.MaxBy(x => x.Version).LastOrDefault();
         }
