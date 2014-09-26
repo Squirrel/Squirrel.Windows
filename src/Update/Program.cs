@@ -261,7 +261,7 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif);
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
 
             try {
                 var zip = File.ReadAllBytes(zipPath);
@@ -321,7 +321,7 @@ namespace Squirrel.Update
             opts.WriteOptionDescriptions(Console.Out);
         }
 
-        string createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif)
+        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts)
         {
             string tempPath;
 
@@ -343,6 +343,18 @@ namespace Squirrel.Update
 
                 var target = Path.GetTempFileName();
                 File.Delete(target);
+
+                // Sign Update.exe so that virus scanners don't think we're
+                // pulling one over on them
+                if (signingOpts != null) {
+                    var di = new DirectoryInfo(tempPath);
+
+                    var files = di.EnumerateFiles()
+                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .Select(x => x.FullName);
+
+                    await files.ForEachAsync(x => signPEFile(x, signingOpts));
+                }
 
                 this.ErrorIfThrows(() =>
                     ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
