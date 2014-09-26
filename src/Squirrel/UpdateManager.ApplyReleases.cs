@@ -115,7 +115,10 @@ namespace Squirrel
                         Description = zf.Description,
                     };
 
-                    sl.Save(file);
+                    // NB: Just don't if we're in a test runner for now
+                    if (!ModeDetector.InUnitTestRunner()) {
+                        sl.Save(file);
+                    }
                 }
             }
 
