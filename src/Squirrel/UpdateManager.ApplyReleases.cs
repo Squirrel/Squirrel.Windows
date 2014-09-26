@@ -53,7 +53,7 @@ namespace Squirrel
                 progress(50);
 
                 var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
-                await this.ErrorIfThrows(() => invokePostInstall(newVersion, currentReleases.Count == 1 && !silentInstall, false),
+                await this.ErrorIfThrows(() => invokePostInstall(newVersion, attemptingFullInstall, false),
                     "Failed to invoke post-install");
                 progress(75);
 
@@ -101,7 +101,10 @@ namespace Squirrel
                 var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
                 var thisRelease = Utility.FindCurrentVersion(releases);
 
-                var zf = new ZipPackage(thisRelease.Filename);
+                var zf = new ZipPackage(Path.Combine(
+                    Utility.PackageDirectoryForAppDir(rootAppDirectory),
+                    thisRelease.Filename));
+
                 var exePath = Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName);
                 var fileVerInfo = FileVersionInfo.GetVersionInfo(exePath);
 
@@ -111,28 +114,31 @@ namespace Squirrel
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
                     var fileExists = File.Exists(file);
 
-                    this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
-
                     // NB: If we've already installed the app, but the shortcut
                     // is no longer there, we have to assume that the user didn't
                     // want it there and explicitly deleted it, so we shouldn't
                     // annoy them by recreating it.
-                    if (!fileExists && updateOnly) continue;
-
-                    if (fileExists) File.Delete(file);
-
-                    var sl = new ShellLink {
-                        Target = exePath,
-                        IconPath = exePath,
-                        IconIndex = 0,
-                        WorkingDirectory = Path.GetDirectoryName(exePath),
-                        Description = zf.Description,
-                    };
-
-                    // NB: Just don't if we're in a test runner for now
-                    if (!ModeDetector.InUnitTestRunner()) {
-                        sl.Save(file);
+                    if (!fileExists && updateOnly) {
+                        this.Log().Warn("Wanted to update shortcut {0} but it appears user deleted it", file);
+                        continue;
                     }
+
+                    this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
+
+                    this.ErrorIfThrows(() => {
+                        if (fileExists) File.Delete(file);
+
+                        var sl = new ShellLink {
+                            Target = exePath,
+                            IconPath = exePath,
+                            IconIndex = 0,
+                            WorkingDirectory = Path.GetDirectoryName(exePath),
+                            Description = zf.Description,
+                        };
+
+                        this.Log().Info("About to save shortcut: {0}", file);
+                        if (ModeDetector.InUnitTestRunner() == false) sl.Save(file);
+                    }, "Can't write shortcut: " + file);
                 }
             }
 
@@ -141,7 +147,10 @@ namespace Squirrel
                 var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
                 var thisRelease = Utility.FindCurrentVersion(releases);
 
-                var zf = new ZipPackage(thisRelease.Filename);
+                var zf = new ZipPackage(Path.Combine(
+                    Utility.PackageDirectoryForAppDir(rootAppDirectory),
+                    thisRelease.Filename));
+
                 var fileVerInfo = FileVersionInfo.GetVersionInfo(
                     Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName));
 
@@ -151,7 +160,10 @@ namespace Squirrel
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
 
                     this.Log().Info("Removing shortcut for {0} => {1}", exeName, file);
-                    if (File.Exists(file)) File.Delete(file);
+
+                    this.ErrorIfThrows(() => {
+                        if (File.Exists(file)) File.Delete(file);
+                    }, "Couldn't delete shortcut: " + file);
                 }
             }
 
@@ -304,8 +316,6 @@ namespace Squirrel
                 // For each app, run the install command in-order and wait
                 if (!firstRunOnly) await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1 /* at a time */);
 
-                if (!isInitialInstall) return;
-
                 // If this is the first run, we run the apps with first-run and 
                 // *don't* wait for them, since they're probably the main EXE
                 if (squirrelApps.Count == 0) {
@@ -318,8 +328,10 @@ namespace Squirrel
 
                     // Create shortcuts for apps automatically if they didn't
                     // create any Squirrel-aware apps
-                    squirrelApps.ForEach(x => CreateShortcutsForExecutable(Path.GetFileName(x), ShortcutLocation.Desktop | ShortcutLocation.StartMenu, isInitialInstall));
+                    squirrelApps.ForEach(x => CreateShortcutsForExecutable(Path.GetFileName(x), ShortcutLocation.Desktop | ShortcutLocation.StartMenu, isInitialInstall == false));
                 }
+
+                if (!isInitialInstall) return;
 
                 var firstRunParam = isInitialInstall ? "--squirrel-firstrun" : "";
                 squirrelApps.ForEach(exe => Process.Start(exe, firstRunParam));
@@ -515,11 +527,11 @@ namespace Squirrel
                     dir = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                     break;
                 case ShortcutLocation.StartMenu:
-                    dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), applicationName);
+                    dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", applicationName);
                     break;
                 }
 
-                if (createDirectoryIfNecessary && Directory.Exists(dir)) {
+                if (createDirectoryIfNecessary && !Directory.Exists(dir)) {
                     Directory.CreateDirectory(dir);
                 }
 
