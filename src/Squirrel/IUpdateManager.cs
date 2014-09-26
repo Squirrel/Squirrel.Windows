@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
@@ -9,6 +11,12 @@ using Splat;
 
 namespace Squirrel
 {
+    [Flags]
+    public enum ShortcutLocation {
+        StartMenu = 1<<0,
+        Desktop = 1<<1,
+    }
+
     public interface IUpdateManager : IDisposable, IEnableLogger
     {
         /// <summary>
@@ -81,10 +89,38 @@ namespace Squirrel
         Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch);
 
         /// <summary>
+        /// Creates an entry in Programs and Features based on the currently 
+        /// applied package. Uses the built-in Update.exe to handle uninstall.
+        /// </summary>
+        /// <returns>The registry key that was created</returns>
+        Task<RegistryKey> CreateUninstallerRegistryEntry();
+
+        /// <summary>
         /// Removes the entry in Programs and Features created via 
         /// CreateUninstallerRegistryEntry
         /// </summary>
         void RemoveUninstallerRegistryEntry();
+
+        /// <summary>
+        /// Create a shortcut on the Desktop / Start Menu for the given 
+        /// executable. Metadata from the currently installed NuGet package 
+        /// and information from the Version Header of the EXE will be used
+        /// to construct the shortcut folder / name.
+        /// </summary>
+        /// <param name="exeName">The name of the executable, relative to the 
+        /// app install directory.</param>
+        /// <param name="locations">The locations to install the shortcut</param>
+        /// <param name="updateOnly">Set to false during initial install, true 
+        /// during app update.</param>
+        void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly);
+
+        /// <summary>
+        /// Removes shortcuts created by CreateShortcutsForExecutable
+        /// </summary>
+        /// <param name="exeName">The name of the executable, relative to the
+        /// app install directory.</param>
+        /// <param name="locations">The locations to install the shortcut</param>
+        void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations);
     }
 
     public static class EasyModeMixin
@@ -106,7 +142,17 @@ namespace Squirrel
                 This.ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
                 "Failed to apply updates");
 
+            await This.ErrorIfThrows(() => 
+                This.CreateUninstallerRegistryEntry(),
+                "Failed to set up uninstaller");
+
             return updateInfo.ReleasesToApply.MaxBy(x => x.Version).LastOrDefault();
+        }
+
+        public static void CreateShortcutForThisExe(this IUpdateManager This)
+        {
+            This.CreateShortcutsForExecutable(Path.GetFileName(Assembly.GetEntryAssembly().Location),
+                ShortcutLocation.Desktop | ShortcutLocation.StartMenu, true);
         }
     }
 }

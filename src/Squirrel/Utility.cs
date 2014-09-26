@@ -283,6 +283,11 @@ namespace Squirrel
             return Tuple.Create(path, (Stream) File.OpenWrite(path));
         }
 
+        public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
+        {
+            return Path.Combine(rootAppDirectory, "app-" + entry.Version.ToString());
+        }
+
         public static string PackageDirectoryForAppDir(string rootAppDirectory) 
         {
             return Path.Combine(rootAppDirectory, "packages");
@@ -291,6 +296,25 @@ namespace Squirrel
         public static string LocalReleaseFileForAppDir(string rootAppDirectory)
         {
             return Path.Combine(PackageDirectoryForAppDir(rootAppDirectory), "RELEASES");
+        }
+
+        public static IEnumerable<ReleaseEntry> LoadLocalReleases(string localReleaseFile)
+        {
+            var file = File.OpenRead(localReleaseFile);
+
+            // NB: sr disposes file
+            using (var sr = new StreamReader(file, Encoding.UTF8)) {
+                return ReleaseEntry.ParseReleaseFile(sr.ReadToEnd());
+            }
+        }
+            
+        public static ReleaseEntry FindCurrentVersion(IEnumerable<ReleaseEntry> localReleases)
+        {
+            if (!localReleases.Any()) {
+                return null;
+            }
+
+            return localReleases.MaxBy(x => x.Version).SingleOrDefault(x => !x.IsDelta);
         }
 
         static TAcc scan<T, TAcc>(this IEnumerable<T> This, TAcc initialValue, Func<TAcc, T, TAcc> accFunc)

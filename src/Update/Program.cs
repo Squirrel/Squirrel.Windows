@@ -17,7 +17,7 @@ using Squirrel;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify,
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, Deshortcut,
     }
 
     class Program : IEnableLogger 
@@ -79,6 +79,8 @@ namespace Squirrel.Update
                     { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
                     { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
+                    { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
+                    { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
                     "",
                     "Options:",
                     { "h|?|help", "Display Help and exit", _ => ShowHelp() },
@@ -111,6 +113,12 @@ namespace Squirrel.Update
                     break;
                 case UpdateAction.Releasify:
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif);
+                    break;
+                case UpdateAction.Shortcut:
+                    Shortcut(target);
+                    break;
+                case UpdateAction.Deshortcut:
+                    Deshortcut(target);
                     break;
                 }
             
@@ -161,9 +169,14 @@ namespace Squirrel.Update
                 var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
                 await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(66 + x / 3));
+
+                var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
+
+                await this.ErrorIfThrows(() =>
+                    mgr.CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateTarget), "-s"),
+                    "Failed to create uninstaller registry entry");
             }
             
-            // TODO: Update our installer entry
         }
 
         public async Task<string> Download(string updateUrl, string appName = null)
@@ -271,6 +284,31 @@ namespace Squirrel.Update
             }
         }
 
+        public void Shortcut(string exeName)
+        {
+            if (String.IsNullOrWhiteSpace(exeName)) {
+                ShowHelp();
+                return;
+            }
+
+            var appName = getAppNameFromDirectory();
+            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+                mgr.CreateShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu, false);
+            }
+        }
+
+        public void Deshortcut(string exeName)
+        {
+            if (String.IsNullOrWhiteSpace(exeName)) {
+                ShowHelp();
+                return;
+            }
+
+            var appName = getAppNameFromDirectory();
+            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+                mgr.RemoveShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
+            }
+        }
 
         public void ShowHelp()
         {

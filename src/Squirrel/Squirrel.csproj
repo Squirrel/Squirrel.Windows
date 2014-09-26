@@ -101,6 +101,7 @@
     <None Include="packages.config" />
     <Compile Include="UpdateManager.DownloadReleases.cs" />
     <Compile Include="UpdateManager.ApplyReleases.cs" />
+    <Compile Include="UpdateManager.InstallHelpers.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
