@@ -95,6 +95,12 @@ namespace Squirrel
             return installHelpers.CreateUninstallerRegistryEntry(uninstallCmd, quietSwitch);
         }
 
+        public Task<RegistryKey> CreateUninstallerRegistryEntry()
+        {
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            return installHelpers.CreateUninstallerRegistryEntry();
+        }
+
         public void RemoveUninstallerRegistryEntry()
         {
             var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);

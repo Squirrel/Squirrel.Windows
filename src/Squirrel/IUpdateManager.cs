@@ -89,6 +89,13 @@ namespace Squirrel
         Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch);
 
         /// <summary>
+        /// Creates an entry in Programs and Features based on the currently
+        /// applied package. Uses the built-in Update.exe to handle uninstall.
+        /// </summary>
+        /// <returns>The registry key that was created</returns>
+        Task<RegistryKey> CreateUninstallerRegistryEntry();
+
+        /// <summary>
         /// Removes the entry in Programs and Features created via 
         /// CreateUninstallerRegistryEntry
         /// </summary>
