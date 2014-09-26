@@ -487,7 +487,23 @@ namespace Squirrel
 
             string linkTargetForVersionInfo(ShortcutLocation location, IPackage package, FileVersionInfo versionInfo)
             {
-                return getLinkTarget(location, package.Title, versionInfo.ProductName);
+                var possibleProductNames = new[] {
+                    versionInfo.ProductName,
+                    package.Title,
+                    versionInfo.FileDescription,
+                    versionInfo.FileName,
+                };
+
+                var possibleCompanyNames = new[] {
+                    package.Title,
+                    versionInfo.CompanyName,
+                    package.Id,
+                };
+
+                var prodName = possibleCompanyNames.First(x => !String.IsNullOrWhiteSpace(x));
+                var pkgName = possibleProductNames.First(x => !String.IsNullOrWhiteSpace(x));
+
+                return getLinkTarget(location, pkgName, prodName);
             }
 
             string getLinkTarget(ShortcutLocation location, string title, string applicationName, bool createDirectoryIfNecessary = true)
