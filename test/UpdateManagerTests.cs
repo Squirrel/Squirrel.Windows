@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Win32;
 using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
@@ -12,6 +14,45 @@ namespace Squirrel.Tests
 {
     public class UpdateManagerTests
     {
+        public class CreateUninstallerRegKeyTests
+        {
+            [Fact]
+            public async Task CallingMethodTwiceShouldUpdateInstaller()
+            {
+                string remotePkgPath;
+                string path;
+
+                using (Utility.WithTempDirectory(out path)) {
+                    using (Utility.WithTempDirectory(out remotePkgPath))
+                    using (var mgr = new UpdateManager(remotePkgPath, "theApp", FrameworkVersion.Net45, path)) {
+                        IntegrationTestHelper.CreateFakeInstalledApp("1.0.0.1", remotePkgPath);
+                        await mgr.FullInstall();
+                    }
+
+                    using (var mgr = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45, path)) {
+                        await mgr.CreateUninstallerRegistryEntry();
+                        var regKey = await mgr.CreateUninstallerRegistryEntry();
+
+                        Assert.False(String.IsNullOrWhiteSpace((string)regKey.GetValue("DisplayName")));
+
+                        mgr.RemoveUninstallerRegistryEntry();
+                    }
+
+                    // NB: Squirrel-Aware first-run might still be running, slow
+                    // our roll before blowing away the temp path
+                    Thread.Sleep(1000);
+                }
+
+                var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                    .OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall");
+
+                using (key) {
+                    Assert.False(key.GetSubKeyNames().Contains("theApp"));
+                }
+
+            }
+        }
+
         public class UpdateLocalReleasesTests
         {
             [Fact]
