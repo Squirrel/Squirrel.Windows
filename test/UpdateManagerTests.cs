@@ -49,7 +49,6 @@ namespace Squirrel.Tests
                 using (key) {
                     Assert.False(key.GetSubKeyNames().Contains("theApp"));
                 }
-
             }
         }
 

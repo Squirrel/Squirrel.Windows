@@ -409,5 +409,31 @@ namespace Squirrel.Tests
                 zp.Version.ToString().ShouldEqual("1.1.0.0");
             }
         }
+
+        [Fact]
+        public async Task CreateShortcutsRoundTrip()
+        {
+            string remotePkgPath;
+            string path;
+
+            using (Utility.WithTempDirectory(out path)) {
+                using (Utility.WithTempDirectory(out remotePkgPath))
+                using (var mgr = new UpdateManager(remotePkgPath, "theApp", FrameworkVersion.Net45, path)) {
+                    IntegrationTestHelper.CreateFakeInstalledApp("1.0.0.1", remotePkgPath);
+                    await mgr.FullInstall();
+                }
+
+                var fixture = new UpdateManager.ApplyReleasesImpl("theApp", Path.Combine(path, "theApp"));
+                fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu, false);
+
+                // NB: COM is Weird.
+                Thread.Sleep(1000);
+                fixture.RemoveShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
+
+                // NB: Squirrel-Aware first-run might still be running, slow
+                // our roll before blowing away the temp path
+                Thread.Sleep(1000);
+            }
+        }
     }
 }
