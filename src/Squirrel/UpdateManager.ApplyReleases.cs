@@ -111,6 +111,8 @@ namespace Squirrel
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
                     var fileExists = File.Exists(file);
 
+                    this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
+
                     // NB: If we've already installed the app, but the shortcut
                     // is no longer there, we have to assume that the user didn't
                     // want it there and explicitly deleted it, so we shouldn't
@@ -147,6 +149,8 @@ namespace Squirrel
                     if (!locations.HasFlag(f)) continue;
 
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
+
+                    this.Log().Info("Removing shortcut for {0} => {1}", exeName, file);
                     if (File.Exists(file)) File.Delete(file);
                 }
             }
