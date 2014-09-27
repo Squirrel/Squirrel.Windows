@@ -30,23 +30,32 @@ namespace Squirrel
     public class ReleaseEntry : IEnableLogger, IReleaseEntry
     {
         [DataMember] public string SHA1 { get; protected set; }
+        [DataMember] public string BaseUrl { get; protected set; }
         [DataMember] public string Filename { get; protected set; }
         [DataMember] public long Filesize { get; protected set; }
         [DataMember] public bool IsDelta { get; protected set; }
 
-        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta)
+        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null)
         {
             Contract.Requires(sha1 != null && sha1.Length == 40);
             Contract.Requires(filename != null);
             Contract.Requires(filename.Contains(Path.DirectorySeparatorChar) == false);
             Contract.Requires(filesize > 0);
 
-            SHA1 = sha1; Filename = filename; Filesize = filesize; IsDelta = isDelta;
+            if(baseUrl != null)
+            {
+                if (Uri.IsWellFormedUriString(baseUrl, UriKind.Absolute) && !baseUrl.EndsWith("/"))
+                    baseUrl += "/";
+                else if (!baseUrl.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                    baseUrl += Path.DirectorySeparatorChar;
+            }
+
+            SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Filesize = filesize; IsDelta = isDelta;
         }
 
         [IgnoreDataMember]
         public string EntryAsString {
-            get { return String.Format("{0} {1} {2}", SHA1, Filename, Filesize); }
+            get { return String.Format("{0} {1}{2} {3}", SHA1, BaseUrl, Filename, Filesize); }
         }
 
         [IgnoreDataMember]
@@ -89,9 +98,25 @@ namespace Squirrel
                 throw new Exception("Invalid release entry: " + entry);
             }
 
+            string filename = m.Groups[2].Value;
+
+            // Extract the filename if a path or a uri is provided
+            string baseUrl = null;
+            if(Uri.IsWellFormedUriString(filename, UriKind.Absolute))
+            {
+                var indexOfLastPathSeparator = filename.LastIndexOf("/");
+                baseUrl = filename.Substring(0, indexOfLastPathSeparator);
+                filename = filename.Substring(indexOfLastPathSeparator + 1);
+            }
+            else if (filename.IndexOf(Path.DirectorySeparatorChar) > -1)
+            {
+                baseUrl = Path.GetDirectoryName(filename);
+                filename = Path.GetFileName(filename);
+            }
+
             long size = Int64.Parse(m.Groups[3].Value);
-            bool isDelta = filenameIsDeltaFile(m.Groups[2].Value);
-            return new ReleaseEntry(m.Groups[1].Value, m.Groups[2].Value, size, isDelta);
+            bool isDelta = filenameIsDeltaFile(filename);
+            return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl);
         }
 
         public static IEnumerable<ReleaseEntry> ParseReleaseFile(string fileContents)
@@ -134,19 +159,19 @@ namespace Squirrel
             }
         }
 
-        public static ReleaseEntry GenerateFromFile(Stream file, string filename)
+        public static ReleaseEntry GenerateFromFile(Stream file, string filename, string baseUrl = null)
         {
             Contract.Requires(file != null && file.CanRead);
             Contract.Requires(!String.IsNullOrEmpty(filename));
 
             var hash = Utility.CalculateStreamSHA1(file);
-            return new ReleaseEntry(hash, filename, file.Length, filenameIsDeltaFile(filename));
+            return new ReleaseEntry(hash, filename, file.Length, filenameIsDeltaFile(filename), baseUrl);
         }
 
-        public static ReleaseEntry GenerateFromFile(string path)
+        public static ReleaseEntry GenerateFromFile(string path, string baseUrl = null)
         {
             using (var inf = File.OpenRead(path)) {
-                return GenerateFromFile(inf, Path.GetFileName(path));
+                return GenerateFromFile(inf, Path.GetFileName(path), baseUrl);
             }
         }
 

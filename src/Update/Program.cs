@@ -260,13 +260,13 @@ namespace Squirrel.Update
 
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
                         Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
-                    processed.Add(dp.InputPackageFile);
+                    processed.Insert(0, dp.InputPackageFile);
                 }
             }
 
             foreach (var file in toProcess) { File.Delete(file.FullName); }
 
-            var releaseEntries = previousReleases.Concat(processed.Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename)));
+            var releaseEntries = previousReleases.Concat(processed.Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl)));
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
             var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
