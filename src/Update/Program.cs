@@ -69,6 +69,7 @@ namespace Squirrel.Update
                 string bootstrapperExe = default(string);
                 string backgroundGif = default(string);
                 string signingParameters = default(string);
+                string baseUrl = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Update.exe command [OPTS]",
@@ -90,6 +91,7 @@ namespace Squirrel.Update
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
                     { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
+                    { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                 };
 
@@ -114,7 +116,7 @@ namespace Squirrel.Update
                     Update(target).Wait();
                     break;
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl);
                     break;
                 case UpdateAction.Shortcut:
                     Shortcut(target);
@@ -205,7 +207,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null)
         {
             targetDir = targetDir ?? ".\\Releases";
             packagesDir = packagesDir ?? ".";
@@ -230,6 +232,7 @@ namespace Squirrel.Update
                 .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase));
 
             var toProcess = allNuGetFiles.Where(x => !x.Name.Contains("-delta") && !x.Name.Contains("-full"));
+            var processed = new List<string>();
 
             var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
             var previousReleases = Enumerable.Empty<ReleaseEntry>();
@@ -249,19 +252,21 @@ namespace Squirrel.Update
                         .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
                         .Wait();
                 });
+                processed.Add(rp.ReleasePackageFile);
 
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
                 if (prev != null) {
                     var deltaBuilder = new DeltaPackageBuilder();
 
-                    deltaBuilder.CreateDeltaPackage(prev, rp,
+                    var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
                         Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                    processed.Add(dp.InputPackageFile);
                 }
             }
 
             foreach (var file in toProcess) { File.Delete(file.FullName); }
 
-            var releaseEntries = allNuGetFiles.Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
+            var releaseEntries = previousReleases.Concat(processed.Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename)));
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
             var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
