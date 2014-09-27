@@ -66,6 +66,8 @@ This means that your app will be executed by the installer, in a number of diffe
 * `--squirrel-updated x.y.z.m` - called when your app is updated to the given version. Exit as soon as you're finished.
 * `--squirrel-uninstall` - called when your app is uninstalled. Exit as soon as you're finished.
 
+If your app is "Squirrel Aware", you'll also need to create icons yourself in `--squirrel-install` and `--squirrel-updated`, and  remove them in `--squirrel-uninstall`. See [INSTALLER](doc/INSTALLER.md) for additional information and examples.
+
 ## Auto Update
 
 Simply deploy the content of the `Releases` folder to your web server (or, when developing, you can also use a directory path).
@@ -73,24 +75,45 @@ Simply deploy the content of the `Releases` folder to your web server (or, when 
 Here is simplified sample code you can use:
 
 ```csharp
+try
+{
+	using (var mgr = new UpdateManager(@"http://your-server/releases-directory",
+			"YourAppName",
+			FrameworkVersion.Net45))
+	{
+		ReleaseEntry result = await mgr.UpdateApp();
+		// Handle the update completion
+	}
+}
+catch (Exception ex)
+{
+   // Handle the error
+}
+```
+
+You can also run steps manually, e.g. if you want to check for updates and separately download and install them:
+
+```csharp
 using(var updateManager = new UpdateManager(@"http://your-server/releases", "YourAppName", FrameworkVersion.Net45))
 {
- var updateInfo = await updateManager.CheckForUpdate();
+	var updateInfo = await updateManager.CheckForUpdate();
 
-    if (updateInfo == null || !updateInfo.ReleasesToApply.Any())
-        return;
+	if (updateInfo == null || !updateInfo.ReleasesToApply.Any())
+		return;
 
-    // To get the latest version information:
-    //   updateInfo.ReleasesToApply.OrderBy(x => x.Version).Last();
+	// To get the latest version information:
+	//   updateInfo.ReleasesToApply.OrderBy(x => x.Version).Last();
 
-    await _updateManager.DownloadReleases(updateInfo.ReleasesToApply);
-    await _updateManager.ApplyReleases(updateInfo);
+	await _updateManager.DownloadReleases(updateInfo.ReleasesToApply);
+	await _updateManager.ApplyReleases(updateInfo);
 }
 ```
 
 ## Create your Installer
 
 In NuGet Package Manager Console, type `Squirrel --releasify path/to/the/nuget/package.nupkg`, where the path is from your solution root.
+
+> Note that you may need to provide a `-p C:\Path\To\YourProject\packages`
 
 A folder called `Releases` will be created; simply deploy it to your web server.
 

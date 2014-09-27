@@ -29,6 +29,62 @@ Update.exe is a generic client for Squirrel which supports several operations:
 * `--download URL` - Check for updates from the given URL and write information about available versions to standard output in JSON format.
 * `--update URL` - Updates the application to the latest version from the remote URL
 
+Here is sample code for handling these events:
+
+```csharp
+public partial class App : Application
+{
+	protected override void OnStartup(StartupEventArgs e)
+	{
+	   // to make this work you MUST remove StartupUri from app.xaml
+	   if (e.Args.Any())
+	   {
+	
+		   if (e.Args[0] == "--squirrel-install")
+		   {
+			   // called when your app is installed. Exit as soon as you're finished setting up the app. 
+			   string version = e.Args[1];
+			   MessageBox.Show(string.Format("installed version: {0}", version));
+			   // add the icon
+			   SquirrelAddIcon.AddIcon(ShortcutCreationLocation.Desktop, "WpfApplication2", "WpfApplication2");
+			   SquirrelAddIcon.AddIcon(ShortcutCreationLocation.StartMenu, "WpfApplication2", "WpfApplication2");
+			   Shutdown(0);
+			   return;
+		   }
+		   if (e.Args[0] == "--squirrel-firstrun")
+		   {
+			   // called after everything is set up. You should treat this like a normal app run (maybe show the "Welcome" screen)
+			   MessageBox.Show("first running. Welcome");
+			   // fall through and run.
+		   }
+		   if (e.Args[0] == "--squirrel-updated")
+		   {
+			   // called when your app is updated to the given version. Exit as soon as you're finished
+			   string version = e.Args[1];
+			   MessageBox.Show(string.Format("updated to version: {0}", version));
+			   SquirrelAddIcon.AddIcon(ShortcutCreationLocation.Desktop, "WpfApplication2", "WpfApplication2");
+			   SquirrelAddIcon.AddIcon(ShortcutCreationLocation.StartMenu, "WpfApplication2", "WpfApplication2");
+			   Shutdown(0);
+			   return;
+		   }
+		   if (e.Args[0] == "--squirrel-uninstall")
+		   {
+			   // called when your app is uninstalled. Exit as soon as you're finished
+			   MessageBox.Show("Uninstall");
+			   SquirrelAddIcon.RemoveIcon(ShortcutCreationLocation.Desktop, "WpfApplication2", "WpfApplication2");
+			   SquirrelAddIcon.RemoveIcon(ShortcutCreationLocation.StartMenu, "WpfApplication2", "WpfApplication2");
+			   Shutdown(0);
+			   return;
+		   }
+	   }
+
+	   // You startup code, e.g. show the main window
+
+	   base.OnStartup(e);
+	}
+}
+```
+
 ## Sample Update.exe --download JSON output
 
 ```
