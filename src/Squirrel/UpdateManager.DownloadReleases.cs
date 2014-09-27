@@ -32,8 +32,11 @@ namespace Squirrel
                     await releasesToDownload.ForEachAsync(async x => {
                         var targetFile = Path.Combine(packagesDirectory, x.Filename);
                         File.Delete(targetFile);
+                        if(!updateUrlOrPath.EndsWith("/"))
+                            updateUrlOrPath += '/';
+                        var sourceFileUrl = new Uri(new Uri(updateUrlOrPath), x.Filename).AbsoluteUri;
                         await urlDownloader.DownloadFile(
-                            String.Format("{0}/{1}", updateUrlOrPath, x.Filename),
+                            sourceFileUrl,
                             targetFile);
                         lock (progress) progress(current += toIncrement);
                     });
