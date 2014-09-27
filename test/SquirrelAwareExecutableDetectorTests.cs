@@ -15,6 +15,15 @@ namespace Squirrel.Tests
     public class SquirrelAwareExecutableDetectorTests
     {
         [Fact]
+        public void AtomShellShouldBeSquirrelAware()
+        {
+            var target = IntegrationTestHelper.GetPath("fixtures", "atom.exe");
+
+            Assert.True(File.Exists(target));
+            Assert.True(SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target) == 1);
+        }
+
+        [Fact]
         public void SquirrelAwareViaVersionBlock()
         {
             var target = Path.Combine(
