@@ -21,9 +21,12 @@ using(var updateManager = new UpdateManager(
 
 #### Methods
 
+* `Task<ReleaseEntry> UpdateApp()`: Downloads and updates the app to the latest version. 
 * `Task<UpdateInfo> CheckForUpdate()`: Checks on the server if there are updates available. Returns an `UpdateInfo` object that contains information about pending updates if there are any, and null if there aren't.
 * `Task DownloadReleases()`: Downloads release files (the `nupkg` file deltas) from the server.
-* `Task<string> ApplyReleases()` Installs the latest version, and returns the new `app-[version]` directory path,
+* `Task<string> ApplyReleases()` Installs the latest version, and returns the new `app-[version]` directory path.
+* `void CreateShortcutsForExecutable(exePath, shortcutLocations, isUpdate)`: Creates shortcuts on the desktop or in Program Files. Pass `true` to isUpdate if ran outside of `--squirrel-install`.
+* * `void RemoveShortcutsForExecutable(exePath, shortcutLocations)`: Removes shortcuts created with `CreateShortcutsForExecutable` 
 
 ### UpdateInfo
 
@@ -42,3 +45,4 @@ Contains the specifics of each release.
 * `string Filename`
 * `long Filesize`
 * `bool IsDelta`
+

@@ -36,51 +36,62 @@ public partial class App : Application
 {
 	protected override void OnStartup(StartupEventArgs e)
 	{
-	   // to make this work you MUST remove StartupUri from app.xaml
-	   if (e.Args.Any())
-	   {
-	
-		   if (e.Args[0] == "--squirrel-install")
-		   {
-			   // called when your app is installed. Exit as soon as you're finished setting up the app. 
-			   string version = e.Args[1];
-			   MessageBox.Show(string.Format("installed version: {0}", version));
-			   // add the icon
-			   SquirrelAddIcon.AddIcon(ShortcutCreationLocation.Desktop, "WpfApplication2", "WpfApplication2");
-			   SquirrelAddIcon.AddIcon(ShortcutCreationLocation.StartMenu, "WpfApplication2", "WpfApplication2");
-			   Shutdown(0);
-			   return;
-		   }
-		   if (e.Args[0] == "--squirrel-firstrun")
-		   {
-			   // called after everything is set up. You should treat this like a normal app run (maybe show the "Welcome" screen)
-			   MessageBox.Show("first running. Welcome");
-			   // fall through and run.
-		   }
-		   if (e.Args[0] == "--squirrel-updated")
-		   {
-			   // called when your app is updated to the given version. Exit as soon as you're finished
-			   string version = e.Args[1];
-			   MessageBox.Show(string.Format("updated to version: {0}", version));
-			   SquirrelAddIcon.AddIcon(ShortcutCreationLocation.Desktop, "WpfApplication2", "WpfApplication2");
-			   SquirrelAddIcon.AddIcon(ShortcutCreationLocation.StartMenu, "WpfApplication2", "WpfApplication2");
-			   Shutdown(0);
-			   return;
-		   }
-		   if (e.Args[0] == "--squirrel-uninstall")
-		   {
-			   // called when your app is uninstalled. Exit as soon as you're finished
-			   MessageBox.Show("Uninstall");
-			   SquirrelAddIcon.RemoveIcon(ShortcutCreationLocation.Desktop, "WpfApplication2", "WpfApplication2");
-			   SquirrelAddIcon.RemoveIcon(ShortcutCreationLocation.StartMenu, "WpfApplication2", "WpfApplication2");
-			   Shutdown(0);
-			   return;
-		   }
-	   }
+		// to make this work you MUST remove StartupUri from app.xaml
+		if (e.Args.Any())
+		{
 
-	   // You startup code, e.g. show the main window
+			if (e.Args[0] == "--squirrel-install")
+			{
+				// called when your app is installed. Exit as soon as you're finished setting up the app. 
+				using (var mgr = new UpdateManager("updateUrl", "MyApp", FrameworkVersion.Net45))
+				{
+					mgr.CreateShortcutsForExecutable(
+					  Path.GetFileName(Assembly.GetEntryAssembly().Location),
+					  ShortcutLocation.Desktop | ShortcutLocation.StartMenu,
+					  false
+				   );
+					Shutdown(0);
+					return;
+				}
+			}
+			if (e.Args[0] == "--squirrel-updated")
+			{
+				// called when your app is updated to the given version. Exit as soon as you're finished
+				using (var mgr = new UpdateManager("updateUrl", "MyApp", FrameworkVersion.Net45))
+				{
+					mgr.CreateShortcutsForExecutable(
+					  Path.GetFileName(Assembly.GetEntryAssembly().Location),
+					  ShortcutLocation.Desktop | ShortcutLocation.StartMenu,
+					  true
+				   );
+					Shutdown(0);
+					return;
+				}
+			}
+			if (e.Args[0] == "--squirrel-uninstall")
+			{
+				// called when your app is uninstalled. Exit as soon as you're finished
+				using (var mgr = new UpdateManager("updateUrl", "MyApp", FrameworkVersion.Net45))
+				{
+					mgr.RemoveShortcutsForExecutable(
+					  Path.GetFileName(Assembly.GetEntryAssembly().Location),
+					  ShortcutLocation.Desktop | ShortcutLocation.StartMenu
+				   );
+					Shutdown(0);
+					return;
+				}
+			}
+			if (e.Args[0] == "--squirrel-firstrun")
+			{
+				// called after everything is set up. You should treat this like a normal app run (maybe show the "Welcome" screen)
+				MessageBox.Show("first running. Welcome");
+				// fall through and run.
+			}
+		}
 
-	   base.OnStartup(e);
+		// You startup code, e.g. show the main window
+
+		base.OnStartup(e);
 	}
 }
 ```
