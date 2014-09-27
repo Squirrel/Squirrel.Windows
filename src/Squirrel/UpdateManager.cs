@@ -64,10 +64,10 @@ namespace Squirrel
 
         public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
-            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(applicationName, rootAppDirectory);
             await acquireUpdateLock();
 
-            return await applyReleases.ApplyReleases(updateInfo, false, progress);
+            return await applyReleases.ApplyReleases(updateInfo, false, false, progress);
         }
 
         public async Task FullInstall(bool silentInstall = false)
@@ -75,92 +75,48 @@ namespace Squirrel
             var updateInfo = await CheckForUpdate();
             await DownloadReleases(updateInfo.ReleasesToApply);
 
-            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(applicationName, rootAppDirectory);
             await acquireUpdateLock();
 
-            await applyReleases.ApplyReleases(updateInfo, silentInstall);
+            await applyReleases.ApplyReleases(updateInfo, silentInstall, true);
         }
 
         public async Task FullUninstall()
         {
-            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(applicationName, rootAppDirectory);
             await acquireUpdateLock();
 
             await applyReleases.FullUninstall();
         }
 
-        const string uninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
-        public async Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
+        public Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
         {
-            var releaseContent = File.ReadAllText(Path.Combine(rootAppDirectory, "packages", "RELEASES"), Encoding.UTF8);
-            var releases = ReleaseEntry.ParseReleaseFile(releaseContent);
-            var latest = releases.OrderByDescending(x => x.Version).First();
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            return installHelpers.CreateUninstallerRegistryEntry(uninstallCmd, quietSwitch);
+        }
 
-            // Download the icon and PNG => ICO it. If this doesn't work, who cares
-            var pkgPath = Path.Combine(rootAppDirectory, "packages", latest.Filename);
-            var zp = new ZipPackage(pkgPath);
-                
-            var targetPng = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
-            var targetIco = Path.Combine(rootAppDirectory, "app.ico");
-
-            var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
-                .CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
-
-            try {
-                var wc = new WebClient();
-
-                await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
-                using (var fs = new FileStream(targetIco, FileMode.Create)) {
-                    if (zp.IconUrl.AbsolutePath.EndsWith("ico")) {
-                        var bytes = File.ReadAllBytes(targetPng);
-                        fs.Write(bytes, 0, bytes.Length);
-                    } else {
-                        using (var bmp = (Bitmap)Image.FromFile(targetPng))
-                        using (var ico = Icon.FromHandle(bmp.GetHicon())) {
-                            ico.Save(fs);
-                        }
-                    }
-
-                    key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
-                }
-            } catch(Exception ex) {
-                this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
-            } finally {
-                File.Delete(targetPng);
-            }
-
-            var stringsToWrite = new[] {
-                new { Key = "DisplayName", Value = zp.Description ?? zp.Summary },
-                new { Key = "DisplayVersion", Value = zp.Version.ToString() },
-                new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyymmdd") },
-                new { Key = "InstallLocation", Value = rootAppDirectory },
-                new { Key = "Publisher", Value = zp.Authors.First() },
-                new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
-                new { Key = "UninstallString", Value = uninstallCmd },
-            };
-
-            var dwordsToWrite = new[] {
-                new { Key = "EstimatedSize", Value = (int)((new FileInfo(pkgPath)).Length / 1024) },
-                new { Key = "NoModify", Value = 1 },
-                new { Key = "NoRepair", Value = 1 },
-                new { Key = "Language", Value = 0x0409 },
-            };
-
-            foreach (var kvp in stringsToWrite) {
-                key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.String);
-            }
-            foreach (var kvp in dwordsToWrite) {
-                key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.DWord);
-            }
-
-            return key;
+        public Task<RegistryKey> CreateUninstallerRegistryEntry()
+        {
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            return installHelpers.CreateUninstallerRegistryEntry();
         }
 
         public void RemoveUninstallerRegistryEntry()
         {
-            var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
-                .OpenSubKey(uninstallRegSubKey, true);
-            key.DeleteSubKeyTree(applicationName);
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            installHelpers.RemoveUninstallerRegistryEntry();
+        }
+
+        public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly)
+        {
+            var installHelpers = new ApplyReleasesImpl(applicationName, rootAppDirectory);
+            installHelpers.CreateShortcutsForExecutable(exeName, locations, updateOnly);
+        }
+
+        public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
+        {
+            var installHelpers = new ApplyReleasesImpl(applicationName, rootAppDirectory);
+            installHelpers.RemoveShortcutsForExecutable(exeName, locations);
         }
 
         public Version CurrentlyInstalledVersion(string executable = null)
@@ -208,7 +164,7 @@ namespace Squirrel
                 IDisposable theLock;
                 try {
                     theLock = ModeDetector.InUnitTestRunner() ?
-                        Disposable.Create(() => {}) : new SingleGlobalInstance(key, 2000);
+                        Disposable.Create(() => {}) : new SingleGlobalInstance(key, TimeSpan.FromMilliseconds(2000));
                 } catch (TimeoutException) {
                     throw new TimeoutException("Couldn't acquire update lock, another instance may be running updates");
                 }

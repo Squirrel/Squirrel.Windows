@@ -94,6 +94,11 @@
       <Name>Squirrel</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="signtool.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
