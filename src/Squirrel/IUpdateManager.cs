@@ -128,11 +128,11 @@ namespace Squirrel
         public static async Task<ReleaseEntry> UpdateApp(this IUpdateManager This, Action<int> progress = null)
         {
             progress = progress ?? (_ => {});
-
             This.Log().Info("Starting automatic update");
 
-        retry:
             bool ignoreDeltaUpdates = false;
+
+        retry:
             var updateInfo = default(UpdateInfo);
 
             try {
