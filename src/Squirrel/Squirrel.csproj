@@ -90,6 +90,7 @@
     <Compile Include="ReleaseExtensions.cs" />
     <Compile Include="ReleasePackage.cs" />
     <Compile Include="ShellFile.cs" />
+    <Compile Include="SquirrelAwareApp.cs" />
     <Compile Include="SquirrelAwareExecutableDetector.cs" />
     <Compile Include="TaskbarHelper.cs" />
     <Compile Include="UpdateInfo.cs" />
