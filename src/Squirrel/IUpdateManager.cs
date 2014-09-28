@@ -164,8 +164,17 @@ namespace Squirrel
 
         public static void CreateShortcutForThisExe(this IUpdateManager This)
         {
-            This.CreateShortcutsForExecutable(Path.GetFileName(Assembly.GetEntryAssembly().Location),
-                ShortcutLocation.Desktop | ShortcutLocation.StartMenu, Environment.CommandLine.Contains("squirrel-install") == false);
+            This.CreateShortcutsForExecutable(Path.GetFileName(
+                Assembly.GetEntryAssembly().Location),
+                ShortcutLocation.Desktop | ShortcutLocation.StartMenu, 
+                Environment.CommandLine.Contains("squirrel-install") == false);
+        }
+
+        public static void RemoveShortcutForThisExe(this IUpdateManager This)
+        {
+            This.RemoveShortcutsForExecutable(
+                Path.GetFileName(Assembly.GetEntryAssembly().Location),
+                ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
         }
     }
 }
