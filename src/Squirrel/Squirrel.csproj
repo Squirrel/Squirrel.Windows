@@ -90,6 +90,7 @@
     <Compile Include="ReleaseExtensions.cs" />
     <Compile Include="ReleasePackage.cs" />
     <Compile Include="ShellFile.cs" />
+    <Compile Include="SquirrelAwareApp.cs" />
     <Compile Include="SquirrelAwareExecutableDetector.cs" />
     <Compile Include="TaskbarHelper.cs" />
     <Compile Include="UpdateInfo.cs" />
@@ -101,6 +102,7 @@
     <None Include="packages.config" />
     <Compile Include="UpdateManager.DownloadReleases.cs" />
     <Compile Include="UpdateManager.ApplyReleases.cs" />
+    <Compile Include="UpdateManager.InstallHelpers.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

@@ -28,6 +28,9 @@ namespace Squirrel.Tests.Core
             var utf16LeHelloWorld = combine(utf16Le, Encoding.UTF8.GetBytes("hello world"));
             var utf8HelloWorld = combine(utf8, Encoding.UTF8.GetBytes("hello world"));
 
+            var asciiMultipleChars = Encoding.ASCII.GetBytes("hello world");
+            var asciiSingleChar = Encoding.ASCII.GetBytes("A");
+
             var emptyString = string.Empty;
             string nullString = null;
             byte[] nullByteArray = {};
@@ -46,6 +49,9 @@ namespace Squirrel.Tests.Core
             Assert.Equal("hello world", Utility.RemoveByteOrderMarkerIfPresent(utf16BeHelloWorld));
             Assert.Equal("hello world", Utility.RemoveByteOrderMarkerIfPresent(utf16LeHelloWorld));
             Assert.Equal("hello world", Utility.RemoveByteOrderMarkerIfPresent(utf8HelloWorld));
+
+            Assert.Equal("hello world", Utility.RemoveByteOrderMarkerIfPresent(asciiMultipleChars));
+            Assert.Equal("A", Utility.RemoveByteOrderMarkerIfPresent(asciiSingleChar));
         }
 
         [Fact]
