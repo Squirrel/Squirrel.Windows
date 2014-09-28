@@ -331,12 +331,11 @@ namespace Squirrel
 
         public static bool IsHttpUrl(string urlOrPath)
         {
-            try {
-                var url = new Uri(urlOrPath);
-                return new[] {"https", "http"}.Contains(url.Scheme.ToLowerInvariant());
-            } catch (Exception) {
+            Uri uri;
+            if (!Uri.TryCreate(urlOrPath, UriKind.Absolute, out uri))
                 return false;
-            }
+
+            return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
         }
 
         public static async Task DeleteDirectoryWithFallbackToNextReboot(string dir)

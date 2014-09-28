@@ -42,14 +42,6 @@ namespace Squirrel
             Contract.Requires(filename.Contains(Path.DirectorySeparatorChar) == false);
             Contract.Requires(filesize > 0);
 
-            if(baseUrl != null)
-            {
-                if (Uri.IsWellFormedUriString(baseUrl, UriKind.Absolute) && !baseUrl.EndsWith("/"))
-                    baseUrl += "/";
-                else if (!baseUrl.EndsWith(Path.DirectorySeparatorChar.ToString()))
-                    baseUrl += Path.DirectorySeparatorChar;
-            }
-
             SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Filesize = filesize; IsDelta = isDelta;
         }
 
@@ -100,18 +92,14 @@ namespace Squirrel
 
             string filename = m.Groups[2].Value;
 
-            // Extract the filename if a path or a uri is provided
+            // Split the base URL and the filename if an URI is provided, throws if a path is provided
             string baseUrl = null;
-            if(Uri.IsWellFormedUriString(filename, UriKind.Absolute))
-            {
-                var indexOfLastPathSeparator = filename.LastIndexOf("/");
+            if(Utility.IsHttpUrl(filename)) {
+                var indexOfLastPathSeparator = filename.LastIndexOf("/") + 1;
                 baseUrl = filename.Substring(0, indexOfLastPathSeparator);
-                filename = filename.Substring(indexOfLastPathSeparator + 1);
-            }
-            else if (filename.IndexOf(Path.DirectorySeparatorChar) > -1)
-            {
-                baseUrl = Path.GetDirectoryName(filename);
-                filename = Path.GetFileName(filename);
+                filename = filename.Substring(indexOfLastPathSeparator);
+            } else if (filename.IndexOfAny(Path.GetInvalidFileNameChars()) > -1) {
+                throw new Exception(string.Format("Filename is not a valid URI and contains invalid characters: '{0}'", filename));
             }
 
             long size = Int64.Parse(m.Groups[3].Value);

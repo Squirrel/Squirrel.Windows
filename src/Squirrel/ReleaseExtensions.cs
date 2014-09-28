@@ -16,8 +16,8 @@ namespace Squirrel
 
         public static Version ToVersion(this string fileName)
         {
-            var parts = (new FileInfo(fileName)).Name
-                .Replace(".nupkg", "").Replace("-delta", "")
+            var parts = Path.GetFileNameWithoutExtension(fileName)
+                .Replace("-delta", "")
                 .Split('.', '-').Reverse();
 
             var numberRegex = new Regex(@"^\d+$");
