@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+	<metadata>
+		<id>Squirrel.SampleApp</id>
+		<version>1.0.0</version>
+		<title>Squirrel - SampleApp</title>
+		<authors>Squirrel</authors>
+		<iconUrl>https://assets-cdn.github.com/favicon.ico</iconUrl>
+		<summary>A test application for Squirrel</summary>
+		<description>A test application for Squirrel</description>
+		<language>en-US</language>
+		<frameworkAssemblies>
+			<frameworkAssembly assemblyName="System" targetFramework="net45" />
+		</frameworkAssemblies>
+	</metadata>
+	<files>
+		<!-- Core Files -->
+		<file src="bin\Debug\Squirrel.SampleApp.exe" target="lib\net45\Squirrel.SampleApp.exe" />
+
+		<!-- Dependencies -->
+		<file src="bin\Debug\Microsoft.Web.XmlTransform.dll" target="lib\net45\Microsoft.Web.XmlTransform.dll" />
+		<file src="bin\Debug\NuGet.Core.dll" target="lib\net45\NuGet.Core.dll" />
+		<file src="bin\Debug\Splat.dll" target="lib\net45\Splat.dll" />
+		<file src="bin\Debug\Squirrel.dll" target="lib\net45\Squirrel.dll" />
+		<file src="bin\Debug\Ionic.Zip.dll" target="lib\net45\Ionic.Zip.dll" />
+
+		<!-- Config Files -->
+		<file src="bin\Debug\Squirrel.SampleApp.exe.config" target="lib\net45\Squirrel.SampleApp.exe.config" />
+	</files>
+</package>
