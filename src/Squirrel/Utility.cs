@@ -331,12 +331,12 @@ namespace Squirrel
 
         public static bool IsHttpUrl(string urlOrPath)
         {
-            try {
-                var url = new Uri(urlOrPath);
-                return new[] {"https", "http"}.Contains(url.Scheme.ToLowerInvariant());
-            } catch (Exception) {
+            var uri = default(Uri);
+            if (!Uri.TryCreate(urlOrPath, UriKind.Absolute, out uri)) {
                 return false;
             }
+
+            return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
         }
 
         public static async Task DeleteDirectoryWithFallbackToNextReboot(string dir)
@@ -371,7 +371,7 @@ namespace Squirrel
         {
             if (MoveFileEx(name, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT)) return;
 
-            // thank you, http://www.pinvoke.net/default.aspx/coredll.getlasterror
+            // Thank You, http://www.pinvoke.net/default.aspx/coredll.getlasterror
             var lastError = Marshal.GetLastWin32Error();
 
             Log().Error("safeDeleteFileAtNextReboot: failed - {0} - {1}", name, lastError);

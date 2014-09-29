@@ -69,6 +69,7 @@ namespace Squirrel.Update
                 string bootstrapperExe = default(string);
                 string backgroundGif = default(string);
                 string signingParameters = default(string);
+                string baseUrl = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Update.exe command [OPTS]",
@@ -91,6 +92,7 @@ namespace Squirrel.Update
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
                     { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
+                    { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
                 };
 
                 opts.Parse(args);
@@ -114,7 +116,7 @@ namespace Squirrel.Update
                     Update(target).Wait();
                     break;
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl);
                     break;
                 case UpdateAction.Shortcut:
                     Shortcut(target);
@@ -205,8 +207,18 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null)
         {
+            if (baseUrl != null) {
+                if (!Utility.IsHttpUrl(baseUrl)) {
+                    throw new Exception(string.Format("Invalid --baseUrl '{0}'. A base URL must start with http or https and be a valid URI.", baseUrl));
+                }
+
+                if (!baseUrl.EndsWith("/")) {
+                    baseUrl += "/";
+                }
+            }
+
             targetDir = targetDir ?? ".\\Releases";
             packagesDir = packagesDir ?? ".";
             bootstrapperExe = bootstrapperExe ?? ".\\Setup.exe";
@@ -230,6 +242,7 @@ namespace Squirrel.Update
                 .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase));
 
             var toProcess = allNuGetFiles.Where(x => !x.Name.Contains("-delta") && !x.Name.Contains("-full"));
+            var processed = new List<string>();
 
             var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
             var previousReleases = Enumerable.Empty<ReleaseEntry>();
@@ -250,18 +263,21 @@ namespace Squirrel.Update
                         .Wait();
                 });
 
+                processed.Add(rp.ReleasePackageFile);
+
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
                 if (prev != null) {
                     var deltaBuilder = new DeltaPackageBuilder();
 
-                    deltaBuilder.CreateDeltaPackage(prev, rp,
+                    var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
                         Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                    processed.Insert(0, dp.InputPackageFile);
                 }
             }
 
             foreach (var file in toProcess) { File.Delete(file.FullName); }
 
-            var releaseEntries = allNuGetFiles.Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
+            var releaseEntries = previousReleases.Concat(processed.Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl)));
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
             var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
