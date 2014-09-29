@@ -1,7 +1,7 @@
 ## Quick Start (for the impatient)
 
 1. `Install-Package squirrel.windows`
-2. Use NuGet Package Explorer (or any other way) to create a NuGet package for your app. Make sure that package doesn't have any dependencies
+2. Use NuGet Package Explorer (or any other way) to create a NuGet package for your app. Make sure that package doesn't have any dependencies.
 3. Open the NuGet Package Console, and type `Squirrel --releasify path/to/the/nuget/package.nupkg`
 4. In your app, from time to time run this code:
 
