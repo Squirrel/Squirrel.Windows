@@ -507,9 +507,8 @@ namespace Squirrel
                 };
 
                 var possibleCompanyNames = new[] {
-                    package.Title,
                     versionInfo.CompanyName,
-                    package.Id,
+                    package.Authors.FirstOrDefault() ?? package.Id,
                 };
 
                 var prodName = possibleCompanyNames.First(x => !String.IsNullOrWhiteSpace(x));
