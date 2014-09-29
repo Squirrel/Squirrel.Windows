@@ -1,5 +1,3 @@
-# API
-
 ## Squirrel.dll
 
 This is the assembly your project should reference in order to use Squirrel in-app updates functionality.
