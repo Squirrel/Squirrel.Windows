@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Ionic.Zip;
+using MarkdownSharp;
 using NuGet;
 using Splat;
 
@@ -27,7 +28,7 @@ namespace Squirrel
         string ReleasePackageFile { get; }
         string SuggestedReleaseFileName { get; }
 
-        string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null);
+        string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null, Action<string> contentsPostProcessHook = null);
     }
 
     public static class VersionComparer
@@ -84,9 +85,10 @@ namespace Squirrel
 
         public Version Version { get { return InputPackageFile.ToVersion(); } }
 
-        public string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null)
+        public string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null, Action<string> contentsPostProcessHook = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(outputFile));
+            releaseNotesProcessor = releaseNotesProcessor ?? (x => (new Markdown()).Transform(x));
 
             if (ReleasePackageFile != null) {
                 return ReleasePackageFile;
@@ -105,12 +107,18 @@ namespace Squirrel
 
                 throw new InvalidOperationException(String.Format(
                     "The input package file {0} targets multiple platforms - {1} - and cannot be transformed into a release package.", InputPackageFile, platforms));
+
+            } else if (!frameworks.Any()) {
+
+                throw new InvalidOperationException(String.Format(
+                    "The input package file {0} targets no platform and cannot be transformed into a release package.", InputPackageFile));
             }
 
             var targetFramework = frameworks.Single();
 
             // Recursively walk the dependency tree and extract all of the
             // dependent packages into the a temporary directory
+            this.Log().Info("Creating release package: {0} => {1}", InputPackageFile, outputFile);
             var dependencies = findAllDependentPackages(
                 package,
                 new LocalPackageRepository(packagesRootDir),
@@ -125,10 +133,12 @@ namespace Squirrel
                     zf.ExtractAll(tempPath);
                 }
 
+                this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
 
                 var specPath = tempDir.GetFiles("*.nuspec").First().FullName;
 
+                this.Log().Info("Removing unnecessary data");
                 removeDependenciesFromPackageSpec(specPath);
                 removeDeveloperDocumentation(tempDir);
 
@@ -138,7 +148,12 @@ namespace Squirrel
 
                 addDeltaFilesToContentTypes(tempDir.FullName);
 
+                if (contentsPostProcessHook != null) {
+                    contentsPostProcessHook(tempPath);
+                }
+
                 using (var zf = new ZipFile(outputFile)) {
+                    this.Log().Info("Succeeeded, saving to " + outputFile);
                     zf.AddDirectory(tempPath);
                     zf.Save();
                 }

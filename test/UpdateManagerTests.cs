@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Win32;
 using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
@@ -12,6 +14,44 @@ namespace Squirrel.Tests
 {
     public class UpdateManagerTests
     {
+        public class CreateUninstallerRegKeyTests
+        {
+            [Fact]
+            public async Task CallingMethodTwiceShouldUpdateInstaller()
+            {
+                string remotePkgPath;
+                string path;
+
+                using (Utility.WithTempDirectory(out path)) {
+                    using (Utility.WithTempDirectory(out remotePkgPath))
+                    using (var mgr = new UpdateManager(remotePkgPath, "theApp", FrameworkVersion.Net45, path)) {
+                        IntegrationTestHelper.CreateFakeAppPackage("1.0.0.1", remotePkgPath);
+                        await mgr.FullInstall();
+                    }
+
+                    using (var mgr = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45, path)) {
+                        await mgr.CreateUninstallerRegistryEntry();
+                        var regKey = await mgr.CreateUninstallerRegistryEntry();
+
+                        Assert.False(String.IsNullOrWhiteSpace((string)regKey.GetValue("DisplayName")));
+
+                        mgr.RemoveUninstallerRegistryEntry();
+                    }
+
+                    // NB: Squirrel-Aware first-run might still be running, slow
+                    // our roll before blowing away the temp path
+                    Thread.Sleep(1000);
+                }
+
+                var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                    .OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall");
+
+                using (key) {
+                    Assert.False(key.GetSubKeyNames().Contains("theApp"));
+                }
+            }
+        }
+
         public class UpdateLocalReleasesTests
         {
             [Fact]
@@ -28,7 +68,7 @@ namespace Squirrel.Tests
                         "Squirrel.Core.1.1.0.0-full.nupkg",
                     }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl("theApp", appDir);
 
                     await fixture.updateLocalReleasesFile();
 
@@ -91,7 +131,7 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl("theApp", appDir);
                         
                     // sync both release files
                     await fixture.updateLocalReleasesFile();
@@ -137,7 +177,7 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl("theApp", appDir);
 
                     // sync both release files
                     await fixture.updateLocalReleasesFile();
@@ -179,7 +219,7 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                    var fixture = new UpdateManager.ApplyReleasesImpl("theApp", appDir);
 
                     // sync both release files
                     await fixture.updateLocalReleasesFile();
@@ -241,9 +281,24 @@ namespace Squirrel.Tests
             public async Task WhenUrlResultsInWebExceptionReturnNull()
             {
                 // This should result in a WebException (which gets caught) unless you can actually access http://lol
-                var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45);
-                var updateInfo = await fixture.CheckForUpdate();
-                Assert.Null(updateInfo);
+                using (var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45)) {
+                    var updateInfo = await fixture.CheckForUpdate();
+                    Assert.Null(updateInfo);
+                }
+            }
+
+            [Theory]
+            [InlineData("C:\\Foo\\Bar\\Test.exe", default(string))]
+            [InlineData("%LocalAppData%\\theApp\\app-1.0.0.1\\Test.exe", "1.0.0.1")]
+            [InlineData("%LocalAppData%\\aDifferentApp\\app-1.0.0.1\\Test.exe", default(string))]
+            public void CurrentlyInstalledVersionTests(string input, string expectedVersion)
+            {
+                input = Environment.ExpandEnvironmentVariables(input);
+                var expected = expectedVersion != null ? new Version(expectedVersion) : default(Version);
+
+                using (var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45)) {
+                    Assert.Equal(expected, fixture.CurrentlyInstalledVersion(input));
+                }
             }
         }
     }

@@ -1,23 +1,46 @@
-## Squirrel.Windows: The Next Generation
+# Squirrel: It's like ClickOnce but Works™
 
-The dream of Squirrel.Windows, risen from the ashes.
+Squirrel is both a set of tools and a library, to completely manage both installation and updating your Desktop Windows application, written in either C# or any other language (i.e. Squirrel can manage native C++ applications).
 
-#### What even is this?
+Squirrel uses NuGet packages to create installation and update packages, which means that you probably already know most of what you need to create an installer.
 
-This is Squirrel.Windows, rewritten to drop a lot of the things that caused the original (never finished) version of Squirrel for Windows. Here's a few examples:
+## Getting Started
 
-* Squirrel.Windows did an enormous of work to support .NET 4.0, and brought in a ton of dependencies to make it happen. vNext requires .NET 4.5, and uses a minimum of dependencies.
+Check out the [user documentation](/docs) for how to use Squirrel. A good place to start reading is the [Getting Started page](/docs/getting-started.md), which includes a Quick Start guide.
 
-* Squirrel.Windows allowed too much setup customization via installation hooks. This feature was super hard because installation hooks often had their own dependencies that blew up when we tried to load them. vNext loses this feature.
+## What Do We Want?
 
-* Squirrel.Windows had a super complicated WiX-based installer that was an unholy nightmare. vNext replaces this with a single hardcoded C++ EXE whose goal is to display as little UI as possible. [Installer Spec](https://github.com/Squirrel/Squirrel.Windows.Next/blob/master/specs/Installer.md)
+Deployment and Updates for Desktop applications are a real drag. ClickOnce almost works, but has some glaring bugs that don't seem like they'll ever be fixed. So let's own our own future and build a new one.
 
-* Squirrel.Windows was super IObservable-heavy, when the reality is that the vast majority of installer ops should just be synchronous. Ditch Rx completely and use async/await only when necessary.
+Windows apps should be as fast and as easy to install and update as apps like Google Chrome. From an app developer's side, it should be really straightforward to create an installer for my app, and publish updates to it, without having to jump through insane hoops
 
-* We didn't get anything but suffering out of IO abstractions. Kill 'em all.
+#### Installation
 
-* Squirrel got hella confused while walking the dependency tree by trying to detect which files in the NuGet package we were *actually* using (i.e. if you're a .NET 4.5 project, you could be using binaries from `Net20`, `Net35`, `Net45`, etc). Instead, write a Targets file which simply dumps the reference list to the output directory, and use that to inform which files should be in the final package. [Tools Spec](https://github.com/Squirrel/Squirrel.Windows.Next/blob/master/specs/Tools.md)
+* Install is Wizard-Free™ and doesn't look awful (or at least, it should have the *possibility* to not look awful)
+* No UAC dialogs, which means....
+* ...installs to the local user account (i.e. under `%LocalAppData%`)
+* Uninstall gives a chance for the application to clean up (i.e. I get to run a chunk of code on uninstall)
+* No Reboots. None!
+* Can pull down the .NET Framework if need be
 
-### How can I get involved?
+#### Updates
+
+* Updates should be able to be applied while the application is running
+* At no time should the user ever be forced to stop what he or she is doing
+* No Reboots. None!
+* The client API should be able to check for updates, receive a (preferably in HTML) ChangeLog
+
+#### Production
+
+* Generating an installer given an existing .NET application should be really easy, like it is for ClickOnce
+* Hosting an update server should be really straightforward as well, and should be able to be done using simple HTTP (i.e. I should be able to host my installer and update feed via S3)
+* Creating an update for my app should be a very simple process that is easily automated
+* Support for multiple "channels" (a-la Chrome Dev/Beta/Release)
+
+## Want to peek under the hood a bit?
+
+Check out [the specs directory](/specs) for more information about how the framework works.
+
+## How can I get involved?
 
 Check out https://github.com/Squirrel/Squirrel.Windows.Next/issues/9 for more information about joining the Squirrel Slack room

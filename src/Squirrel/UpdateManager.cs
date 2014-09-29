@@ -1,13 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
+using System.Security.AccessControl;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Win32;
 using NuGet;
 using Splat;
 
@@ -57,27 +62,81 @@ namespace Squirrel
             await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
         }
 
-        public async Task ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
+        public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
-            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(applicationName, rootAppDirectory);
             await acquireUpdateLock();
 
-            await applyReleases.ApplyReleases(updateInfo, progress);
+            return await applyReleases.ApplyReleases(updateInfo, false, false, progress);
         }
 
-        public async Task FullInstall()
+        public async Task FullInstall(bool silentInstall = false)
         {
             var updateInfo = await CheckForUpdate();
             await DownloadReleases(updateInfo.ReleasesToApply);
-            await ApplyReleases(updateInfo);
+
+            var applyReleases = new ApplyReleasesImpl(applicationName, rootAppDirectory);
+            await acquireUpdateLock();
+
+            await applyReleases.ApplyReleases(updateInfo, silentInstall, true);
         }
 
         public async Task FullUninstall()
         {
-            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(applicationName, rootAppDirectory);
             await acquireUpdateLock();
 
             await applyReleases.FullUninstall();
+        }
+
+        public Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
+        {
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            return installHelpers.CreateUninstallerRegistryEntry(uninstallCmd, quietSwitch);
+        }
+
+        public Task<RegistryKey> CreateUninstallerRegistryEntry()
+        {
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            return installHelpers.CreateUninstallerRegistryEntry();
+        }
+
+        public void RemoveUninstallerRegistryEntry()
+        {
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            installHelpers.RemoveUninstallerRegistryEntry();
+        }
+
+        public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly)
+        {
+            var installHelpers = new ApplyReleasesImpl(applicationName, rootAppDirectory);
+            installHelpers.CreateShortcutsForExecutable(exeName, locations, updateOnly);
+        }
+
+        public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
+        {
+            var installHelpers = new ApplyReleasesImpl(applicationName, rootAppDirectory);
+            installHelpers.RemoveShortcutsForExecutable(exeName, locations);
+        }
+
+        public Version CurrentlyInstalledVersion(string executable = null)
+        {
+            executable = executable ??
+                Path.GetDirectoryName(typeof(UpdateManager).Assembly.Location);
+
+            if (!executable.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) {
+                return null;
+            }
+
+            var appDirName = executable.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
+
+            if (appDirName == null) return null;
+            return appDirName.ToVersion();
+        }
+
+        public string RootAppDirectory {
+            get { return rootAppDirectory; }
         }
 
         public void Dispose()
@@ -100,19 +159,15 @@ namespace Squirrel
             if (updateLock != null) return Task.FromResult(updateLock);
 
             return Task.Run(() => {
-                // TODO: We'll bring this back later
                 var key = Utility.CalculateStreamSHA1(new MemoryStream(Encoding.UTF8.GetBytes(rootAppDirectory)));
-                var theLock = Disposable.Create(() => { });
 
-                /*
                 IDisposable theLock;
                 try {
-                    theLock = RxApp.InUnitTestRunner() ?
-                        Disposable.Empty : new SingleGlobalInstance(key, 2000);
+                    theLock = ModeDetector.InUnitTestRunner() ?
+                        Disposable.Create(() => {}) : new SingleGlobalInstance(key, TimeSpan.FromMilliseconds(2000));
                 } catch (TimeoutException) {
                     throw new TimeoutException("Couldn't acquire update lock, another instance may be running updates");
                 }
-                */
 
                 var ret = Disposable.Create(() => {
                     theLock.Dispose();

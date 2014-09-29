@@ -1,0 +1,30 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <version>0.5.1</version>
+    <authors>GitHub</authors>
+    <owners>Paul Betts</owners>
+    <licenseUrl>https://github.com/squirrel/Squirrel.Windows/blob/master/COPYING</licenseUrl>
+    <projectUrl>https://github.com/squirrel/Squirrel.Windows</projectUrl>
+
+    <dependencies>
+      <dependency id="NuGet.Core" version="2.8.2" />
+      <dependency id="Mono.Cecil" version="0.9.5.4" />
+      <dependency id="Splat" version="1.4.0" />
+    </dependencies>
+
+    <id>squirrel.windows</id>
+    <title>Squirrel for Windows</title>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>An installation and update framework for Windows applications</description>
+    <copyright>Copyright GitHub© 2014</copyright>
+  </metadata>
+  <files>
+    <file src="Squirrel\bin\Release\Squirrel.*" target="lib\Net45" />
+    <file src="Squirrel\bin\Release\Ionic.*" target="lib\Net45" />
+    <file src="Setup\bin\Release\Setup.exe" target="tools" />
+    <file src="Update\bin\Release\Update.exe" target="tools\Squirrel.exe" />
+    <file src="Update\bin\Release\Update.com" target="tools\Squirrel.com" />
+    <file src="Update\signtool.exe" target="tools\signtool.exe" />
+  </files>
+</package>

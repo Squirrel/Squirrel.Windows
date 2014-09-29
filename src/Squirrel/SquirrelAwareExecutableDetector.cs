@@ -73,11 +73,20 @@ namespace Squirrel
                 return null;
             }
 
+            // NB: I have **no** idea why, but Atom.exe won't return the version
+            // number "1" despite it being in the resource file and being 100% 
+            // identical to the version block that actually works. I've got stuff
+            // to ship, so we're just going to return '1' if we find the name in 
+            // the block at all. I hate myself for this.
+            return 1;
+
+#if __NOT__DEFINED_EVAR__
             int ret;
             string resultData = Marshal.PtrToStringAnsi(result, resultSize-1 /* Subtract one for null terminator */);
             if (!Int32.TryParse(resultData, NumberStyles.Integer, CultureInfo.CurrentCulture, out ret)) return null;
 
             return ret;
+#endif
         }
     }
 }

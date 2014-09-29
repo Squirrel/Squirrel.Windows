@@ -24,7 +24,52 @@ Setup.exe does the following operations:
 
 Update.exe is a generic client for Squirrel which supports several operations:
 
-* `/install [File.nupkg] [/silent]` - Install the NuPkg file given (or any NuPkg files in the same directory as itself), and launch their applications. If `/silent` is given, don't launch anything. Copy `Update.exe` to the application root directory. Install also writes an entry in Programs and Features which will invoke `/uninstall`.
-* `/uninstall` - Completely uninstall the application associated with the directory in which `Update.exe` resides.
-* `/download URL` - Check for updates from the given URL and write information about available versions to standard output in JSON format.
-* `/update` - Updates the application to the latest version of the files in the packages directory associated with the directory in which `Update.exe` resides.
+* `--install [directory] [/silent]` - Install the NuPkg file given (or any NuPkg files in the same directory as itself), and launch their applications. If `/silent` is given, don't launch anything. Copy `Update.exe` to the application root directory. Install also writes an entry in Programs and Features which will invoke `/uninstall`.
+* `--uninstall` - Completely uninstall the application associated with the directory in which `Update.exe` resides.
+* `--download URL` - Check for updates from the given URL and write information about available versions to standard output in JSON format.
+* `--update URL` - Updates the application to the latest version from the remote URL
+
+## Sample JSON output
+
+```
+{
+  "CurrentlyInstalledVersion": null,
+  "FutureReleaseEntry": {
+    "SHA1": "163D0D3F0B339D6B5866C808ABFF57DB74B93C68",
+    "Filename": "GitHubForWindows.2.3.1.1.nupkg",
+    "Filesize": 33160193,
+    "IsDelta": false,
+    "EntryAsString": "163D0D3F0B339D6B5866C808ABFF57DB74B93C68 GitHubForWindows.2.3.1.1.nupkg 33160193",
+    "Version": {
+      "Major": 2,
+      "Minor": 3,
+      "Build": 1,
+      "Revision": 1,
+      "MajorRevision": 0,
+      "MinorRevision": 1
+    },
+    "PackageName": "GitHubForWindows"
+  },
+  "ReleasesToApply": [
+    {
+      "SHA1": "163D0D3F0B339D6B5866C808ABFF57DB74B93C68",
+      "Filename": "GitHubForWindows.2.3.1.1.nupkg",
+      "Filesize": 33160193,
+      "IsDelta": false,
+      "EntryAsString": "163D0D3F0B339D6B5866C808ABFF57DB74B93C68 GitHubForWindows.2.3.1.1.nupkg 33160193",
+      "Version": {
+        "Major": 2,
+        "Minor": 3,
+        "Build": 1,
+        "Revision": 1,
+        "MajorRevision": 0,
+        "MinorRevision": 1
+      },
+      "PackageName": "GitHubForWindows"
+    }
+  ],
+  "AppFrameworkVersion": 1,
+  "IsBootstrapping": true,
+  "PackageDirectory": "C:\\Users\\paul\\AppData\\Local\\Debug\\packages"
+}
+```

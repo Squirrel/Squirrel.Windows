@@ -23,25 +23,50 @@ namespace Squirrel
             {
                 progress = progress ?? (_ => { });
                 urlDownloader = urlDownloader ?? new FileDownloader();
+                var packagesDirectory = Path.Combine(rootAppDirectory, "packages");
 
                 int current = 0;
                 int toIncrement = (int)(100.0 / releasesToDownload.Count());
 
                 if (Utility.IsHttpUrl(updateUrlOrPath)) {
+                    // From Internet
                     await releasesToDownload.ForEachAsync(async x => {
-                        await urlDownloader.DownloadFile(
-                            String.Format("{0}/{1}", updateUrlOrPath, x.Filename),
-                            Path.Combine(rootAppDirectory, "packages", x.Filename));
+                        var targetFile = Path.Combine(packagesDirectory, x.Filename);
+                        await downloadRelease(updateUrlOrPath, x, urlDownloader, targetFile);
+
                         lock (progress) progress(current += toIncrement);
                     });
                 } else {
+                    // From Disk
                     await releasesToDownload.ForEachAsync(x => {
+                        var targetFile = Path.Combine(packagesDirectory, x.Filename);
+
                         File.Copy(
                             Path.Combine(updateUrlOrPath, x.Filename),
-                            Path.Combine(rootAppDirectory, "packages", x.Filename));
+                            targetFile,
+                            true); 
+
                         lock (progress) progress(current += toIncrement);
                     });
                 }
+            }
+
+            bool isReleaseExplicitlyHttp(ReleaseEntry x)
+            {
+                return x.BaseUrl != null && 
+                    Uri.IsWellFormedUriString(x.BaseUrl, UriKind.Absolute);
+            }
+
+            Task downloadRelease(string updateBaseUrl, ReleaseEntry releaseEntry, IFileDownloader urlDownloader, string targetFile)
+            {
+                if (!updateBaseUrl.EndsWith("/")) {
+                    updateBaseUrl += '/';
+                }
+
+                var sourceFileUrl = new Uri(new Uri(updateBaseUrl), releaseEntry.BaseUrl + releaseEntry.Filename).AbsoluteUri;
+                File.Delete(targetFile);
+
+                return urlDownloader.DownloadFile(sourceFileUrl, targetFile);
             }
 
             Task checksumAllPackages(IEnumerable<ReleaseEntry> releasesDownloaded)

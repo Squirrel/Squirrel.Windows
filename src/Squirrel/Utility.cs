@@ -20,6 +20,69 @@ namespace Squirrel
 {
     static class Utility
     {
+        public static string RemoveByteOrderMarkerIfPresent(string content)
+        {
+            return string.IsNullOrEmpty(content) ? 
+                string.Empty : RemoveByteOrderMarkerIfPresent(Encoding.UTF8.GetBytes(content));
+        }
+
+        public static string RemoveByteOrderMarkerIfPresent(byte[] content)
+        {
+            byte[] output = { };
+
+            if (content == null)
+            {
+                goto done;
+            }
+
+            Func<byte[], byte[], bool> matches = (bom, src) =>
+            {
+                if (src.Length < bom.Length)
+                {
+                    return false;
+                }
+                return !bom.Where((chr, index) => src[index] != chr).Any();
+            };
+
+            var utf32Be = new byte[] { 0x00, 0x00, 0xFE, 0xFF };
+            var utf32Le = new byte[] { 0xFF, 0xFE, 0x00, 0x00 };
+            var utf16Be = new byte[] { 0xFE, 0xFF };
+            var utf16Le = new byte[] { 0xFF, 0xFE };
+            var utf8 = new byte[] { 0xEF, 0xBB, 0xBF };
+
+            if (matches(utf32Be, content))
+            {
+                output = new byte[content.Length - utf32Be.Length];
+            }
+            else if (matches(utf32Le, content))
+            {
+                output = new byte[content.Length - utf32Le.Length];
+            }
+            else if (matches(utf16Be, content))
+            {
+                output = new byte[content.Length - utf16Be.Length];
+            }
+            else if (matches(utf16Le, content))
+            {
+                output = new byte[content.Length - utf16Le.Length];
+            }
+            else if (matches(utf8, content))
+            {
+                output = new byte[content.Length - utf8.Length];
+            }
+            else
+            {
+                output = content;
+            }
+
+        done:
+            if (output.Length > 0)
+            {
+                Buffer.BlockCopy(content, content.Length - output.Length, output, 0, output.Length);
+            }
+            return Encoding.UTF8.GetString(output);
+        }
+
         public static IEnumerable<FileInfo> GetAllFilesRecursively(this DirectoryInfo rootPath)
         {
             Contract.Requires(rootPath != null);
@@ -220,6 +283,11 @@ namespace Squirrel
             return Tuple.Create(path, (Stream) File.OpenWrite(path));
         }
 
+        public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
+        {
+            return Path.Combine(rootAppDirectory, "app-" + entry.Version.ToString());
+        }
+
         public static string PackageDirectoryForAppDir(string rootAppDirectory) 
         {
             return Path.Combine(rootAppDirectory, "packages");
@@ -228,6 +296,25 @@ namespace Squirrel
         public static string LocalReleaseFileForAppDir(string rootAppDirectory)
         {
             return Path.Combine(PackageDirectoryForAppDir(rootAppDirectory), "RELEASES");
+        }
+
+        public static IEnumerable<ReleaseEntry> LoadLocalReleases(string localReleaseFile)
+        {
+            var file = File.OpenRead(localReleaseFile);
+
+            // NB: sr disposes file
+            using (var sr = new StreamReader(file, Encoding.UTF8)) {
+                return ReleaseEntry.ParseReleaseFile(sr.ReadToEnd());
+            }
+        }
+            
+        public static ReleaseEntry FindCurrentVersion(IEnumerable<ReleaseEntry> localReleases)
+        {
+            if (!localReleases.Any()) {
+                return null;
+            }
+
+            return localReleases.MaxBy(x => x.Version).SingleOrDefault(x => !x.IsDelta);
         }
 
         static TAcc scan<T, TAcc>(this IEnumerable<T> This, TAcc initialValue, Func<TAcc, T, TAcc> accFunc)
@@ -244,19 +331,19 @@ namespace Squirrel
 
         public static bool IsHttpUrl(string urlOrPath)
         {
-            try {
-                var url = new Uri(urlOrPath);
-                return new[] {"https", "http"}.Contains(url.Scheme.ToLowerInvariant());
-            } catch (Exception) {
+            var uri = default(Uri);
+            if (!Uri.TryCreate(urlOrPath, UriKind.Absolute, out uri)) {
                 return false;
             }
+
+            return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
         }
 
         public static async Task DeleteDirectoryWithFallbackToNextReboot(string dir)
         {
             try {
                 await Utility.DeleteDirectory(dir);
-            } catch (UnauthorizedAccessException ex) {
+            } catch (Exception ex) {
                 var message = String.Format("Uninstall failed to delete dir '{0}', punting to next reboot", dir);
                 LogHost.Default.WarnException(message, ex);
 
@@ -284,10 +371,110 @@ namespace Squirrel
         {
             if (MoveFileEx(name, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT)) return;
 
-            // thank you, http://www.pinvoke.net/default.aspx/coredll.getlasterror
+            // Thank You, http://www.pinvoke.net/default.aspx/coredll.getlasterror
             var lastError = Marshal.GetLastWin32Error();
 
             Log().Error("safeDeleteFileAtNextReboot: failed - {0} - {1}", name, lastError);
+        }
+
+        public static void LogIfThrows(this IFullLogger This, LogLevel level, string message, Action block)
+        {
+            try {
+                block();
+            } catch (Exception ex) {
+                switch (level) {
+                case LogLevel.Debug:
+                    This.DebugException(message ?? "", ex);
+                    break;
+                case LogLevel.Info:
+                    This.InfoException(message ?? "", ex);
+                    break;
+                case LogLevel.Warn:
+                    This.WarnException(message ?? "", ex);
+                    break;
+                case LogLevel.Error:
+                    This.ErrorException(message ?? "", ex);
+                    break;
+                }
+
+                throw;
+            }
+        }
+
+        public static async Task LogIfThrows(this IFullLogger This, LogLevel level, string message, Func<Task> block)
+        {
+            try {
+                await block();
+            } catch (Exception ex) {
+                switch (level) {
+                case LogLevel.Debug:
+                    This.DebugException(message ?? "", ex);
+                    break;
+                case LogLevel.Info:
+                    This.InfoException(message ?? "", ex);
+                    break;
+                case LogLevel.Warn:
+                    This.WarnException(message ?? "", ex);
+                    break;
+                case LogLevel.Error:
+                    This.ErrorException(message ?? "", ex);
+                    break;
+                }
+                throw;
+            }
+        }
+
+        public static async Task<T> LogIfThrows<T>(this IFullLogger This, LogLevel level, string message, Func<Task<T>> block)
+        {
+            try {
+                return await block();
+            } catch (Exception ex) {
+                switch (level) {
+                case LogLevel.Debug:
+                    This.DebugException(message ?? "", ex);
+                    break;
+                case LogLevel.Info:
+                    This.InfoException(message ?? "", ex);
+                    break;
+                case LogLevel.Warn:
+                    This.WarnException(message ?? "", ex);
+                    break;
+                case LogLevel.Error:
+                    This.ErrorException(message ?? "", ex);
+                    break;
+                }
+                throw;
+            }
+        }
+
+        public static void WarnIfThrows(this IEnableLogger This, Action block, string message = null)
+        {
+            This.Log().LogIfThrows(LogLevel.Warn, message, block);
+        }
+
+        public static Task WarnIfThrows(this IEnableLogger This, Func<Task> block, string message = null)
+        {
+            return This.Log().LogIfThrows(LogLevel.Warn, message, block);
+        }
+
+        public static Task<T> WarnIfThrows<T>(this IEnableLogger This, Func<Task<T>> block, string message = null)
+        {
+            return This.Log().LogIfThrows(LogLevel.Warn, message, block);
+        }
+
+        public static void ErrorIfThrows(this IEnableLogger This, Action block, string message = null)
+        {
+            This.Log().LogIfThrows(LogLevel.Error, message, block);
+        }
+
+        public static Task ErrorIfThrows(this IEnableLogger This, Func<Task> block, string message = null)
+        {
+            return This.Log().LogIfThrows(LogLevel.Error, message, block);
+        }
+
+        public static Task<T> ErrorIfThrows<T>(this IEnableLogger This, Func<Task<T>> block, string message = null)
+        {
+            return This.Log().LogIfThrows(LogLevel.Error, message, block);
         }
 
         static IFullLogger logger;
@@ -312,70 +499,63 @@ namespace Squirrel
         }
     }
 
-    /*
-    public sealed class SingleGlobalInstance : IDisposable
+    sealed class SingleGlobalInstance : IDisposable, IEnableLogger
     {
-        readonly static object gate = 42;
-        bool HasHandle = false;
-        Mutex mutex;
-        EventLoopScheduler lockScheduler = new EventLoopScheduler();
+        IDisposable handle = null;
 
-        public SingleGlobalInstance(string key, int timeOut)
+        public SingleGlobalInstance(string key, TimeSpan timeOut)
         {
-            if (RxApp.InUnitTestRunner()) {
-                HasHandle = Observable.Start(() => Monitor.TryEnter(gate, timeOut), lockScheduler).First();
-
-                if (HasHandle == false)
-                    throw new TimeoutException("Timeout waiting for exclusive access on SingleInstance");
+            if (ModeDetector.InUnitTestRunner()) {
                 return;
             }
 
-            initMutex(key);
-            try
-            {
-                if (timeOut <= 0)
-                    HasHandle = Observable.Start(() => mutex.WaitOne(Timeout.Infinite, false), lockScheduler).First();
-                else
-                    HasHandle = Observable.Start(() => mutex.WaitOne(timeOut, false), lockScheduler).First();
+            var path = Path.Combine(Path.GetTempPath(), ".squirrel-lock-" + key);
 
-                if (HasHandle == false)
-                    throw new TimeoutException("Timeout waiting for exclusive access on SingleInstance");
+            var st = new Stopwatch();
+            st.Start();
+
+            var fh = default(FileStream);
+            while (st.Elapsed < timeOut) {
+                try {
+                    fh = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Delete);
+                    fh.Write(new byte[] { 0xba, 0xad, 0xf0, 0x0d, }, 0, 4);
+                    break;
+                } catch (Exception ex) {
+                    this.Log().WarnException("Failed to grab lockfile, will retry: " + path, ex);
+                    Thread.Sleep(250);
+                }
             }
-            catch (AbandonedMutexException)
-            {
-                HasHandle = true;
+
+            st.Stop();
+
+            if (fh == null) {
+                throw new Exception("Couldn't acquire lock, is another instance running");
             }
-        }
 
-        private void initMutex(string key)
-        {
-            string mutexId = string.Format("Global\\{{{0}}}", key);
-            mutex = new Mutex(false, mutexId);
-
-            var allowEveryoneRule = new MutexAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), MutexRights.FullControl, AccessControlType.Allow);
-            var securitySettings = new MutexSecurity();
-            securitySettings.AddAccessRule(allowEveryoneRule);
-            mutex.SetAccessControl(securitySettings);
+            var handle = Disposable.Create(() => {
+                fh.Dispose();
+                File.Delete(path);
+            });
         }
 
         public void Dispose()
         {
-            if (HasHandle && RxApp.InUnitTestRunner()) {
-                Observable.Start(() => Monitor.Exit(gate), lockScheduler).First();
-                HasHandle = false;
+            if (ModeDetector.InUnitTestRunner()) {
+                return;
             }
 
-            if (HasHandle && mutex != null) {
-                Observable.Start(() => mutex.ReleaseMutex(), lockScheduler).First();
-                HasHandle = false;
-            }
+            var disp = Interlocked.Exchange(ref handle, null);
+            if (disp != null) disp.Dispose();
+        }
 
-            lockScheduler.Dispose();
+        ~SingleGlobalInstance()
+        {
+            if (handle == null) return;
+            throw new AbandonedMutexException("Leaked a Mutex!");
         }
     }
-    */
 
-    public static class Disposable
+    static class Disposable
     {
         public static IDisposable Create(Action action)
         {
