@@ -46,7 +46,7 @@ namespace Squirrel
             string[] arguments = null)
         {
             Action<Version> defaultBlock = (v => { });
-            var args = arguments ?? Environment.GetCommandLineArgs();
+            var args = arguments ?? Environment.GetCommandLineArgs().Skip(1).ToArray();
             if (args.Length == 0) return;
 
             var lookup = new[] {
@@ -68,10 +68,10 @@ namespace Squirrel
 
             try {
                 lookup[args[0]](version);
-                Environment.Exit(0);
+                if (!ModeDetector.InUnitTestRunner()) Environment.Exit(0);
             } catch (Exception ex) {
                 LogHost.Default.ErrorException("Failed to handle Squirrel events", ex);
-                Environment.Exit(-1);
+                if (!ModeDetector.InUnitTestRunner()) Environment.Exit(-1);
             }
         }
     }
