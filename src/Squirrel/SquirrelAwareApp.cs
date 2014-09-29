@@ -45,14 +45,15 @@ namespace Squirrel
             Action onFirstRun = null,
             string[] arguments = null)
         {
+            Action<Version> defaultBlock = (v => { });
             var args = arguments ?? Environment.GetCommandLineArgs();
             if (args.Length == 0) return;
 
             var lookup = new[] {
-                new { Key = "--squirrel-install", Value = onInitialInstall },
-                new { Key = "--squirrel-updated", Value = onAppUpdate },
-                new { Key = "--squirrel-obsolete", Value = onAppObsoleted },
-                new { Key = "--squirrel-uninstall", Value = onAppUninstall },
+                new { Key = "--squirrel-install", Value = onInitialInstall ?? defaultBlock },
+                new { Key = "--squirrel-updated", Value = onAppUpdate ?? defaultBlock },
+                new { Key = "--squirrel-obsolete", Value = onAppObsoleted ?? defaultBlock },
+                new { Key = "--squirrel-uninstall", Value = onAppUninstall ?? defaultBlock },
             }.ToDictionary(k => k.Key, v => v.Value);
 
             if (args[0] == "--squirrel-firstrun") {
