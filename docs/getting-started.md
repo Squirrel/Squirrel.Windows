@@ -1,17 +1,27 @@
 ## Quick Start (for the impatient)
 
 1. `Install-Package squirrel.windows`
-2. Use NuGet Package Explorer (or any other way) to create a NuGet package for your app.
+2. Use NuGet Package Explorer (or any other way) to create a NuGet package for your app. Make sure that package doesn't have any dependencies
 3. Open the NuGet Package Console, and type `Squirrel --releasify path/to/the/nuget/package.nupkg`
 4. In your app, from time to time run this code:
 
 ```cs
+// NB: For this version, always say your app is using .NET 4.5, even if it's
+// totally not
 using (var mgr = new UpdateManager("https://path/to/my/update/folder", "nuget-package-id", FrameworkVersion.Net45)) {
     await mgr.UpdateApp();
 }
 ```
 
 You should have a folder called `Releases` with three files in it. Publish those all to S3 in the same folder and you've now got an installer.
+
+## BETA: Some hacky notes that will go away soon
+
+1. Make sure your NuGet package doesn't have any `<Dependency>` tags.
+
+1. Use the `<File>` tag to include all of your app's dependencies, even ones that for a normal NuGet package wouldn't be there. Make sure to include `Squirrel.dll` and its dependencies too! Every file in the References section of your app should be there.
+
+1. Put all of your app files in `lib/net45`. I don't care if your app isn't actually a .NET 4.5 app, just do it. Even if your app is written in COBOL, put it in `lib/net45`.
 
 ## What about shortcuts?
 
