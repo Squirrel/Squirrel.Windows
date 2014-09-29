@@ -53,9 +53,9 @@ using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45))
     // Note, in most of these scenarios, the app exits after this method
     // completes!
     SquirrelAwareApp.HandleEvents(
-      onInitialInstall: v => mgr.CreateShortcutsForThisExe(),
-      onAppUpdate: v => mgr.CreateShortcutsForThisExe(),
-      onAppUninstall: v => mgr.RemoveShortcutsForThisExe(),
+      onInitialInstall: v => mgr.CreateShortcutForThisExe(),
+      onAppUpdate: v => mgr.CreateShortcutForThisExe(),
+      onAppUninstall: v => mgr.RemoveShortcutForThisExe(),
       onFirstRun: () => ShowTheWelcomeWizard = true);
 }
 ```
