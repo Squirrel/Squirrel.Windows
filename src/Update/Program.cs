@@ -49,6 +49,7 @@ namespace Squirrel.Update
             //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
             //Thread.Sleep(10 * 60 * 1000);
 
+            using (Disposable.Create(() => animatedGifWindowToken.Cancel()))
             using (var logger = new SetupLogLogger(isUninstalling) { Level = Splat.LogLevel.Info }) {
                 Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
 
@@ -125,8 +126,6 @@ namespace Squirrel.Update
                     Deshortcut(target);
                     break;
                 }
-            
-                animatedGifWindowToken.Cancel();
             }
 
             return 0;
