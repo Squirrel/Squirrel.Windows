@@ -4,8 +4,8 @@
     <version>0.5.1</version>
     <authors>GitHub</authors>
     <owners>Paul Betts</owners>
-    <licenseUrl>https://github.com/squirrel/Squirrel.Windows.Next/blob/master/COPYING</licenseUrl>
-    <projectUrl>https://github.com/squirrel/Squirrel.Windows.Next</projectUrl>
+    <licenseUrl>https://github.com/squirrel/Squirrel.Windows/blob/master/COPYING</licenseUrl>
+    <projectUrl>https://github.com/squirrel/Squirrel.Windows</projectUrl>
 
     <dependencies>
       <dependency id="NuGet.Core" version="2.8.2" />
