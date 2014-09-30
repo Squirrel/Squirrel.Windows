@@ -26,8 +26,8 @@ namespace Squirrel
             arguments = arguments ?? new string[] { };
             object[] psi =
             {
-                string.Format("--process-start={0}", exeName),
-                string.Format("--process-start-args={0}", string.Join(" ", arguments))
+                string.Format("--process-start=\"{0}\"", exeName),
+                string.Format("--process-start-args=\"{0}\"", string.Join(" ", arguments))
             };
             return new ProcessStartInfo(getUpdateExe(assembly), string.Format(" ", psi));
         }
