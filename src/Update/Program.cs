@@ -354,8 +354,7 @@ namespace Squirrel.Update
 
             try
             {
-                arguments = arguments ?? string.Empty;
-                arguments = "--squirrel-process-start " + arguments;
+                arguments = arguments ?? "--squirrel-process-start";
                 Process.Start(new ProcessStartInfo(exeName, arguments));
             }
             catch (Exception ex)
