@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 
@@ -6,14 +8,16 @@ namespace Squirrel
 {
     public static class AssemblyExtensions
     {
-        public static void Restart(this Assembly assembly, string[] arguments = null)
+        public static Process Restart(this Assembly assembly, string[] arguments = null)
         {
-            ProcessStart(assembly, assembly.Location, arguments);
+            return ProcessStart(assembly, assembly.Location, arguments);
         }
 
-        public static void ProcessStart(this Assembly assembly, string exeName, string[] arguments = null)
+        public static Process ProcessStart(this Assembly assembly, string exeName, string[] arguments = null)
         {
-            Process.Start(getProcessStartInfo(assembly, exeName, arguments));
+            return Process.Start(getProcessStartInfo(assembly, exeName, arguments));
+        }
+
         public static Process ProcessStart(this Assembly assembly, ProcessStartInfo psi)
         {
             psi.FileName = getUpdateExe(assembly);
