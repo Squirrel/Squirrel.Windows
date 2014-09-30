@@ -23,13 +23,15 @@ namespace Squirrel
 
         static ProcessStartInfo getProcessStartInfo(Assembly assembly, string exeName, string[] arguments)
         {
-            arguments = arguments ?? new string[] { };
-            object[] psi =
+            var psi = new List<string>
             {
-                string.Format("--process-start=\"{0}\"", exeName),
-                string.Format("--process-start-args=\"{0}\"", string.Join(" ", arguments))
+                string.Format("--process-start=\"{0}\"", exeName)
             };
-            return new ProcessStartInfo(getUpdateExe(assembly), string.Format(" ", psi));
+            if (arguments != null && arguments.Length > 0)
+            {
+                psi.Add(string.Format("--process-start-args=\"{0}\"", string.Join(" ", arguments)));
+            }
+            return new ProcessStartInfo(getUpdateExe(assembly), string.Join(" ", psi));
         }
 
         static string getUpdateExe(Assembly assembly)
