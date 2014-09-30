@@ -97,7 +97,7 @@ namespace Squirrel.Update
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
                     { "ps=|process-start=", "Start an executable", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
-                    { "ps=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
+                    { "psa=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                 };
 
                 opts.Parse(args);
