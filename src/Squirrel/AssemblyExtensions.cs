@@ -14,6 +14,14 @@ namespace Squirrel
         public static void ProcessStart(this Assembly assembly, string exeName, string[] arguments = null)
         {
             Process.Start(getProcessStartInfo(assembly, exeName, arguments));
+        public static Process ProcessStart(this Assembly assembly, ProcessStartInfo psi)
+        {
+            psi.FileName = getUpdateExe(assembly);
+            if (!string.IsNullOrEmpty(psi.Arguments))
+            {
+                psi.Arguments = string.Format("--process-start-args=\"{0}\"", string.Join(" ", psi.Arguments));
+            }
+            return Process.Start(psi);
         }
 
         public static ProcessStartInfo ProcessStartGetInfo(this Assembly assembly, string exeName, string[] arguments = null)
