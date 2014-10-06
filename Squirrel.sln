@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+VisualStudioVersion = 12.0.30723.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squirrel", "src\Squirrel\Squirrel.csproj", "{1436E22A-FE3C-4D68-9A85-9E74DF2E6A92}"
 EndProject
@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{50DF07
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Update", "src\Update\Update.csproj", "{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncGitHubReleases", "src\SyncGitHubReleases\SyncGitHubReleases.csproj", "{EB521191-1EBF-4D06-8541-ED192E2EE378}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,9 +53,9 @@ Global
 		{98AEB048-E27D-42F4-9440-505B7F78BAFD}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{98AEB048-E27D-42F4-9440-505B7F78BAFD}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{C1D40624-A484-438A-B846-052F321C89D1}.CIBuild|Any CPU.ActiveCfg = CIBuild|Win32
+		{C1D40624-A484-438A-B846-052F321C89D1}.CIBuild|Any CPU.Build.0 = CIBuild|Win32
 		{C1D40624-A484-438A-B846-052F321C89D1}.CIBuild|Mixed Platforms.ActiveCfg = CIBuild|Win32
 		{C1D40624-A484-438A-B846-052F321C89D1}.CIBuild|Mixed Platforms.Build.0 = CIBuild|Win32
-		{C1D40624-A484-438A-B846-052F321C89D1}.CIBuild|Any CPU.Build.0 = CIBuild|Win32
 		{C1D40624-A484-438A-B846-052F321C89D1}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{C1D40624-A484-438A-B846-052F321C89D1}.Debug|Any CPU.Build.0 = Debug|Win32
 		{C1D40624-A484-438A-B846-052F321C89D1}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
@@ -74,6 +76,18 @@ Global
 		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.CIBuild|Any CPU.ActiveCfg = Release|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.CIBuild|Any CPU.Build.0 = Release|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.CIBuild|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.CIBuild|Mixed Platforms.Build.0 = Release|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{EB521191-1EBF-4D06-8541-ED192E2EE378}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
