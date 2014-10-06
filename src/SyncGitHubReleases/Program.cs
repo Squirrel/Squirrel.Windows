@@ -85,8 +85,19 @@ namespace SyncGitHubReleases
                             var target = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
                             if (target.Exists) target.Delete();
 
-                            var wc = new WebClient();
-                            await wc.DownloadFileTaskAsync(x.Url, target.FullName);
+                            var hc = new HttpClient();
+                            var rq = new HttpRequestMessage(HttpMethod.Get, x.Url);
+                            rq.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream"));
+                            rq.Headers.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue(userAgent.Name, userAgent.Version));
+                            rq.Headers.Add("Authorization", "Bearer " + token);
+
+                            var resp = await hc.SendAsync(rq);
+                            resp.EnsureSuccessStatusCode();
+
+                            using (var from = await resp.Content.ReadAsStreamAsync())
+                            using (var to = File.OpenWrite(target.FullName)) {
+                                await from.CopyToAsync(to);
+                            }
                         });
                 });
 
