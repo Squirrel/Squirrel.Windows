@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -57,16 +59,41 @@ namespace SyncGitHubReleases
                     return -1;
                 }
 
+                var releaseDirectoryInfo = new DirectoryInfo(releaseDir ?? Path.Combine(".", "Releases"));
+
                 var repoUri = new Uri(repoUrl);
                 var userAgent = new ProductHeaderValue("SyncGitHubReleases " + Assembly.GetExecutingAssembly().GetName().Version);
                 var client = new GitHubClient(userAgent, repoUri) {
                     Credentials = new Credentials(token)
                 };
 
-                var repo = nwoFromRepoUrl(repoUrl);
-                var allDownloads = await client.Release.GetAll(repo.Item1, repo.Item2);
+                var nwo = nwoFromRepoUrl(repoUrl);
+                var releases = await client.Release.GetAll(nwo.Item1, nwo.Item2);
 
-                allDownloads.ForEachAsync
+                await releases.ForEachAsync(async release => {
+                    // NB: Why do I have to double-fetch the release assets? It's already in GetAll
+                    var assets = await client.Release.GetAssets(nwo.Item1, nwo.Item2, release.Id);
+
+                    await assets
+                        .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
+                        .Where(x => {
+                            var fi = new FileInfo(Path.Combine(releaseDir, x.Name));
+                            return !(fi.Exists && fi.Length == x.Size);
+                        })
+                        .ForEachAsync(async x => {
+                            var target = new FileInfo(Path.Combine(releaseDir, x.Name));
+                            if (target.Exists) target.Delete();
+
+                            var wc = new WebClient();
+                            await wc.DownloadFileTaskAsync(x.Url, target.FullName);
+                        });
+                });
+
+                var entries = releaseDirectoryInfo.GetFiles("*.nupkg")
+                    .AsParallel()
+                    .Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
+
+                ReleaseEntry.WriteReleaseFile(entries, Path.Combine(releaseDirectoryInfo.FullName, "RELEASES"));
             }
 
             return 0;
