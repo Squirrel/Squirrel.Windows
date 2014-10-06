@@ -54,15 +54,16 @@ namespace SyncGitHubReleases
 
                 opts.Parse(args);
 
-                if (token == null || repoUrl == null || repoUrl.StartsWith("http", true, CultureInfo.InvariantCulture)) {
+                if (token == null || repoUrl == null || repoUrl.StartsWith("http", true, CultureInfo.InvariantCulture) == false) {
                     ShowHelp();
                     return -1;
                 }
 
                 var releaseDirectoryInfo = new DirectoryInfo(releaseDir ?? Path.Combine(".", "Releases"));
+                if (!releaseDirectoryInfo.Exists) releaseDirectoryInfo.Create();
 
                 var repoUri = new Uri(repoUrl);
-                var userAgent = new ProductHeaderValue("SyncGitHubReleases " + Assembly.GetExecutingAssembly().GetName().Version);
+                var userAgent = new ProductHeaderValue("SyncGitHubReleases", Assembly.GetExecutingAssembly().GetName().Version.ToString());
                 var client = new GitHubClient(userAgent, repoUri) {
                     Credentials = new Credentials(token)
                 };
@@ -77,11 +78,11 @@ namespace SyncGitHubReleases
                     await assets
                         .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
                         .Where(x => {
-                            var fi = new FileInfo(Path.Combine(releaseDir, x.Name));
+                            var fi = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
                             return !(fi.Exists && fi.Length == x.Size);
                         })
                         .ForEachAsync(async x => {
-                            var target = new FileInfo(Path.Combine(releaseDir, x.Name));
+                            var target = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
                             if (target.Exists) target.Delete();
 
                             var wc = new WebClient();
@@ -109,11 +110,11 @@ namespace SyncGitHubReleases
             var uri = new Uri(repoUrl);
 
             var segments = uri.AbsolutePath.Split('/');
-            if (segments.Count() != 2) {
+            if (segments.Count() != 3) {
                 throw new Exception("Repo URL must be to the root URL of the repo e.g. https://github.com/myuser/myrepo");
             }
 
-            return Tuple.Create(segments[0], segments[1]);
+            return Tuple.Create(segments[1], segments[2]);
         }
     }
 
