@@ -47,7 +47,7 @@ namespace SyncGitHubReleases
                     "",
                     "Options:",
                     { "h|?|help", "Display Help and exit", _ => {} },
-                    { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
+                    { "r=|releaseDir=", "Path to a release directory to download to", v => releaseDir = v},
                     { "u=|repoUrl=", "The URL to the repository root page", v => repoUrl = v},
                     { "t=|token=", "The OAuth token to use as login credentials", v => token = v},
                 };
