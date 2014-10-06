@@ -36,3 +36,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("0.5.2")]
 [assembly: InternalsVisibleTo("Squirrel.Tests")]
 [assembly: InternalsVisibleTo("Update")]
+[assembly: InternalsVisibleTo("SyncGitHubReleases")]
