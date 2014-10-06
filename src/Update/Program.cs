@@ -73,7 +73,7 @@ namespace Squirrel.Update
                 string baseUrl = default(string);
 
                 opts = new OptionSet() {
-                    "Usage: Update.exe command [OPTS]",
+                    "Usage: Squirrel.exe command [OPTS]",
                     "Manages Squirrel packages",
                     "",
                     "Commands",
@@ -100,6 +100,7 @@ namespace Squirrel.Update
 
                 if (updateAction == UpdateAction.Unset) {
                     ShowHelp();
+                    return -1;
                 }
 
                 switch (updateAction) {
