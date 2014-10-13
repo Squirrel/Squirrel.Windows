@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using Splat;
 
@@ -16,24 +13,46 @@ namespace Squirrel
 
     class FileDownloader : IFileDownloader, IEnableLogger
     {
-        public Task DownloadFile(string url, string targetFile)
+        public async Task DownloadFile(string url, string targetFile)
         {
             var wc = new WebClient();
+            var failedUrl = default(string);
 
-            this.Log().Info("Downloading file: " + url);
+        retry:
+            try {
+                this.Log().Info("Downloading file: " + failedUrl ?? url);
 
-            return this.WarnIfThrows(() => wc.DownloadFileTaskAsync(url, targetFile),
-                "Failed downloading URL: " + url);
+                await this.WarnIfThrows(() => wc.DownloadFileTaskAsync(failedUrl ?? url, targetFile),
+                    "Failed downloading URL: " + failedUrl ?? url);
+            } catch (Exception) {
+                // NB: Some super brain-dead services are case-sensitive yet 
+                // corrupt case on upload. I can't even.
+                if (failedUrl != null) throw;
+
+                failedUrl = url.ToLower();
+                goto retry;
+            }
         }
 
-        public Task<byte[]> DownloadUrl(string url)
+        public async Task<byte[]> DownloadUrl(string url)
         {
             var wc = new WebClient();
+            var failedUrl = default(string);
 
-            this.Log().Info("Downloading url: " + url);
+        retry:
+            try {
+                this.Log().Info("Downloading url: " + failedUrl ?? url);
 
-            return this.WarnIfThrows(() => wc.DownloadDataTaskAsync(url),
-                "Failed to download url: " + url);
+                return await this.WarnIfThrows(() => wc.DownloadDataTaskAsync(failedUrl ?? url),
+                    "Failed to download url: " + failedUrl ?? url);
+            } catch (Exception) {
+                // NB: Some super brain-dead services are case-sensitive yet 
+                // corrupt case on upload. I can't even.
+                if (failedUrl != null) throw;
+
+                failedUrl = url.ToLower();
+                goto retry;
+            }
         }
     }
 }
