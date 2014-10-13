@@ -66,6 +66,9 @@ local.properties
 **/*.dotCover
 **/packages/
 
+packages
+*.GhostDoc.xml
+
 # Visual C++ cache files
 ipch/
 *.aps

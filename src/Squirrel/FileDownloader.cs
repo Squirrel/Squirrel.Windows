@@ -20,6 +20,8 @@ namespace Squirrel
         {
             var wc = new WebClient();
 
+            url = url.GetFinalUrl();
+
             this.Log().Info("Downloading file: " + url);
 
             return this.WarnIfThrows(() => wc.DownloadFileTaskAsync(url, targetFile),
@@ -29,6 +31,8 @@ namespace Squirrel
         public Task<byte[]> DownloadUrl(string url)
         {
             var wc = new WebClient();
+
+            url = url.GetFinalUrl();
 
             this.Log().Info("Downloading url: " + url);
 
