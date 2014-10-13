@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using Splat;
 
@@ -16,27 +13,55 @@ namespace Squirrel
 
     class FileDownloader : IFileDownloader, IEnableLogger
     {
-        public Task DownloadFile(string url, string targetFile)
+        public async Task DownloadFile(string url, string targetFile)
         {
             var wc = new WebClient();
 
-            url = url.GetFinalUrl();
+            var failed = false;
 
-            this.Log().Info("Downloading file: " + url);
+            try
+            {
+                this.Log().Info("Downloading file: " + url);
 
-            return this.WarnIfThrows(() => wc.DownloadFileTaskAsync(url, targetFile),
-                "Failed downloading URL: " + url);
+                await this.WarnIfThrows(() => wc.DownloadFileTaskAsync(url, targetFile),
+                    "Failed downloading URL: " + url);
+            }
+            catch (Exception)
+            {
+                failed = true;
+            }
+
+            if (failed)
+            {
+                this.Log().Info("Downloading failed, falling back to lowercase url");
+
+                url = url.ToLower();
+
+                await this.WarnIfThrows(() => wc.DownloadFileTaskAsync(url, targetFile),
+                    "Failed downloading URL: " + url);
+            }
         }
 
-        public Task<byte[]> DownloadUrl(string url)
+        public async Task<byte[]> DownloadUrl(string url)
         {
             var wc = new WebClient();
 
-            url = url.GetFinalUrl();
+            try
+            {
+                this.Log().Info("Downloading url: " + url);
 
-            this.Log().Info("Downloading url: " + url);
+                return await this.WarnIfThrows(() => wc.DownloadDataTaskAsync(url),
+                    "Failed to download url: " + url);
+            }
+            catch (Exception)
+            {
+            }
 
-            return this.WarnIfThrows(() => wc.DownloadDataTaskAsync(url),
+            this.Log().Info("Downloading failed, falling back to lowercase url");
+
+            url = url.ToLower();
+
+            return await this.WarnIfThrows(() => wc.DownloadDataTaskAsync(url),
                 "Failed to download url: " + url);
         }
     }

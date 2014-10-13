@@ -85,7 +85,6 @@
     <Compile Include="ReleaseEntryTests.cs" />
     <Compile Include="ReleasePackageTests.cs" />
     <Compile Include="SquirrelAwareExecutableDetectorTests.cs" />
-    <Compile Include="StringExtensionsTests.cs" />
     <Compile Include="TestHelpers\AssertExtensions.cs" />
     <Compile Include="TestHelpers\ExposedClass.cs" />
     <Compile Include="TestHelpers\ExposedObject.cs" />

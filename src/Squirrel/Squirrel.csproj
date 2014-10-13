@@ -92,7 +92,6 @@
     <Compile Include="ShellFile.cs" />
     <Compile Include="SquirrelAwareApp.cs" />
     <Compile Include="SquirrelAwareExecutableDetector.cs" />
-    <Compile Include="StringExtensions.cs" />
     <Compile Include="TaskbarHelper.cs" />
     <Compile Include="UpdateInfo.cs" />
     <Compile Include="UpdateManager.CheckForUpdates.cs" />
