@@ -189,6 +189,35 @@ namespace Squirrel.Update
             }
         }
 
+        public async Task UpdateSelf(string appName)
+        {
+            var localAppDir = Environment.ExpandEnvironmentVariables("%LocalAppData%");
+            var targetDir = new DirectoryInfo(
+                Path.Combine(localAppDir, appName));
+
+            waitForParentToExit();
+
+            if (!targetDir.Exists) {
+                throw new ArgumentException("Target app isn't installed!");
+            }
+
+            if (!targetDir.FullName.StartsWith(localAppDir, StringComparison.OrdinalIgnoreCase)) {
+                throw new ArgumentException();
+            }
+
+            var src = Assembly.GetExecutingAssembly().Location;
+            if (targetDir.FullName.Equals(src, StringComparison.OrdinalIgnoreCase)) {
+                throw new ArgumentException("Can't update yourself with yourself, that's silly");
+            }
+
+            await Task.Run(() => {
+                File.Copy(
+                    src,
+                    Path.Combine(targetDir.FullName, "Update.exe"),
+                    true);
+            });
+        }
+
         public async Task<string> Download(string updateUrl, string appName = null)
         {
             ensureConsole();
