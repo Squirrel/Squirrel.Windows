@@ -54,6 +54,8 @@ namespace Squirrel
                 progress(50);
 
                 var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
+                executeSelfUpdate(newVersion);
+
                 await this.ErrorIfThrows(() => invokePostInstall(newVersion, attemptingFullInstall, false),
                     "Failed to invoke post-install");
                 progress(75);
