@@ -147,6 +147,21 @@ namespace Squirrel
             }
         }
 
+        public static void RestartApp(string exeToStart = null, string arguments = null)
+        { 
+            // NB: Here's how this method works:
+            //
+            // 1. We're going to pass the *name* of our EXE and the params to 
+            //    Update.exe
+            // 2. Update.exe is going to grab our PID (via getting its parent), 
+            //    then wait for us to exit.
+            // 3. We exit cleanly, dropping any single-instance mutexes or 
+            //    whatever.
+            // 4. Update.exe unblocks, then we launch the app again, possibly 
+            //    launching a different version than we started with (this is why
+            //    we take the app's *name* rather than a full path)
+        }
+
         ~UpdateManager()
         {
             if (updateLock != null) {
@@ -177,6 +192,14 @@ namespace Squirrel
                 updateLock = ret;
                 return ret;
             });
+        }
+
+        static string getUpdateExe()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+
+            var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..\\Update.exe");
+            return (new FileInfo(updateDotExe)).FullName;
         }
 
         static string getLocalAppDataDirectory()
