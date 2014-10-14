@@ -363,19 +363,7 @@ namespace Squirrel.Update
                 return;
             }
 
-            // Grab a handle the parent process
-            var parentPid = NativeMethods.GetParentProcessId();
-            var handle = default(IntPtr);
-
-            // Wait for our parent to exit
-            try {
-                handle = NativeMethods.OpenProcess(ProcessAccess.Synchronize, false, parentPid);
-                if (handle == IntPtr.Zero) throw new Win32Exception();
-
-                NativeMethods.WaitForSingleObject(handle, 0xFFFFFFFF /*INFINITE*/);
-            } finally {
-                if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
-            }
+            waitForParentToExit();
 
             // Find the latest installed version's app dir
             var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -413,6 +401,23 @@ namespace Squirrel.Update
         {
             ensureConsole();
             opts.WriteOptionDescriptions(Console.Out);
+        }
+
+        static void waitForParentToExit()
+        {
+            // Grab a handle the parent process
+            var parentPid = NativeMethods.GetParentProcessId();
+            var handle = default(IntPtr);
+
+            // Wait for our parent to exit
+            try {
+                handle = NativeMethods.OpenProcess(ProcessAccess.Synchronize, false, parentPid);
+                if (handle == IntPtr.Zero) throw new Win32Exception();
+
+                NativeMethods.WaitForSingleObject(handle, 0xFFFFFFFF /*INFINITE*/);
+            } finally {
+                if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
+            }
         }
 
         async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts)
