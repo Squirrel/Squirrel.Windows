@@ -86,6 +86,7 @@ namespace Squirrel.Update
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
                     { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
                     { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
+                    { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
                     "",
                     "Options:",
                     { "h|?|help", "Display Help and exit", _ => ShowHelp() },
@@ -96,8 +97,7 @@ namespace Squirrel.Update
                     { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
-                    { "ps=|process-start=", "Start an executable", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
-                    { "psa=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
+                    { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                 };
 
                 opts.Parse(args);
