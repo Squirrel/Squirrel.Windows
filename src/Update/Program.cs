@@ -17,7 +17,7 @@ using Squirrel;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, Deshortcut,
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, Deshortcut, ProcessStart
     }
 
     class Program : IEnableLogger 
@@ -71,6 +71,8 @@ namespace Squirrel.Update
                 string backgroundGif = default(string);
                 string signingParameters = default(string);
                 string baseUrl = default(string);
+                string processStart = default(string);
+                string processStartArgs = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -94,6 +96,8 @@ namespace Squirrel.Update
                     { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
+                    { "ps=|process-start=", "Start an executable", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
+                    { "psa=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                 };
 
                 opts.Parse(args);
@@ -125,6 +129,9 @@ namespace Squirrel.Update
                     break;
                 case UpdateAction.Deshortcut:
                     Deshortcut(target);
+                    break;
+                case UpdateAction.ProcessStart:
+                    ProcessStart(processStart, processStartArgs);
                     break;
                 }
             }
@@ -346,6 +353,25 @@ namespace Squirrel.Update
             var appName = getAppNameFromDirectory();
             using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
                 mgr.RemoveShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
+            }
+        }
+
+        public void ProcessStart(string exeName, string arguments)
+        {
+            if (String.IsNullOrWhiteSpace(exeName))
+            {
+                ShowHelp();
+                return;
+            }
+
+            try
+            {
+                arguments = String.IsNullOrEmpty(arguments) ? "--squirrel-process-start" : arguments;
+                Process.Start(new ProcessStartInfo(exeName, arguments));
+            }
+            catch (Exception ex)
+            {
+                this.Log().ErrorException("Failed to start process", ex);
             }
         }
 
