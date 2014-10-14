@@ -379,7 +379,8 @@ namespace Squirrel.Update
 
             // Find the latest installed version's app dir
             var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var releases = ReleaseEntry.ParseReleaseFile(Utility.LocalReleaseFileForAppDir(appDir));
+            var releases = ReleaseEntry.ParseReleaseFile(
+                File.ReadAllText(Utility.LocalReleaseFileForAppDir(appDir), Encoding.UTF8));
 
             var latestAppDir = releases
                 .OrderBy(x => x.Version)
