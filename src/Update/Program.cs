@@ -17,7 +17,8 @@ using Squirrel;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, Deshortcut, ProcessStart
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, 
+        Deshortcut, ProcessStart, UpdateSelf,
     }
 
     class Program : IEnableLogger 
@@ -73,6 +74,7 @@ namespace Squirrel.Update
                 string baseUrl = default(string);
                 string processStart = default(string);
                 string processStartArgs = default(string);
+                string appName = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -86,6 +88,7 @@ namespace Squirrel.Update
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
                     { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
                     { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
+                    { "updateSelf=", "Copy the currently executing Update.exe into the default location", v => { updateAction =  UpdateAction.UpdateSelf; appName = v; } },
                     { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
                     "",
                     "Options:",
@@ -120,6 +123,9 @@ namespace Squirrel.Update
                     break;
                 case UpdateAction.Update:
                     Update(target).Wait();
+                    break;
+                case UpdateAction.UpdateSelf:
+                    UpdateSelf(appName).Wait();
                     break;
                 case UpdateAction.Releasify:
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl);
@@ -213,7 +219,7 @@ namespace Squirrel.Update
             await Task.Run(() => {
                 File.Copy(
                     src,
-                    Path.Combine(targetDir.FullName, "Update.exe"),
+                    Path.Combine(targetDir.FullName, "Update.exe"), 
                     true);
             });
         }
