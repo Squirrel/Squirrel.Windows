@@ -17,7 +17,7 @@ using Squirrel;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, Deshortcut,
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, Deshortcut, ProcessStart
     }
 
     class Program : IEnableLogger 
@@ -71,6 +71,8 @@ namespace Squirrel.Update
                 string backgroundGif = default(string);
                 string signingParameters = default(string);
                 string baseUrl = default(string);
+                string processStart = default(string);
+                string processStartArgs = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -84,9 +86,10 @@ namespace Squirrel.Update
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
                     { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
                     { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
+                    { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
                     "",
                     "Options:",
-                    { "h|?|help", "Display Help and exit", _ => ShowHelp() },
+                    { "h|?|help", "Display Help and exit", _ => {} },
                     { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
                     { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
@@ -94,6 +97,7 @@ namespace Squirrel.Update
                     { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
+                    { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                 };
 
                 opts.Parse(args);
@@ -125,6 +129,9 @@ namespace Squirrel.Update
                     break;
                 case UpdateAction.Deshortcut:
                     Deshortcut(target);
+                    break;
+                case UpdateAction.ProcessStart:
+                    ProcessStart(processStart, processStartArgs);
                     break;
                 }
             }
@@ -349,6 +356,59 @@ namespace Squirrel.Update
             }
         }
 
+        public void ProcessStart(string exeName, string arguments)
+        {
+            if (String.IsNullOrWhiteSpace(exeName)) {
+                ShowHelp();
+                return;
+            }
+
+            // Grab a handle the parent process
+            var parentPid = NativeMethods.GetParentProcessId();
+            var handle = default(IntPtr);
+
+            // Wait for our parent to exit
+            try {
+                handle = NativeMethods.OpenProcess(ProcessAccess.Synchronize, false, parentPid);
+                if (handle == IntPtr.Zero) throw new Win32Exception();
+
+                NativeMethods.WaitForSingleObject(handle, 0xFFFFFFFF /*INFINITE*/);
+            } finally {
+                if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
+            }
+
+            // Find the latest installed version's app dir
+            var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var releases = ReleaseEntry.ParseReleaseFile(
+                File.ReadAllText(Utility.LocalReleaseFileForAppDir(appDir), Encoding.UTF8));
+
+            var latestAppDir = releases
+                .OrderBy(x => x.Version)
+                .Select(x => Utility.AppDirForRelease(appDir, x))
+                .FirstOrDefault(x => Directory.Exists(x));
+
+            // Check for the EXE name they want
+            var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName));
+            this.Log().Info("Want to launch '{0}'", targetExe);
+
+            // Check for path canonicalization attacks
+            if (!targetExe.FullName.StartsWith(latestAppDir)) {
+                throw new ArgumentException();
+            }
+
+            if (!targetExe.Exists) {
+                this.Log().Error("File {0} doesn't exist in current release", targetExe);
+                throw new ArgumentException();
+            }
+
+            try {
+                this.Log().Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");
+                Process.Start(new ProcessStartInfo(targetExe.FullName, arguments ?? ""));
+            } catch (Exception ex) {
+                this.Log().ErrorException("Failed to start process", ex);
+            }
+        }
+
         public void ShowHelp()
         {
             ensureConsole();
@@ -440,34 +500,6 @@ namespace Squirrel.Update
             NativeMethods.GetStdHandle(StandardHandles.STD_ERROR_HANDLE);
             NativeMethods.GetStdHandle(StandardHandles.STD_OUTPUT_HANDLE);
         }
-    }
-
-    enum StandardHandles : int {
-        STD_INPUT_HANDLE = -10,
-        STD_OUTPUT_HANDLE = -11,
-        STD_ERROR_HANDLE = -12,
-    }
-
-    static class NativeMethods
-    {
-        [DllImport("kernel32.dll", EntryPoint = "GetStdHandle")]
-        public static extern IntPtr GetStdHandle(StandardHandles nStdHandle);
-
-        [DllImport("kernel32.dll", EntryPoint = "AllocConsole")]
-        [return: MarshalAs(UnmanagedType.Bool)] 
-        public static extern bool AllocConsole();
- 
-        [DllImport("kernel32.dll")]
-        public static extern bool AttachConsole(int pid);
-
-        [DllImport("Kernel32.dll", SetLastError=true)]
-        public static extern IntPtr BeginUpdateResource(string pFileName, bool bDeleteExistingResources);
-
-        [DllImport("Kernel32.dll", SetLastError=true)]
-        public static extern bool UpdateResource(IntPtr handle, string pType, IntPtr pName, short language, [MarshalAs(UnmanagedType.LPArray)] byte[] pData, int dwSize);
-
-        [DllImport("Kernel32.dll", SetLastError=true)]
-        public static extern bool EndUpdateResource(IntPtr handle, bool discard);
     }
 
     class SetupLogLogger : Splat.ILogger, IDisposable

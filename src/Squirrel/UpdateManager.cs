@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Globalization;
@@ -147,6 +148,28 @@ namespace Squirrel
             }
         }
 
+        public static void RestartApp(string exeToStart = null, string arguments = null)
+        { 
+            // NB: Here's how this method works:
+            //
+            // 1. We're going to pass the *name* of our EXE and the params to 
+            //    Update.exe
+            // 2. Update.exe is going to grab our PID (via getting its parent), 
+            //    then wait for us to exit.
+            // 3. We exit cleanly, dropping any single-instance mutexes or 
+            //    whatever.
+            // 4. Update.exe unblocks, then we launch the app again, possibly 
+            //    launching a different version than we started with (this is why
+            //    we take the app's *name* rather than a full path)
+
+            exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            var argsArg = arguments != null ?
+                String.Format("-a \"{0}\"", arguments) : "";
+
+            Process.Start(getUpdateExe(), String.Format("--processStart {0} {1}", exeToStart, argsArg));
+            Environment.Exit(0);
+        }
+
         ~UpdateManager()
         {
             if (updateLock != null) {
@@ -177,6 +200,17 @@ namespace Squirrel
                 updateLock = ret;
                 return ret;
             });
+        }
+
+        static string getUpdateExe()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+
+            var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..\\Update.exe");
+            var target = new FileInfo(updateDotExe);
+
+            if (!target.Exists) throw new Exception("Update.exe not found, not a Squirrel-installed app?");
+            return target.FullName;
         }
 
         static string getLocalAppDataDirectory()
