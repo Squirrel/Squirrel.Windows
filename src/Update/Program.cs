@@ -192,7 +192,18 @@ namespace Squirrel.Update
                 var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
 
-                return SimpleJson.SerializeObject(updateInfo);
+                var releaseNotes = updateInfo.FetchReleaseNotes();
+
+                var sanitizedUpdateInfo = new {
+                    currentVersion = updateInfo.CurrentlyInstalledVersion.Version.ToString(),
+                    futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
+                    releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
+                        version = x.Version.ToString(),
+                        releaseNotes = releaseNotes.ContainsKey(x) ? releaseNotes[x] : "",
+                    }).ToArray(),
+                };
+
+                return SimpleJson.SerializeObject(sanitizedUpdateInfo);
             }
         }
 
