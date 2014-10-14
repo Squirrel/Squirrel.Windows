@@ -358,19 +358,50 @@ namespace Squirrel.Update
 
         public void ProcessStart(string exeName, string arguments)
         {
-            if (String.IsNullOrWhiteSpace(exeName))
-            {
+            if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
                 return;
             }
 
-            try
-            {
-                arguments = String.IsNullOrEmpty(arguments) ? "--squirrel-process-start" : arguments;
-                Process.Start(new ProcessStartInfo(exeName, arguments));
+            // Grab a handle the parent process
+            var parentPid = NativeMethods.GetParentProcessId();
+            var handle = default(IntPtr);
+
+            // Wait for our parent to exit
+            try {
+                handle = NativeMethods.OpenProcess(ProcessAccess.Synchronize, false, parentPid);
+                if (handle == IntPtr.Zero) throw new Win32Exception();
+
+                NativeMethods.WaitForSingleObject(handle, 0xFFFFFFFF /*INFINITE*/);
+            } finally {
+                if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
             }
-            catch (Exception ex)
-            {
+
+            // Find the latest installed version's app dir
+            var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var releases = ReleaseEntry.ParseReleaseFile(Utility.LocalReleaseFileForAppDir(appDir));
+
+            var latestAppDir = releases
+                .OrderBy(x => x.Version)
+                .Select(x => Utility.AppDirForRelease(appDir, x))
+                .FirstOrDefault(x => Directory.Exists(x));
+
+            // Check for the EXE name they want
+            var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName));
+
+            // Check for path canonicalization attacks
+            if (!targetExe.FullName.StartsWith(latestAppDir)) {
+                throw new ArgumentException();
+            }
+
+            if (!targetExe.Exists) {
+                Console.Error.WriteLine("File {0} doesn't exist in current release", targetExe);
+                throw new ArgumentException();
+            }
+
+            try {
+                Process.Start(new ProcessStartInfo(targetExe.FullName, arguments ?? ""));
+            } catch (Exception ex) {
                 this.Log().ErrorException("Failed to start process", ex);
             }
         }
