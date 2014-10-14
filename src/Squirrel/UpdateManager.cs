@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Globalization;
@@ -160,6 +161,13 @@ namespace Squirrel
             // 4. Update.exe unblocks, then we launch the app again, possibly 
             //    launching a different version than we started with (this is why
             //    we take the app's *name* rather than a full path)
+
+            exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            var argsArg = arguments != null ?
+                String.Format("-a \"{0}\"", arguments) : "";
+
+            Process.Start(getUpdateExe(), String.Format("--processStart {0} {1}", exeToStart, argsArg));
+            Environment.Exit(0);
         }
 
         ~UpdateManager()
@@ -199,7 +207,10 @@ namespace Squirrel
             var assembly = Assembly.GetExecutingAssembly();
 
             var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..\\Update.exe");
-            return (new FileInfo(updateDotExe)).FullName;
+            var target = new FileInfo(updateDotExe);
+
+            if (!target.Exists) throw new Exception("Update.exe not found, not a Squirrel-installed app?");
+            return target.FullName;
         }
 
         static string getLocalAppDataDirectory()
