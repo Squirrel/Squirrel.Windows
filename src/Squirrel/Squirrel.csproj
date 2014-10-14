@@ -77,7 +77,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BinaryPatchUtility.cs" />
-    <Compile Include="AssemblyExtensions.cs" />
     <Compile Include="ContentType.cs" />
     <Compile Include="DeltaPackage.cs" />
     <Compile Include="EnumerableExtensions.cs" />
