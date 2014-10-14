@@ -499,34 +499,6 @@ namespace Squirrel.Update
         }
     }
 
-    enum StandardHandles : int {
-        STD_INPUT_HANDLE = -10,
-        STD_OUTPUT_HANDLE = -11,
-        STD_ERROR_HANDLE = -12,
-    }
-
-    static class NativeMethods
-    {
-        [DllImport("kernel32.dll", EntryPoint = "GetStdHandle")]
-        public static extern IntPtr GetStdHandle(StandardHandles nStdHandle);
-
-        [DllImport("kernel32.dll", EntryPoint = "AllocConsole")]
-        [return: MarshalAs(UnmanagedType.Bool)] 
-        public static extern bool AllocConsole();
- 
-        [DllImport("kernel32.dll")]
-        public static extern bool AttachConsole(int pid);
-
-        [DllImport("Kernel32.dll", SetLastError=true)]
-        public static extern IntPtr BeginUpdateResource(string pFileName, bool bDeleteExistingResources);
-
-        [DllImport("Kernel32.dll", SetLastError=true)]
-        public static extern bool UpdateResource(IntPtr handle, string pType, IntPtr pName, short language, [MarshalAs(UnmanagedType.LPArray)] byte[] pData, int dwSize);
-
-        [DllImport("Kernel32.dll", SetLastError=true)]
-        public static extern bool EndUpdateResource(IntPtr handle, bool discard);
-    }
-
     class SetupLogLogger : Splat.ILogger, IDisposable
     {
         StreamWriter inner;
