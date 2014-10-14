@@ -89,7 +89,7 @@ namespace Squirrel.Update
                     { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
                     "",
                     "Options:",
-                    { "h|?|help", "Display Help and exit", _ => ShowHelp() },
+                    { "h|?|help", "Display Help and exit", _ => {} },
                     { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
                     { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
