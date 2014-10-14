@@ -389,6 +389,7 @@ namespace Squirrel.Update
 
             // Check for the EXE name they want
             var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName));
+            this.Log().Info("Want to launch '{0}'", targetExe);
 
             // Check for path canonicalization attacks
             if (!targetExe.FullName.StartsWith(latestAppDir)) {
@@ -396,11 +397,12 @@ namespace Squirrel.Update
             }
 
             if (!targetExe.Exists) {
-                Console.Error.WriteLine("File {0} doesn't exist in current release", targetExe);
+                this.Log().Error("File {0} doesn't exist in current release", targetExe);
                 throw new ArgumentException();
             }
 
             try {
+                this.Log().Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");
                 Process.Start(new ProcessStartInfo(targetExe.FullName, arguments ?? ""));
             } catch (Exception ex) {
                 this.Log().ErrorException("Failed to start process", ex);
