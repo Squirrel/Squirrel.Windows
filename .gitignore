@@ -66,6 +66,8 @@ local.properties
 **/*.dotCover
 **/packages/
 
+packages
+
 # Visual C++ cache files
 ipch/
 *.aps
