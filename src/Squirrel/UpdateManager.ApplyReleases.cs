@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -300,6 +301,30 @@ namespace Squirrel
                 foreach (var v in getOldReleases(newCurrentVersion)) {
                     Utility.DeleteDirectoryAtNextReboot(v.FullName);
                 }
+            }
+
+            void executeSelfUpdate(Version currentVersion)
+            {
+                var targetDir = getDirectoryForRelease(currentVersion);
+                var newSquirrel = Path.Combine(targetDir.FullName, "Squirrel.exe");
+                if (!File.Exists(newSquirrel)) {
+                    return;
+                }
+
+                // If we're running in the context of Update.exe, we can't 
+                // update ourselves. Instead, ask the new Update.exe to do it
+                // once we exit
+                var us = Assembly.GetEntryAssembly();
+                if (us != null && Path.GetFileName(us.Location).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
+                    var appName = targetDir.Parent.Name;
+
+                    Process.Start(newSquirrel, "--updateSelf=" + appName);
+                    return;
+                }
+
+                // If we're *not* Update.exe, this is easy, it's just a file copy
+                Utility.Retry(() =>
+                    File.Copy(newSquirrel, Path.Combine(targetDir.Parent.FullName, "Update.exe"), true));
             }
 
             async Task invokePostInstall(Version currentVersion, bool isInitialInstall, bool firstRunOnly)
