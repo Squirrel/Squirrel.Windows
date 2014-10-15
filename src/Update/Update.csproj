@@ -107,7 +107,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PostBuildEvent>cd "$(TargetDir)"
-"$(SolutionDir)packages\ILRepack.1.25.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) WpfAnimatedGif.dll Ionic.Zip.dll Microsoft.Web.XmlTransform.dll Mono.Cecil.dll NuGet.Core.dll Splat.dll Squirrel.dll
+"$(SolutionDir)packages\ILRepack.1.25.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) WpfAnimatedGif.dll ICSharpCode.SharpZipLib.dll Microsoft.Web.XmlTransform.dll Mono.Cecil.dll NuGet.Core.dll Splat.dll Squirrel.dll
 del "$(TargetFileName)"
 ren "$(TargetFileName).tmp" "$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
