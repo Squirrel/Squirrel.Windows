@@ -9,7 +9,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Ionic.Zip;
+using ICSharpCode.SharpZipLib.Zip;
 using MarkdownSharp;
 using NuGet;
 using Splat;
@@ -128,11 +128,10 @@ namespace Squirrel
 
             using (Utility.WithTempDirectory(out tempPath)) {
                 var tempDir = new DirectoryInfo(tempPath);
+                var fz = new FastZip();
 
-                using(var zf = new ZipFile(InputPackageFile)) {
-                    zf.ExtractAll(tempPath);
-                }
-
+                fz.ExtractZip(InputPackageFile, tempPath, null);
+                                
                 this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
 
@@ -152,12 +151,8 @@ namespace Squirrel
                     contentsPostProcessHook(tempPath);
                 }
 
-                using (var zf = new ZipFile(outputFile)) {
-                    this.Log().Info("Succeeeded, saving to " + outputFile);
-                    zf.AddDirectory(tempPath);
-                    zf.Save();
-                }
-
+                fz.CreateZip(outputFile, tempPath, true, null);
+                                
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;
             }
