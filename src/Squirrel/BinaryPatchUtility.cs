@@ -51,9 +51,19 @@ namespace Squirrel
             // NB: If you diff a file big enough, we blow the stack. This doesn't 
             // solve it, just buys us more space. The solution is to rewrite Split
             // using iteration instead of recursion, but that's Hard(tm).
-            var t = new Thread(() => CreateInternal(oldData, newData, output), 40 * 1048576);
+            var ex = default(Exception);
+            var t = new Thread(() => {
+                try {
+                    CreateInternal(oldData, newData, output);
+                } catch (Exception exc) {
+                    ex = exc;
+                }
+            }, 40 * 1048576);
+
             t.Start();
             t.Join();
+
+            if (ex != null) throw ex;
         }
 
         static void CreateInternal(byte[] oldData, byte[] newData, Stream output)
