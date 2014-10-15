@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Ionic.BZip2;
 
 // Adapted from https://github.com/LogosBible/bsdiff.net/blob/master/src/bsdiff/BinaryPatchUtility.cs
@@ -45,6 +48,16 @@ namespace Squirrel
         /// <param name="output">A <see cref="Stream"/> to which the patch will be written.</param>
         public static void Create(byte[] oldData, byte[] newData, Stream output)
         {
+            // NB: If you diff a file big enough, we blow the stack. This doesn't 
+            // solve it, just buys us more space. The solution is to rewrite Split
+            // using iteration instead of recursion, but that's Hard(tm).
+            var t = new Thread(() => CreateInternal(oldData, newData, output), 40 * 1048576);
+            t.Start();
+            t.Join();
+        }
+
+        static void CreateInternal(byte[] oldData, byte[] newData, Stream output)
+        {
             // check arguments
             if (oldData == null)
                 throw new ArgumentNullException("oldData");
@@ -58,15 +71,15 @@ namespace Squirrel
                 throw new ArgumentException("Output stream must be writable.", "output");
 
             /* Header is
-                0	8	 "BSDIFF40"
-                8	8	length of bzip2ed ctrl block
-                16	8	length of bzip2ed diff block
-                24	8	length of new file */
+                0   8    "BSDIFF40"
+                8   8   length of bzip2ed ctrl block
+                16  8   length of bzip2ed diff block
+                24  8   length of new file */
             /* File is
-                0	32	Header
-                32	??	Bzip2ed ctrl block
-                ??	??	Bzip2ed diff block
-                ??	??	Bzip2ed extra block */
+                0   32  Header
+                32  ??  Bzip2ed ctrl block
+                ??  ??  Bzip2ed diff block
+                ??  ??  Bzip2ed extra block */
             byte[] header = new byte[c_headerSize];
             WriteInt64(c_fileSignature, header, 0); // "BSDIFF40"
             WriteInt64(0, header, 8);
@@ -78,8 +91,8 @@ namespace Squirrel
 
             int[] I = SuffixSort(oldData);
 
-            byte[] db = new byte[newData.Length + 1];
-            byte[] eb = new byte[newData.Length + 1];
+            byte[] db = new byte[newData.Length];
+            byte[] eb = new byte[newData.Length];
 
             int dblen = 0;
             int eblen = 0;
@@ -173,7 +186,7 @@ namespace Squirrel
                         }
 
                         for (int i = 0; i < lenf; i++)
-                            db[dblen + i] = (byte)(newData[lastscan + i] - oldData[lastpos + i]);
+                            db[dblen + i] = (byte) (newData[lastscan + i] - oldData[lastpos + i]);
                         for (int i = 0; i < (scan - lenb) - (lastscan + lenf); i++)
                             eb[eblen + i] = newData[lastscan + lenf + i];
 
@@ -247,13 +260,13 @@ namespace Squirrel
 
             /*
             File format:
-                0	8	"BSDIFF40"
-                8	8	X
-                16	8	Y
-                24	8	sizeof(newfile)
-                32	X	bzip2(control block)
-                32+X	Y	bzip2(diff block)
-                32+X+Y	???	bzip2(extra block)
+                0   8   "BSDIFF40"
+                8   8   X
+                16  8   Y
+                24  8   sizeof(newfile)
+                32  X   bzip2(control block)
+                32+X    Y   bzip2(diff block)
+                32+X+Y  ??? bzip2(extra block)
             with control block a set of triples (x,y,z) meaning "add x bytes
             from oldfile to x bytes from the diff block; copy y bytes from the
             extra block; seek forwards in oldfile by z bytes".
