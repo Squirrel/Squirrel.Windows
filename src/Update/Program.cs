@@ -17,7 +17,8 @@ using Squirrel;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, Deshortcut, ProcessStart
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, 
+        Deshortcut, ProcessStart, UpdateSelf,
     }
 
     class Program : IEnableLogger 
@@ -73,6 +74,7 @@ namespace Squirrel.Update
                 string baseUrl = default(string);
                 string processStart = default(string);
                 string processStartArgs = default(string);
+                string appName = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -86,6 +88,7 @@ namespace Squirrel.Update
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
                     { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
                     { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
+                    { "updateSelf=", "Copy the currently executing Update.exe into the default location", v => { updateAction =  UpdateAction.UpdateSelf; appName = v; } },
                     { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
                     "",
                     "Options:",
@@ -120,6 +123,9 @@ namespace Squirrel.Update
                     break;
                 case UpdateAction.Update:
                     Update(target).Wait();
+                    break;
+                case UpdateAction.UpdateSelf:
+                    UpdateSelf(appName).Wait();
                     break;
                 case UpdateAction.Releasify:
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl);
@@ -187,6 +193,35 @@ namespace Squirrel.Update
                     mgr.CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateTarget), "-s"),
                     "Failed to create uninstaller registry entry");
             }
+        }
+
+        public async Task UpdateSelf(string appName)
+        {
+            var localAppDir = Environment.ExpandEnvironmentVariables("%LocalAppData%");
+            var targetDir = new DirectoryInfo(
+                Path.Combine(localAppDir, appName));
+
+            waitForParentToExit();
+
+            if (!targetDir.Exists) {
+                throw new ArgumentException("Target app isn't installed!");
+            }
+
+            if (!targetDir.FullName.StartsWith(localAppDir, StringComparison.OrdinalIgnoreCase)) {
+                throw new ArgumentException();
+            }
+
+            var src = Assembly.GetExecutingAssembly().Location;
+            if (targetDir.FullName.Equals(src, StringComparison.OrdinalIgnoreCase)) {
+                throw new ArgumentException("Can't update yourself with yourself, that's silly");
+            }
+
+            await Task.Run(() => {
+                File.Copy(
+                    src,
+                    Path.Combine(targetDir.FullName, "Update.exe"), 
+                    true);
+            });
         }
 
         public async Task<string> Download(string updateUrl, string appName = null)
@@ -363,19 +398,7 @@ namespace Squirrel.Update
                 return;
             }
 
-            // Grab a handle the parent process
-            var parentPid = NativeMethods.GetParentProcessId();
-            var handle = default(IntPtr);
-
-            // Wait for our parent to exit
-            try {
-                handle = NativeMethods.OpenProcess(ProcessAccess.Synchronize, false, parentPid);
-                if (handle == IntPtr.Zero) throw new Win32Exception();
-
-                NativeMethods.WaitForSingleObject(handle, 0xFFFFFFFF /*INFINITE*/);
-            } finally {
-                if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
-            }
+            waitForParentToExit();
 
             // Find the latest installed version's app dir
             var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -413,6 +436,23 @@ namespace Squirrel.Update
         {
             ensureConsole();
             opts.WriteOptionDescriptions(Console.Out);
+        }
+
+        static void waitForParentToExit()
+        {
+            // Grab a handle the parent process
+            var parentPid = NativeMethods.GetParentProcessId();
+            var handle = default(IntPtr);
+
+            // Wait for our parent to exit
+            try {
+                handle = NativeMethods.OpenProcess(ProcessAccess.Synchronize, false, parentPid);
+                if (handle == IntPtr.Zero) throw new Win32Exception();
+
+                NativeMethods.WaitForSingleObject(handle, 0xFFFFFFFF /*INFINITE*/);
+            } finally {
+                if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
+            }
         }
 
         async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts)
