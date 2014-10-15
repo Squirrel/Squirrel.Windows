@@ -79,6 +79,7 @@
     <Compile Include="CheckForUpdateTests.cs" />
     <Compile Include="ContentTypeTests.cs" />
     <Compile Include="DeltaPackageTests.cs" />
+    <Compile Include="DiffTests.cs" />
     <Compile Include="DownloadReleasesTests.cs" />
     <Compile Include="PackageExtensionsTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
