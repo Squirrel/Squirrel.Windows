@@ -33,9 +33,9 @@ namespace Squirrel
             // NB: When bootstrapping, CurrentlyInstalledVersion is null!
             CurrentlyInstalledVersion = currentlyInstalledVersion;
             ReleasesToApply = (releasesToApply ?? Enumerable.Empty<ReleaseEntry>()).ToList();
-            FutureReleaseEntry = ReleasesToApply.Any() ? 
-                ReleasesToApply.MaxBy(x => x.Version).FirstOrDefault() : 
-                null;
+            FutureReleaseEntry = ReleasesToApply.Any() ?
+                ReleasesToApply.MaxBy(x => x.Version).FirstOrDefault() :
+                CurrentlyInstalledVersion;
 
             AppFrameworkVersion = appFrameworkVersion;
 
