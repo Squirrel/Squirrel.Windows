@@ -66,7 +66,7 @@ namespace Squirrel.Tests.Core
             Assert.Equal(sha1FromExternalTool, sha1, StringComparer.OrdinalIgnoreCase);
         }
 
-        [Fact]
+        [Fact(Skip="This test takes forever")]
         public void CanDeleteDeepRecursiveDirectoryStructure()
         {
             string tempDir;
