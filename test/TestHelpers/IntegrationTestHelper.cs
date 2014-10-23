@@ -4,11 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Ionic.Zip;
 using Squirrel;
 using Splat;
 using Xunit;
 using System.Text;
+using ICSharpCode.SharpZipLib.Zip;
 
 namespace Squirrel.Tests.TestHelpers
 {
@@ -131,8 +131,8 @@ namespace Squirrel.Tests.TestHelpers
             var zipPath = GetPath("fixtures", zipFile);
             Assert.True(File.Exists(zipPath));
 
-            var zf = new ZipFile(zipPath);
-            zf.ExtractAll(path);
+            var fz = new FastZip();
+            fz.ExtractZip(zipPath, path, null);
 
             return ret;
         }

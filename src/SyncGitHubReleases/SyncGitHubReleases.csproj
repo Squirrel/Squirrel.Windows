@@ -32,6 +32,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ext\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
@@ -70,10 +74,9 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PostBuildEvent>cd "$(TargetDir)"
-"$(SolutionDir)packages\ILRepack.1.25.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) Ionic.Zip.dll Microsoft.Web.XmlTransform.dll Mono.Cecil.dll NuGet.Core.dll Splat.dll Squirrel.dll Octokit.dll
+"$(SolutionDir)packages\ILRepack.1.25.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) ICSharpCode.SharpZipLib.dll Microsoft.Web.XmlTransform.dll Mono.Cecil.dll NuGet.Core.dll Splat.dll Squirrel.dll Octokit.dll
 del "$(TargetFileName)"
 ren "$(TargetFileName).tmp" "$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <version>0.5.4</version>
+    <version>0.5.5</version>
     <authors>GitHub</authors>
     <owners>Paul Betts</owners>
     <licenseUrl>https://github.com/squirrel/Squirrel.Windows/blob/master/COPYING</licenseUrl>
@@ -21,7 +21,7 @@
   </metadata>
   <files>
     <file src="Squirrel\bin\Release\Squirrel.*" target="lib\Net45" />
-    <file src="Squirrel\bin\Release\Ionic.*" target="lib\Net45" />
+    <file src="Squirrel\bin\Release\ICSharpCode.*" target="lib\Net45" />
     <file src="Setup\bin\Release\Setup.exe" target="tools" />
     <file src="Update\bin\Release\Update.exe" target="tools\Squirrel.exe" />
     <file src="Update\bin\Release\Update.com" target="tools\Squirrel.com" />
