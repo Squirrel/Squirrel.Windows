@@ -160,7 +160,7 @@ namespace Squirrel
             }
 
             return updateInfo.ReleasesToApply.Any() ?
-                updateInfo.ReleasesToApply.MaxBy(x => x.Version).LastOrDefault() :
+                updateInfo.ReleasesToApply.MaxBy(x => x.Version).Last() :
                 default(ReleaseEntry);
         }
 
