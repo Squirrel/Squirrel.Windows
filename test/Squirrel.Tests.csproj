@@ -75,6 +75,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\src\SolutionAssemblyInfo.cs">
+      <Link>Properties\SolutionAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="ApplyReleasesTests.cs" />
     <Compile Include="CheckForUpdateTests.cs" />
     <Compile Include="ContentTypeTests.cs" />
