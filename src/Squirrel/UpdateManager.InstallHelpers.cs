@@ -105,7 +105,7 @@ namespace Squirrel
             public Task<RegistryKey> CreateUninstallerRegistryEntry()
             {
                 var updateDotExe = Path.Combine(rootAppDirectory, "Update.exe");
-                return CreateUninstallerRegistryEntry(updateDotExe, "-s");
+                return CreateUninstallerRegistryEntry(String.Format("{0} --uninstall", updateDotExe), "-s");
             }
 
             public void RemoveUninstallerRegistryEntry()
