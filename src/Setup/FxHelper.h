@@ -4,6 +4,6 @@ class CFxHelper
 {
 public:
 	static bool IsDotNet45OrHigherInstalled();
-	static void HelpUserInstallDotNetFramework(bool isQuiet);
+	static HRESULT InstallDotNetFramework(bool isQuiet);
 };
 
