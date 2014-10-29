@@ -159,7 +159,9 @@ namespace Squirrel
                 throw;
             }
 
-            return updateInfo.ReleasesToApply.MaxBy(x => x.Version).LastOrDefault();
+            return updateInfo.ReleasesToApply.Any() ?
+                updateInfo.ReleasesToApply.MaxBy(x => x.Version).Last() :
+                default(ReleaseEntry);
         }
 
         public static void CreateShortcutForThisExe(this IUpdateManager This)
