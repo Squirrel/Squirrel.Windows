@@ -129,41 +129,50 @@ HRESULT CFxHelper::InstallDotNetFramework(bool isQuiet)
 		}
 	}
 
+	HRESULT hr = E_FAIL;
+	WCHAR szFinalTempFileName[_MAX_PATH] = L"";
+	CComPtr<IBindStatusCallback> bscb;
+	CComPtr<IProgressDialog> pd;
+	SHELLEXECUTEINFO execInfo = {sizeof(execInfo),};
+
 	CString url;
 	url.LoadString(IDS_FXDOWNLOADURL);
 
 	WCHAR szTempPath[_MAX_PATH];
 	DWORD dwTempPathResult = GetTempPath(_MAX_PATH, szTempPath);
 	if (dwTempPathResult == 0) {
-		return AtlHresultFromLastError();
+		hr = AtlHresultFromLastError();
+		goto out;
 	} else if (dwTempPathResult > _MAX_PATH) {
-		return DISP_E_BUFFERTOOSMALL;
+		hr = DISP_E_BUFFERTOOSMALL;
+		goto out;
 	}
 	WCHAR szTempFileName[_MAX_PATH];
 	if (!GetTempFileName(szTempPath, L"NDP", 0, szTempFileName)) {
-		return AtlHresultFromLastError();
+		hr = AtlHresultFromLastError();
+		goto out;
 	}
 	szTempFileName[_countof(szTempFileName) - 1] = L'\0';
-	WCHAR szFinalTempFileName[_MAX_PATH];
 	if (wcscpy_s(szFinalTempFileName, _countof(szFinalTempFileName), szTempFileName) != 0) {
-		return E_FAIL;
+		hr = E_FAIL;
+		goto out;
 	}
 	WCHAR* pLastDot = wcsrchr(szFinalTempFileName, L'.');
 	if (pLastDot == nullptr) {
 		if (wcscat_s(szFinalTempFileName, _countof(szFinalTempFileName), L".exe") != 0) {
-			return E_FAIL;
+			hr = E_FAIL;
+			goto out;
 		}
 	} else {
 		if (wcscpy_s(szFinalTempFileName, _countof(szFinalTempFileName) - (pLastDot - szFinalTempFileName), L".exe") != 0) {
-			return E_FAIL;
+			hr = E_FAIL;
+			goto out;
 		}
 	}
 	if (!MoveFile(szTempFileName, szFinalTempFileName)) {
-		return AtlHresultFromLastError();
+		hr = AtlHresultFromLastError();
+		goto out;
 	}
-
-	CComPtr<IBindStatusCallback> bscb;
-	CComPtr<IProgressDialog> pd;
 
 	if (!isQuiet) {
 		pd.CoCreateInstance(CLSID_ProgressDialog);
@@ -179,15 +188,14 @@ HRESULT CFxHelper::InstallDotNetFramework(bool isQuiet)
 		}
 	}
 
-	HRESULT hr = URLDownloadToFile(nullptr, url, szFinalTempFileName, 0, bscb);
+	hr = URLDownloadToFile(nullptr, url, szFinalTempFileName, 0, bscb);
 	if (pd != nullptr) {
 		pd->StopProgressDialog();
 	}
 	if (hr != S_OK) {
-		return hr;
+		goto out;
 	}
 
-	SHELLEXECUTEINFO execInfo = {sizeof(execInfo),};
 	execInfo.fMask = SEE_MASK_NOCLOSEPROCESS;
 	execInfo.lpVerb = L"open";
 	execInfo.lpFile = szFinalTempFileName;
@@ -198,15 +206,23 @@ HRESULT CFxHelper::InstallDotNetFramework(bool isQuiet)
 	}
 	execInfo.nShow = SW_SHOW;
 	if (!ShellExecuteEx(&execInfo)) {
-		return AtlHresultFromLastError();
+		hr = AtlHresultFromLastError();
+		goto out;
 	}
 	WaitForSingleObject(execInfo.hProcess, INFINITE);
 	DWORD exitCode;
 	if (!GetExitCodeProcess(execInfo.hProcess, &exitCode)) {
-		return AtlHresultFromLastError();
+		hr = AtlHresultFromLastError();
+		goto out;
 	}
-	CloseHandle(execInfo.hProcess);
+	hr = exitCode;
 
-	DeleteFile(szFinalTempFileName);
-	return exitCode;
+out:
+	if (execInfo.hProcess != NULL && execInfo.hProcess != INVALID_HANDLE_VALUE) {
+		CloseHandle(execInfo.hProcess);
+	}
+	if (*szFinalTempFileName != L'\0') {
+		DeleteFile(szFinalTempFileName);
+	}
+	return hr;
 }
