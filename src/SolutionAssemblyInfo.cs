@@ -25,7 +25,4 @@ using System.Resources;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 
-// NOTE: Restamp on build server, I prefer GitVersion but anything can be used. Changing manually is not recommended but is possible
-
-[assembly: AssemblyVersion("0.5.5")]
-[assembly: AssemblyInformationalVersion("0.5.5, manually built in Visual Studio")]
+[assembly: AssemblyVersion("0.6.0")]
