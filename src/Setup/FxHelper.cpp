@@ -10,8 +10,6 @@ bool CFxHelper::IsDotNet45OrHigherInstalled()
 {
 	ATL::CRegKey key;
 
-	return false;
-
 	if (key.Open(HKEY_LOCAL_MACHINE, ndpPath, KEY_READ) != ERROR_SUCCESS) {
 		return false;
 	}
