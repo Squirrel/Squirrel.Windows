@@ -15,5 +15,3 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("a0663459-8b01-4fcd-96b8-c4235eb4dc51")]
-
-[assembly: AssemblyMetadata("SquirrelAwareVersion", "1")]
