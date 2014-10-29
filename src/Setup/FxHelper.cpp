@@ -23,18 +23,18 @@ bool CFxHelper::IsDotNet45OrHigherInstalled()
 	return true;
 }
 
-class ATL_NO_VTABLE CMyBindStatusCallback :
+class ATL_NO_VTABLE CDownloadProgressCallback :
 	public CComObjectRoot,
 	public IBindStatusCallback
 {
 public:
-	CMyBindStatusCallback()
+	CDownloadProgressCallback()
 	{
 	}
 
-DECLARE_NOT_AGGREGATABLE(CMyBindStatusCallback)
+DECLARE_NOT_AGGREGATABLE(CDownloadProgressCallback)
 
-BEGIN_COM_MAP(CMyBindStatusCallback)
+BEGIN_COM_MAP(CDownloadProgressCallback)
 	COM_INTERFACE_ENTRY(IBindStatusCallback)
 END_COM_MAP()
 
@@ -171,8 +171,8 @@ HRESULT CFxHelper::InstallDotNetFramework(bool isQuiet)
 			pd->SetTitle(L"Downloading");
 			pd->SetLine(1, L"Downloading the .NET Framework installer", FALSE, nullptr);
 			pd->StartProgressDialog(nullptr, nullptr, 0, nullptr);
-			CComObject<CMyBindStatusCallback>* bscbObj = nullptr;
-			if (SUCCEEDED(CComObject<CMyBindStatusCallback>::CreateInstance(&bscbObj))) {
+			CComObject<CDownloadProgressCallback>* bscbObj = nullptr;
+			if (SUCCEEDED(CComObject<CDownloadProgressCallback>::CreateInstance(&bscbObj))) {
 				bscbObj->SetProgressDialog(pd);
 				bscb = bscbObj;
 			}
