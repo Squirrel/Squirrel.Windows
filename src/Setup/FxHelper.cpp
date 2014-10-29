@@ -170,7 +170,7 @@ HRESULT CFxHelper::InstallDotNetFramework(bool isQuiet)
 			goto out;
 		}
 	} else {
-		if (wcscpy_s(szFinalTempFileName, _countof(szFinalTempFileName) - (pLastDot - szFinalTempFileName), L".exe") != 0) {
+		if (wcscpy_s(pLastDot, _countof(szFinalTempFileName) - (pLastDot - szFinalTempFileName), L".exe") != 0) {
 			hr = E_FAIL;
 			goto out;
 		}
