@@ -12,6 +12,8 @@
 // Windows Header Files:
 #include <windows.h>
 #include <shellapi.h>
+#include <shlobj.h>
+#include <urlmon.h>
 
 // C RunTime Header Files
 #include <stdlib.h>

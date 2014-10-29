@@ -17,7 +17,6 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 	dlg.SetMainInstructionText(L"Installation has failed");
 	dlg.SetContentText(errorMessage);
 	dlg.SetMainIcon(TD_ERROR_ICON);
-	dlg.EnableButton(1, logFile != NULL);
 
 	int nButton;
 
@@ -115,7 +114,8 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	}
 
 	if (dwExitCode != 0) {
-		DisplayErrorMessage(CString(L"There was an error while installing the application. "
+		DisplayErrorMessage(CString(
+			L"There was an error while installing the application. " 
 			L"Check the setup log for more information and contact the author."), logFile);
 	}
 

@@ -24,8 +24,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	bool isQuiet = (cmdLine.Find(L"/quiet") >= 0);
 
 	if (!CFxHelper::IsDotNet45OrHigherInstalled()) {
-		CFxHelper::HelpUserInstallDotNetFramework(isQuiet);
-		goto out;
+		hr = CFxHelper::InstallDotNetFramework(isQuiet);
+		if (hr != S_OK) {
+			goto out;
+		}
 	}
 
 	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine);
