@@ -56,12 +56,19 @@ namespace Squirrel
 
                     this.Log().Info("Downloading RELEASES file from {0}", updateUrlOrPath);
 
+                    int retries = 3;
+
+                retry:
+
                     try {
                         var data = await urlDownloader.DownloadUrl(String.Format("{0}/{1}", updateUrlOrPath, "RELEASES"));
                         releaseFile = Encoding.UTF8.GetString(data);
                     } catch (WebException ex) {
                         this.Log().InfoException("Download resulted in WebException (returning blank release list)", ex);
-                        releaseFile = String.Empty;
+
+                        if (retries <= 0) throw;
+                        retries--;
+                        goto retry;
                     }
 
                     progress(33);
