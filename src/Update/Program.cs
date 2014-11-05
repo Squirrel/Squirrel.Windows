@@ -184,10 +184,25 @@ namespace Squirrel.Update
             appName = appName ?? getAppNameFromDirectory();
 
             this.Log().Info("Starting update, downloading from " + updateUrl);
+
             using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
-                var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
-                await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
-                await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(66 + x / 3));
+                bool ignoreDeltaUpdates = false;
+
+            retry:
+                try {
+                    var updateInfo = await mgr.CheckForUpdate(ignoreDeltaUpdates: ignoreDeltaUpdates, progress: x => Console.WriteLine(x / 3));
+                    await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
+                    await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(66 + x / 3));
+                } catch (Exception ex) {
+                    if (ignoreDeltaUpdates) {
+                        this.Log().ErrorException("Really couldn't apply updates!", ex);
+                        throw;
+                    }
+
+                    this.Log().WarnException("Failed to apply updates, falling back to full updates", ex);
+                    ignoreDeltaUpdates = true;
+                    goto retry;
+                }
 
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
 
