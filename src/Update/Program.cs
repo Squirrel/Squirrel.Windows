@@ -165,11 +165,13 @@ namespace Squirrel.Update
                 .First().PackageName;
 
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
-                await mgr.FullInstall(silentInstall);
-                var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
+                Directory.CreateDirectory(mgr.RootAppDirectory);
 
+                var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
                 this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
+
+                await mgr.FullInstall(silentInstall);
 
                 await this.ErrorIfThrows(() =>
                     mgr.CreateUninstallerRegistryEntry(),
