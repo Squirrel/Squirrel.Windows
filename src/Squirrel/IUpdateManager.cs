@@ -13,8 +13,10 @@ namespace Squirrel
 {
     [Flags]
     public enum ShortcutLocation {
-        StartMenu = 1<<0,
-        Desktop = 1<<1,
+        StartMenu = 1 << 0,
+        Desktop = 1 << 1,
+        StartUp = 1 << 2,
+        Favourites = 1 << 3,
     }
 
     public interface IUpdateManager : IDisposable, IEnableLogger

@@ -111,7 +111,7 @@ namespace Squirrel
                 var exePath = Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName);
                 var fileVerInfo = FileVersionInfo.GetVersionInfo(exePath);
 
-                foreach (var f in new[] { ShortcutLocation.StartMenu, ShortcutLocation.Desktop, }) {
+                foreach (var f in new[] { ShortcutLocation.StartMenu, ShortcutLocation.Desktop, ShortcutLocation.StartUp, ShortcutLocation.Favourites, }) {
                     if (!locations.HasFlag(f)) continue;
 
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
@@ -157,7 +157,7 @@ namespace Squirrel
                 var fileVerInfo = FileVersionInfo.GetVersionInfo(
                     Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName));
 
-                foreach (var f in new[] { ShortcutLocation.StartMenu, ShortcutLocation.Desktop, }) {
+                foreach (var f in new[] { ShortcutLocation.StartMenu, ShortcutLocation.Desktop, ShortcutLocation.StartUp, ShortcutLocation.Favourites, }) {
                     if (!locations.HasFlag(f)) continue;
 
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
@@ -554,6 +554,12 @@ namespace Squirrel
                     break;
                 case ShortcutLocation.StartMenu:
                     dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", applicationName);
+                    break;
+                case ShortcutLocation.StartUp:
+                    dir = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.Startup), applicationName);
+                    break;
+                case ShortcutLocation.Favourites:
+                    dir = Path.Combine (Environment.GetFolderPath (Environment.SpecialFolder.UserProfile), "Links", applicationName);
                     break;
                 }
 
