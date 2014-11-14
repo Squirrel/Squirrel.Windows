@@ -243,7 +243,6 @@ namespace Squirrel.Update
 
         public async Task<string> Download(string updateUrl, string appName = null)
         {
-            ensureConsole();
             appName = appName ?? getAppNameFromDirectory();
 
             this.Log().Info("Fetching update information, downloading from " + updateUrl);
