@@ -108,6 +108,11 @@
     <Compile Include="UpdateManager.InstallHelpers.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PostBuildEvent>cd "$(TargetDir)"
+"$(SolutionDir)packages\ILRepack.1.25.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).ILRepack.dll $(TargetFileName) ICSharpCode.SharpZipLib.dll Microsoft.Web.XmlTransform.dll Mono.Cecil.dll NuGet.Core.dll Splat.dll Squirrel.dll
+	</PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
