@@ -224,8 +224,7 @@ namespace Squirrel
 
             path = tempDir.FullName;
 
-            return Disposable.Create(() =>
-                DeleteDirectory(tempDir.FullName).Wait());
+            return Disposable.Create(() => Task.Run(async () => await DeleteDirectory(tempDir.FullName)).Wait());
         }
 
         public static async Task DeleteDirectory(string directoryPath)

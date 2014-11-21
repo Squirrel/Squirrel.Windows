@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
+using Xunit;
 
 // All other assembly info is defined in SharedAssembly.cs
 
@@ -15,3 +16,5 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("f781bbe0-d19d-41aa-a78b-c689b1943094")]
+
+[assembly: CollectionBehavior(MaxParallelThreads=1, DisableTestParallelization=true)]
