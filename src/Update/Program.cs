@@ -536,6 +536,10 @@ namespace Squirrel.Update
                     exe, signingOpts, exePath);
                 throw new Exception(msg);
             }
+            else
+            {
+                Console.WriteLine(processResult.Item2);
+            }
         }
 
         static string getAppNameFromDirectory(string path = null)
