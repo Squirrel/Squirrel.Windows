@@ -527,10 +527,10 @@ namespace Squirrel.Update
                 if (!File.Exists(exe)) exe = "signtool.exe";
             }
 
-            int exitCode = await Utility.InvokeProcessAsync(exe,
+            Tuple<int, string> processResult = await Utility.InvokeProcessAsync(exe,
                 String.Format("sign {0} {1}", signingOpts, exePath));
 
-            if (exitCode != 0) {
+            if (processResult.Item1 != 0) {
                 var msg = String.Format(
                     "Failed to sign, command invoked was: '{0} sign {1} {2}'", 
                     exe, signingOpts, exePath);
