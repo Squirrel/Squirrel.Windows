@@ -536,8 +536,7 @@ namespace Squirrel.Update
                     exe, signingOpts, exePath);
                 throw new Exception(msg);
             }
-            else
-            {
+            else {
                 Console.WriteLine(processResult.Item2);
             }
         }

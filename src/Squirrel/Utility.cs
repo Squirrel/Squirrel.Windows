@@ -181,11 +181,9 @@ namespace Squirrel
             await Task.Run(() => pi.WaitForExit());
 
             string textResult = await pi.StandardOutput.ReadToEndAsync();
-            if(String.IsNullOrWhiteSpace(textResult))
-            {
+            if (String.IsNullOrWhiteSpace(textResult)) {
                 textResult = await pi.StandardError.ReadToEndAsync();
-                if(String.IsNullOrWhiteSpace(textResult))
-                {
+                if (String.IsNullOrWhiteSpace(textResult)) {
                     textResult = String.Empty;
                 }
             }
