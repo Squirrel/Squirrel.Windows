@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using ICSharpCode.SharpZipLib.Zip;
 using Splat;
+using DeltaCompressionDotNet.MsDelta;
 
 namespace Squirrel
 {
@@ -102,6 +103,7 @@ namespace Squirrel
                 // Apply all of the .diff files
                 deltaPathRelativePaths
                     .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                    .Where(x => !x.EndsWith(".shasum", StringComparison.InvariantCultureIgnoreCase))
                     .ForEach(file => {
                         pathsVisited.Add(Regex.Replace(file, @".diff$", "").ToLowerInvariant());
                         applyDiffToFile(deltaPath, file, workingPath);
@@ -164,13 +166,12 @@ namespace Squirrel
             }
 
             this.Log().Info("Delta patching {0} => {1}", baseFileListing[relativePath], targetFile.FullName);
-            using (var of = File.Create(targetFile.FullName + ".diff")) {
-                BinaryPatchUtility.Create(oldData, newData, of);
+            var msDelta = new MsDeltaCompression();
+            msDelta.CreateDelta(baseFileListing[relativePath], targetFile.FullName, targetFile.FullName + ".diff");
 
-                var rl = ReleaseEntry.GenerateFromFile(new MemoryStream(newData), targetFile.Name + ".shasum");
-                File.WriteAllText(targetFile.FullName + ".shasum", rl.EntryAsString, Encoding.UTF8);
-                targetFile.Delete();
-            }
+            var rl = ReleaseEntry.GenerateFromFile(new MemoryStream(newData), targetFile.Name + ".shasum");
+            File.WriteAllText(targetFile.FullName + ".shasum", rl.EntryAsString, Encoding.UTF8);
+            targetFile.Delete();
         }
 
 
@@ -188,11 +189,9 @@ namespace Squirrel
             }
 
             if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
-                using (var of = File.OpenWrite(tempTargetFile))
-                using (var inf = File.OpenRead(finalTarget)) {
-                    this.Log().Info("Applying Diff to {0}", relativeFilePath);
-                    BinaryPatchUtility.Apply(inf, () => File.OpenRead(inputFile), of);
-                }
+                this.Log().Info("Applying Diff to {0}", relativeFilePath);
+                var msDelta = new MsDeltaCompression();
+                msDelta.ApplyDelta(inputFile, finalTarget, tempTargetFile);
 
                 try {
                     verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
