@@ -50,7 +50,7 @@ namespace Squirrel.Tests
         [Fact]
         public void NotSquirrelAware()
         {
-            var target = Assembly.GetExecutingAssembly().Location;
+            var target = IntegrationTestHelper.GetPath("..", "src", "Update", "bin", "Release", "Update.exe");
             Assert.True(File.Exists(target));
 
             var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
