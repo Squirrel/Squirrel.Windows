@@ -162,22 +162,32 @@ namespace Squirrel
             }
         }
 
-        public static Task<int> InvokeProcessAsync(string fileName, string arguments)
+        public static Task<Tuple<int, string>> InvokeProcessAsync(string fileName, string arguments)
         {
             var psi = new ProcessStartInfo(fileName, arguments);
             psi.UseShellExecute = false;
             psi.WindowStyle = ProcessWindowStyle.Hidden;
             psi.ErrorDialog = false;
+            psi.CreateNoWindow = true;
+            psi.RedirectStandardOutput = true;
+            psi.RedirectStandardError = true;
 
             return InvokeProcessAsync(psi);
         }
 
-        public static async Task<int> InvokeProcessAsync(ProcessStartInfo psi)
+        public static async Task<Tuple<int, string>> InvokeProcessAsync(ProcessStartInfo psi)
         {
             var pi = Process.Start(psi);
-
             await Task.Run(() => pi.WaitForExit());
-            return pi.ExitCode;
+
+            string textResult = await pi.StandardOutput.ReadToEndAsync();
+            if (String.IsNullOrWhiteSpace(textResult)) {
+                textResult = await pi.StandardError.ReadToEndAsync();
+                if (String.IsNullOrWhiteSpace(textResult)) {
+                    textResult = String.Empty;
+                }
+            }
+            return Tuple.Create(pi.ExitCode, textResult.Trim());
         }
 
         public static Task ForEachAsync<T>(this IEnumerable<T> source, Action<T> body, int degreeOfParallelism = 4)
