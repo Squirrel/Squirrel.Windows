@@ -563,20 +563,26 @@ namespace Squirrel.Update
 
     class SetupLogLogger : Splat.ILogger, IDisposable
     {
-        StreamWriter inner;
+        TextWriter inner;
         readonly object gate = 42;
         public Splat.LogLevel Level { get; set; }
 
         public SetupLogLogger(bool saveInTemp)
         {
-            var dir = saveInTemp ?
-                Path.GetTempPath() : 
-                Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            try {
+                var dir = saveInTemp ?
+                    Path.GetTempPath() :
+                    Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
-            var file = Path.Combine(dir, "SquirrelSetup.log");
-            if (File.Exists(file)) File.Delete(file);
+                var file = Path.Combine(dir, "SquirrelSetup.log");
+                if (File.Exists(file)) File.Delete(file);
 
-            inner = new StreamWriter(file, false, Encoding.UTF8);
+                inner = new StreamWriter(file, false, Encoding.UTF8);
+            } catch (Exception ex) {
+                // Didn't work? Log to stderr
+                Console.Error.WriteLine("Couldn't open log file, writing to stderr: " + ex.ToString());
+                inner = Console.Error;
+            }
         }
 
         public void Write(string message, Splat.LogLevel logLevel)
