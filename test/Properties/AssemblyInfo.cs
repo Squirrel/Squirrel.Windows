@@ -18,3 +18,4 @@ using Xunit;
 [assembly: Guid("f781bbe0-d19d-41aa-a78b-c689b1943094")]
 
 [assembly: CollectionBehavior(MaxParallelThreads=1, DisableTestParallelization=true)]
+[assembly: AssemblyMetadata("SquirrelAwareVersion", "1")]
