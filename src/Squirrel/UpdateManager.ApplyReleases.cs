@@ -500,6 +500,23 @@ namespace Squirrel
                         this.Log().WarnException("Couldn't delete directory: " + x.FullName, ex);
                     }
                 });
+
+                // Clean up the packages directory too
+                var releasesFile = Utility.LocalReleaseFileForAppDir(rootAppDirectory);
+                var entries = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesFile, Encoding.UTF8));
+                var pkgDir = Utility.PackageDirectoryForAppDir(rootAppDirectory);
+                var releaseEntry = default(ReleaseEntry);
+
+                foreach (var entry in entries) {
+                    if (entry.Version == currentVersion) {
+                        releaseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(pkgDir, entry.Filename));
+                        continue;
+                    }
+
+                    File.Delete(Path.Combine(pkgDir, entry.Filename));
+                }
+
+                ReleaseEntry.WriteReleaseFile(new[] { releaseEntry }, releasesFile);
             }
 
             internal async Task<List<ReleaseEntry>> updateLocalReleasesFile()
