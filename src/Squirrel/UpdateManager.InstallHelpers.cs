@@ -51,7 +51,7 @@ namespace Squirrel
 
                 if (!File.Exists(targetIco)) {
                     try {
-                        var wc = new WebClient();
+                        var wc = Utility.CreateWebClient();
 
                         await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
                         using (var fs = new FileStream(targetIco, FileMode.Create)) {

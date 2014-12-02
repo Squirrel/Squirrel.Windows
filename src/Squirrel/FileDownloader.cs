@@ -15,7 +15,7 @@ namespace Squirrel
     {
         public async Task DownloadFile(string url, string targetFile)
         {
-            var wc = new WebClient();
+            var wc = Utility.CreateWebClient();
             var failedUrl = default(string);
 
         retry:
@@ -36,7 +36,7 @@ namespace Squirrel
 
         public async Task<byte[]> DownloadUrl(string url)
         {
-            var wc = new WebClient();
+            var wc = Utility.CreateWebClient();
             var failedUrl = default(string);
 
         retry:

@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net;
 
 namespace Squirrel
 {
@@ -113,6 +114,19 @@ namespace Squirrel
             using (var sha1 = SHA1.Create()) {
                 return BitConverter.ToString(sha1.ComputeHash(file)).Replace("-", String.Empty);
             }
+        }
+
+        public static WebClient CreateWebClient()
+        {
+            // WHY DOESNT IT JUST DO THISSSSSSSS
+            var ret = new WebClient();
+            var wp = WebRequest.DefaultWebProxy;
+            if (wp != null) {
+                wp.Credentials = CredentialCache.DefaultCredentials;
+                ret.Proxy = wp;
+            }
+
+            return ret;
         }
 
         public static async Task CopyToAsync(string from, string to)
