@@ -148,7 +148,7 @@ namespace Squirrel
             Contract.Requires(releaseEntries != null && releaseEntries.Any());
             Contract.Requires(!String.IsNullOrEmpty(path));
 
-            using (var f = File.OpenWrite(path)) {
+            using (var f = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.None)) {
                 WriteReleaseFile(releaseEntries, f);
             }
         }
