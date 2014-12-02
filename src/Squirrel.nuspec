@@ -8,6 +8,7 @@
     <projectUrl>https://github.com/squirrel/Squirrel.Windows</projectUrl>
 
     <dependencies>
+      <dependency id="DeltaCompressionDotNet" version="1.0.0" />
       <dependency id="NuGet.Core" version="2.8.2" />
       <dependency id="Mono.Cecil" version="0.9.5.4" />
       <dependency id="Splat" version="1.4.0" />
