@@ -103,6 +103,7 @@ namespace Squirrel
                 // Apply all of the .diff files
                 deltaPathRelativePaths
                     .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                    .Where(x => !x.EndsWith(".shasum", StringComparison.InvariantCultureIgnoreCase))
                     .ForEach(file => {
                         pathsVisited.Add(Regex.Replace(file, @".diff$", "").ToLowerInvariant());
                         applyDiffToFile(deltaPath, file, workingPath);
