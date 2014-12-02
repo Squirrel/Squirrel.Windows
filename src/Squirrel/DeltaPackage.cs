@@ -188,12 +188,9 @@ namespace Squirrel
             }
 
             if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
-                using (var of = File.OpenWrite(tempTargetFile))
-                using (var inf = File.OpenRead(finalTarget)) {
-                    this.Log().Info("Applying Diff to {0}", relativeFilePath);
-                    var msDelta = new MsDeltaCompression();
-                    msDelta.ApplyDelta(deltaPath, inputFile, tempTargetFile);
-                }
+                this.Log().Info("Applying Diff to {0}", relativeFilePath);
+                var msDelta = new MsDeltaCompression();
+                msDelta.ApplyDelta(inputFile, finalTarget, tempTargetFile);
 
                 try {
                     verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
