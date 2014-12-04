@@ -325,7 +325,7 @@ namespace Squirrel
                     File.Copy(newSquirrel, Path.Combine(targetDir.Parent.FullName, "Update.exe"), true));
             }
 
-            async Task invokePostInstall(Version currentVersion, bool isInitialInstall, bool firstRunOnly)
+            async Task invokePostInstall(Version currentVersion, bool isInitialInstall, bool runOnly)
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
                 var args = isInitialInstall ?
@@ -337,7 +337,7 @@ namespace Squirrel
                 this.Log().Info("Squirrel Enabled Apps: [{0}]", String.Join(",", squirrelApps));
 
                 // For each app, run the install command in-order and wait
-                if (!firstRunOnly) await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1 /* at a time */);
+                if (!runOnly) await squirrelApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, args), 1 /* at a time */);
 
                 // If this is the first run, we run the apps with first-run and 
                 // *don't* wait for them, since they're probably the main EXE
@@ -354,7 +354,7 @@ namespace Squirrel
                     squirrelApps.ForEach(x => CreateShortcutsForExecutable(Path.GetFileName(x), ShortcutLocation.Desktop | ShortcutLocation.StartMenu, isInitialInstall == false));
                 }
 
-                if (!isInitialInstall) return;
+                if (!isInitialInstall && !runOnly) return;
 
                 var firstRunParam = isInitialInstall ? "--squirrel-firstrun" : "";
                 squirrelApps.ForEach(exe => Process.Start(exe, firstRunParam));
