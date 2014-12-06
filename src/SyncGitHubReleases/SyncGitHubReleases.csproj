@@ -39,12 +39,13 @@
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
-    <Reference Include="NuGet.Core, Version=2.8.50506.491, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+    <Reference Include="NuGet.Core, Version=2.8.50926.602, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\NuGet.Core.2.8.2\lib\net40-Client\NuGet.Core.dll</HintPath>
+      <HintPath>..\..\packages\Nuget.Core.2.8.3\lib\net40-Client\NuGet.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Octokit">
-      <HintPath>..\..\packages\Octokit.0.4.1\lib\net45\Octokit.dll</HintPath>
+    <Reference Include="Octokit, Version=0.5.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\Octokit.0.5.2\lib\net45\Octokit.dll</HintPath>
     </Reference>
     <Reference Include="Splat">
       <HintPath>..\..\packages\Splat.1.5.1\lib\Net45\Splat.dll</HintPath>
