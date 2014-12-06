@@ -459,11 +459,11 @@ namespace Squirrel.Tests
                 }
 
                 var fixture = new UpdateManager.ApplyReleasesImpl("theApp", Path.Combine(path, "theApp"));
-                fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.StartUp, false);
+                fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup, false);
 
                 // NB: COM is Weird.
                 Thread.Sleep(1000);
-                fixture.RemoveShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.StartUp);
+                fixture.RemoveShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup);
 
                 // NB: Squirrel-Aware first-run might still be running, slow
                 // our roll before blowing away the temp path
