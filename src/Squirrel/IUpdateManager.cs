@@ -15,7 +15,7 @@ namespace Squirrel
     public enum ShortcutLocation {
         StartMenu = 1 << 0,
         Desktop = 1 << 1,
-        StartUp = 1 << 2
+        Startup = 1 << 2
     }
 
     public interface IUpdateManager : IDisposable, IEnableLogger
