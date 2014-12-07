@@ -15,7 +15,11 @@ namespace Squirrel
     public enum ShortcutLocation {
         StartMenu = 1 << 0,
         Desktop = 1 << 1,
-        Startup = 1 << 2
+        Startup = 1 << 2,
+        /// <summary>
+        /// A shortcut in the application folder, useful for portable applications.
+        /// </summary>
+        AppRoot = 1 << 3
     }
 
     public interface IUpdateManager : IDisposable, IEnableLogger

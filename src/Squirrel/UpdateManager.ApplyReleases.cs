@@ -114,7 +114,7 @@ namespace Squirrel
                 var exePath = Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName);
                 var fileVerInfo = FileVersionInfo.GetVersionInfo(exePath);
 
-                foreach (var f in new[] { ShortcutLocation.StartMenu, ShortcutLocation.Desktop, ShortcutLocation.Startup, }) {
+                foreach (var f in (ShortcutLocation[]) Enum.GetValues(typeof(ShortcutLocation))) {
                     if (!locations.HasFlag(f)) continue;
 
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
@@ -572,6 +572,9 @@ namespace Squirrel
                     break;
                 case ShortcutLocation.Startup:
                     dir = Environment.GetFolderPath (Environment.SpecialFolder.Startup);
+                    break;
+                case ShortcutLocation.AppRoot:
+                    dir = rootAppDirectory;
                     break;
                 }
 
