@@ -1,6 +1,6 @@
 # Hosting on IIS
 All versions of IIS (including Microsoft Azure PaaS) deny serving files when
-the extension MIM type is unknown. If you are hosting your updates in this
+the extension MIME type is unknown. If you are hosting your updates in this
 manner then you will need to add a Web.config to your downloads repository as
 follows:
 
