@@ -321,8 +321,7 @@ namespace Squirrel.Update
                 previousReleases = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8));
             }
 
-            try
-            {
+            try {
                 foreach (var file in toProcess) {
                     this.Log().Info("Creating release package: " + file.FullName);
 
@@ -356,8 +355,7 @@ namespace Squirrel.Update
                 }
             }
             
-            finally
-            {
+            finally {
                 foreach (var file in toProcess) { File.Delete(file.FullName); }
             }
 
