@@ -63,6 +63,7 @@ namespace Squirrel.Update
                 }
 
                 bool silentInstall = false;
+                bool force = false;
                 var updateAction = default(UpdateAction);
 
                 string target = default(string);
@@ -101,6 +102,7 @@ namespace Squirrel.Update
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
                     { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
+                    { "f|force", "Use with --releasify to overwrite an existing package", _ => force = true },
                 };
 
                 opts.Parse(args);
@@ -128,7 +130,7 @@ namespace Squirrel.Update
                     UpdateSelf(appName).Wait();
                     break;
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, force);
                     break;
                 case UpdateAction.Shortcut:
                     Shortcut(target);
@@ -276,7 +278,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, bool force = false)
         {
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
@@ -319,32 +321,45 @@ namespace Squirrel.Update
                 previousReleases = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8));
             }
 
-            foreach (var file in toProcess) {
-                this.Log().Info("Creating release package: " + file.FullName);
+            try
+            {
+                foreach (var file in toProcess) {
+                    this.Log().Info("Creating release package: " + file.FullName);
 
-                var rp = new ReleasePackage(file.FullName);
-                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
-                    if (signingOpts == null) return;
+                    var rp = new ReleasePackage(file.FullName);
 
-                    new DirectoryInfo(pkgPath).GetAllFilesRecursively()
-                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
-                        .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
-                        .Wait();
-                });
+                    if (previousReleases.Any(x => x.Version == rp.Version) && !force)
+                    {
+                        foreach (string p in processed) { File.Delete(p); } // Rollback the already processed files
+                        throw new Exception(string.Format("Release package {0} already exists, use -force to overwrite the existing one", rp.SuggestedReleaseFileName));
+                    }
 
-                processed.Add(rp.ReleasePackageFile);
+                    rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+                        if (signingOpts == null) return;
 
-                var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
-                if (prev != null) {
-                    var deltaBuilder = new DeltaPackageBuilder();
+                        new DirectoryInfo(pkgPath).GetAllFilesRecursively()
+                            .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                            .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
+                            .Wait();
+                    });
 
-                    var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
-                        Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
-                    processed.Insert(0, dp.InputPackageFile);
+                    processed.Add(rp.ReleasePackageFile);
+
+                    var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
+                    if (prev != null) {
+                        var deltaBuilder = new DeltaPackageBuilder();
+
+                        var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
+                            Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                        processed.Insert(0, dp.InputPackageFile);
+                    }
                 }
             }
-
-            foreach (var file in toProcess) { File.Delete(file.FullName); }
+            
+            finally
+            {
+                foreach (var file in toProcess) { File.Delete(file.FullName); }
+            }
 
             var releaseEntries = previousReleases.Concat(processed.Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl)));
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
