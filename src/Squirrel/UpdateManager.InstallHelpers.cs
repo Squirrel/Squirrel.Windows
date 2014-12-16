@@ -49,7 +49,7 @@ namespace Squirrel
                 var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
                     .CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
 
-                if (!File.Exists(targetIco)) {
+                if (zp.IconUrl != null && !File.Exists(targetIco)) {
                     try {
                         var wc = Utility.CreateWebClient();
 
