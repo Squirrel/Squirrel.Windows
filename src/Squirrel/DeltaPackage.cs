@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using ICSharpCode.SharpZipLib.Zip;
 using Splat;
 using DeltaCompressionDotNet.MsDelta;
+using System.ComponentModel;
 
 namespace Squirrel
 {
@@ -167,7 +168,12 @@ namespace Squirrel
 
             this.Log().Info("Delta patching {0} => {1}", baseFileListing[relativePath], targetFile.FullName);
             var msDelta = new MsDeltaCompression();
-            msDelta.CreateDelta(baseFileListing[relativePath], targetFile.FullName, targetFile.FullName + ".diff");
+            try {
+                msDelta.CreateDelta(baseFileListing[relativePath], targetFile.FullName, targetFile.FullName + ".diff");
+            } catch (Win32Exception ex) {
+                this.Log().Warn("We couldn't create a delta for {0}, writing full file", targetFile.Name);
+                return;
+            }
 
             var rl = ReleaseEntry.GenerateFromFile(new MemoryStream(newData), targetFile.Name + ".shasum");
             File.WriteAllText(targetFile.FullName + ".shasum", rl.EntryAsString, Encoding.UTF8);
