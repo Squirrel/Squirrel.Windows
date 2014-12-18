@@ -100,7 +100,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	}
 
 	wchar_t cmd[MAX_PATH];
-	swprintf_s(cmd, L"%s %s", updateExePath, lpCommandLine);
+	swprintf_s(cmd, L"\"%s\" %s", updateExePath, lpCommandLine);
 
 	if (!CreateProcess(NULL, cmd, NULL, NULL, false, 0, NULL, targetDir, &si, &pi)) {
 		goto failedExtract;
