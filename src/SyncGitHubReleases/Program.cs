@@ -69,7 +69,9 @@ namespace SyncGitHubReleases
                 };
 
                 var nwo = nwoFromRepoUrl(repoUrl);
-                var releases = await client.Release.GetAll(nwo.Item1, nwo.Item2);
+                var releases = (await client.Release.GetAll(nwo.Item1, nwo.Item2))
+                    .OrderByDescending(x => x.PublishedAt)
+                    .Take(2);
 
                 await releases.ForEachAsync(async release => {
                     // NB: Why do I have to double-fetch the release assets? It's already in GetAll
