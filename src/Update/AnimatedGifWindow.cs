@@ -70,6 +70,8 @@ namespace Squirrel.Update
                     wnd.Topmost = false;
                 };
 
+                wnd.Closed += (o, e) => dt.Stop();
+
                 token.Register(() => wnd.Dispatcher.BeginInvoke(new Action(wnd.Close)));
                 (new Application()).Run(wnd);
             });
