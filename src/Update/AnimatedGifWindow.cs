@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using WpfAnimatedGif;
 
 namespace Squirrel.Update
@@ -41,7 +42,8 @@ namespace Squirrel.Update
             this.AllowsTransparency = true;
             this.WindowStyle = WindowStyle.None;
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            this.ShowInTaskbar = true;
+            this.ShowInTaskbar = false;
+            this.Topmost = true;
             this.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         }
 
@@ -60,6 +62,13 @@ namespace Squirrel.Update
 
                 wnd = new AnimatedGifWindow();
                 wnd.Show();
+
+                var dt = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(5.0) };
+                dt.Start();
+                dt.Tick += (o, e) => {
+                    dt.Stop();
+                    wnd.Topmost = false;
+                };
 
                 token.Register(() => wnd.Dispatcher.BeginInvoke(new Action(wnd.Close)));
                 (new Application()).Run(wnd);
