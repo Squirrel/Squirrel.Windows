@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Mono.Options;
 using Splat;
 using Squirrel;
+using System.Drawing;
 
 namespace Squirrel.Update
 {
@@ -357,9 +358,14 @@ namespace Squirrel.Update
 
             try {
                 var zip = File.ReadAllBytes(zipPath);
+                var icon = getIconFromReleaseEntry(newestFullRelease, di.FullName);
 
                 IntPtr handle = NativeMethods.BeginUpdateResource(targetSetupExe, false);
                 if (handle == IntPtr.Zero) {
+                    throw new Win32Exception();
+                }
+
+                if (!NativeMethods.UpdateResource(handle, new IntPtr(3), new IntPtr(107), 0x0409, icon, icon.Length)) {
                     throw new Win32Exception();
                 }
 
@@ -511,6 +517,31 @@ namespace Squirrel.Update
                     "Failed to create Zip file from directory: " + tempPath);
 
                 return target;
+            }
+        }
+
+        static Byte[] getIconFromReleaseEntry(ReleaseEntry entry, string releasesDir)
+        {
+            using (var wc = Utility.CreateWebClient()) {
+                var url = entry.GetIconUrl(releasesDir);
+
+                if (url != null) { 
+                    return new Byte[0];
+                }
+
+                var icon = wc.DownloadData(url);
+
+                if (url.AbsolutePath.EndsWith("ico")) {
+                    return icon;
+                }
+                else { 
+                    using(var bmp = (Bitmap)Image.FromStream(new MemoryStream(icon)))
+                    using(var ico = Icon.FromHandle(bmp.GetHbitmap())) 
+                    using(var ms = new MemoryStream()) {
+                        ico.Save(ms);
+                        return ms.ToArray();
+                    }
+                }
             }
         }
 
