@@ -63,14 +63,10 @@ namespace Squirrel.Update
                 wnd = new AnimatedGifWindow();
                 wnd.Show();
 
-                var dt = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(5.0) };
-                dt.Start();
-                dt.Tick += (o, e) => {
-                    dt.Stop();
-                    wnd.Topmost = false;
-                };
-
-                wnd.Closed += (o, e) => dt.Stop();
+                Task.Delay(TimeSpan.FromSeconds(5.0), token).ContinueWith(t => {
+                    if (t.IsCanceled) return;
+                    wnd.Dispatcher.BeginInvoke(new Action(() => wnd.Topmost = false));
+                });
 
                 token.Register(() => wnd.Dispatcher.BeginInvoke(new Action(wnd.Close)));
                 (new Application()).Run(wnd);
