@@ -28,5 +28,6 @@
     <file src="Update\bin\Release\Update.com" target="tools\Squirrel.com" />
     <file src="SyncGitHubReleases\bin\Release\SyncGitHubReleases.exe" target="tools" />
     <file src="Update\signtool.exe" target="tools\signtool.exe" />
+    <file src="Update\rcedit.exe" target="tools\rcedit.exe" />
   </files>
 </package>
