@@ -148,6 +148,7 @@ namespace Squirrel
             }
         }
 
+        static bool exiting = false;
         public static void RestartApp(string exeToStart = null, string arguments = null)
         { 
             // NB: Here's how this method works:
@@ -166,13 +167,14 @@ namespace Squirrel
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
+            exiting = true;
             Process.Start(getUpdateExe(), String.Format("--processStart {0} {1}", exeToStart, argsArg));
             Environment.Exit(0);
         }
 
         ~UpdateManager()
         {
-            if (updateLock != null) {
+            if (updateLock != null && !exiting) {
                 throw new Exception("You must dispose UpdateManager!");
             }
         }
