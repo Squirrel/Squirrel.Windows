@@ -96,11 +96,11 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	si.dwFlags = STARTF_USESHOWWINDOW;
 
 	if (!lpCommandLine || wcsnlen_s(lpCommandLine, MAX_PATH) < 1) {
-		lpCommandLine = L"--install .";
+		lpCommandLine = L"";
 	}
 
 	wchar_t cmd[MAX_PATH];
-	swprintf_s(cmd, L"\"%s\" %s", updateExePath, lpCommandLine);
+	swprintf_s(cmd, L"\"%s\" --install . %s", updateExePath, lpCommandLine);
 
 	if (!CreateProcess(NULL, cmd, NULL, NULL, false, 0, NULL, targetDir, &si, &pi)) {
 		goto failedExtract;
