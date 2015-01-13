@@ -59,6 +59,9 @@ namespace Squirrel.Update
         [DllImport("Kernel32.dll", SetLastError=true)]
         public static extern bool UpdateResource(IntPtr handle, string pType, IntPtr pName, short language, [MarshalAs(UnmanagedType.LPArray)] byte[] pData, int dwSize);
 
+        [DllImport("Kernel32.dll", SetLastError = true)]
+        public static extern bool UpdateResource(IntPtr handle, IntPtr pType, IntPtr pName, short language, [MarshalAs(UnmanagedType.LPArray)] byte[] pData, int dwSize);
+
         [DllImport("Kernel32.dll", SetLastError=true)]
         public static extern bool EndUpdateResource(IntPtr handle, bool discard);
     }
