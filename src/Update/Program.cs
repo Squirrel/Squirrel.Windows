@@ -116,7 +116,10 @@ namespace Squirrel.Update
 
                 switch (updateAction) {
                 case UpdateAction.Install:
-                    AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token);
+                    if (!silentInstall) { 
+                        AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token);
+                    }
+
                     Install(silentInstall, Path.GetFullPath(target)).Wait();
                     break;
                 case UpdateAction.Uninstall:
