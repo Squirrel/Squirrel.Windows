@@ -162,7 +162,7 @@ namespace Squirrel.Update
             }
 
             var ourAppName = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesPath, Encoding.UTF8))
-                .First().PackageName;
+                .First().GetPackageId(sourceDirectory);
 
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
                 Directory.CreateDirectory(mgr.RootAppDirectory);

@@ -23,6 +23,7 @@ namespace Squirrel
         Version Version { get; }
         string PackageName { get; }
 
+        string GetPackageId(string packageDirectory);
         string GetReleaseNotes(string packageDirectory);
     }
 
@@ -53,9 +54,22 @@ namespace Squirrel
         [IgnoreDataMember]
         public Version Version { get { return Filename.ToVersion(); } }
 
+        [Obsolete("Property is deprecated because it may not correctly retrieve package names (a.k.a. Id's) if you have periods in it.  If you wish to retrieve the package Id, please use the GetPackageId method.")]
         [IgnoreDataMember]
         public string PackageName {
             get { return Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' })); }
+        }
+
+        public string GetPackageId(string packageDirectory)
+        {
+            var zp = new ZipPackage(Path.Combine(packageDirectory, Filename));
+
+            if (String.IsNullOrWhiteSpace(zp.Id))
+            {
+                throw new Exception(String.Format("Invalid 'Id' value in nuspec file at '{0}'", Path.Combine(packageDirectory, Filename)));
+            }
+
+            return zp.Id;
         }
 
         public string GetReleaseNotes(string packageDirectory)
