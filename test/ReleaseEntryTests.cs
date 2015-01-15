@@ -69,6 +69,18 @@ namespace Squirrel.Tests.Core
             Assert.Equal(expectedMinor, fixture.Version.Minor);
         }
 
+        [Theory]
+        [InlineData("Squirrel.Core.1.0.0.0.nupkg", "NSync.Core")]
+        [InlineData("Squirrel.Core.NoDependencies.1.0.0.0", "NSync.Core")]
+        [InlineData("ProjectWithContent.1.0.0.0-beta.nupkg", "ProjectWithContent")]
+        public void ParsePackageIdFromReleaseEntryTest(string packageFileName, string packageId)
+        {
+            var path = IntegrationTestHelper.GetPath("fixtures", packageFileName);
+            var fixture = ReleaseEntry.GenerateFromFile(path);
+
+            Assert.Equal(packageId, fixture.GetPackageId(IntegrationTestHelper.GetPath("fixtures")));
+        }
+
         [Fact]
         public void CanParseGeneratedReleaseEntryAsString()
         {
