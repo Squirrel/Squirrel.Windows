@@ -23,7 +23,6 @@ namespace Squirrel
         Version Version { get; }
         string PackageName { get; }
 
-        string GetPackageId(string packageDirectory);
         string GetReleaseNotes(string packageDirectory);
     }
 
@@ -54,22 +53,19 @@ namespace Squirrel
         [IgnoreDataMember]
         public Version Version { get { return Filename.ToVersion(); } }
 
-        [Obsolete("Property is deprecated because it may not correctly retrieve package names (a.k.a. Id's) if you have periods in it.  If you wish to retrieve the package Id, please use the GetPackageId method.")]
+        static readonly Regex packageRegex = new Regex(@"^(?<packageName>.*)-(?<version>\d+\.\d+\.\d+\.\d+)-(?<releaseType>full|delta).nupkg$");
         [IgnoreDataMember]
         public string PackageName {
-            get { return Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' })); }
-        }
-
-        public string GetPackageId(string packageDirectory)
-        {
-            var zp = new ZipPackage(Path.Combine(packageDirectory, Filename));
-
-            if (String.IsNullOrWhiteSpace(zp.Id))
+            get
             {
-                throw new Exception(String.Format("Invalid 'Id' value in nuspec file at '{0}'", Path.Combine(packageDirectory, Filename)));
-            }
+                var match = packageRegex.Match(Filename);
 
-            return zp.Id;
+                if (!match.Success) {
+                    throw new Exception(String.Format("Could not parse package name from filename '{0}' in RELEASE file.", Filename));
+                }
+
+                return match.Groups["packageName"].Value;
+            }
         }
 
         public string GetReleaseNotes(string packageDirectory)
