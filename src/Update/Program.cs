@@ -78,6 +78,7 @@ namespace Squirrel.Update
                 string processStartArgs = default(string);
                 string appName = default(string);
                 string setupIcon = default(string);
+                string shortcutArgs = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -105,6 +106,7 @@ namespace Squirrel.Update
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
                     { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
+                    { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
                 };
 
                 opts.Parse(args);
@@ -138,10 +140,10 @@ namespace Squirrel.Update
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon);
                     break;
                 case UpdateAction.Shortcut:
-                    Shortcut(target);
+                    Shortcut(target, shortcutArgs);
                     break;
                 case UpdateAction.Deshortcut:
-                    Deshortcut(target);
+                    Deshortcut(target, shortcutArgs);
                     break;
                 case UpdateAction.ProcessStart:
                     ProcessStart(processStart, processStartArgs);
@@ -391,7 +393,7 @@ namespace Squirrel.Update
 
         }
 
-        public void Shortcut(string exeName)
+        public void Shortcut(string exeName, string shortcutArgs)
         {
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
@@ -399,12 +401,16 @@ namespace Squirrel.Update
             }
 
             var appName = getAppNameFromDirectory();
+            var locations = String.IsNullOrWhiteSpace(shortcutArgs) 
+                ? ShortcutLocation.StartMenu | ShortcutLocation.Desktop
+                : parseShortcutLocations(shortcutArgs);
+
             using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
-                mgr.CreateShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu, false);
+                mgr.CreateShortcutsForExecutable(exeName, locations, false);
             }
         }
 
-        public void Deshortcut(string exeName)
+        public void Deshortcut(string exeName, string shortcutArgs)
         {
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
@@ -412,8 +418,12 @@ namespace Squirrel.Update
             }
 
             var appName = getAppNameFromDirectory();
+            var locations = String.IsNullOrWhiteSpace(shortcutArgs)
+                ? ShortcutLocation.StartMenu | ShortcutLocation.Desktop
+                : parseShortcutLocations(shortcutArgs);
+
             using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
-                mgr.RemoveShortcutsForExecutable(exeName, ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
+                mgr.RemoveShortcutsForExecutable(exeName, locations);
             }
         }
 
@@ -592,6 +602,19 @@ namespace Squirrel.Update
         {
             path = path ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             return (new DirectoryInfo(path)).Name;
+        }
+
+        static ShortcutLocation parseShortcutLocations(string shortcutArgs)
+        {
+            var locations = ShortcutLocation.None;
+            var args = shortcutArgs.Split(new[] { ',' });
+
+            foreach (var arg in args) {
+                var location = (ShortcutLocation)(Enum.Parse(typeof(ShortcutLocation), arg, false));
+                locations |= location;
+            }
+
+            return locations;
         }
 
         static int consoleCreated = 0;
