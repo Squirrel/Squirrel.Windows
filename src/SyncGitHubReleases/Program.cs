@@ -79,60 +79,60 @@ namespace SyncGitHubReleases
 
         private async Task SyncFromGitHub(string repoUrl, string token, DirectoryInfo releaseDirectoryInfo)
         {
-                var repoUri = new Uri(repoUrl);
-                var userAgent = new ProductHeaderValue("SyncGitHubReleases", Assembly.GetExecutingAssembly().GetName().Version.ToString());
-                var client = new GitHubClient(userAgent, repoUri) {
-                    Credentials = new Credentials(token)
-                };
+            var repoUri = new Uri(repoUrl);
+            var userAgent = new ProductHeaderValue("SyncGitHubReleases", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            var client = new GitHubClient(userAgent, repoUri) {
+                Credentials = new Credentials(token)
+            };
 
-                var nwo = nwoFromRepoUrl(repoUrl);
-                var releases = (await client.Release.GetAll(nwo.Item1, nwo.Item2))
-                    .OrderByDescending(x => x.PublishedAt)
-                    .Take(2);
+            var nwo = nwoFromRepoUrl(repoUrl);
+            var releases = (await client.Release.GetAll(nwo.Item1, nwo.Item2))
+                .OrderByDescending(x => x.PublishedAt)
+                .Take(2);
 
-                await releases.ForEachAsync(async release => {
-                    // NB: Why do I have to double-fetch the release assets? It's already in GetAll
-                    var assets = await client.Release.GetAssets(nwo.Item1, nwo.Item2, release.Id);
+            await releases.ForEachAsync(async release => {
+                // NB: Why do I have to double-fetch the release assets? It's already in GetAll
+                var assets = await client.Release.GetAssets(nwo.Item1, nwo.Item2, release.Id);
 
-                    await assets
-                        .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
-                        .Where(x => {
-                            var fi = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
-                            return !(fi.Exists && fi.Length == x.Size);
-                        })
-                        .ForEachAsync(async x => {
-                            var target = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
-                            if (target.Exists) target.Delete();
-                            var retryCount = 3;
+                await assets
+                    .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
+                    .Where(x => {
+                        var fi = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
+                        return !(fi.Exists && fi.Length == x.Size);
+                    })
+                    .ForEachAsync(async x => {
+                        var target = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
+                        if (target.Exists) target.Delete();
+                        var retryCount = 3;
 
-                        retry:
+                    retry:
 
-                            try {
-                                var hc = new HttpClient();
-                                var rq = new HttpRequestMessage(HttpMethod.Get, x.Url);
-                                rq.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream"));
-                                rq.Headers.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue(userAgent.Name, userAgent.Version));
-                                rq.Headers.Add("Authorization", "Bearer " + token);
+                        try {
+                            var hc = new HttpClient();
+                            var rq = new HttpRequestMessage(HttpMethod.Get, x.Url);
+                            rq.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream"));
+                            rq.Headers.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue(userAgent.Name, userAgent.Version));
+                            rq.Headers.Add("Authorization", "Bearer " + token);
 
-                                var resp = await hc.SendAsync(rq);
-                                resp.EnsureSuccessStatusCode();
+                            var resp = await hc.SendAsync(rq);
+                            resp.EnsureSuccessStatusCode();
 
-                                using (var from = await resp.Content.ReadAsStreamAsync())
-                                using (var to = File.OpenWrite(target.FullName)) {
-                                    await from.CopyToAsync(to);
-                                }
-                            } catch (Exception ex) {
-                                if (--retryCount > 0) goto retry;
-                                throw;
+                            using (var from = await resp.Content.ReadAsStreamAsync())
+                            using (var to = File.OpenWrite(target.FullName)) {
+                                await from.CopyToAsync(to);
                             }
-                        });
-                });
+                        } catch (Exception ex) {
+                            if (--retryCount > 0) goto retry;
+                            throw;
+                        }
+                    });
+            });
 
-                var entries = releaseDirectoryInfo.GetFiles("*.nupkg")
-                    .AsParallel()
-                    .Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
+            var entries = releaseDirectoryInfo.GetFiles("*.nupkg")
+                .AsParallel()
+                .Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
 
-                ReleaseEntry.WriteReleaseFile(entries, Path.Combine(releaseDirectoryInfo.FullName, "RELEASES"));
+            ReleaseEntry.WriteReleaseFile(entries, Path.Combine(releaseDirectoryInfo.FullName, "RELEASES"));
         }
         
         public void ShowHelp()
