@@ -59,27 +59,28 @@ namespace SyncGitHubReleases
                     return -1;
                 }
 
+                var releasesDirectoryInfo = new DirectoryInfo(releaseDir ?? Path.Combine(".", "Releases"));
+                
+                if (!releasesDirectoryInfo.Exists) 
+                    releasesDirectoryInfo.Create();
+
                 if (token == null)
                 {
                     Console.WriteLine("No GitHub token specified so assuming URL points to existing RELEASES file");
-                    await SyncFromStandardHttp(repoUrl, releaseDir ?? Path.Combine(".", "Releases"));
-
+                    await SyncFromStandardHttp(new Uri(repoUrl), releasesDirectoryInfo);
                 }
                 else
                 {
                     Console.WriteLine("GitHub token was specified, so will create Releases directory from repository");
-                    await SyncFromGitHub(repoUrl, token, releaseDir ?? Path.Combine(".", "Releases"));
+                    await SyncFromGitHub(repoUrl, token, releasesDirectoryInfo);
                 }
             }
 
             return 0;
         }
 
-        private async Task SyncFromGitHub(string repoUrl, string token, string releaseDir)
+        private async Task SyncFromGitHub(string repoUrl, string token, DirectoryInfo releaseDirectoryInfo)
         {
-            var releaseDirectoryInfo = new DirectoryInfo(releaseDir);
-            if (!releaseDirectoryInfo.Exists) releaseDirectoryInfo.Create();
-
             var repoUri = new Uri(repoUrl);
             var userAgent = new ProductHeaderValue("SyncGitHubReleases", Assembly.GetExecutingAssembly().GetName().Version.ToString());
             var client = new GitHubClient(userAgent, repoUri)
@@ -144,9 +145,57 @@ namespace SyncGitHubReleases
             ReleaseEntry.WriteReleaseFile(entries, Path.Combine(releaseDirectoryInfo.FullName, "RELEASES"));
         }
 
-        private async Task SyncFromStandardHttp(string repoUrl, string releasesDir)
+        private async Task SyncFromStandardHttp(Uri repoUrl, DirectoryInfo releasesDir)
         {
-            
+            var releasesIndex = await DownloadReleasesIndex(repoUrl);
+
+            File.WriteAllText(Path.Combine(releasesDir.FullName, "RELEASES"), releasesIndex);
+
+            var releasesToDownload = ReleaseEntry.ParseReleaseFile(releasesIndex)
+                .Where(x => !x.IsDelta)
+                .OrderByDescending(x => x.Version)
+                .Take(2)
+                .Select(x => new
+                             {
+                                 LocalPath = Path.Combine(releasesDir.FullName, x.Filename),
+                                 RemoteUrl = new Uri(repoUrl, x.Filename)
+                             }
+                );
+
+            foreach (var releaseToDownload in releasesToDownload)
+                await DownloadRelease(releaseToDownload.LocalPath, releaseToDownload.RemoteUrl);
+        }
+
+        private async Task<string> DownloadReleasesIndex(Uri repoUrl)
+        {
+            var uri = new Uri(repoUrl, "RELEASES");
+
+            Console.WriteLine("Trying to download RELEASES index from {0}", uri);
+
+            using (HttpClient client = new HttpClient())
+            {
+                return await client.GetStringAsync(uri);
+            }
+        }
+
+        private async Task DownloadRelease(string localPath, Uri remoteUrl)
+        {
+            if (File.Exists(localPath))
+            {
+                Console.WriteLine("Skipping this release as existing file found at: {0}", localPath);
+                return;
+            }
+
+            using (HttpClient client = new HttpClient())
+            {
+                using (var localStream = File.Create(localPath))
+                {
+                    using (var remoteStream = await client.GetStreamAsync(remoteUrl))
+                    {
+                        await remoteStream.CopyToAsync(localStream);
+                    }
+                }
+            }
         }
 
         public void ShowHelp()
