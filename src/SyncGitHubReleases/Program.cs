@@ -59,20 +59,18 @@ namespace SyncGitHubReleases
                     return -1;
                 }
 
-                var releasesDirectoryInfo = new DirectoryInfo(releaseDir ?? Path.Combine(".", "Releases"));
-                
-                if (!releasesDirectoryInfo.Exists) 
-                    releasesDirectoryInfo.Create();
+                var releaseDirectoryInfo = new DirectoryInfo(releaseDir ?? Path.Combine(".", "Releases"));
+                if (!releaseDirectoryInfo.Exists) releaseDirectoryInfo.Create();
 
                 if (token == null)
                 {
                     Console.WriteLine("No GitHub token specified so assuming URL points to existing RELEASES file");
-                    await new StandardHttpSyncer(new Uri(repoUrl)).Sync(releasesDirectoryInfo);
+                    await new StandardHttpSyncer(new Uri(repoUrl)).Sync(releaseDirectoryInfo);
                 }
                 else
                 {
                     Console.WriteLine("GitHub token was specified, so will create Releases directory from repository");
-                    await SyncFromGitHub(repoUrl, token, releasesDirectoryInfo);
+                    await SyncFromGitHub(repoUrl, token, releaseDirectoryInfo);
                 }
             }
 
