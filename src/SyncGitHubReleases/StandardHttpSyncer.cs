@@ -58,6 +58,8 @@ namespace SyncGitHubReleases
                 return;
             }
 
+            Console.WriteLine("Downloading release from {0}", remoteUrl);
+
             using (HttpClient client = new HttpClient())
             {
                 using (var localStream = File.Create(localPath))
