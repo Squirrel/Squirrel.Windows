@@ -18,7 +18,6 @@ namespace SyncGitHubReleases
 
         public async Task Sync(DirectoryInfo releasesDir)
         {
-            
             var releasesIndex = await DownloadReleasesIndex(m_Uri);
 
             File.WriteAllText(Path.Combine(releasesDir.FullName, "RELEASES"), releasesIndex);
