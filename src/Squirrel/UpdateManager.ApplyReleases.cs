@@ -88,6 +88,8 @@ namespace Squirrel
                     try {
                         var squirrelAwareApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName);
 
+                        if (isAppFolderDead(currentRelease.FullName)) throw new Exception("App folder is dead, but we're trying to uninstall it?");
+
                         if (squirrelAwareApps.Count > 0) {
                             await squirrelAwareApps.ForEachAsync(exe => Utility.InvokeProcessAsync(exe, String.Format("--squirrel-uninstall {0}", version)), 1);
                         } else {
@@ -481,7 +483,8 @@ namespace Squirrel
                 // come from here.
                 var toCleanup = di.GetDirectories()
                     .Where(x => x.Name.ToLowerInvariant().Contains("app-"))
-                    .Where(x => x.Name != currentVersionFolder && x.Name != originalVersionFolder);
+                    .Where(x => x.Name != currentVersionFolder && x.Name != originalVersionFolder)
+                    .Where(x => !isAppFolderDead(x.FullName));
 
                 if (forceUninstall == false) {
                     await toCleanup.ForEachAsync(async x => {
@@ -501,6 +504,11 @@ namespace Squirrel
                         await Utility.DeleteDirectoryWithFallbackToNextReboot(x.FullName);
                     } catch (UnauthorizedAccessException ex) {
                         this.Log().WarnException("Couldn't delete directory: " + x.FullName, ex);
+
+                        // NB: If we cannot clean up a directory, we need to make 
+                        // sure that anyone finding it later won't attempt to run
+                        // Squirrel events on it. We'll mark it with a .dead file
+                        markAppFolderAsDead(x.FullName);
                     }
                 });
 
@@ -520,6 +528,16 @@ namespace Squirrel
                 }
 
                 ReleaseEntry.WriteReleaseFile(new[] { releaseEntry }, releasesFile);
+            }
+
+            static void markAppFolderAsDead(string appFolderPath)
+            {
+                File.WriteAllText(Path.Combine(appFolderPath, ".dead"), "");
+            }
+
+            static bool isAppFolderDead(string appFolderPath)
+            {
+                return File.Exists(Path.Combine(appFolderPath, ".dead"));
             }
 
             internal async Task<List<ReleaseEntry>> updateLocalReleasesFile()
