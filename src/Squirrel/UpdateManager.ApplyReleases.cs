@@ -60,6 +60,10 @@ namespace Squirrel
                     "Failed to invoke post-install");
                 progress(75);
 
+                this.Log().Info("Starting fixPinnedExecutables");
+                this.ErrorIfThrows(() => fixPinnedExecutables(updateInfo.FutureReleaseEntry.Version));
+                progress(80);
+
                 try {
                     var currentVersion = updateInfo.CurrentlyInstalledVersion != null ?
                         updateInfo.CurrentlyInstalledVersion.Version : null;
@@ -206,9 +210,6 @@ namespace Squirrel
                 await pkg.GetContentFiles().ForEachAsync(x => copyFileToLocation(target, x));
 
                 var newCurrentVersion = updateInfo.FutureReleaseEntry.Version;
-
-                this.Log().Info("runPostInstallAndCleanup: starting fixPinnedExecutables");
-                this.ErrorIfThrows(() => fixPinnedExecutables(newCurrentVersion));
 
                 return target.FullName;
             }
