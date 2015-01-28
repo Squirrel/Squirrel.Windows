@@ -115,7 +115,6 @@ namespace Squirrel
                 var fileVerInfo = FileVersionInfo.GetVersionInfo(exePath);
 
                 foreach (var f in (ShortcutLocation[]) Enum.GetValues(typeof(ShortcutLocation))) {
-                    if (f == ShortcutLocation.None) continue;
                     if (!locations.HasFlag(f)) continue;
 
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
@@ -162,7 +161,6 @@ namespace Squirrel
                     Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName));
 
                 foreach (var f in (ShortcutLocation[]) Enum.GetValues(typeof(ShortcutLocation))) {
-                    if (f == ShortcutLocation.None) continue;
                     if (!locations.HasFlag(f)) continue;
 
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);

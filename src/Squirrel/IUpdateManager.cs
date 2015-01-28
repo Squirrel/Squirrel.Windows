@@ -13,7 +13,6 @@ namespace Squirrel
 {
     [Flags]
     public enum ShortcutLocation {
-        None = 0,
         StartMenu = 1 << 0,
         Desktop = 1 << 1,
         Startup = 1 << 2,
