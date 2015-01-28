@@ -401,12 +401,11 @@ namespace Squirrel.Update
             }
 
             var appName = getAppNameFromDirectory();
-            var locations = String.IsNullOrWhiteSpace(shortcutArgs) 
-                ? ShortcutLocation.StartMenu | ShortcutLocation.Desktop
-                : parseShortcutLocations(shortcutArgs);
+            var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
+            var locations = parseShortcutLocations(shortcutArgs);
 
             using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
-                mgr.CreateShortcutsForExecutable(exeName, locations, false);
+                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false);
             }
         }
 
@@ -418,12 +417,11 @@ namespace Squirrel.Update
             }
 
             var appName = getAppNameFromDirectory();
-            var locations = String.IsNullOrWhiteSpace(shortcutArgs)
-                ? ShortcutLocation.StartMenu | ShortcutLocation.Desktop
-                : parseShortcutLocations(shortcutArgs);
+            var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
+            var locations = parseShortcutLocations(shortcutArgs);
 
             using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
-                mgr.RemoveShortcutsForExecutable(exeName, locations);
+                mgr.RemoveShortcutsForExecutable(exeName, locations ?? defaultLocations);
             }
         }
 
@@ -604,17 +602,21 @@ namespace Squirrel.Update
             return (new DirectoryInfo(path)).Name;
         }
 
-        static ShortcutLocation parseShortcutLocations(string shortcutArgs)
+        static ShortcutLocation? parseShortcutLocations(string shortcutArgs)
         {
-            var locations = ShortcutLocation.None;
+            var ret = default(ShortcutLocation?);
             var args = shortcutArgs.Split(new[] { ',' });
 
             foreach (var arg in args) {
                 var location = (ShortcutLocation)(Enum.Parse(typeof(ShortcutLocation), arg, false));
-                locations |= location;
+                if (ret.HasValue) {
+                    ret |= location;
+                } else {
+                    ret = location;
+                }
             }
 
-            return locations;
+            return ret;
         }
 
         static int consoleCreated = 0;
