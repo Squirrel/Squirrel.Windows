@@ -587,8 +587,8 @@ namespace Squirrel.Update
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
-                    "Failed to modify resources, command invoked was: '{0} {1}'", 
-                    exe, args);
+                    "Failed to modify resources, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    exe, args, processResult.Item2);
 
                 throw new Exception(msg);
             } else {
