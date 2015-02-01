@@ -41,10 +41,22 @@ namespace Squirrel
             updateUrlOrPath = urlOrPath;
             this.applicationName = applicationName;
             this.appFrameworkVersion = appFrameworkVersion;
+            this.urlDownloader = urlDownloader ?? new FileDownloader();
+
+            if (rootDirectory != null) {
+                this.rootAppDirectory = Path.Combine(rootDirectory, applicationName);
+                return;
+            }
+
+            // Determine the rootAppDirectory in such a way so that Portable 
+            // Apps are more likely to work
+            var entry = Assembly.GetEntryAssembly();
+            if (entry != null) {
+                rootDirectory = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(entry.Location), "..", ".."));
+            }
 
             this.rootAppDirectory = Path.Combine(rootDirectory ?? getLocalAppDataDirectory(), applicationName);
 
-            this.urlDownloader = urlDownloader ?? new FileDownloader();
         }
 
         public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null)
