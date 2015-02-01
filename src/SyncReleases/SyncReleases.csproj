@@ -7,8 +7,8 @@
     <ProjectGuid>{EB521191-1EBF-4D06-8541-ED192E2EE378}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SyncGitHubReleases</RootNamespace>
-    <AssemblyName>SyncGitHubReleases</AssemblyName>
+    <RootNamespace>SyncReleases</RootNamespace>
+    <AssemblyName>SyncReleases</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

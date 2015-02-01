@@ -7,7 +7,7 @@ using Squirrel;
 using Octokit;
 using System.Reflection;
 
-namespace SyncGitHubReleases
+namespace SyncReleases
 {
     internal class SyncImplementations
     {
@@ -34,7 +34,7 @@ namespace SyncGitHubReleases
         public static async Task SyncFromGitHub(string repoUrl, string token, DirectoryInfo releaseDirectoryInfo)
         {
             var repoUri = new Uri(repoUrl);
-            var userAgent = new ProductHeaderValue("SyncGitHubReleases", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            var userAgent = new ProductHeaderValue("SyncReleases", Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
             var client = new GitHubClient(userAgent, repoUri);
 

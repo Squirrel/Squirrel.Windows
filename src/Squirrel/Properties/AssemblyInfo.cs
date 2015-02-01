@@ -19,4 +19,4 @@ using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("Squirrel.Tests")]
 [assembly: InternalsVisibleTo("Update")]
-[assembly: InternalsVisibleTo("SyncGitHubReleases")]
+[assembly: InternalsVisibleTo("SyncReleases")]

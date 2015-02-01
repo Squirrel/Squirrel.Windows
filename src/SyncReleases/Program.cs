@@ -13,7 +13,7 @@ using Octokit;
 using Splat;
 using Squirrel;
 
-namespace SyncGitHubReleases
+namespace SyncReleases
 {
     class Program : IEnableLogger 
     {
@@ -42,7 +42,7 @@ namespace SyncGitHubReleases
                 var token = default(string);
 
                 opts = new OptionSet() {
-                    "Usage: SyncGitHubReleases.exe command [OPTS]",
+                    "Usage: SyncReleases.exe command [OPTS]",
                     "Builds a Releases directory from releases on GitHub",
                     "",
                     "Options:",
@@ -62,7 +62,7 @@ namespace SyncGitHubReleases
                 var releaseDirectoryInfo = new DirectoryInfo(releaseDir ?? Path.Combine(".", "Releases"));
                 if (!releaseDirectoryInfo.Exists) releaseDirectoryInfo.Create();
 
-                Exception githubException;
+                var githubException = default(Exception);
                 try {
                     await SyncImplementations.SyncFromGitHub(repoUrl, token, releaseDirectoryInfo);
                     return 0;
@@ -75,7 +75,7 @@ namespace SyncGitHubReleases
                     await SyncImplementations.SyncRemoteReleases(new Uri(repoUrl), releaseDirectoryInfo);
                 } catch (Exception) {
                     Console.Error.WriteLine("Failed to sync URL as GitHub repo: " + githubException.Message);
-                    throw
+                    throw;
                 }
             }
 
