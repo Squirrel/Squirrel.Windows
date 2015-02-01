@@ -385,7 +385,8 @@ namespace Squirrel.Update
                 File.Delete(zipPath);
             }
 
-            setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait();
+            Utility.Retry(() =>
+                setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
             if (signingOpts != null) {
                 signPEFile(targetSetupExe, signingOpts).Wait();
