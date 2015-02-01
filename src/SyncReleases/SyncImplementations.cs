@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Squirrel;
 using Octokit;
 using System.Reflection;
+using System.Net;
 
 namespace SyncReleases
 {
@@ -23,7 +24,7 @@ namespace SyncReleases
                 .Take(5)
                 .Select(x => new {
                     LocalPath = Path.Combine(releasesDir.FullName, x.Filename),
-                    RemoteUrl = new Uri(targetUri, x.Filename)
+                    RemoteUrl = new Uri(targetUri + "/" + x.Filename)
                  });
 
             foreach (var releaseToDownload in releasesToDownload) {
@@ -99,17 +100,12 @@ namespace SyncReleases
         static async Task downloadRelease(string localPath, Uri remoteUrl)
         {
             if (File.Exists(localPath)) {
-                Console.WriteLine("Skipping this release as existing file found at: {0}", localPath);
-                return;
+                File.Delete(localPath);
             }
 
             Console.WriteLine("Downloading release from {0}", remoteUrl);
-
-            using (HttpClient client = new HttpClient())
-            using (var localStream = File.Create(localPath))
-            using (var remoteStream = await client.GetStreamAsync(remoteUrl)) {
-                await remoteStream.CopyToAsync(localStream);
-            }
+            var wc = new NotBrokenWebClient();
+            await wc.DownloadFileTaskAsync(remoteUrl, localPath);
         }
 
         static Tuple<string, string> nwoFromRepoUrl(string repoUrl)
@@ -142,6 +138,20 @@ namespace SyncReleases
         static async Task retryAsync(int count, Func<Task> block)
         {
             await retryAsync(count, async () => { await block(); return false; });
+        }
+    }
+
+    class NotBrokenWebClient : WebClient
+    {
+        protected override WebRequest GetWebRequest(Uri address)
+        {
+            var wr = base.GetWebRequest(address);
+            var hwr = wr as HttpWebRequest;
+            if (hwr == null) return wr;
+
+            hwr.AllowAutoRedirect = true;
+            hwr.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            return hwr;
         }
     }
 }
