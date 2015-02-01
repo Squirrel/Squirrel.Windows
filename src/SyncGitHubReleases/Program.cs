@@ -48,13 +48,13 @@ namespace SyncGitHubReleases
                     "Options:",
                     { "h|?|help", "Display Help and exit", _ => {} },
                     { "r=|releaseDir=", "Path to a release directory to download to", v => releaseDir = v},
-                    { "u=|repoUrl=", "The URL to the repository root page", v => repoUrl = v},
+                    { "u=|url=", "When pointing to GitHub, use the URL to the repository root page, else point to an existing RELEASES URL", v => repoUrl = v},
                     { "t=|token=", "The OAuth token to use as login credentials", v => token = v},
                 };
 
                 opts.Parse(args);
 
-                if (token == null || repoUrl == null || repoUrl.StartsWith("http", true, CultureInfo.InvariantCulture) == false) {
+                if (repoUrl == null || repoUrl.StartsWith("http", true, CultureInfo.InvariantCulture) == false) {
                     ShowHelp();
                     return -1;
                 }
@@ -62,80 +62,29 @@ namespace SyncGitHubReleases
                 var releaseDirectoryInfo = new DirectoryInfo(releaseDir ?? Path.Combine(".", "Releases"));
                 if (!releaseDirectoryInfo.Exists) releaseDirectoryInfo.Create();
 
-                var repoUri = new Uri(repoUrl);
-                var userAgent = new ProductHeaderValue("SyncGitHubReleases", Assembly.GetExecutingAssembly().GetName().Version.ToString());
-                var client = new GitHubClient(userAgent, repoUri) {
-                    Credentials = new Credentials(token)
-                };
+                Exception githubException;
+                try {
+                    await SyncImplementations.SyncFromGitHub(repoUrl, token, releaseDirectoryInfo);
+                    return 0;
+                } catch (Exception ex) {
+                    githubException = ex;
+                    Console.Error.WriteLine("Attemping to sync URL as remote RELEASES folder");
+                }
 
-                var nwo = nwoFromRepoUrl(repoUrl);
-                var releases = (await client.Release.GetAll(nwo.Item1, nwo.Item2))
-                    .OrderByDescending(x => x.PublishedAt)
-                    .Take(2);
-
-                await releases.ForEachAsync(async release => {
-                    // NB: Why do I have to double-fetch the release assets? It's already in GetAll
-                    var assets = await client.Release.GetAssets(nwo.Item1, nwo.Item2, release.Id);
-
-                    await assets
-                        .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
-                        .Where(x => {
-                            var fi = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
-                            return !(fi.Exists && fi.Length == x.Size);
-                        })
-                        .ForEachAsync(async x => {
-                            var target = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
-                            if (target.Exists) target.Delete();
-                            var retryCount = 3;
-
-                        retry:
-
-                            try {
-                                var hc = new HttpClient();
-                                var rq = new HttpRequestMessage(HttpMethod.Get, x.Url);
-                                rq.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream"));
-                                rq.Headers.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue(userAgent.Name, userAgent.Version));
-                                rq.Headers.Add("Authorization", "Bearer " + token);
-
-                                var resp = await hc.SendAsync(rq);
-                                resp.EnsureSuccessStatusCode();
-
-                                using (var from = await resp.Content.ReadAsStreamAsync())
-                                using (var to = File.OpenWrite(target.FullName)) {
-                                    await from.CopyToAsync(to);
-                                }
-                            } catch (Exception ex) {
-                                if (--retryCount > 0) goto retry;
-                                throw;
-                            }
-                        });
-                });
-
-                var entries = releaseDirectoryInfo.GetFiles("*.nupkg")
-                    .AsParallel()
-                    .Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
-
-                ReleaseEntry.WriteReleaseFile(entries, Path.Combine(releaseDirectoryInfo.FullName, "RELEASES"));
+                try {
+                    await SyncImplementations.SyncRemoteReleases(new Uri(repoUrl), releaseDirectoryInfo);
+                } catch (Exception) {
+                    Console.Error.WriteLine("Failed to sync URL as GitHub repo: " + githubException.Message);
+                    throw
+                }
             }
 
             return 0;
         }
-
+        
         public void ShowHelp()
         {
             opts.WriteOptionDescriptions(Console.Out);
-        }
-
-        Tuple<string, string> nwoFromRepoUrl(string repoUrl)
-        {
-            var uri = new Uri(repoUrl);
-
-            var segments = uri.AbsolutePath.Split('/');
-            if (segments.Count() != 3) {
-                throw new Exception("Repo URL must be to the root URL of the repo e.g. https://github.com/myuser/myrepo");
-            }
-
-            return Tuple.Create(segments[1], segments[2]);
         }
     }
 
