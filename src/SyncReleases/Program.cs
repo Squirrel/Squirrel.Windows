@@ -48,7 +48,7 @@ namespace SyncReleases
                     "Options:",
                     { "h|?|help", "Display Help and exit", _ => {} },
                     { "r=|releaseDir=", "Path to a release directory to download to", v => releaseDir = v},
-                    { "u=|url=", "When pointing to GitHub, use the URL to the repository root page, else point to an existing RELEASES URL", v => repoUrl = v},
+                    { "u=|url=", "When pointing to GitHub, use the URL to the repository root page, else point to an existing remote Releases folder", v => repoUrl = v},
                     { "t=|token=", "The OAuth token to use as login credentials", v => token = v},
                 };
 
