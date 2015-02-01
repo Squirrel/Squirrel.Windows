@@ -95,6 +95,7 @@ namespace Squirrel
                         } else {
                             var allApps = currentRelease.EnumerateFiles()
                                 .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                                .Where(x => !x.Name.StartsWith("squirrel.", StringComparison.OrdinalIgnoreCase))
                                 .ToList();
 
                             allApps.ForEach(x => RemoveShortcutsForExecutable(x.Name, ShortcutLocation.StartMenu | ShortcutLocation.Desktop));
@@ -349,6 +350,7 @@ namespace Squirrel
 
                     squirrelApps = targetDir.EnumerateFiles()
                         .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                        .Where(x => !x.Name.StartsWith("squirrel.", StringComparison.OrdinalIgnoreCase))
                         .Select(x => x.FullName)
                         .ToList();
 
