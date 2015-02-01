@@ -182,7 +182,11 @@ namespace Squirrel
 
             async Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
             {
-                var pkg = new OptimizedZipPackage(Path.Combine(updateInfo.PackageDirectory, release.Filename));
+                string tmpDir = default(string);
+                bool shouldDeleteTmpDir = findShortTemporaryDir(out tmpDir);
+
+                var fs = new PhysicalFileSystem(tmpDir);
+                var pkg = new OptimizedZipPackage(fs, Path.Combine(updateInfo.PackageDirectory, release.Filename));
                 var target = getDirectoryForRelease(release.Version);
 
                 // NB: This might happen if we got killed partially through applying the release
@@ -209,12 +213,27 @@ namespace Squirrel
                 // have to copy these files in-order. Once we fix assembly resolution, 
                 // we can kill both of these NBs.
                 await Task.Run(() => toWrite.ForEach(x => copyFileToLocation(target, x)));
-
                 await pkg.GetContentFiles().ForEachAsync(x => copyFileToLocation(target, x));
 
-                var newCurrentVersion = updateInfo.FutureReleaseEntry.Version;
+                if (shouldDeleteTmpDir) {
+                    await Utility.DeleteDirectory(tmpDir);
+                }
 
                 return target.FullName;
+            }
+
+            bool findShortTemporaryDir(out string path)
+            {
+                var dir = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%\\ProgramData\\sqtmp");
+                try {
+                    Directory.CreateDirectory(dir);
+                    path = dir;
+                    return true;
+                } catch (IOException ex) {
+                    this.Log().WarnException("Couldn't create short temp dir, trying normal one", ex);
+                    path = Path.GetTempPath();
+                    return false;
+                }
             }
 
             void copyFileToLocation(FileSystemInfo target, IPackageFile x)
