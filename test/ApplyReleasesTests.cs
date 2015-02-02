@@ -22,7 +22,7 @@ namespace Squirrel.Tests
             return Task.FromResult(new byte[0]);
         }
 
-        public async Task DownloadFile(string url, string targetFile)
+        public async Task DownloadFile(string url, string targetFile, Action<int> progress)
         {
         }
     }

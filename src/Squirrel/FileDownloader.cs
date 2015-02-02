@@ -7,16 +7,18 @@ namespace Squirrel
 {
     public interface IFileDownloader
     {
-        Task DownloadFile(string url, string targetFile);
+        Task DownloadFile(string url, string targetFile, Action<int> progress);
         Task<byte[]> DownloadUrl(string url);
     }
 
     class FileDownloader : IFileDownloader, IEnableLogger
     {
-        public async Task DownloadFile(string url, string targetFile)
+        public async Task DownloadFile(string url, string targetFile, Action<int> progress)
         {
             var wc = Utility.CreateWebClient();
             var failedUrl = default(string);
+
+            wc.DownloadProgressChanged += (sender, args) => progress(args.ProgressPercentage);
 
         retry:
             try {
@@ -30,6 +32,7 @@ namespace Squirrel
                 if (failedUrl != null) throw;
 
                 failedUrl = url.ToLower();
+                progress(0);
                 goto retry;
             }
         }
