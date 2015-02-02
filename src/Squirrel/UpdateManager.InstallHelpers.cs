@@ -51,21 +51,21 @@ namespace Squirrel
 
                 if (zp.IconUrl != null && !File.Exists(targetIco)) {
                     try {
-                        var wc = Utility.CreateWebClient();
-
-                        await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
-                        using (var fs = new FileStream(targetIco, FileMode.Create)) {
-                            if (zp.IconUrl.AbsolutePath.EndsWith("ico")) {
-                                var bytes = File.ReadAllBytes(targetPng);
-                                fs.Write(bytes, 0, bytes.Length);
-                            } else {
-                                using (var bmp = (Bitmap)Image.FromFile(targetPng))
-                                using (var ico = Icon.FromHandle(bmp.GetHicon())) {
-                                    ico.Save(fs);
+                        using (var wc = Utility.CreateWebClient()) { 
+                            await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
+                            using (var fs = new FileStream(targetIco, FileMode.Create)) {
+                                if (zp.IconUrl.AbsolutePath.EndsWith("ico")) {
+                                    var bytes = File.ReadAllBytes(targetPng);
+                                    fs.Write(bytes, 0, bytes.Length);
+                                } else {
+                                    using (var bmp = (Bitmap)Image.FromFile(targetPng))
+                                    using (var ico = Icon.FromHandle(bmp.GetHicon())) {
+                                        ico.Save(fs);
+                                    }
                                 }
-                            }
 
-                            key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
+                                key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
+                            }
                         }
                     } catch(Exception ex) {
                         this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
