@@ -14,6 +14,8 @@ using Mono.Options;
 using Splat;
 using Squirrel;
 using System.Drawing;
+using System.Windows;
+using System.Windows.Shell;
 using NuGet;
 
 namespace Squirrel.Update
@@ -118,11 +120,12 @@ namespace Squirrel.Update
 
                 switch (updateAction) {
                 case UpdateAction.Install:
+                    var progressSource = new ProgressSource();
                     if (!silentInstall) { 
-                        AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token);
+                        AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token, progressSource);
                     }
 
-                    Install(silentInstall, Path.GetFullPath(target)).Wait();
+                    Install(silentInstall, progressSource, Path.GetFullPath(target)).Wait();
                     break;
                 case UpdateAction.Uninstall:
                     Uninstall().Wait();
@@ -154,7 +157,7 @@ namespace Squirrel.Update
             return 0;
         }
 
-        public async Task Install(bool silentInstall, string sourceDirectory = null)
+        public async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
         {
             sourceDirectory = sourceDirectory ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
@@ -181,10 +184,9 @@ namespace Squirrel.Update
                 this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
-                await mgr.FullInstall(silentInstall);
+                await mgr.FullInstall(silentInstall, progressSource.Raise);
 
-                await this.ErrorIfThrows(() =>
-                    mgr.CreateUninstallerRegistryEntry(),
+                await this.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
                     "Failed to create uninstaller registry entry");
             }
         }
@@ -652,6 +654,17 @@ namespace Squirrel.Update
 
             NativeMethods.GetStdHandle(StandardHandles.STD_ERROR_HANDLE);
             NativeMethods.GetStdHandle(StandardHandles.STD_OUTPUT_HANDLE);
+        }
+    }
+
+    public class ProgressSource
+    {
+        public event EventHandler<int> Progress;
+
+        public void Raise(int i)
+        {
+            if (Progress != null)
+                Progress.Invoke(this, i);
         }
     }
 
