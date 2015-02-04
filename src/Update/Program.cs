@@ -188,7 +188,10 @@ namespace Squirrel.Update
                     if (app == null) return;
                     var window = app.MainWindow;
                     if (window == null) return;
-                    app.Dispatcher.BeginInvoke(new Action(() => window.TaskbarItemInfo.ProgressValue = p/100.0));
+                    app.Dispatcher.BeginInvoke(new Action(() => {
+                        window.ShowInTaskbar = true;
+                        window.TaskbarItemInfo.ProgressValue = p/100.0;
+                    }));
                 });
 
                 await this.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),

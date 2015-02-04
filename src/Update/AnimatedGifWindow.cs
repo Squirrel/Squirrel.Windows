@@ -45,7 +45,9 @@ namespace Squirrel.Update
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.ShowInTaskbar = false;
             this.Topmost = true;
-            this.TaskbarItemInfo = new TaskbarItemInfo();
+            this.TaskbarItemInfo = new TaskbarItemInfo {
+                ProgressState = TaskbarItemProgressState.Normal
+            };
             this.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         }
 
