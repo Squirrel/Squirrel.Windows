@@ -14,6 +14,8 @@ using Mono.Options;
 using Splat;
 using Squirrel;
 using System.Drawing;
+using System.Windows;
+using System.Windows.Shell;
 using NuGet;
 
 namespace Squirrel.Update
@@ -27,6 +29,7 @@ namespace Squirrel.Update
     {
         static OptionSet opts;
 
+        [STAThread]
         public static int Main(string[] args)
         {
             var pg = new Program();
@@ -181,11 +184,25 @@ namespace Squirrel.Update
                 this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
-                await mgr.FullInstall(silentInstall);
+                var app = new Application();
+                var window = new Window {
+                    TaskbarItemInfo = new TaskbarItemInfo {
+                        ProgressState = TaskbarItemProgressState.Normal,
+                    },
+                    WindowState = WindowState.Minimized,
+                    Width = 0,
+                    Height = 0,
+                    WindowStyle = WindowStyle.None
+                };
+                app.Startup += async (sender, args) => {
+                    await mgr.FullInstall(silentInstall, p => app.Dispatcher.Invoke(() => window.TaskbarItemInfo.ProgressValue = p / 100.0));
 
-                await this.ErrorIfThrows(() =>
-                    mgr.CreateUninstallerRegistryEntry(),
-                    "Failed to create uninstaller registry entry");
+                    await this.ErrorIfThrows(() =>
+                        mgr.CreateUninstallerRegistryEntry(),
+                        "Failed to create uninstaller registry entry");
+                    app.Shutdown();
+                };
+                app.Run(window);
             }
         }
 
