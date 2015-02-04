@@ -183,17 +183,15 @@ namespace Squirrel.Update
                 this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
-                await mgr.FullInstall(silentInstall, p =>
-                {
+                await mgr.FullInstall(silentInstall, p => {
                     var app = Application.Current;
                     if (app == null) return;
                     var window = app.MainWindow;
                     if (window == null) return;
-                    app.Dispatcher.BeginInvoke(new Action(() => window.TaskbarItemInfo.ProgressValue = p / 100.0))
+                    app.Dispatcher.BeginInvoke(new Action(() => window.TaskbarItemInfo.ProgressValue = p/100.0));
                 });
 
-                await this.ErrorIfThrows(() =>
-                    mgr.CreateUninstallerRegistryEntry(),
+                await this.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
                     "Failed to create uninstaller registry entry");
             }
         }
