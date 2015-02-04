@@ -11,6 +11,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
+using System.Windows.Shell;
 using System.Windows.Threading;
 using WpfAnimatedGif;
 
@@ -44,6 +45,7 @@ namespace Squirrel.Update
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             this.ShowInTaskbar = false;
             this.Topmost = true;
+            this.TaskbarItemInfo = new TaskbarItemInfo();
             this.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         }
 

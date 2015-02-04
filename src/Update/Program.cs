@@ -29,7 +29,6 @@ namespace Squirrel.Update
     {
         static OptionSet opts;
 
-        [STAThread]
         public static int Main(string[] args)
         {
             var pg = new Program();
@@ -184,25 +183,18 @@ namespace Squirrel.Update
                 this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
-                var app = new Application();
-                var window = new Window {
-                    TaskbarItemInfo = new TaskbarItemInfo {
-                        ProgressState = TaskbarItemProgressState.Normal,
-                    },
-                    WindowState = WindowState.Minimized,
-                    Width = 0,
-                    Height = 0,
-                    WindowStyle = WindowStyle.None
-                };
-                app.Startup += async (sender, args) => {
-                    await mgr.FullInstall(silentInstall, p => app.Dispatcher.Invoke(() => window.TaskbarItemInfo.ProgressValue = p / 100.0));
+                await mgr.FullInstall(silentInstall, p =>
+                {
+                    var app = Application.Current;
+                    if (app == null) return;
+                    var window = app.MainWindow;
+                    if (window == null) return;
+                    app.Dispatcher.BeginInvoke(new Action(() => window.TaskbarItemInfo.ProgressValue = p / 100.0))
+                });
 
-                    await this.ErrorIfThrows(() =>
-                        mgr.CreateUninstallerRegistryEntry(),
-                        "Failed to create uninstaller registry entry");
-                    app.Shutdown();
-                };
-                app.Run(window);
+                await this.ErrorIfThrows(() =>
+                    mgr.CreateUninstallerRegistryEntry(),
+                    "Failed to create uninstaller registry entry");
             }
         }
 
