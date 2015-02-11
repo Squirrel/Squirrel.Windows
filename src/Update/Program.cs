@@ -629,14 +629,17 @@ namespace Squirrel.Update
         static ShortcutLocation? parseShortcutLocations(string shortcutArgs)
         {
             var ret = default(ShortcutLocation?);
-            var args = shortcutArgs.Split(new[] { ',' });
 
-            foreach (var arg in args) {
-                var location = (ShortcutLocation)(Enum.Parse(typeof(ShortcutLocation), arg, false));
-                if (ret.HasValue) {
-                    ret |= location;
-                } else {
-                    ret = location;
+            if (!String.IsNullOrWhiteSpace(shortcutArgs)) {
+                var args = shortcutArgs.Split(new[] { ',' });
+
+                foreach (var arg in args) {
+                    var location = (ShortcutLocation)(Enum.Parse(typeof(ShortcutLocation), arg, false));
+                    if (ret.HasValue) {
+                        ret |= location;
+                    } else {
+                        ret = location;
+                    }
                 }
             }
 
