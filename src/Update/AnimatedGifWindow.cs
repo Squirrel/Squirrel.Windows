@@ -48,6 +48,7 @@ namespace Squirrel.Update
             this.TaskbarItemInfo = new TaskbarItemInfo {
                 ProgressState = TaskbarItemProgressState.Normal
             };
+            this.Title = "Installing...";
             this.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         }
 

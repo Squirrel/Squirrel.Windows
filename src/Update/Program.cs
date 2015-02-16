@@ -570,7 +570,7 @@ namespace Squirrel.Update
             }
 
             Tuple<int, string> processResult = await Utility.InvokeProcessAsync(exe,
-                String.Format("sign {0} {1}", signingOpts, exePath));
+                String.Format("sign {0} {1}", signingOpts, exePath), CancellationToken.None);
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
@@ -607,7 +607,7 @@ namespace Squirrel.Update
                 if (!File.Exists(exe)) exe = "rcedit.exe";
             }
 
-            var processResult = await Utility.InvokeProcessAsync(exe, args.ToString());
+            var processResult = await Utility.InvokeProcessAsync(exe, args.ToString(), CancellationToken.None);
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
@@ -685,9 +685,7 @@ namespace Squirrel.Update
                     Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
                 var file = Path.Combine(dir, "SquirrelSetup.log");
-                if (File.Exists(file)) File.Delete(file);
-
-                inner = new StreamWriter(file, false, Encoding.UTF8);
+                inner = new StreamWriter(file, true, Encoding.UTF8);
             } catch (Exception ex) {
                 // Didn't work? Log to stderr
                 Console.Error.WriteLine("Couldn't open log file, writing to stderr: " + ex.ToString());
@@ -706,7 +704,10 @@ namespace Squirrel.Update
 
         public void Dispose()
         {
-            lock(gate) inner.Dispose();
+            lock (gate) {
+                inner.Flush();
+                inner.Dispose();
+            }
         }
     }
 }
