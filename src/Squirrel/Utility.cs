@@ -176,7 +176,7 @@ namespace Squirrel
             }
         }
 
-        public static Task<Tuple<int, string>> InvokeProcessAsync(string fileName, string arguments)
+        public static Task<Tuple<int, string>> InvokeProcessAsync(string fileName, string arguments, CancellationToken ct)
         {
             var psi = new ProcessStartInfo(fileName, arguments);
             psi.UseShellExecute = false;
@@ -186,13 +186,19 @@ namespace Squirrel
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
 
-            return InvokeProcessAsync(psi);
+            return InvokeProcessAsync(psi, ct);
         }
 
-        public static async Task<Tuple<int, string>> InvokeProcessAsync(ProcessStartInfo psi)
+        public static async Task<Tuple<int, string>> InvokeProcessAsync(ProcessStartInfo psi, CancellationToken ct)
         {
             var pi = Process.Start(psi);
-            await Task.Run(() => pi.WaitForExit());
+            await Task.Run(() => {
+                while (!ct.IsCancellationRequested) {
+                    if (pi.WaitForExit(2000)) return;
+                }
+
+                ct.ThrowIfCancellationRequested();
+            });
 
             string textResult = await pi.StandardOutput.ReadToEndAsync();
             if (String.IsNullOrWhiteSpace(textResult)) {
