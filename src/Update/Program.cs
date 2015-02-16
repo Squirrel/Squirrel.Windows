@@ -570,7 +570,7 @@ namespace Squirrel.Update
             }
 
             Tuple<int, string> processResult = await Utility.InvokeProcessAsync(exe,
-                String.Format("sign {0} {1}", signingOpts, exePath));
+                String.Format("sign {0} {1}", signingOpts, exePath), CancellationToken.None);
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
@@ -607,7 +607,7 @@ namespace Squirrel.Update
                 if (!File.Exists(exe)) exe = "rcedit.exe";
             }
 
-            var processResult = await Utility.InvokeProcessAsync(exe, args.ToString());
+            var processResult = await Utility.InvokeProcessAsync(exe, args.ToString(), CancellationToken.None);
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
