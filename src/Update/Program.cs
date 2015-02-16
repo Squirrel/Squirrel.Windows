@@ -685,9 +685,7 @@ namespace Squirrel.Update
                     Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
                 var file = Path.Combine(dir, "SquirrelSetup.log");
-                if (File.Exists(file)) File.Delete(file);
-
-                inner = new StreamWriter(file, false, Encoding.UTF8);
+                inner = new StreamWriter(file, true, Encoding.UTF8);
             } catch (Exception ex) {
                 // Didn't work? Log to stderr
                 Console.Error.WriteLine("Couldn't open log file, writing to stderr: " + ex.ToString());
@@ -706,7 +704,10 @@ namespace Squirrel.Update
 
         public void Dispose()
         {
-            lock(gate) inner.Dispose();
+            lock (gate) {
+                inner.Flush();
+                inner.Dispose();
+            }
         }
     }
 }
