@@ -255,7 +255,7 @@ namespace Squirrel
         {
             Contract.Requires(!String.IsNullOrEmpty(directoryPath));
 
-            Log().Info("Starting to delete folder: {0}", directoryPath);
+            Log().Debug("Starting to delete folder: {0}", directoryPath);
 
             if (!Directory.Exists(directoryPath)) {
                 Log().Warn("DeleteDirectory: does not exist - {0}", directoryPath);
