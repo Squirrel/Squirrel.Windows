@@ -67,7 +67,9 @@ namespace SyncReleases
                             var rq = new HttpRequestMessage(HttpMethod.Get, x.Url);
                             rq.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream"));
                             rq.Headers.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue(userAgent.Name, userAgent.Version));
-                            rq.Headers.Add("Authorization", "Bearer " + token);
+                            if (token != null) {
+                                rq.Headers.Add("Authorization", "Bearer " + token);
+                            }
 
                             var resp = await hc.SendAsync(rq);
                             resp.EnsureSuccessStatusCode();
