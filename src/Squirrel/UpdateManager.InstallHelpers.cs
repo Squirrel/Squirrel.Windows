@@ -32,7 +32,7 @@ namespace Squirrel
             {
                 var releaseContent = File.ReadAllText(Path.Combine(rootAppDirectory, "packages", "RELEASES"), Encoding.UTF8);
                 var releases = ReleaseEntry.ParseReleaseFile(releaseContent);
-                var latest = releases.OrderByDescending(x => x.Version).First();
+                var latest = releases.Where(x => !x.IsDelta).OrderByDescending(x => x.Version).First();
 
                 // Download the icon and PNG => ICO it. If this doesn't work, who cares
                 var pkgPath = Path.Combine(rootAppDirectory, "packages", latest.Filename);
