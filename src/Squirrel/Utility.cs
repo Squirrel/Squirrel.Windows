@@ -197,7 +197,10 @@ namespace Squirrel
                     if (pi.WaitForExit(2000)) return;
                 }
 
-                ct.ThrowIfCancellationRequested();
+                if (ct.IsCancellationRequested) {
+                    pi.Kill();
+                    ct.ThrowIfCancellationRequested();
+                }
             });
 
             string textResult = await pi.StandardOutput.ReadToEndAsync();
