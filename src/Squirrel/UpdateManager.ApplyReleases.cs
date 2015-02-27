@@ -159,6 +159,8 @@ namespace Squirrel
                             Description = zf.Description,
                         };
 
+                        sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
+
                         this.Log().Info("About to save shortcut: {0}", file);
                         if (ModeDetector.InUnitTestRunner() == false) sl.Save(file);
                     }, "Can't write shortcut: " + file);
