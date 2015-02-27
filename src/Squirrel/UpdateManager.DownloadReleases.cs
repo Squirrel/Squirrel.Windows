@@ -32,9 +32,19 @@ namespace Squirrel
                     // From Internet
                     await releasesToDownload.ForEachAsync(async x => {
                         var targetFile = Path.Combine(packagesDirectory, x.Filename);
-                        await downloadRelease(updateUrlOrPath, x, urlDownloader, targetFile);
+                        var component = 0;
+                        await downloadRelease(updateUrlOrPath, x, urlDownloader, targetFile, p => {
+                            lock (progress) {
+                                if (p == 0) {
+                                    if (component <= 0) return;
+                                    progress(current -= component);
+                                    component = 0;
+                                } else {
+                                    progress(current += component += (int) (toIncrement/100.0*p));
+                                }
+                            }
+                        });
 
-                        lock (progress) progress(current += toIncrement);
                     });
                 } else {
                     // From Disk
@@ -57,7 +67,7 @@ namespace Squirrel
                     Uri.IsWellFormedUriString(x.BaseUrl, UriKind.Absolute);
             }
 
-            Task downloadRelease(string updateBaseUrl, ReleaseEntry releaseEntry, IFileDownloader urlDownloader, string targetFile)
+            Task downloadRelease(string updateBaseUrl, ReleaseEntry releaseEntry, IFileDownloader urlDownloader, string targetFile, Action<int> progress)
             {
                 if (!updateBaseUrl.EndsWith("/")) {
                     updateBaseUrl += '/';
@@ -66,7 +76,7 @@ namespace Squirrel
                 var sourceFileUrl = new Uri(new Uri(updateBaseUrl), releaseEntry.BaseUrl + releaseEntry.Filename).AbsoluteUri;
                 File.Delete(targetFile);
 
-                return urlDownloader.DownloadFile(sourceFileUrl, targetFile);
+                return urlDownloader.DownloadFile(sourceFileUrl, targetFile, progress);
             }
 
             Task checksumAllPackages(IEnumerable<ReleaseEntry> releasesDownloaded)
