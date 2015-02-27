@@ -81,6 +81,7 @@ namespace Squirrel.Update
                 string appName = default(string);
                 string setupIcon = default(string);
                 string shortcutArgs = default(string);
+                bool shouldWait = false;
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -96,6 +97,7 @@ namespace Squirrel.Update
                     { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
                     { "updateSelf=", "Copy the currently executing Update.exe into the default location", v => { updateAction =  UpdateAction.UpdateSelf; appName = v; } },
                     { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
+                    { "processStartAndWait=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; shouldWait = true; }, true},
                     "",
                     "Options:",
                     { "h|?|help", "Display Help and exit", _ => {} },
@@ -149,7 +151,7 @@ namespace Squirrel.Update
                     Deshortcut(target, shortcutArgs);
                     break;
                 case UpdateAction.ProcessStart:
-                    ProcessStart(processStart, processStartArgs);
+                    ProcessStart(processStart, processStartArgs, shouldWait);
                     break;
                 }
             }
@@ -449,14 +451,12 @@ namespace Squirrel.Update
             }
         }
 
-        public void ProcessStart(string exeName, string arguments)
+        public void ProcessStart(string exeName, string arguments, bool shouldWait)
         {
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
                 return;
             }
-
-            waitForParentToExit();
 
             // Find the latest installed version's app dir
             var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -481,6 +481,8 @@ namespace Squirrel.Update
                 this.Log().Error("File {0} doesn't exist in current release", targetExe);
                 throw new ArgumentException();
             }
+
+            if (shouldWait) waitForParentToExit();
 
             try {
                 this.Log().Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");
