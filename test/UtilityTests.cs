@@ -14,6 +14,21 @@ namespace Squirrel.Tests.Core
     public class UtilityTests : IEnableLogger
     {
         [Fact]
+        public void SetAppIdOnShortcutTest()
+        {
+            var sl = new ShellLink() {
+                Target = @"C:\Windows\Notepad.exe",
+                Description = "It's Notepad",
+            };
+
+            sl.SetAppUserModelId("org.paulbetts.test");
+            var path = Path.GetFullPath(@".\test.lnk");
+            sl.Save(path);
+
+            Console.WriteLine("Saved to " + path);
+        }
+
+        [Fact]
         public void RemoveByteOrderMarkerIfPresent()
         {
             var utf32Be = new byte[] { 0x00, 0x00, 0xFE, 0xFF };
