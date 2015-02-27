@@ -125,6 +125,7 @@ namespace Squirrel
             {
                 var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
                 var thisRelease = Utility.FindCurrentVersion(releases);
+                var updateExe = getUpdateExe();
 
                 var zf = new ZipPackage(Path.Combine(
                     Utility.PackageDirectoryForAppDir(rootAppDirectory),
@@ -154,11 +155,12 @@ namespace Squirrel
                         if (fileExists) File.Delete(file);
 
                         var sl = new ShellLink {
-                            Target = exePath,
+                            Target = updateExe,
                             IconPath = exePath,
                             IconIndex = 0,
                             WorkingDirectory = Path.GetDirectoryName(exePath),
                             Description = zf.Description,
+                            Arguments = "--processStart " + exeName,
                         };
 
                         sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
