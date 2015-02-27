@@ -151,10 +151,25 @@ namespace Squirrel
 
                     this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
 
+                    ShellLink sl;
                     this.ErrorIfThrows(() => {
-                        if (fileExists) File.Delete(file);
+                        if (fileExists) {
+                            try {
+                                sl = new ShellLink();
 
-                        var sl = new ShellLink {
+                                sl.Open(file);
+                                if (sl.Target == updateExe && sl.Description == zf.Description && sl.IconPath == exePath) {
+                                    return;
+                                }
+
+                                File.Delete(file);
+                            } catch (Exception ex) {
+                                this.Log().WarnException("Tried to compare shortcut and failed", ex);
+                                File.Delete(file);
+                            }
+                        }
+
+                        sl = new ShellLink {
                             Target = updateExe,
                             IconPath = exePath,
                             IconIndex = 0,
