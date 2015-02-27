@@ -22,7 +22,7 @@ namespace Squirrel.Tests
             return Task.FromResult(new byte[0]);
         }
 
-        public async Task DownloadFile(string url, string targetFile)
+        public async Task DownloadFile(string url, string targetFile, Action<int> progress)
         {
         }
     }
@@ -91,6 +91,43 @@ namespace Squirrel.Tests
 
                 var text = File.ReadAllText(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt"), Encoding.UTF8);
                 Assert.Contains("updated|0.2.0", text);
+            }
+        }
+
+        [Fact]
+        public async Task RunningUpgradeAppTwiceDoesntCrash()
+        {
+            string tempDir;
+            string remotePkgDir;
+
+            using (Utility.WithTempDirectory(out tempDir))
+            using (Utility.WithTempDirectory(out remotePkgDir)) {
+                IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
+                var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
+                ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
+
+                using (var fixture = new UpdateManager(remotePkgDir, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.FullInstall();
+                }
+
+                await Task.Delay(1000);
+
+                IntegrationTestHelper.CreateFakeInstalledApp("0.2.0", remotePkgDir);
+                pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
+                ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
+
+                using (var fixture = new UpdateManager(remotePkgDir, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.UpdateApp();
+                }
+
+                await Task.Delay(1000);
+
+                // NB: The 2nd time we won't have any updates to apply. We should just do nothing!
+                using (var fixture = new UpdateManager(remotePkgDir, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    await fixture.UpdateApp();
+                }
+
+                await Task.Delay(1000);
             }
         }
 
@@ -215,7 +252,6 @@ namespace Squirrel.Tests
                 var filesToFind = new[] {
                     new {Name = "NLog.dll", Version = new Version("2.0.0.0")},
                     new {Name = "NSync.Core.dll", Version = new Version("1.1.0.0")},
-                    new {Name = Path.Combine("sub", "Ionic.Zip.dll"), Version = new Version("1.9.1.8")},
                 };
 
                 filesToFind.ForEach(x => {
@@ -366,7 +402,6 @@ namespace Squirrel.Tests
                 var filesToFind = new[] {
                     new {Name = "NLog.dll", Version = new Version("2.0.0.0")},
                     new {Name = "NSync.Core.dll", Version = new Version("1.1.0.0")},
-                    new {Name = Path.Combine("sub", "Ionic.Zip.dll"), Version = new Version("1.9.1.8")},
                 };
 
                 filesToFind.ForEach(x => {
@@ -424,11 +459,11 @@ namespace Squirrel.Tests
                 }
 
                 var fixture = new UpdateManager.ApplyReleasesImpl("theApp", Path.Combine(path, "theApp"));
-                fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu, false);
+                fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup | ShortcutLocation.AppRoot, false);
 
                 // NB: COM is Weird.
                 Thread.Sleep(1000);
-                fixture.RemoveShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
+                fixture.RemoveShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup | ShortcutLocation.AppRoot);
 
                 // NB: Squirrel-Aware first-run might still be running, slow
                 // our roll before blowing away the temp path

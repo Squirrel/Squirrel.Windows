@@ -50,14 +50,25 @@ namespace Squirrel
                 // Fetch the remote RELEASES file, whether it's a local dir or an 
                 // HTTP URL
                 if (Utility.IsHttpUrl(updateUrlOrPath)) {
+                    if (updateUrlOrPath.EndsWith("/")) {
+                        updateUrlOrPath = updateUrlOrPath.Substring(0, updateUrlOrPath.Length - 1);
+                    }
+
                     this.Log().Info("Downloading RELEASES file from {0}", updateUrlOrPath);
+
+                    int retries = 3;
+
+                retry:
 
                     try {
                         var data = await urlDownloader.DownloadUrl(String.Format("{0}/{1}", updateUrlOrPath, "RELEASES"));
                         releaseFile = Encoding.UTF8.GetString(data);
                     } catch (WebException ex) {
                         this.Log().InfoException("Download resulted in WebException (returning blank release list)", ex);
-                        releaseFile = String.Empty;
+
+                        if (retries <= 0) throw;
+                        retries--;
+                        goto retry;
                     }
 
                     progress(33);
@@ -95,13 +106,15 @@ namespace Squirrel
                 }
 
                 var ret = default(UpdateInfo);
-                var remoteReleases = ReleaseEntry.ParseReleaseFile(releaseFile);
+                var remoteReleases = ReleaseEntry.ParseReleaseFile(releaseFile); 
                 progress(66);
 
-                if (remoteReleases.Any()) {
-                    ret = determineUpdateInfo(localReleases, remoteReleases, ignoreDeltaUpdates);
+                if (!remoteReleases.Any()) {
+                    throw new Exception("Remote release File is empty or corrupted");
                 }
 
+                ret = determineUpdateInfo(localReleases, remoteReleases, ignoreDeltaUpdates);
+                
                 progress(100);
                 return ret;
             }
@@ -127,11 +140,11 @@ namespace Squirrel
                     throw new Exception("Corrupt remote RELEASES file");
                 }
 
-                if (localReleases.Count() == remoteReleases.Count()) {
-                    this.Log().Info("No updates, remote and local are the same");
+                var latestFullRelease = Utility.FindCurrentVersion(remoteReleases);
+                var currentRelease = Utility.FindCurrentVersion(localReleases);
 
-                    var latestFullRelease = Utility.FindCurrentVersion(remoteReleases);
-                    var currentRelease = Utility.FindCurrentVersion(localReleases);
+                if (latestFullRelease == currentRelease) {
+                    this.Log().Info("No updates, remote and local are the same");
 
                     var info = UpdateInfo.Create(currentRelease, new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
                     return info;
@@ -143,19 +156,15 @@ namespace Squirrel
 
                 if (!localReleases.Any()) {
                     this.Log().Warn("First run or local directory is corrupt, starting from scratch");
-
-                    var latestFullRelease = Utility.FindCurrentVersion(remoteReleases);
                     return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
                 }
 
                 if (localReleases.Max(x => x.Version) > remoteReleases.Max(x => x.Version)) {
                     this.Log().Warn("hwhat, local version is greater than remote version");
-
-                    var latestFullRelease = Utility.FindCurrentVersion(remoteReleases);
                     return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
                 }
 
-                return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), remoteReleases, packageDirectory, appFrameworkVersion);
+                return UpdateInfo.Create(currentRelease, remoteReleases, packageDirectory, appFrameworkVersion);
             }
         }
     }

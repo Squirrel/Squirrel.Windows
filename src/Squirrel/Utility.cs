@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net;
 
 namespace Squirrel
 {
@@ -115,6 +116,19 @@ namespace Squirrel
             }
         }
 
+        public static WebClient CreateWebClient()
+        {
+            // WHY DOESNT IT JUST DO THISSSSSSSS
+            var ret = new WebClient();
+            var wp = WebRequest.DefaultWebProxy;
+            if (wp != null) {
+                wp.Credentials = CredentialCache.DefaultCredentials;
+                ret.Proxy = wp;
+            }
+
+            return ret;
+        }
+
         public static async Task CopyToAsync(string from, string to)
         {
             Contract.Requires(!String.IsNullOrEmpty(from) && File.Exists(from));
@@ -162,22 +176,38 @@ namespace Squirrel
             }
         }
 
-        public static Task<int> InvokeProcessAsync(string fileName, string arguments)
+        public static Task<Tuple<int, string>> InvokeProcessAsync(string fileName, string arguments, CancellationToken ct)
         {
             var psi = new ProcessStartInfo(fileName, arguments);
             psi.UseShellExecute = false;
             psi.WindowStyle = ProcessWindowStyle.Hidden;
             psi.ErrorDialog = false;
+            psi.CreateNoWindow = true;
+            psi.RedirectStandardOutput = true;
+            psi.RedirectStandardError = true;
 
-            return InvokeProcessAsync(psi);
+            return InvokeProcessAsync(psi, ct);
         }
 
-        public static async Task<int> InvokeProcessAsync(ProcessStartInfo psi)
+        public static async Task<Tuple<int, string>> InvokeProcessAsync(ProcessStartInfo psi, CancellationToken ct)
         {
             var pi = Process.Start(psi);
+            await Task.Run(() => {
+                while (!ct.IsCancellationRequested) {
+                    if (pi.WaitForExit(2000)) return;
+                }
 
-            await Task.Run(() => pi.WaitForExit());
-            return pi.ExitCode;
+                ct.ThrowIfCancellationRequested();
+            });
+
+            string textResult = await pi.StandardOutput.ReadToEndAsync();
+            if (String.IsNullOrWhiteSpace(textResult)) {
+                textResult = await pi.StandardError.ReadToEndAsync();
+                if (String.IsNullOrWhiteSpace(textResult)) {
+                    textResult = String.Empty;
+                }
+            }
+            return Tuple.Create(pi.ExitCode, textResult.Trim());
         }
 
         public static Task ForEachAsync<T>(this IEnumerable<T> source, Action<T> body, int degreeOfParallelism = 4)
@@ -224,15 +254,14 @@ namespace Squirrel
 
             path = tempDir.FullName;
 
-            return Disposable.Create(() =>
-                DeleteDirectory(tempDir.FullName).Wait());
+            return Disposable.Create(() => Task.Run(async () => await DeleteDirectory(tempDir.FullName)).Wait());
         }
 
         public static async Task DeleteDirectory(string directoryPath)
         {
             Contract.Requires(!String.IsNullOrEmpty(directoryPath));
 
-            Log().Info("Starting to delete folder: {0}", directoryPath);
+            Log().Debug("Starting to delete folder: {0}", directoryPath);
 
             if (!Directory.Exists(directoryPath)) {
                 Log().Warn("DeleteDirectory: does not exist - {0}", directoryPath);
@@ -331,12 +360,12 @@ namespace Squirrel
 
         public static bool IsHttpUrl(string urlOrPath)
         {
-            try {
-                var url = new Uri(urlOrPath);
-                return new[] {"https", "http"}.Contains(url.Scheme.ToLowerInvariant());
-            } catch (Exception) {
+            var uri = default(Uri);
+            if (!Uri.TryCreate(urlOrPath, UriKind.Absolute, out uri)) {
                 return false;
             }
+
+            return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
         }
 
         public static async Task DeleteDirectoryWithFallbackToNextReboot(string dir)
@@ -371,7 +400,7 @@ namespace Squirrel
         {
             if (MoveFileEx(name, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT)) return;
 
-            // thank you, http://www.pinvoke.net/default.aspx/coredll.getlasterror
+            // Thank You, http://www.pinvoke.net/default.aspx/coredll.getlasterror
             var lastError = Marshal.GetLastWin32Error();
 
             Log().Error("safeDeleteFileAtNextReboot: failed - {0} - {1}", name, lastError);
@@ -532,7 +561,7 @@ namespace Squirrel
                 throw new Exception("Couldn't acquire lock, is another instance running");
             }
 
-            var handle = Disposable.Create(() => {
+            handle = Disposable.Create(() => {
                 fh.Dispose();
                 File.Delete(path);
             });

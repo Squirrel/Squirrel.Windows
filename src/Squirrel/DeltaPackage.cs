@@ -5,8 +5,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Ionic.Zip;
+using ICSharpCode.SharpZipLib.Zip;
 using Splat;
+using DeltaCompressionDotNet.MsDelta;
+using System.ComponentModel;
 
 namespace Squirrel
 {
@@ -54,13 +56,9 @@ namespace Squirrel
                 this.Log().Info("Extracting {0} and {1} into {2}", 
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
-                using (var zf = new ZipFile(basePackage.ReleasePackageFile)) {
-                    zf.ExtractAll(baseTempInfo.FullName);
-                }
-
-                using (var zf = new ZipFile(newPackage.ReleasePackageFile)) {
-                    zf.ExtractAll(tempInfo.FullName);
-                }
+                var fz = new FastZip();
+                fz.ExtractZip(basePackage.ReleasePackageFile, baseTempInfo.FullName, null);
+                fz.ExtractZip(newPackage.ReleasePackageFile, tempInfo.FullName, null);
 
                 // Collect a list of relative paths under 'lib' and map them
                 // to their full name. We'll use this later to determine in
@@ -77,11 +75,7 @@ namespace Squirrel
                 }
 
                 ReleasePackage.addDeltaFilesToContentTypes(tempInfo.FullName);
-
-                using (var zf = new ZipFile(outputFile)) {
-                    zf.AddDirectory(tempInfo.FullName);
-                    zf.Save();
-                }
+                fz.CreateZip(outputFile, tempInfo.FullName, true, null);
             }
 
             return new ReleasePackage(outputFile);
@@ -96,11 +90,10 @@ namespace Squirrel
             string deltaPath;
 
             using (Utility.WithTempDirectory(out deltaPath))
-            using (Utility.WithTempDirectory(out workingPath))
-            using (var deltaZip = new ZipFile(deltaPackage.InputPackageFile))
-            using (var baseZip = new ZipFile(basePackage.InputPackageFile)) {
-                deltaZip.ExtractAll(deltaPath);
-                baseZip.ExtractAll(workingPath);
+            using (Utility.WithTempDirectory(out workingPath)) {
+                var fz = new FastZip();
+                fz.ExtractZip(deltaPackage.InputPackageFile, deltaPath, null);
+                fz.ExtractZip(basePackage.InputPackageFile, workingPath, null);
 
                 var pathsVisited = new List<string>();
 
@@ -111,6 +104,7 @@ namespace Squirrel
                 // Apply all of the .diff files
                 deltaPathRelativePaths
                     .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                    .Where(x => !x.EndsWith(".shasum", StringComparison.InvariantCultureIgnoreCase))
                     .ForEach(file => {
                         pathsVisited.Add(Regex.Replace(file, @".diff$", "").ToLowerInvariant());
                         applyDiffToFile(deltaPath, file, workingPath);
@@ -135,11 +129,8 @@ namespace Squirrel
                         File.Copy(Path.Combine(deltaPath, x), Path.Combine(workingPath, x), true);
                     });
 
-                using (var zf = new ZipFile(outputFile)) {
-                    this.Log().Info("Repacking into full package: {0}", outputFile);
-                    zf.AddDirectory(workingPath);
-                    zf.Save();
-                }
+                this.Log().Info("Repacking into full package: {0}", outputFile);
+                fz.CreateZip(outputFile, workingPath, true, null);
             }
 
             return new ReleasePackage(outputFile);
@@ -176,13 +167,17 @@ namespace Squirrel
             }
 
             this.Log().Info("Delta patching {0} => {1}", baseFileListing[relativePath], targetFile.FullName);
-            using (var of = File.Create(targetFile.FullName + ".diff")) {
-                BinaryPatchUtility.Create(oldData, newData, of);
-
-                var rl = ReleaseEntry.GenerateFromFile(new MemoryStream(newData), targetFile.Name + ".shasum");
-                File.WriteAllText(targetFile.FullName + ".shasum", rl.EntryAsString, Encoding.UTF8);
-                targetFile.Delete();
+            var msDelta = new MsDeltaCompression();
+            try {
+                msDelta.CreateDelta(baseFileListing[relativePath], targetFile.FullName, targetFile.FullName + ".diff");
+            } catch (Win32Exception ex) {
+                this.Log().Warn("We couldn't create a delta for {0}, writing full file", targetFile.Name);
+                return;
             }
+
+            var rl = ReleaseEntry.GenerateFromFile(new MemoryStream(newData), targetFile.Name + ".shasum");
+            File.WriteAllText(targetFile.FullName + ".shasum", rl.EntryAsString, Encoding.UTF8);
+            targetFile.Delete();
         }
 
 
@@ -200,11 +195,9 @@ namespace Squirrel
             }
 
             if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
-                using (var of = File.OpenWrite(tempTargetFile))
-                using (var inf = File.OpenRead(finalTarget)) {
-                    this.Log().Info("Applying Diff to {0}", relativeFilePath);
-                    BinaryPatchUtility.Apply(inf, () => File.OpenRead(inputFile), of);
-                }
+                this.Log().Info("Applying Diff to {0}", relativeFilePath);
+                var msDelta = new MsDeltaCompression();
+                msDelta.ApplyDelta(inputFile, finalTarget, tempTargetFile);
 
                 try {
                     verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);

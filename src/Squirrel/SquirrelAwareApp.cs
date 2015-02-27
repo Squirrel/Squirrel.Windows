@@ -45,14 +45,15 @@ namespace Squirrel
             Action onFirstRun = null,
             string[] arguments = null)
         {
-            var args = arguments ?? Environment.GetCommandLineArgs();
+            Action<Version> defaultBlock = (v => { });
+            var args = arguments ?? Environment.GetCommandLineArgs().Skip(1).ToArray();
             if (args.Length == 0) return;
 
             var lookup = new[] {
-                new { Key = "--squirrel-install", Value = onInitialInstall },
-                new { Key = "--squirrel-updated", Value = onAppUpdate },
-                new { Key = "--squirrel-obsolete", Value = onAppObsoleted },
-                new { Key = "--squirrel-uninstall", Value = onAppUninstall },
+                new { Key = "--squirrel-install", Value = onInitialInstall ?? defaultBlock },
+                new { Key = "--squirrel-updated", Value = onAppUpdate ?? defaultBlock },
+                new { Key = "--squirrel-obsolete", Value = onAppObsoleted ?? defaultBlock },
+                new { Key = "--squirrel-uninstall", Value = onAppUninstall ?? defaultBlock },
             }.ToDictionary(k => k.Key, v => v.Value);
 
             if (args[0] == "--squirrel-firstrun") {
@@ -67,10 +68,10 @@ namespace Squirrel
 
             try {
                 lookup[args[0]](version);
-                Environment.Exit(0);
+                if (!ModeDetector.InUnitTestRunner()) Environment.Exit(0);
             } catch (Exception ex) {
                 LogHost.Default.ErrorException("Failed to handle Squirrel events", ex);
-                Environment.Exit(-1);
+                if (!ModeDetector.InUnitTestRunner()) Environment.Exit(-1);
             }
         }
     }

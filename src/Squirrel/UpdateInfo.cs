@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.Serialization;
+using Splat;
 
 namespace Squirrel
 {
@@ -12,7 +13,7 @@ namespace Squirrel
     }
 
     [DataContract]
-    public class UpdateInfo
+    public class UpdateInfo : IEnableLogger
     {
         [DataMember] public ReleaseEntry CurrentlyInstalledVersion { get; protected set; }
         [DataMember] public ReleaseEntry FutureReleaseEntry { get; protected set; }
@@ -32,9 +33,9 @@ namespace Squirrel
             // NB: When bootstrapping, CurrentlyInstalledVersion is null!
             CurrentlyInstalledVersion = currentlyInstalledVersion;
             ReleasesToApply = (releasesToApply ?? Enumerable.Empty<ReleaseEntry>()).ToList();
-            FutureReleaseEntry = ReleasesToApply.Any() ? 
-                ReleasesToApply.MaxBy(x => x.Version).FirstOrDefault() : 
-                null;
+            FutureReleaseEntry = ReleasesToApply.Any() ?
+                ReleasesToApply.MaxBy(x => x.Version).FirstOrDefault() :
+                CurrentlyInstalledVersion;
 
             AppFrameworkVersion = appFrameworkVersion;
 
@@ -44,8 +45,16 @@ namespace Squirrel
         public Dictionary<ReleaseEntry, string> FetchReleaseNotes()
         {
             return ReleasesToApply
-                .Select(x => new { Entry = x, Readme = x.GetReleaseNotes(PackageDirectory) })
-                .ToDictionary(k => k.Entry, v => v.Readme);
+                .SelectMany(x => {
+                    try {
+                        var releaseNotes = x.GetReleaseNotes(PackageDirectory);
+                        return EnumerableExtensions.Return(Tuple.Create(x, releaseNotes));
+                    } catch (Exception ex) {
+                        this.Log().WarnException("Couldn't get release notes for:" + x.Filename, ex);
+                        return Enumerable.Empty<Tuple<ReleaseEntry, string>>();
+                    }
+                })
+                .ToDictionary(k => k.Item1, v => v.Item2);
         }
 
         public static UpdateInfo Create(ReleaseEntry currentVersion, IEnumerable<ReleaseEntry> availableReleases, string packageDirectory, FrameworkVersion appFrameworkVersion)

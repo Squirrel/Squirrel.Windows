@@ -33,43 +33,13 @@ Update.exe is a generic client for Squirrel which supports several operations:
 
 ```
 {
-  "CurrentlyInstalledVersion": null,
-  "FutureReleaseEntry": {
-    "SHA1": "163D0D3F0B339D6B5866C808ABFF57DB74B93C68",
-    "Filename": "GitHubForWindows.2.3.1.1.nupkg",
-    "Filesize": 33160193,
-    "IsDelta": false,
-    "EntryAsString": "163D0D3F0B339D6B5866C808ABFF57DB74B93C68 GitHubForWindows.2.3.1.1.nupkg 33160193",
-    "Version": {
-      "Major": 2,
-      "Minor": 3,
-      "Build": 1,
-      "Revision": 1,
-      "MajorRevision": 0,
-      "MinorRevision": 1
-    },
-    "PackageName": "GitHubForWindows"
-  },
-  "ReleasesToApply": [
-    {
-      "SHA1": "163D0D3F0B339D6B5866C808ABFF57DB74B93C68",
-      "Filename": "GitHubForWindows.2.3.1.1.nupkg",
-      "Filesize": 33160193,
-      "IsDelta": false,
-      "EntryAsString": "163D0D3F0B339D6B5866C808ABFF57DB74B93C68 GitHubForWindows.2.3.1.1.nupkg 33160193",
-      "Version": {
-        "Major": 2,
-        "Minor": 3,
-        "Build": 1,
-        "Revision": 1,
-        "MajorRevision": 0,
-        "MinorRevision": 1
-      },
-      "PackageName": "GitHubForWindows"
-    }
-  ],
-  "AppFrameworkVersion": 1,
-  "IsBootstrapping": true,
-  "PackageDirectory": "C:\\Users\\paul\\AppData\\Local\\Debug\\packages"
+    currentVersion: "1.0.0.0",
+    futureVersion: "1.0.0.1",
+    releasesToApply: [
+        {
+            version: "1.0.0.1",
+            releaseNotes: "This does a thing"
+        }
+    ]
 }
 ```

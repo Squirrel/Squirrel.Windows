@@ -24,29 +24,31 @@ namespace Squirrel
         string PackageName { get; }
 
         string GetReleaseNotes(string packageDirectory);
+        Uri GetIconUrl(string packageDirectory);
     }
 
     [DataContract]
     public class ReleaseEntry : IEnableLogger, IReleaseEntry
     {
         [DataMember] public string SHA1 { get; protected set; }
+        [DataMember] public string BaseUrl { get; protected set; }
         [DataMember] public string Filename { get; protected set; }
         [DataMember] public long Filesize { get; protected set; }
         [DataMember] public bool IsDelta { get; protected set; }
 
-        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta)
+        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null)
         {
             Contract.Requires(sha1 != null && sha1.Length == 40);
             Contract.Requires(filename != null);
             Contract.Requires(filename.Contains(Path.DirectorySeparatorChar) == false);
             Contract.Requires(filesize > 0);
 
-            SHA1 = sha1; Filename = filename; Filesize = filesize; IsDelta = isDelta;
+            SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Filesize = filesize; IsDelta = isDelta;
         }
 
         [IgnoreDataMember]
         public string EntryAsString {
-            get { return String.Format("{0} {1} {2}", SHA1, Filename, Filesize); }
+            get { return String.Format("{0} {1}{2} {3}", SHA1, BaseUrl, Filename, Filesize); }
         }
 
         [IgnoreDataMember]
@@ -69,6 +71,12 @@ namespace Squirrel
             return zp.ReleaseNotes;
         }
 
+        public Uri GetIconUrl(string packageDirectory)
+        {
+            var zp = new ZipPackage(Path.Combine(packageDirectory, Filename));
+            return zp.IconUrl;
+        }
+
         static readonly Regex entryRegex = new Regex(@"^([0-9a-fA-F]{40})\s+(\S+)\s+(\d+)[\r]*$");
         static readonly Regex commentRegex = new Regex(@"#.*$");
         public static ReleaseEntry ParseReleaseEntry(string entry)
@@ -89,9 +97,27 @@ namespace Squirrel
                 throw new Exception("Invalid release entry: " + entry);
             }
 
+            string filename = m.Groups[2].Value;
+
+            // Split the base URL and the filename if an URI is provided, 
+            // throws if a path is provided
+            string baseUrl = null;
+
+            if(Utility.IsHttpUrl(filename)) {
+                var indexOfLastPathSeparator = filename.LastIndexOf("/") + 1;
+
+                baseUrl = filename.Substring(0, indexOfLastPathSeparator);
+                filename = filename.Substring(indexOfLastPathSeparator);
+            } 
+            
+            if (filename.IndexOfAny(Path.GetInvalidFileNameChars()) > -1) {
+                throw new Exception("Filename can either be an absolute HTTP[s] URL, *or* a file name");
+            }
+
             long size = Int64.Parse(m.Groups[3].Value);
-            bool isDelta = filenameIsDeltaFile(m.Groups[2].Value);
-            return new ReleaseEntry(m.Groups[1].Value, m.Groups[2].Value, size, isDelta);
+            bool isDelta = filenameIsDeltaFile(filename);
+
+            return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl);
         }
 
         public static IEnumerable<ReleaseEntry> ParseReleaseFile(string fileContents)
@@ -129,24 +155,24 @@ namespace Squirrel
             Contract.Requires(releaseEntries != null && releaseEntries.Any());
             Contract.Requires(!String.IsNullOrEmpty(path));
 
-            using (var f = File.OpenWrite(path)) {
+            using (var f = File.Open(path, FileMode.Create, FileAccess.Write, FileShare.None)) {
                 WriteReleaseFile(releaseEntries, f);
             }
         }
 
-        public static ReleaseEntry GenerateFromFile(Stream file, string filename)
+        public static ReleaseEntry GenerateFromFile(Stream file, string filename, string baseUrl = null)
         {
             Contract.Requires(file != null && file.CanRead);
             Contract.Requires(!String.IsNullOrEmpty(filename));
 
             var hash = Utility.CalculateStreamSHA1(file);
-            return new ReleaseEntry(hash, filename, file.Length, filenameIsDeltaFile(filename));
+            return new ReleaseEntry(hash, filename, file.Length, filenameIsDeltaFile(filename), baseUrl);
         }
 
-        public static ReleaseEntry GenerateFromFile(string path)
+        public static ReleaseEntry GenerateFromFile(string path, string baseUrl = null)
         {
             using (var inf = File.OpenRead(path)) {
-                return GenerateFromFile(inf, Path.GetFileName(path));
+                return GenerateFromFile(inf, Path.GetFileName(path), baseUrl);
             }
         }
 

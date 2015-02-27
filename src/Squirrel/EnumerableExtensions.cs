@@ -8,6 +8,11 @@ namespace Squirrel
 {
     internal static class EnumerableExtensions
     {
+        public static IEnumerable<T> Return<T>(T value)
+        {
+            yield return value;
+        }
+
         /// <summary>
         /// Enumerates the sequence and invokes the given action for each value in the sequence.
         /// </summary>

@@ -83,10 +83,10 @@ var updateInfo = await updateManager.CheckForUpdate();
 
 if (updateInfo == null) {
     Console.WriteLine("No updates found");
-} else if (!info.ReleasesToApply.Any()) {
+} else if (!updateInfo.ReleasesToApply.Any()) {
         Console.WriteLine("You're up to date!");
 } else {
-    var latest = info.ReleasesToApply.MaxBy(x => x.Version).First();
+    var latest = updateInfo.ReleasesToApply.MaxBy(x => x.Version).First();
     Console.WriteLine("You can update to {0}", latest.Version);
 }
 ```

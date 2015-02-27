@@ -9,6 +9,7 @@ using Microsoft.Win32;
 using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
+using System.Net;
 
 namespace Squirrel.Tests
 {
@@ -264,7 +265,7 @@ namespace Squirrel.Tests
             }
 
             [Fact]
-            public async Task WhenReleasesFileIsBlankReturnNull()
+            public async Task WhenReleasesFileIsBlankThrowAnException()
             {
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir)) {
@@ -272,18 +273,17 @@ namespace Squirrel.Tests
                     File.WriteAllText(Path.Combine(tempDir, "RELEASES"), "");
 
                     using (fixture) {
-                        Assert.Null(await fixture.CheckForUpdate());
+                        await Assert.ThrowsAsync(typeof(Exception), () => fixture.CheckForUpdate());
                     }
                 }
             }
 
             [Fact]
-            public async Task WhenUrlResultsInWebExceptionReturnNull()
+            public async Task WhenUrlResultsInWebExceptionWeShouldThrow()
             {
                 // This should result in a WebException (which gets caught) unless you can actually access http://lol
                 using (var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45)) {
-                    var updateInfo = await fixture.CheckForUpdate();
-                    Assert.Null(updateInfo);
+                    await Assert.ThrowsAsync(typeof(WebException), () => fixture.CheckForUpdate());
                 }
             }
 
