@@ -115,6 +115,8 @@ namespace Squirrel
                     }
                 }
 
+                fixPinnedExecutables(new Version(255, 255, 255, 255));
+
                 await this.ErrorIfThrows(() => Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
             }
