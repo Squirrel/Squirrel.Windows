@@ -93,13 +93,14 @@ namespace Squirrel
 
                         if (squirrelAwareApps.Count > 0) {
                             await squirrelAwareApps.ForEachAsync(async exe => {
-                                var cts = new CancellationTokenSource();
-                                cts.CancelAfter(10 * 1000);
+                                using (var cts = new CancellationTokenSource()) { 
+                                    cts.CancelAfter(10 * 1000);
 
-                                try {
-                                    await Utility.InvokeProcessAsync(exe, String.Format("--squirrel-uninstall {0}", version), cts.Token);
-                                } catch (Exception ex) {
-                                    this.Log().ErrorException("Failed to run cleanup hook, continuing: " + exe, ex);
+                                    try {
+                                        await Utility.InvokeProcessAsync(exe, String.Format("--squirrel-uninstall {0}", version), cts.Token);
+                                    } catch (Exception ex) {
+                                        this.Log().ErrorException("Failed to run cleanup hook, continuing: " + exe, ex);
+                                    }
                                 }
                             }, 1 /*at a time*/);
                         } else {
@@ -392,13 +393,14 @@ namespace Squirrel
 
                 // For each app, run the install command in-order and wait
                 if (!firstRunOnly) await squirrelApps.ForEachAsync(async exe => {
-                    var cts = new CancellationTokenSource();
-                    cts.CancelAfter(15 * 1000);
+                    using (var cts = new CancellationTokenSource()) { 
+                        cts.CancelAfter(15 * 1000);
 
-                    try {
-                        await Utility.InvokeProcessAsync(exe, args, cts.Token);
-                    } catch (Exception ex) {
-                        this.Log().ErrorException("Couldn't run Squirrel hook, continuing: " + exe, ex);
+                        try {
+                            await Utility.InvokeProcessAsync(exe, args, cts.Token);
+                        } catch (Exception ex) {
+                            this.Log().ErrorException("Couldn't run Squirrel hook, continuing: " + exe, ex);
+                        }
                     }
                 }, 1 /* at a time */);
 
@@ -555,13 +557,14 @@ namespace Squirrel
                         if (squirrelApps.Count > 0) {
                             // For each app, run the install command in-order and wait
                             await squirrelApps.ForEachAsync(async exe => {
-                                var cts = new CancellationTokenSource();
-                                cts.CancelAfter(10 * 1000);
+                                using (var cts = new CancellationTokenSource()) { 
+                                    cts.CancelAfter(10 * 1000);
 
-                                try {
-                                    await Utility.InvokeProcessAsync(exe, args, cts.Token);
-                                } catch (Exception ex) {
-                                    this.Log().ErrorException("Coudln't run Squirrel hook, continuing: " + exe, ex);
+                                    try {
+                                        await Utility.InvokeProcessAsync(exe, args, cts.Token);
+                                    } catch (Exception ex) {
+                                        this.Log().ErrorException("Coudln't run Squirrel hook, continuing: " + exe, ex);
+                                    }
                                 }
                             }, 1 /* at a time */);
                         }
