@@ -22,10 +22,10 @@ namespace Squirrel
 
         retry:
             try {
-                this.Log().Info("Downloading file: " + failedUrl ?? url);
+                this.Log().Info("Downloading file: " + (failedUrl ?? url));
 
                 await this.WarnIfThrows(() => wc.DownloadFileTaskAsync(failedUrl ?? url, targetFile),
-                    "Failed downloading URL: " + failedUrl ?? url);
+                    "Failed downloading URL: " + (failedUrl ?? url));
             } catch (Exception) {
                 // NB: Some super brain-dead services are case-sensitive yet 
                 // corrupt case on upload. I can't even.
@@ -45,10 +45,10 @@ namespace Squirrel
 
         retry:
             try {
-                this.Log().Info("Downloading url: " + failedUrl ?? url);
+                this.Log().Info("Downloading url: " + (failedUrl ?? url));
 
                 return await this.WarnIfThrows(() => wc.DownloadDataTaskAsync(failedUrl ?? url),
-                    "Failed to download url: " + failedUrl ?? url);
+                    "Failed to download url: " + (failedUrl ?? url));
             } catch (Exception) {
                 // NB: Some super brain-dead services are case-sensitive yet 
                 // corrupt case on upload. I can't even.
