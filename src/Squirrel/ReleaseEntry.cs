@@ -192,16 +192,21 @@ namespace Squirrel
             // place
             var entries = entriesQueue.ToList();
             var tempFile = Path.GetTempFileName();
-            using (var of = File.OpenWrite(tempFile)) {
-                if (entries.Count > 0) WriteReleaseFile(entries, of);
-            }
+            try {
+                using (var of = File.OpenWrite(tempFile)) {
+                    if (entries.Count > 0) WriteReleaseFile(entries, of);
+                }
 
-            var target = Path.Combine(packagesDir.FullName, "RELEASES");
-            if (File.Exists(target)) {
-                File.Delete(target);
-            }
+                var target = Path.Combine(packagesDir.FullName, "RELEASES");
+                if (File.Exists(target)) {
+                    File.Delete(target);
+                }
 
-            File.Move(tempFile, target);
+                File.Move(tempFile, target);
+            }
+            finally {
+                File.Delete(tempFile);
+            }
             return entries;
         }
 
