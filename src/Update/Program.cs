@@ -495,7 +495,7 @@ namespace Squirrel.Update
             opts.WriteOptionDescriptions(Console.Out);
         }
 
-        static void waitForParentToExit()
+        void waitForParentToExit()
         {
             // Grab a handle the parent process
             var parentPid = NativeMethods.GetParentProcessId();
@@ -504,9 +504,12 @@ namespace Squirrel.Update
             // Wait for our parent to exit
             try {
                 handle = NativeMethods.OpenProcess(ProcessAccess.Synchronize, false, parentPid);
-                if (handle == IntPtr.Zero) throw new Win32Exception();
-
-                NativeMethods.WaitForSingleObject(handle, 0xFFFFFFFF /*INFINITE*/);
+                if (handle != IntPtr.Zero) {
+                    this.Log().Info("About to wait for parent PID {0}", parentPid);
+                    NativeMethods.WaitForSingleObject(handle, 0xFFFFFFFF /*INFINITE*/);
+                } else {
+                    this.Log().Info("Parent PID {0} no longer valid - ignoring", parentPid);
+                }
             } finally {
                 if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
             }
