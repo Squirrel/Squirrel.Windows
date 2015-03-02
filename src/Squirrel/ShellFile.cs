@@ -8,17 +8,11 @@ using System.Windows.Forms;
 
 namespace Squirrel
 {
-    #region ShellLink Object
-
     /// <summary>
     /// Summary description for ShellLink.
     /// </summary>
     public class ShellLink : IDisposable
     {
-        #region ComInterop for IShellLink
-
-        #region IPersist Interface
-
         [ComImport()]
         [Guid("0000010C-0000-0000-C000-000000000046")]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -28,10 +22,6 @@ namespace Squirrel
             //[helpstring("Returns the class identifier for the component object")]
             void GetClassID(out Guid pClassID);
         }
-
-        #endregion
-
-        #region IPersistFile Interface
 
         [ComImport()]
         [Guid("0000010B-0000-0000-C000-000000000046")]
@@ -64,9 +54,56 @@ namespace Squirrel
                 [MarshalAs(UnmanagedType.LPWStr)] out string ppszFileName);
         }
 
-        #endregion
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PropVariant
+        {
+            public short variantType;
+            public short Reserved1, Reserved2, Reserved3;
+            public IntPtr pointerValue;
 
-        #region IShellLink Interface
+            public static PropVariant FromString(string str)
+            {
+                var pv = new PropVariant() {
+                    variantType = 31,  // VT_LPWSTR
+                    pointerValue = Marshal.StringToCoTaskMemUni(str),
+                };
+
+                return pv;
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PROPERTYKEY
+        {
+            public Guid fmtid;
+            public UIntPtr pid;
+
+            public static PROPERTYKEY PKEY_AppUserModel_ID {
+                get {
+                    return new PROPERTYKEY() {
+                        fmtid = Guid.ParseExact("{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}", "B"),
+                        pid = new UIntPtr(5),
+                    };
+                }
+            }
+        }
+
+        [ComImport]
+        [Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        interface IPropertyStore
+        {
+            [PreserveSig]
+            int GetCount([Out] out uint cProps);
+            [PreserveSig]
+            int GetAt([In] uint iProp, out PROPERTYKEY pkey);
+            [PreserveSig]
+            int GetValue([In] ref PROPERTYKEY key, out PropVariant pv);
+            [PreserveSig]
+            int SetValue([In] ref PROPERTYKEY key, [In] ref PropVariant pv);
+            [PreserveSig]
+            int Commit();
+        }
 
         [ComImport()]
         [Guid("000214EE-0000-0000-C000-000000000046")]
@@ -230,20 +267,12 @@ namespace Squirrel
                 [MarshalAs(UnmanagedType.LPWStr)] string pszFile);
         }
 
-        #endregion
-
-        #region ShellLinkCoClass
-
         [Guid("00021401-0000-0000-C000-000000000046")]
         [ClassInterface(ClassInterfaceType.None)]
         [ComImport()]
         class CShellLink
         {
         }
-
-        #endregion
-
-        #region Private IShellLink enumerations
 
         enum EShellLinkGP : uint
         {
@@ -269,10 +298,6 @@ namespace Squirrel
             SW_SHOWDEFAULT = 10,
             SW_MAX = 10
         }
-
-        #endregion
-
-        #region IShellLink Private structs
 
         [StructLayout(LayoutKind.Sequential, Pack = 4, Size = 0,
             CharSet = CharSet.Unicode)]
@@ -321,10 +346,6 @@ namespace Squirrel
             public uint dwHighDateTime;
         }
 
-        #endregion
-
-        #region UnManaged Methods
-
         class UnManagedMethods
         {
             [DllImport("Shell32", CharSet = CharSet.Auto)]
@@ -338,12 +359,6 @@ namespace Squirrel
             [DllImport("user32")]
             internal static extern int DestroyIcon(IntPtr hIcon);
         }
-
-        #endregion
-
-        #endregion
-
-        #region Enumerations
 
         /// <summary>
         /// Flags determining how the links with missing
@@ -421,18 +436,10 @@ namespace Squirrel
             edmMaximized = EShowWindowFlags.SW_MAXIMIZE
         }
 
-        #endregion
-
-        #region Member Variables
-
         // Use Unicode (W) under NT, otherwise use ANSI      
         IShellLinkW linkW;
         IShellLinkA linkA;
         string shortcutFile = "";
-
-        #endregion
-
-        #region Constructor
 
         /// <summary>
         /// Creates an instance of the Shell Link object.
@@ -459,10 +466,6 @@ namespace Squirrel
             Open(linkFile);
         }
 
-        #endregion
-
-        #region Destructor and Dispose
-
         /// <summary>
         /// Call dispose just in case it hasn't happened yet
         /// </summary>
@@ -487,10 +490,6 @@ namespace Squirrel
                 linkA = null;
             }
         }
-
-        #endregion
-
-        #region Implementation
 
         public string ShortCutFile
         {
@@ -863,6 +862,12 @@ namespace Squirrel
             }
         }
 
+        public void SetAppUserModelId(string appId)
+        {
+            var propStore = (IPropertyStore)linkW;
+            propStore.SetValue(PROPERTYKEY.PKEY_AppUserModel_ID, PropVariant.FromString(appId));
+        }
+
         /// <summary>
         /// Saves the shortcut to ShortCutFile.
         /// </summary>
@@ -967,11 +972,7 @@ namespace Squirrel
                 this.shortcutFile = linkFile;
             }
         }
-
-        #endregion
     }
-
-    #endregion
 
     /// <summary>
     /// Enables extraction of icons for any file type from
@@ -979,8 +980,6 @@ namespace Squirrel
     /// </summary>
     public class FileIcon
     {
-        #region UnmanagedCode
-
         const int MAX_PATH = 260;
 
         [StructLayout(LayoutKind.Sequential)]
@@ -1029,19 +1028,11 @@ namespace Squirrel
         [DllImport("kernel32")]
         static extern int GetLastError();
 
-        #endregion
-
-        #region Member Variables
-
         string fileName;
         string displayName;
         string typeName;
         SHGetFileInfoConstants flags;
         Icon fileIcon;
-
-        #endregion
-
-        #region Enumerations
 
         [Flags]
         public enum SHGetFileInfoConstants : int
@@ -1065,10 +1056,6 @@ namespace Squirrel
             SHGFI_ADDOVERLAYS = 0x000000020, // apply the appropriate overlays
             SHGFI_OVERLAYINDEX = 0x000000040 // Get the index of the overlay
         }
-
-        #endregion
-
-        #region Implementation
 
         /// <summary>
         /// Gets/sets the flags used to extract the icon
@@ -1163,9 +1150,9 @@ namespace Squirrel
         {
             flags = SHGetFileInfoConstants.SHGFI_ICON |
                 SHGetFileInfoConstants.SHGFI_DISPLAYNAME |
-                    SHGetFileInfoConstants.SHGFI_TYPENAME |
-                        SHGetFileInfoConstants.SHGFI_ATTRIBUTES |
-                            SHGetFileInfoConstants.SHGFI_EXETYPE;
+                SHGetFileInfoConstants.SHGFI_TYPENAME |
+                SHGetFileInfoConstants.SHGFI_ATTRIBUTES |
+                SHGetFileInfoConstants.SHGFI_EXETYPE;
         }
 
         /// <summary>
@@ -1197,7 +1184,5 @@ namespace Squirrel
             this.flags = flags;
             GetInfo();
         }
-
-        #endregion
     }
 }

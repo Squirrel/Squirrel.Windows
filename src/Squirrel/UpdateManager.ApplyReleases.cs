@@ -116,6 +116,8 @@ namespace Squirrel
                     }
                 }
 
+                fixPinnedExecutables(new Version(255, 255, 255, 255));
+
                 await this.ErrorIfThrows(() => Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
             }
@@ -124,6 +126,7 @@ namespace Squirrel
             {
                 var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
                 var thisRelease = Utility.FindCurrentVersion(releases);
+                var updateExe = getUpdateExe();
 
                 var zf = new ZipPackage(Path.Combine(
                     Utility.PackageDirectoryForAppDir(rootAppDirectory),
@@ -149,16 +152,34 @@ namespace Squirrel
 
                     this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
 
+                    ShellLink sl;
                     this.ErrorIfThrows(() => {
-                        if (fileExists) File.Delete(file);
+                        if (fileExists) {
+                            try {
+                                sl = new ShellLink();
 
-                        var sl = new ShellLink {
-                            Target = exePath,
+                                sl.Open(file);
+                                if (sl.Target == updateExe && sl.Description == zf.Description && sl.IconPath == exePath) {
+                                    return;
+                                }
+
+                                File.Delete(file);
+                            } catch (Exception ex) {
+                                this.Log().WarnException("Tried to compare shortcut and failed", ex);
+                                File.Delete(file);
+                            }
+                        }
+
+                        sl = new ShellLink {
+                            Target = updateExe,
                             IconPath = exePath,
                             IconIndex = 0,
                             WorkingDirectory = Path.GetDirectoryName(exePath),
                             Description = zf.Description,
+                            Arguments = "--processStart " + exeName,
                         };
+
+                        sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
 
                         this.Log().Info("About to save shortcut: {0}", file);
                         if (ModeDetector.InUnitTestRunner() == false) sl.Save(file);

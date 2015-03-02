@@ -181,7 +181,7 @@ namespace Squirrel
 
             exiting = true;
 
-            Process.Start(getUpdateExe(), String.Format("--processStart {0} {1}", exeToStart, argsArg));
+            Process.Start(getUpdateExe(), String.Format("--processStartAndWait {0} {1}", exeToStart, argsArg));
 
             // NB: We have to give update.exe some time to grab our PID, but
             // we can't use WaitForInputIdle because we probably don't have
@@ -224,7 +224,16 @@ namespace Squirrel
 
         static string getUpdateExe()
         {
-            var assembly = Assembly.GetExecutingAssembly();
+            var assembly = Assembly.GetEntryAssembly();
+
+            // Are we update.exe?
+            if (assembly != null &&
+                Path.GetFileName(assembly.Location).Equals("update.exe", StringComparison.OrdinalIgnoreCase) &&
+                assembly.Location.IndexOf("app-", StringComparison.OrdinalIgnoreCase) == -1) {
+                return Path.GetFullPath(assembly.Location);
+            }
+
+            assembly = Assembly.GetExecutingAssembly();
 
             var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..\\Update.exe");
             var target = new FileInfo(updateDotExe);
