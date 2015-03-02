@@ -187,38 +187,37 @@ namespace Squirrel
             var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @".diff$", ""));
 
             var tempTargetFile = Path.GetTempFileName();
+            try {
+                // NB: Zero-length diffs indicate the file hasn't actually changed
+                if (new FileInfo(inputFile).Length == 0) {
+                    this.Log().Info("{0} exists unchanged, skipping", relativeFilePath);
+                    return;
+                }
 
-            // NB: Zero-length diffs indicate the file hasn't actually changed
-            if (new FileInfo(inputFile).Length == 0) {
-                this.Log().Info("{0} exists unchanged, skipping", relativeFilePath);
-                return;
-            }
+                if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
+                    this.Log().Info("Applying Diff to {0}", relativeFilePath);
+                    var msDelta = new MsDeltaCompression();
+                    msDelta.ApplyDelta(inputFile, finalTarget, tempTargetFile);
 
-            if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
-                this.Log().Info("Applying Diff to {0}", relativeFilePath);
-                var msDelta = new MsDeltaCompression();
-                msDelta.ApplyDelta(inputFile, finalTarget, tempTargetFile);
-
-                try {
                     verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
-                } catch (Exception) {
-                    File.Delete(tempTargetFile);
-                    throw;
+                   
+                } else {
+                    using (var of = File.OpenWrite(tempTargetFile))
+                    using (var inf = File.OpenRead(inputFile)) {
+                        this.Log().Info("Adding new file: {0}", relativeFilePath);
+                        inf.CopyTo(of);
+                    }
                 }
-            } else {
-                using (var of = File.OpenWrite(tempTargetFile))
-                using (var inf = File.OpenRead(inputFile)) {
-                    this.Log().Info("Adding new file: {0}", relativeFilePath);
-                    inf.CopyTo(of);
-                }
+
+                if (File.Exists(finalTarget)) File.Delete(finalTarget);
+
+                var targetPath = Directory.GetParent(finalTarget);
+                if (!targetPath.Exists) targetPath.Create();
+
+                File.Move(tempTargetFile, finalTarget);
+            } finally {
+                if (File.Exists(tempTargetFile)) Utility.DeleteFileHarder(tempTargetFile, true);
             }
-
-            if (File.Exists(finalTarget)) File.Delete(finalTarget);
-
-            var targetPath = Directory.GetParent(finalTarget);
-            if (!targetPath.Exists) targetPath.Create();
-
-            File.Move(tempTargetFile, finalTarget);
         }
 
         void verifyPatchedFile(string relativeFilePath, string inputFile, string tempTargetFile)

@@ -371,6 +371,18 @@ namespace Squirrel
             return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps;
         }
 
+        public static void DeleteFileHarder(string path, bool ignoreIfFails = false)
+        {
+            try {
+                Retry(() => File.Delete(path), 2);
+            } catch (Exception ex) {
+                if (ignoreIfFails) return;
+
+                LogHost.Default.ErrorException("Really couldn't delete file: " + path, ex);
+                throw;
+            }
+        }
+
         public static async Task DeleteDirectoryWithFallbackToNextReboot(string dir)
         {
             try {
