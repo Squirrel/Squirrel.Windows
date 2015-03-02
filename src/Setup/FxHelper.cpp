@@ -258,8 +258,8 @@ HRESULT CFxHelper::HandleRebootRequirement(bool isQuiet)
 		return E_FAIL;
 	}
 
-	// We'll never get here, because Reboot
-	return S_OK;
+	// About to reboot, but just in case...
+	return S_FALSE;
 }
 
 //
