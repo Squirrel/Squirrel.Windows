@@ -8,6 +8,8 @@
 #include "targetver.h"
 
 #define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
+#define UNICODE
+#define _UNICODE
 
 // Windows Header Files:
 #include <windows.h>
@@ -26,6 +28,11 @@
 #include <atlmisc.h>
 #include <atldlgs.h>
 #include <atlwin.h>
+
+#include <windows.h>
+#include <shlobj.h>
+#include <exdisp.h>
+#include <shlwapi.h>
 
 #if defined _M_IX86
 #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")

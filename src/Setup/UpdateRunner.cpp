@@ -57,6 +57,72 @@ out:
 	return hr;
 }
 
+HRESULT FindDesktopFolderView(REFIID riid, void **ppv)
+{
+	HRESULT hr;
+
+	CComPtr<IShellWindows> spShellWindows;
+	spShellWindows.CoCreateInstance(CLSID_ShellWindows);
+
+	CComVariant vtLoc(CSIDL_DESKTOP);
+	CComVariant vtEmpty;
+	long lhwnd;
+	CComPtr<IDispatch> spdisp;
+
+	hr = spShellWindows->FindWindowSW(
+		&vtLoc, &vtEmpty,
+		SWC_DESKTOP, &lhwnd, SWFO_NEEDDISPATCH, &spdisp);
+	if (FAILED(hr)) return hr;
+
+	CComPtr<IShellBrowser> spBrowser;
+	hr = CComQIPtr<IServiceProvider>(spdisp)->QueryService(SID_STopLevelBrowser, IID_PPV_ARGS(&spBrowser));
+	if (FAILED(hr)) return hr;
+
+	CComPtr<IShellView> spView;
+	hr = spBrowser->QueryActiveShellView(&spView);
+	if (FAILED(hr)) return hr;
+
+	hr = spView->QueryInterface(riid, ppv);
+	if (FAILED(hr)) return hr;
+
+	return S_OK;
+}
+
+HRESULT GetDesktopAutomationObject(REFIID riid, void **ppv)
+{
+	HRESULT hr;
+
+	CComPtr<IShellView> spsv;
+	hr = FindDesktopFolderView(IID_PPV_ARGS(&spsv));
+	if (FAILED(hr)) return hr;
+
+	CComPtr<IDispatch> spdispView;
+	hr = spsv->GetItemObject(SVGIO_BACKGROUND, IID_PPV_ARGS(&spdispView));
+	if (FAILED(hr)) return hr;
+
+	return spdispView->QueryInterface(riid, ppv);
+}
+
+HRESULT CUpdateRunner::ShellExecuteFromExplorer(LPWSTR pszFile, LPWSTR pszParameters)
+{
+	HRESULT hr;
+
+	CComPtr<IShellFolderViewDual> spFolderView;
+	hr = GetDesktopAutomationObject(IID_PPV_ARGS(&spFolderView));
+	if (FAILED(hr)) return hr;
+
+	CComPtr<IDispatch> spdispShell;
+	hr = spFolderView->get_Application(&spdispShell);
+	if (FAILED(hr)) return hr;
+
+	return CComQIPtr<IShellDispatch2>(spdispShell)->ShellExecute(
+		CComBSTR(pszFile),
+		CComVariant(pszParameters ? pszParameters : L""),
+		CComVariant(L""),
+		CComVariant(L""),
+		CComVariant(SW_SHOWDEFAULT));
+}
+
 int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 {
 	PROCESS_INFORMATION pi = { 0 };
