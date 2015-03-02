@@ -253,7 +253,12 @@ out:
 // Deal with the aftermath of the framework installer telling us that we need to reboot
 bool CFxHelper::HandleRebootRequirement(bool isQuiet)
 {
-	if (!isQuiet) {
+	if (isQuiet) {
+		// Don't silently reboot - just error-out
+		fprintf_s(stderr, "A reboot is required following .NET installation - reboot then run installer again.\n");
+		return false;
+	}
+	else {
 		CTaskDialog dlg;
 		TASKDIALOG_BUTTON buttons[] = {
 			{ 1, L"Restart Now", },
