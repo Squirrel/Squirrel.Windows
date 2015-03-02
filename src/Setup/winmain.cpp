@@ -25,7 +25,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	if (!CFxHelper::IsDotNet45OrHigherInstalled()) {
 		hr = CFxHelper::InstallDotNetFramework(isQuiet);
+		if (FAILED(hr)) {
+			exitCode = hr; // #yolo
+			goto out;
+		}
+	
+		// S_FALSE isn't failure, but we still shouldn't try to install
 		if (hr != S_OK) {
+			exitCode = 0;
 			goto out;
 		}
 	}

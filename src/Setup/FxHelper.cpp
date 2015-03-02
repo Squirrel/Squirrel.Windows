@@ -40,10 +40,7 @@ public:
 
 	DECLARE_PROTECT_FINAL_CONSTRUCT()
 
-	HRESULT FinalConstruct()
-	{
-		return S_OK;
-	}
+	HRESULT FinalConstruct() { return S_OK; }
 
 	void FinalRelease()
 	{
@@ -52,21 +49,6 @@ public:
 	void SetProgressDialog(IProgressDialog* pd)
 	{
 		m_spProgressDialog = pd;
-	}
-
-	STDMETHOD(OnStartBinding)(DWORD /*dwReserved*/, IBinding *pBinding)
-	{
-		return E_NOTIMPL;
-	}
-
-	STDMETHOD(GetPriority)(LONG *pnPriority)
-	{
-		return E_NOTIMPL;
-	}
-
-	STDMETHOD(OnLowResource)(DWORD /*reserved*/)
-	{
-		return E_NOTIMPL;
 	}
 
 	STDMETHOD(OnProgress)(ULONG ulProgress, ULONG ulProgressMax, ULONG /*ulStatusCode*/, LPCWSTR /*szStatusText*/)
@@ -82,25 +64,13 @@ public:
 		return S_OK;
 	}
 
-	STDMETHOD(OnStopBinding)(HRESULT /*hresult*/, LPCWSTR /*szError*/)
-	{
-		return E_NOTIMPL;
-	}
-
-	STDMETHOD(GetBindInfo)(DWORD *pgrfBINDF, BINDINFO *pbindInfo)
-	{
-		return E_NOTIMPL;
-	}
-
-	STDMETHOD(OnDataAvailable)(DWORD grfBSCF, DWORD dwSize, FORMATETC * /*pformatetc*/, STGMEDIUM *pstgmed)
-	{
-		return E_NOTIMPL;
-	}
-
-	STDMETHOD(OnObjectAvailable)(REFIID /*riid*/, IUnknown * /*punk*/)
-	{
-		return E_NOTIMPL;
-	}
+	STDMETHOD(OnStartBinding)(DWORD /*dwReserved*/, IBinding *pBinding) { return E_NOTIMPL; }
+	STDMETHOD(GetPriority)(LONG *pnPriority) { return E_NOTIMPL; }
+	STDMETHOD(OnLowResource)(DWORD /*reserved*/) { return E_NOTIMPL; }
+	STDMETHOD(OnStopBinding)(HRESULT /*hresult*/, LPCWSTR /*szError*/) { return E_NOTIMPL; }
+	STDMETHOD(GetBindInfo)(DWORD *pgrfBINDF, BINDINFO *pbindInfo) { return E_NOTIMPL; }
+	STDMETHOD(OnDataAvailable)(DWORD grfBSCF, DWORD dwSize, FORMATETC * /*pformatetc*/, STGMEDIUM *pstgmed) { return E_NOTIMPL; }
+	STDMETHOD(OnObjectAvailable)(REFIID /*riid*/, IUnknown * /*punk*/) { return E_NOTIMPL; }
 
 private:
 	CComPtr<IProgressDialog> m_spProgressDialog;
@@ -229,7 +199,15 @@ HRESULT CFxHelper::InstallDotNetFramework(bool isQuiet)
 		goto out;
 	}
 
-	hr = exitCode != 0 ? E_FAIL : S_OK;
+	if (exitCode == 1641 || exitCode == 3010) {
+		// The framework installer wants a reboot before we can continue
+		// See https://msdn.microsoft.com/en-us/library/ee942965%28v=vs.110%29.aspx
+		hr = HandleRebootRequirement(isQuiet);
+		// Exit as a failure, so that setup doesn't carry on now
+	} else {
+		hr = exitCode != 0 ? E_FAIL : S_OK;
+	}
+
 
 out:
 	if (execInfo.hProcess != NULL && execInfo.hProcess != INVALID_HANDLE_VALUE) {
@@ -242,3 +220,93 @@ out:
 
 	return hr;
 }
+
+// Deal with the aftermath of the framework installer telling us that we need to reboot
+HRESULT CFxHelper::HandleRebootRequirement(bool isQuiet)
+{
+	if (isQuiet) {
+		// Don't silently reboot - just error-out
+		fprintf_s(stderr, "A reboot is required following .NET installation - reboot then run installer again.\n");
+		return E_FAIL;
+	} 
+	
+	CTaskDialog dlg;
+	TASKDIALOG_BUTTON buttons[] = {
+		{ 1, L"Restart Now", },
+		{ 2, L"Cancel", },
+	};
+
+	dlg.SetButtons(buttons, 2);
+	dlg.SetMainInstructionText(L"Restart System");
+	dlg.SetContentText(L"To finish installing the .NET Framework 4.5, the system now needs to restart.  The installation will finish after you restart and log-in again.");
+	dlg.SetMainIcon(TD_INFORMATION_ICON);
+
+	dlg.SetExpandedInformationText(L"If you click 'Cancel', you'll need to re-run this setup program yourself, after restarting your system.");
+
+	int nButton;
+	if (FAILED(dlg.DoModal(::GetActiveWindow(), &nButton)) || nButton != 1) {
+		return S_FALSE;
+	}
+
+	// We need to set up a runonce entry to restart this installer once the reboot has happened
+	if (!WriteRunOnceEntry()) {
+		return E_FAIL;
+	}
+
+	// And now, reboot
+	if (!RebootSystem()) {
+		return E_FAIL;
+	}
+
+	// We'll never get here, because Reboot
+	return S_OK;
+}
+
+//
+// Write a runonce entry to the registry to tell it to continue with 
+// setup after a reboot
+//
+bool CFxHelper::WriteRunOnceEntry()
+{
+	ATL::CRegKey key;
+
+	if (key.Open(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce", KEY_WRITE) != ERROR_SUCCESS) {
+		return false;
+	}
+
+	TCHAR exePath[MAX_PATH];
+	GetModuleFileName(NULL, exePath, MAX_PATH);
+
+	if (key.SetStringValue(L"SquirrelInstall", exePath) != ERROR_SUCCESS) {
+		return false;
+	}
+
+	return true;
+}
+
+bool CFxHelper::RebootSystem()
+{
+	// First we need to enable the SE_SHUTDOWN_NAME privilege
+	LUID luid;
+	if (!LookupPrivilegeValue(L"", SE_SHUTDOWN_NAME, &luid)) {
+		return false;
+	}
+
+	HANDLE hToken = NULL;
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken)) {
+		return false;
+	}
+
+	TOKEN_PRIVILEGES tp;
+	tp.PrivilegeCount = 1;
+	tp.Privileges[0].Luid = luid;
+	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+	if (!AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(tp), NULL, 0)) {
+		CloseHandle(hToken);
+		return false;
+	}
+
+	// Now we have that privilege, we can ask Windows to restart
+	return ExitWindowsEx(EWX_REBOOT, 0) != 0;
+}
+
