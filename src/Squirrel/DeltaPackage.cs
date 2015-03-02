@@ -187,8 +187,7 @@ namespace Squirrel
             var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @".diff$", ""));
 
             var tempTargetFile = Path.GetTempFileName();
-            try
-            {
+            try {
                 // NB: Zero-length diffs indicate the file hasn't actually changed
                 if (new FileInfo(inputFile).Length == 0) {
                     this.Log().Info("{0} exists unchanged, skipping", relativeFilePath);
@@ -216,9 +215,7 @@ namespace Squirrel
                 if (!targetPath.Exists) targetPath.Create();
 
                 File.Move(tempTargetFile, finalTarget);
-            }
-            finally
-            {
+            } finally {
                 File.Delete(tempTargetFile);
             }
         }
