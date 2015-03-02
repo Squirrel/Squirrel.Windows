@@ -224,7 +224,16 @@ namespace Squirrel
 
         static string getUpdateExe()
         {
-            var assembly = Assembly.GetExecutingAssembly();
+            var assembly = Assembly.GetEntryAssembly();
+
+            // Are we update.exe?
+            if (assembly != null &&
+                Path.GetFileName(assembly.Location).Equals("update.exe", StringComparison.OrdinalIgnoreCase) &&
+                assembly.Location.IndexOf("app-", StringComparison.OrdinalIgnoreCase) == -1) {
+                return Path.GetFullPath(assembly.Location);
+            }
+
+            assembly = Assembly.GetExecutingAssembly();
 
             var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..\\Update.exe");
             var target = new FileInfo(updateDotExe);
