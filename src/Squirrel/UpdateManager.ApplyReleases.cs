@@ -567,12 +567,17 @@ namespace Squirrel
                 await toCleanup.ForEachAsync(async x => {
                     try {
                         await Utility.DeleteDirectoryWithFallbackToNextReboot(x.FullName);
+
+                        if (Directory.Exists(x.FullName)) {
+                            // NB: If we cannot clean up a directory, we need to make 
+                            // sure that anyone finding it later won't attempt to run
+                            // Squirrel events on it. We'll mark it with a .dead file
+                            markAppFolderAsDead(x.FullName);
+                        }
                     } catch (UnauthorizedAccessException ex) {
                         this.Log().WarnException("Couldn't delete directory: " + x.FullName, ex);
 
-                        // NB: If we cannot clean up a directory, we need to make 
-                        // sure that anyone finding it later won't attempt to run
-                        // Squirrel events on it. We'll mark it with a .dead file
+                        // NB: Same deal as above
                         markAppFolderAsDead(x.FullName);
                     }
                 });
