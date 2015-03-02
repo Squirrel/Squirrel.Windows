@@ -29,6 +29,34 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 	}
 }
 
+HRESULT CUpdateRunner::AreWeUACElevated()
+{
+	HANDLE hProcess = GetCurrentProcess();
+	HANDLE hToken = 0;
+	HRESULT hr;
+
+	if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken)) {
+		hr = HRESULT_FROM_WIN32(GetLastError());
+		goto out;
+	}
+
+	TOKEN_ELEVATION_TYPE elevType;
+	DWORD dontcare;
+	if (!GetTokenInformation(hToken, TokenElevationType, &elevType, sizeof(TOKEN_ELEVATION_TYPE), &dontcare)) {
+		hr = HRESULT_FROM_WIN32(GetLastError());
+		goto out;
+	}
+
+	hr = (elevType == TokenElevationTypeFull ? S_OK : S_FALSE);
+
+out:
+	if (hToken) {
+		CloseHandle(hToken);
+	}
+
+	return hr;
+}
+
 int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 {
 	PROCESS_INFORMATION pi = { 0 };
