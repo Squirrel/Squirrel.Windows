@@ -60,6 +60,16 @@ namespace Squirrel
             public short variantType;
             public short Reserved1, Reserved2, Reserved3;
             public IntPtr pointerValue;
+
+            public static PropVariant FromString(string str)
+            {
+                var pv = new PropVariant() {
+                    variantType = 31,  // VT_LPWSTR
+                    pointerValue = Marshal.StringToCoTaskMemUni(str),
+                };
+
+                return pv;
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -90,7 +100,7 @@ namespace Squirrel
             [PreserveSig]
             int GetValue([In] ref PROPERTYKEY key, out PropVariant pv);
             [PreserveSig]
-            int SetValue([In] ref PROPERTYKEY key, [In] ref object pv);
+            int SetValue([In] ref PROPERTYKEY key, [In] ref PropVariant pv);
             [PreserveSig]
             int Commit();
         }
@@ -855,7 +865,7 @@ namespace Squirrel
         public void SetAppUserModelId(string appId)
         {
             var propStore = (IPropertyStore)linkW;
-            propStore.SetValue(PROPERTYKEY.PKEY_AppUserModel_ID, appId);
+            propStore.SetValue(PROPERTYKEY.PKEY_AppUserModel_ID, PropVariant.FromString(appId));
         }
 
         /// <summary>
