@@ -214,11 +214,7 @@ namespace Squirrel
 
             async Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
             {
-                string tmpDir = default(string);
-                bool shouldDeleteTmpDir = findShortTemporaryDir(out tmpDir);
-
-                var fs = new PhysicalFileSystem(tmpDir);
-                var pkg = new OptimizedZipPackage(fs, Path.Combine(updateInfo.PackageDirectory, release.Filename));
+                var pkg = new ZipPackage(Path.Combine(updateInfo.PackageDirectory, release.Filename));
                 var target = getDirectoryForRelease(release.Version);
 
                 // NB: This might happen if we got killed partially through applying the release
@@ -246,10 +242,6 @@ namespace Squirrel
                 // we can kill both of these NBs.
                 await Task.Run(() => toWrite.ForEach(x => copyFileToLocation(target, x)));
                 await pkg.GetContentFiles().ForEachAsync(x => copyFileToLocation(target, x));
-
-                if (shouldDeleteTmpDir) {
-                    await Utility.DeleteDirectory(tmpDir);
-                }
 
                 return target.FullName;
             }
