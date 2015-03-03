@@ -52,7 +52,8 @@ namespace Squirrel.Update
             //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
             //Thread.Sleep(10 * 60 * 1000);
 
-            using (var animatedGifWindowToken = new CancellationTokenSource())
+            var animatedGifWindowToken = new CancellationTokenSource();
+
             using (Disposable.Create(() => animatedGifWindowToken.Cancel()))
             using (var logger = new SetupLogLogger(isUninstalling) { Level = Splat.LogLevel.Info }) {
                 Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
