@@ -127,6 +127,7 @@ namespace Squirrel.Update
                     }
 
                     Install(silentInstall, progressSource, Path.GetFullPath(target)).Wait();
+                    animatedGifWindowToken.Cancel();
                     break;
                 case UpdateAction.Uninstall:
                     Uninstall().Wait();
