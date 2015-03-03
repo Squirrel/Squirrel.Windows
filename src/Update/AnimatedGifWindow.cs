@@ -21,19 +21,17 @@ namespace Squirrel.Update
     {
         public AnimatedGifWindow()
         {
-            var img = new Image();
-            var src = default(BitmapImage);
-
             var source = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                 "background.gif");
 
             if (File.Exists(source)) {
-                src = new BitmapImage();
+                var src = new BitmapImage();
                 src.BeginInit();
                 src.StreamSource = File.OpenRead(source);
                 src.EndInit();
-            
+
+                var img = new Image();
                 ImageBehavior.SetAnimatedSource(img, src);
                 this.Content = img;
                 this.Width = src.Width;
@@ -54,11 +52,11 @@ namespace Squirrel.Update
 
 
 
-        public static void ShowWindow(TimeSpan initialDelay, CancellationToken cancellation, ProgressSource progressSource)
+        public static void ShowWindow(TimeSpan initialDelay, CancellationToken token, ProgressSource progressSource)
         {
             var thread = new Thread(_ => {
                 try {
-                    showWindowImpl(initialDelay, cancellation, progressSource);
+                    showWindowImpl(initialDelay, token, progressSource);
                 } catch (Exception) {
                     // We must never lose exceptions out of background threads, because it crashes the app
                 }
