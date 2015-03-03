@@ -21,7 +21,7 @@ These methods are the primary methods you'll use to interact with app updates an
 
 * `UpdateApp`: Downloads and updates the app to the latest version. This method is the "Easy Mode" method that does everything all in one go.
 
-* `CheckForUpdate`: Checks on the server if there are updates available. Returns an `UpdateInfo` object that contains information about pending updates if there are any, and null if there aren't.
+* `CheckForUpdate`: Checks on the server if there are updates available. Returns an `UpdateInfo` object that contains information about any pending updates.
 
 * `DownloadReleases`: Downloads release files (the `nupkg` file deltas) from the server to the local machine
 
