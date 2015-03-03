@@ -52,41 +52,51 @@ namespace Squirrel.Update
             this.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         }
 
-        public static void ShowWindow(TimeSpan initialDelay, CancellationToken token, ProgressSource progressSource)
+
+
+        public static void ShowWindow(TimeSpan initialDelay, CancellationToken cancellation, ProgressSource progressSource)
         {
-            var wnd = default(AnimatedGifWindow);
-
-            var thread = new Thread(() => {
-                if (token.IsCancellationRequested) return;
-
+            var thread = new Thread(_ => {
                 try {
-                    Task.Delay(initialDelay, token).ContinueWith(t => { return true; }).Wait();
+                    showWindowImpl(initialDelay, cancellation, progressSource);
                 } catch (Exception) {
-                    return;
-                }
-
-                wnd = new AnimatedGifWindow();
-                wnd.Show();
-
-                Task.Delay(TimeSpan.FromSeconds(5.0), token).ContinueWith(t => {
-                    if (t.IsCanceled) return;
-                    wnd.Dispatcher.BeginInvoke(new Action(() => wnd.Topmost = false));
-                });
-
-                token.Register(() => wnd.Dispatcher.BeginInvoke(new Action(wnd.Close)));
-                EventHandler<int> progressSourceOnProgress = ((sender, p) =>
-                    wnd.Dispatcher.BeginInvoke(
-                        new Action(() => wnd.TaskbarItemInfo.ProgressValue = p/100.0)));
-                progressSource.Progress += progressSourceOnProgress;
-                try {
-                    (new Application()).Run(wnd);
-                } finally {
-                    progressSource.Progress -= progressSourceOnProgress;
+                    // We must never lose exceptions out of background threads, because it crashes the app
                 }
             });
 
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
+        }
+
+        /// <summary>
+        /// Blocking method to show the progress window - expects to be called on STA thread separate to app main thread
+        /// </summary>
+        static void showWindowImpl(TimeSpan initialDelay, CancellationToken cancellation, ProgressSource progressSource)
+        {
+            Task.Delay(initialDelay, cancellation).ContinueWith(_ => true,cancellation).Wait(cancellation);
+
+            var wnd = new AnimatedGifWindow();
+            wnd.Show();
+
+            // The window doesn't need to be topmost after 5 seconds 
+            Task.Delay(TimeSpan.FromSeconds(5.0), cancellation).ContinueWith(_ => {
+                wnd.Dispatcher.BeginInvoke(new Action(() => wnd.Topmost = false));
+            }, cancellation);
+
+            // Close the window if the cancellation token fires
+            cancellation.Register(() => wnd.Dispatcher.BeginInvoke(new Action(wnd.Close)));
+
+            // Pass progress calls through to the progress bar
+            EventHandler<int> progressSourceOnProgress = ((sender, p) =>
+                wnd.Dispatcher.BeginInvoke(
+                    new Action(() => wnd.TaskbarItemInfo.ProgressValue = p/100.0)));
+            progressSource.Progress += progressSourceOnProgress;
+            try {
+                (new Application()).Run(wnd);
+            }
+            finally {
+                progressSource.Progress -= progressSourceOnProgress;
+            }
         }
     }
 }
