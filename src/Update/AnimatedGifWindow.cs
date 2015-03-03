@@ -21,19 +21,17 @@ namespace Squirrel.Update
     {
         public AnimatedGifWindow()
         {
-            var img = new Image();
-            var src = default(BitmapImage);
-
             var source = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                 "background.gif");
 
             if (File.Exists(source)) {
-                src = new BitmapImage();
+                var src = new BitmapImage();
                 src.BeginInit();
                 src.StreamSource = File.OpenRead(source);
                 src.EndInit();
-            
+
+                var img = new Image();
                 ImageBehavior.SetAnimatedSource(img, src);
                 this.Content = img;
                 this.Width = src.Width;
