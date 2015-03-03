@@ -1,25 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Shell;
-using System.Windows.Threading;
 using WpfAnimatedGif;
 
 namespace Squirrel.Update
 {
     public class AnimatedGifWindow : Window
     {
-        public AnimatedGifWindow()
+        AnimatedGifWindow()
         {
             var source = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
@@ -68,10 +63,9 @@ namespace Squirrel.Update
 
         static void showWindowImpl(TimeSpan initialDelay, CancellationToken token, ProgressSource progressSource)
         {
-            Task.Delay(initialDelay, token).ContinueWith(_ => true,token).Wait(token);
+            Task.Delay(initialDelay, token).Wait(token);
 
             var wnd = new AnimatedGifWindow();
-            wnd.Show();
 
             // The window doesn't need to be topmost after 5 seconds 
             Task.Delay(TimeSpan.FromSeconds(5.0), token).ContinueWith(_ => {
