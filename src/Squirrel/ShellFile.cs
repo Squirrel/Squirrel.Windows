@@ -2,7 +2,6 @@
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Windows.Forms;
 
 // All of this code is from http://vbaccelerator.com/home/NET/Code/Libraries/Shell_Projects/Creating_and_Modifying_Shortcuts/article.asp
 
@@ -834,7 +833,7 @@ namespace Squirrel
         /// <summary>
         /// Gets/sets the HotKey to start the shortcut (if any)
         /// </summary>
-        public Keys HotKey
+        public short HotKey
         {
             get
             {
@@ -847,17 +846,17 @@ namespace Squirrel
                 {
                     linkA.GetHotkey(out key);
                 }
-                return (Keys)key;
+                return key;
             }
             set
             {
                 if (linkA == null)
                 {
-                    linkW.SetHotkey((short)value);
+                    linkW.SetHotkey(value);
                 }
                 else
                 {
-                    linkA.SetHotkey((short)value);
+                    linkA.SetHotkey(value);
                 }
             }
         }
