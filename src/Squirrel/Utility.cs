@@ -260,53 +260,41 @@ namespace Squirrel
             return Disposable.Create(() => Task.Run(async () => await DeleteDirectory(tempDir.FullName)).Wait());
         }
 
+        /// <summary>
+        /// Recursively delete a directory and its contents
+        /// Perform a number of retries, because apps which have files open can cause this to fail transiently
+        /// 
+        /// See http://stackoverflow.com/questions/329355/cannot-delete-directory-with-directory-deletepath-true/329502#329502
+        /// ALTHOUGH BE AWARE THAT LOTS OF THAT THREAD IS WRONG, and the idea that you need to explicitly recurse or delete
+        /// files is incorrect.
+        /// </summary>
         public static async Task DeleteDirectory(string directoryPath)
         {
             Contract.Requires(!String.IsNullOrEmpty(directoryPath));
 
-            Log().Debug("Starting to delete folder: {0}", directoryPath);
-
-            if (!Directory.Exists(directoryPath)) {
-                Log().Warn("DeleteDirectory: does not exist - {0}", directoryPath);
-                return;
+            // At 100ms per attempt and 10 attempts, we'll waste a max of 1 second in here, on top
+            // of whatever Directory.Delete takes - hopefully that's enough
+            int attemptsRemaining = 10;
+            while (attemptsRemaining-- > 0) {
+                try {
+                    Directory.Delete(directoryPath, true);
+                    break;
+                }
+                catch (DirectoryNotFoundException) {
+                    // It must have gone now 
+                    break; 
+                }
+                catch (Exception ex) {
+                    var message = String.Format("Error while deleting {0}, {1} attempts remaining", directoryPath, attemptsRemaining);
+                    Log().Warn(message, ex);
+                    if (attemptsRemaining == 0) {
+                        throw;
+                    }
+                }
+                // Delay in case we're waiting for Explorer windows to close, etc
+                await Task.Delay(100);
             }
-
-            // From http://stackoverflow.com/questions/329355/cannot-delete-directory-with-directory-deletepath-true/329502#329502
-            var files = new string[0];
-            try {
-                files = Directory.GetFiles(directoryPath);
-            } catch (UnauthorizedAccessException ex) {
-                var message = String.Format("The files inside {0} could not be read", directoryPath);
-                Log().Warn(message, ex);
-            }
-
-            var dirs = new string[0];
-            try {
-                dirs = Directory.GetDirectories(directoryPath);
-            } catch (UnauthorizedAccessException ex) {
-                var message = String.Format("The directories inside {0} could not be read", directoryPath);
-                Log().Warn(message, ex);
-            }
-
-            var fileOperations = files.ForEachAsync(file => {
-                File.SetAttributes(file, FileAttributes.Normal);
-                File.Delete(file);
-            });
-
-            var directoryOperations =
-                dirs.ForEachAsync(async dir => await DeleteDirectory(dir));
-
-            await Task.WhenAll(fileOperations, directoryOperations);
-
-            Log().Debug("Now deleting folder: {0}", directoryPath);
-            File.SetAttributes(directoryPath, FileAttributes.Normal);
-
-            try {
-                Directory.Delete(directoryPath, false);
-            } catch (Exception ex) {
-                var message = String.Format("DeleteDirectory: could not delete - {0}", directoryPath);
-                Log().ErrorException(message, ex);
-            }
+            Log().Info("Deleted directory {0} with {1} attempts still remaining", directoryPath, attemptsRemaining);
         }
 
         public static Tuple<string, Stream> CreateTempFile()
