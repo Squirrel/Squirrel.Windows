@@ -124,9 +124,11 @@ namespace Squirrel
 
             public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly)
             {
+                this.Log().Info("About to create shortcuts for {0}, rootAppDir {1}", exeName, rootAppDirectory);
+
                 var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
                 var thisRelease = Utility.FindCurrentVersion(releases);
-                var updateExe = getUpdateExe();
+                var updateExe = Path.Combine(rootAppDirectory, "update.exe");
 
                 var zf = new ZipPackage(Path.Combine(
                     Utility.PackageDirectoryForAppDir(rootAppDirectory),
@@ -181,7 +183,7 @@ namespace Squirrel
 
                         sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
 
-                        this.Log().Info("About to save shortcut: {0}", file);
+                        this.Log().Info("About to save shortcut: {0} (target {1}, workingDir {2}, args {3})", file, sl.Target, sl.WorkingDirectory, sl.Arguments);
                         if (ModeDetector.InUnitTestRunner() == false) sl.Save(file);
                     }, "Can't write shortcut: " + file);
                 }
