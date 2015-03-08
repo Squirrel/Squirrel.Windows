@@ -599,7 +599,7 @@ namespace Squirrel.Update
             var args = verStrings.Aggregate(new StringBuilder("\"" + exePath + "\""), (acc, x) => { acc.AppendFormat(" --set-version-string \"{0}\" \"{1}\"", x.Key, x.Value); return acc; });
             args.AppendFormat(" --set-file-version {0} --set-product-version {0}", package.Version.ToString());
             if (iconPath != null) {
-                args.AppendFormat(" --set-icon \"{0}\"", iconPath);
+                args.AppendFormat(" --set-icon \"{0}\"", Path.GetFullPath(iconPath));
             }
 
             // Try to find rcedit.exe
