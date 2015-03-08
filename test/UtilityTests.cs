@@ -28,6 +28,19 @@ namespace Squirrel.Tests.Core
             Console.WriteLine("Saved to " + path);
         }
 
+        [Theory]
+        [InlineData(10, 1)]
+        [InlineData(100, 1)]
+        [InlineData(0, 1)]
+        [InlineData(30000, 2)]
+        [InlineData(50000, 2)]
+        [InlineData(10000000, 3)]
+        public void TestTempNameGeneration(int index, int expectedLength)
+        {
+            string result = Utility.tempNameForIndex(index, "");
+            Assert.Equal(result.Length, expectedLength);
+        }
+
         [Fact]
         public void RemoveByteOrderMarkerIfPresent()
         {
