@@ -186,7 +186,9 @@ namespace Squirrel
             var inputFile = Path.Combine(deltaPath, relativeFilePath);
             var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @".diff$", ""));
 
-            var tempTargetFile = Path.GetTempFileName();
+            var tempTargetFile = default(string);
+            Utility.WithTempFile(out tempTargetFile);
+
             try {
                 // NB: Zero-length diffs indicate the file hasn't actually changed
                 if (new FileInfo(inputFile).Length == 0) {
