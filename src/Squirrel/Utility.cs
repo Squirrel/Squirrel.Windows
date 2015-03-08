@@ -342,12 +342,6 @@ namespace Squirrel
             }
         }
 
-        public static Tuple<string, Stream> CreateTempFile()
-        {
-            var path = Path.GetTempFileName();
-            return Tuple.Create(path, (Stream) File.OpenWrite(path));
-        }
-
         public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
         {
             return Path.Combine(rootAppDirectory, "app-" + entry.Version.ToString());

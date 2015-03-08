@@ -191,7 +191,9 @@ namespace Squirrel
             // Write the new RELEASES file to a temp file then move it into
             // place
             var entries = entriesQueue.ToList();
-            var tempFile = Path.GetTempFileName();
+            var tempFile = default(string);
+            Utility.WithTempFile(out tempFile);
+
             try {
                 using (var of = File.OpenWrite(tempFile)) {
                     if (entries.Count > 0) WriteReleaseFile(entries, of);
