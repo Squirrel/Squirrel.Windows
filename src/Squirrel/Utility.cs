@@ -229,7 +229,22 @@ namespace Squirrel
                 }));
         }
 
-        static string directoryChars;
+        static Lazy<string> directoryChars = new Lazy<string>(() => {
+            return "abcdefghijklmnopqrstuvwxyz" +
+                Enumerable.Range(0x4E00, 0x9FCC - 0x4E00)  // CJK UNIFIED IDEOGRAPHS
+                    .Aggregate(new StringBuilder(), (acc, x) => { acc.Append(Char.ConvertFromUtf32(x)); return acc; })
+                    .ToString();
+        });
+
+        static string tempNameForIndex(int index, string prefix)
+        {
+            if (index < directoryChars.Value.Length) {
+                return prefix + directoryChars.Value[index];
+            }
+
+            return prefix + directoryChars.Value[index % directoryChars.Value.Length] + tempNameForIndex(index / directoryChars.Value.Length, "");
+        }
+
         public static IDisposable WithTempDirectory(out string path)
         {
             var di = new DirectoryInfo(Environment.GetEnvironmentVariable("SQUIRREL_TEMP") ?? Environment.GetEnvironmentVariable("TEMP") ?? "");
@@ -239,14 +254,10 @@ namespace Squirrel
 
             var tempDir = default(DirectoryInfo);
 
-            directoryChars = directoryChars ?? (
-                "abcdefghijklmnopqrstuvwxyz" +
-                Enumerable.Range(0x4E00, 0x9FCC - 0x4E00)  // CJK UNIFIED IDEOGRAPHS
-                    .Aggregate(new StringBuilder(), (acc, x) => { acc.Append(Char.ConvertFromUtf32(x)); return acc; })
-                    .ToString());
+            var names = Enumerable.Range(0, 1<<20).Select(x => tempNameForIndex(x, "temp"));
 
-            foreach (var c in directoryChars) {
-                var target = Path.Combine(di.FullName, c.ToString());
+            foreach (var name in names) {
+                var target = Path.Combine(di.FullName, name);
 
                 if (!File.Exists(target) && !Directory.Exists(target)) {
                     Directory.CreateDirectory(target);
@@ -258,6 +269,28 @@ namespace Squirrel
             path = tempDir.FullName;
 
             return Disposable.Create(() => Task.Run(async () => await DeleteDirectory(tempDir.FullName)).Wait());
+        }
+
+        public static IDisposable WithTempFile(out string path)
+        {
+            var di = new DirectoryInfo(Environment.GetEnvironmentVariable("SQUIRREL_TEMP") ?? Environment.GetEnvironmentVariable("TEMP") ?? "");
+            if (!di.Exists) {
+                throw new Exception("%TEMP% isn't defined, go set it");
+            }
+
+            var names = Enumerable.Range(0, 1<<20).Select(x => tempNameForIndex(x, "temp"));
+
+            path = "";
+            foreach (var name in names) {
+                path = Path.Combine(di.FullName, name);
+
+                if (!File.Exists(path) && !Directory.Exists(path)) {
+                    break;
+                }
+            }
+
+            var thePath = path;
+            return Disposable.Create(() => File.Delete(thePath));
         }
 
         public static async Task DeleteDirectory(string directoryPath)
