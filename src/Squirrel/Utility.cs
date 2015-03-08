@@ -231,12 +231,13 @@ namespace Squirrel
 
         static Lazy<string> directoryChars = new Lazy<string>(() => {
             return "abcdefghijklmnopqrstuvwxyz" +
-                Enumerable.Range(0x4E00, 0x9FCC - 0x4E00)  // CJK UNIFIED IDEOGRAPHS
+                Enumerable.Range(0x03B0, 0x03FF - 0x03B0)   // Greek and Coptic
+                    .Concat(Enumerable.Range(0x0400, 0x04FF - 0x0400)) // Cyrillic
                     .Aggregate(new StringBuilder(), (acc, x) => { acc.Append(Char.ConvertFromUtf32(x)); return acc; })
                     .ToString();
         });
 
-        static string tempNameForIndex(int index, string prefix)
+        internal static string tempNameForIndex(int index, string prefix)
         {
             if (index < directoryChars.Value.Length) {
                 return prefix + directoryChars.Value[index];
