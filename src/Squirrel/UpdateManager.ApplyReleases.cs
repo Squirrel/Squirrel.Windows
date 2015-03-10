@@ -652,22 +652,7 @@ namespace Squirrel
 
             string getLinkTarget(ShortcutLocation location, string title, string applicationName, bool createDirectoryIfNecessary = true)
             {
-                var dir = default(string);
-
-                switch (location) {
-                case ShortcutLocation.Desktop:
-                    dir = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-                    break;
-                case ShortcutLocation.StartMenu:
-                    dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", applicationName);
-                    break;
-                case ShortcutLocation.Startup:
-                    dir = Environment.GetFolderPath (Environment.SpecialFolder.Startup);
-                    break;
-                case ShortcutLocation.AppRoot:
-                    dir = rootAppDirectory;
-                    break;
-                }
+                var dir = getLinkTargetDirectory(location, applicationName);
 
                 if (createDirectoryIfNecessary && !Directory.Exists(dir)) {
                     Directory.CreateDirectory(dir);
@@ -676,6 +661,26 @@ namespace Squirrel
                 return Path.Combine(dir, title + ".lnk");
             }
 
+            string getLinkTargetDirectory(ShortcutLocation location, string applicationName)
+            {
+                switch (location) {
+                    case ShortcutLocation.Desktop:
+                        return Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                    case ShortcutLocation.StartMenu:
+                        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs",
+                            applicationName);
+                    case ShortcutLocation.StartMenuRoot:
+                        return Environment.GetFolderPath(Environment.SpecialFolder.StartMenu);
+                    case ShortcutLocation.StartMenuPrograms:
+                        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
+                    case ShortcutLocation.Startup:
+                        return Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                    case ShortcutLocation.AppRoot:
+                        return this.rootAppDirectory;
+                    default:
+                        throw new ArgumentOutOfRangeException("location");
+                }
+            }
         }
     }
 }
