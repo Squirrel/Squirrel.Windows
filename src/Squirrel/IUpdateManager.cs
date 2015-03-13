@@ -13,13 +13,30 @@ namespace Squirrel
 {
     [Flags]
     public enum ShortcutLocation {
+        /// <summary>
+        /// StartMenu\Programs\[authorName]\Shortcut.lnk
+        /// </summary>
         StartMenu = 1 << 0,
+        /// <summary>
+        /// On the desktop
+        /// </summary>
         Desktop = 1 << 1,
+        /// <summary>
+        /// In the per-user startup folder
+        /// </summary>
         Startup = 1 << 2,
         /// <summary>
         /// A shortcut in the application folder, useful for portable applications.
         /// </summary>
-        AppRoot = 1 << 3
+        AppRoot = 1 << 3,
+        /// <summary>
+        /// The top level of the start menu
+        /// </summary>
+        StartMenuRoot = 1 << 4,
+        /// <summary>
+        /// StartMenu\Programs (like the 'StartMenu' option but without the authorName folder)
+        /// </summary>
+        StartMenuPrograms = 1 << 5
     }
 
     public interface IUpdateManager : IDisposable, IEnableLogger
