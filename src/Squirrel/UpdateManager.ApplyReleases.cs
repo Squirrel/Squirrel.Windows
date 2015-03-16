@@ -22,11 +22,9 @@ namespace Squirrel
             readonly FrameworkVersion appFrameworkVersion = FrameworkVersion.Net45;
 
             readonly string rootAppDirectory;
-            readonly string applicationName;
 
-            public ApplyReleasesImpl(string applicationName, string rootAppDirectory)
+            public ApplyReleasesImpl(string rootAppDirectory)
             {
-                this.applicationName = applicationName;
                 this.rootAppDirectory = rootAppDirectory;
             }
 
