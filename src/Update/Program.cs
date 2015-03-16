@@ -341,9 +341,9 @@ namespace Squirrel.Update
             var processed = new List<string>();
 
             var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
-            var previousReleases = Enumerable.Empty<ReleaseEntry>();
+            var previousReleases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
-                previousReleases = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8));
+                previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
             }
 
             foreach (var file in toProcess) {
@@ -373,7 +373,9 @@ namespace Squirrel.Update
 
             foreach (var file in toProcess) { File.Delete(file.FullName); }
 
-            var releaseEntries = previousReleases.Concat(processed.Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl)));
+            var newReleaseEntries = processed.Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl)).ToList();
+            var distinctPreviousReleases = previousReleases.Where(x => !newReleaseEntries.Select(e => e.Version).Contains(x.Version));
+            var releaseEntries = distinctPreviousReleases.Concat(newReleaseEntries).ToList();
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
             var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
