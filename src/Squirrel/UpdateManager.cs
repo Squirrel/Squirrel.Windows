@@ -63,24 +63,25 @@ namespace Squirrel
         {
             var checkForUpdate = new CheckForUpdateImpl(rootAppDirectory);
 
-            await acquireUpdateLock();
-            return await checkForUpdate.CheckForUpdate(Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader);
+            using (await acquireUpdateLock()) {
+                return await checkForUpdate.CheckForUpdate(Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader);
+            }
         }
 
         public async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
         {
             var downloadReleases = new DownloadReleasesImpl(rootAppDirectory);
-            await acquireUpdateLock();
-
-            await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
+            using (await acquireUpdateLock()) {
+                await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
+            }
         }
 
         public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
-            await acquireUpdateLock();
-
-            return await applyReleases.ApplyReleases(updateInfo, false, false, progress);
+            using (await acquireUpdateLock()) {
+                return await applyReleases.ApplyReleases(updateInfo, false, false, progress);
+            }
         }
 
         public async Task FullInstall(bool silentInstall = false, Action<int> progress = null)
@@ -89,17 +90,17 @@ namespace Squirrel
             await DownloadReleases(updateInfo.ReleasesToApply);
 
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
-            await acquireUpdateLock();
-
-            await applyReleases.ApplyReleases(updateInfo, silentInstall, true, progress);
+            using (await acquireUpdateLock()) {
+                await applyReleases.ApplyReleases(updateInfo, silentInstall, true, progress);
+            }
         }
 
         public async Task FullUninstall()
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
-            await acquireUpdateLock();
-
-            await applyReleases.FullUninstall();
+            using (await acquireUpdateLock()) {
+                await applyReleases.FullUninstall();
+            }
         }
 
         public Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
