@@ -15,7 +15,8 @@ namespace Squirrel
     public enum ShortcutLocation {
         StartMenu = 1 << 0,
         Desktop = 1 << 1,
-        Startup = 1 << 2,
+        Startup = 1 << 2, // under authorName
+		StartMenuPrograms = 1 << 5, // in main list of Start menu
         /// <summary>
         /// A shortcut in the application folder, useful for portable applications.
         /// </summary>
