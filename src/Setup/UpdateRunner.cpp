@@ -132,7 +132,9 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	wchar_t logFile[MAX_PATH];
 	std::vector<CString> to_delete;
 
-	ExpandEnvironmentStrings(L"%LocalAppData%\\SquirrelTemp", targetDir, _countof(targetDir));
+	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
+	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
+
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		goto failedExtract;
 	}
