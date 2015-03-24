@@ -233,7 +233,7 @@ namespace Squirrel.Update
 
         public async Task UpdateSelf(string appName)
         {
-            var localAppDir = Environment.ExpandEnvironmentVariables("%LocalAppData%");
+            var localAppDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             var targetDir = new DirectoryInfo(
                 Path.Combine(localAppDir, appName));
 

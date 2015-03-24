@@ -13,7 +13,12 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 	};
 
 	// TODO: Something about contacting support?
-	dlg.SetButtons(buttons, 2, 1);
+	if (logFile != NULL) {
+		dlg.SetButtons(&buttons[1], 1, 1);
+	} else {
+		dlg.SetButtons(buttons, 2, 1);
+	}
+
 	dlg.SetMainInstructionText(L"Installation has failed");
 	dlg.SetContentText(errorMessage);
 	dlg.SetMainIcon(TD_ERROR_ICON);
@@ -24,7 +29,7 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 		return;
 	}
 
-	if (nButton == 1) {
+	if (nButton == 1 && logFile != NULL) {
 		ShellExecute(NULL, NULL, logFile, NULL, NULL, SW_SHOW);
 	}
 }
@@ -132,9 +137,15 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	wchar_t logFile[MAX_PATH];
 	std::vector<CString> to_delete;
 
-	ExpandEnvironmentStrings(L"%LocalAppData%\\SquirrelTemp", targetDir, _countof(targetDir));
+	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
+	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
+
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
-		goto failedExtract;
+		wchar_t err[4096];
+		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
+		DisplayErrorMessage(CString(err), NULL);
+
+		return -1;
 	}
 
 	swprintf_s(logFile, L"%s\\SquirrelSetup.log", targetDir);
