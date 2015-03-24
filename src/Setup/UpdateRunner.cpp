@@ -13,7 +13,12 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 	};
 
 	// TODO: Something about contacting support?
-	dlg.SetButtons(buttons, 2, 1);
+	if (logFile != NULL) {
+		dlg.SetButtons(&buttons[1], 1, 1);
+	} else {
+		dlg.SetButtons(buttons, 2, 1);
+	}
+
 	dlg.SetMainInstructionText(L"Installation has failed");
 	dlg.SetContentText(errorMessage);
 	dlg.SetMainIcon(TD_ERROR_ICON);
@@ -24,7 +29,7 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 		return;
 	}
 
-	if (nButton == 1) {
+	if (nButton == 1 && logFile != NULL) {
 		ShellExecute(NULL, NULL, logFile, NULL, NULL, SW_SHOW);
 	}
 }
