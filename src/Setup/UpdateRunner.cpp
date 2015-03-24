@@ -141,7 +141,11 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
 
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
-		goto failedExtract;
+		wchar_t err[4096];
+		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
+		DisplayErrorMessage(CString(err), NULL);
+
+		return -1;
 	}
 
 	swprintf_s(logFile, L"%s\\SquirrelSetup.log", targetDir);
