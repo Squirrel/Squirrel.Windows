@@ -23,6 +23,7 @@
   <files>
     <file src="Squirrel\bin\Release\Squirrel.*" target="lib\Net45" />
     <file src="Squirrel\bin\Release\ICSharpCode.*" target="lib\Net45" />
+    <file src="Update\bin\Release\Update.exe" target="lib\Net45\Squirrel.exe" />
     <file src="Setup\bin\Release\Setup.exe" target="tools" />
     <file src="Update\bin\Release\Update.exe" target="tools\Squirrel.exe" />
     <file src="Update\bin\Release\Update.com" target="tools\Squirrel.com" />
