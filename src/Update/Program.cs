@@ -129,7 +129,7 @@ namespace Squirrel.Update
 
                     string filePath = target.Split(new char[] { ' ' }, 2)[0];
                     string argsOfSetup = target.Split(new char[] { ' ' }, 2)[1];
-                    Install(silentInstall, progressSource, Path.GetFullPath(target), argsOfSetup).Wait();
+                    Install(silentInstall, progressSource, Path.GetFullPath(filePath), argsOfSetup).Wait();
                     animatedGifWindowToken.Cancel();
                     break;
                 case UpdateAction.Uninstall:
