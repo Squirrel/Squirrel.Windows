@@ -414,7 +414,7 @@ namespace Squirrel
 
                 if (!isInitialInstall || silentInstall) return;
 
-                var firstRunParam = isInitialInstall ? "--squirrel-firstrun" : "";
+                var firstRunParam = isInitialInstall ? "--squirrel-firstrun " + argsOfSetup : "";
                 squirrelApps
                     .Select(exe => new ProcessStartInfo(exe, firstRunParam) { WorkingDirectory = Path.GetDirectoryName(exe) })
                     .ForEach(info => Process.Start(info));

@@ -68,7 +68,7 @@ namespace Squirrel
         /// <param name="progress">A Observer which can be used to report Progress - 
         /// will return values from 0-100 and Complete, or Throw</param>
         /// <returns>Completion</returns>
-        Task FullInstall(bool silentInstall, Action<int> progress = null);
+        Task FullInstall(bool silentInstall, Action<int> progress = null, string argsOfSetup = null);
 
         /// <summary>
         /// Completely uninstalls the targeted app
