@@ -80,6 +80,7 @@ namespace Squirrel.Update
                 string processStartArgs = default(string);
                 string appName = default(string);
                 string setupIcon = default(string);
+                string setupName = "setup.exe";
                 string shortcutArgs = default(string);
                 bool shouldWait = false;
 
@@ -106,6 +107,7 @@ namespace Squirrel.Update
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
                     { "i=|setupIcon", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
+                    { "sn=|setupName", "File Name of the generated Setup exe. By default setup.exe", v => setupName = v},
                     { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
@@ -143,7 +145,7 @@ namespace Squirrel.Update
                     UpdateSelf(appName).Wait();
                     break;
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, setupName);
                     break;
                 case UpdateAction.Shortcut:
                     Shortcut(target, shortcutArgs);
@@ -303,7 +305,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, string setupName = null)
         {
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
@@ -378,7 +380,7 @@ namespace Squirrel.Update
             var releaseEntries = distinctPreviousReleases.Concat(newReleaseEntries).ToList();
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
-            var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
+            var targetSetupExe = Path.Combine(di.FullName, setupName);
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
