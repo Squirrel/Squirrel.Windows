@@ -190,5 +190,53 @@ namespace Squirrel.Tests
             }
             */
         }
+
+        [Fact]
+        public async Task DownloadReportProgress()
+        {
+            Action<int> progressReporter = (i) =>
+            {
+                Console.WriteLine(i);
+                if (i > 100)
+                {
+                    Assert.False(true, "Progress reported number above 100.");
+                }
+            };
+            await DownloadReleasesFixed(progressReporter, new[] { new object(), new object(), new object() });
+        }
+
+        private async Task DownloadReleasesFixed(Action<int> progress, object[] releasesToDownload)
+        {
+            int current = 0;
+            await releasesToDownload.ForEachAsync(async x =>
+            {
+                int component = 0;
+                await ReportOneToHundred(p =>
+                {
+                    lock (progress)
+                    {
+                        if (p != 0)
+                        {
+                            var newCurrent = current - component + p;
+                            component = p;
+
+                            var toReport = newCurrent / releasesToDownload.Count();
+                            if (toReport > 0)
+                            {
+                                progress(toReport);
+                            }
+
+                            current = newCurrent;
+                        }
+                    }
+                });
+            });
+        }
+
+        private async Task ReportOneToHundred(Action<int> progress)
+        {
+            Enumerable.Range(0, 101).ToList().ForEach(progress);
+            await Task.Delay(1);
+        }
     }
 }
