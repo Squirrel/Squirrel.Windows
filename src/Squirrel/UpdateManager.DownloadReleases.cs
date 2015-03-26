@@ -25,19 +25,19 @@ namespace Squirrel
                 urlDownloader = urlDownloader ?? new FileDownloader();
                 var packagesDirectory = Path.Combine(rootAppDirectory, "packages");
 
-                int current = 0;
-                int toIncrement = (int)(100.0 / releasesToDownload.Count());
+                double current = 0;
+                double toIncrement = 100.0 / releasesToDownload.Count();
 
                 if (Utility.IsHttpUrl(updateUrlOrPath)) {
                     // From Internet
                     await releasesToDownload.ForEachAsync(async x => {
                         var targetFile = Path.Combine(packagesDirectory, x.Filename);
-                        var component = 0;
+                        double component = 0;
                         await downloadRelease(updateUrlOrPath, x, urlDownloader, targetFile, p => {
                             lock (progress) {
                                 current -= component;
-                                component = (int)(toIncrement / 100.0 * p);
-                                progress(current += component);
+                                component = toIncrement / 100.0 * p;
+                                progress((int)Math.Round(current += component));
                             }
                         });
                     });
@@ -49,9 +49,9 @@ namespace Squirrel
                         File.Copy(
                             Path.Combine(updateUrlOrPath, x.Filename),
                             targetFile,
-                            true); 
+                            true);
 
-                        lock (progress) progress(current += toIncrement);
+                        lock (progress) progress((int)Math.Round(current += toIncrement));
                     });
                 }
             }
