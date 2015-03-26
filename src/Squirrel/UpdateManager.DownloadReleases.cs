@@ -35,16 +35,11 @@ namespace Squirrel
                         var component = 0;
                         await downloadRelease(updateUrlOrPath, x, urlDownloader, targetFile, p => {
                             lock (progress) {
-                                if (p == 0) {
-                                    if (component <= 0) return;
-                                    progress(current -= component);
-                                    component = 0;
-                                } else {
-                                    progress(current += component += (int) (toIncrement/100.0*p));
-                                }
+                                current -= component;
+                                component = (int)(toIncrement / 100.0 * p);
+                                progress(current += component);
                             }
                         });
-
                     });
                 } else {
                     // From Disk
