@@ -41,6 +41,7 @@ namespace Squirrel
                         await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, false, true, silentInstall);
                     }
 
+                    progress(100);
                     return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
                 }
 
