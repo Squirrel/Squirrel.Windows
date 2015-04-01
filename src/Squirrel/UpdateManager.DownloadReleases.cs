@@ -26,8 +26,6 @@ namespace Squirrel
                 var packagesDirectory = Path.Combine(rootAppDirectory, "packages");
 
                 int current = 0;
-                int toIncrement = (int)(100.0 / releasesToDownload.Count());
-
                 if (Utility.IsHttpUrl(updateUrlOrPath)) {
                     // From Internet
                     await releasesToDownload.ForEachAsync(async x => {
@@ -35,12 +33,18 @@ namespace Squirrel
                         var component = 0;
                         await downloadRelease(updateUrlOrPath, x, urlDownloader, targetFile, p => {
                             lock (progress) {
-                                if (p == 0) {
-                                    if (component <= 0) return;
-                                    progress(current -= component);
-                                    component = 0;
-                                } else {
-                                    progress(current += component += (int) (toIncrement/100.0*p));
+                                if (p != 0)
+                                {
+                                    var newCurrent = current - component + p;
+                                    component = p;
+
+                                    var toReport = newCurrent/releasesToDownload.Count();
+                                    if (toReport > 0)
+                                    {
+                                        progress(toReport);
+                                    }
+
+                                    current = newCurrent;
                                 }
                             }
                         });
@@ -56,7 +60,9 @@ namespace Squirrel
                             targetFile,
                             true); 
 
-                        lock (progress) progress(current += toIncrement);
+                            lock (progress) {
+                                progress(current += (int)100.0 / releasesToDownload.Count());
+                            }
                     });
                 }
             }
