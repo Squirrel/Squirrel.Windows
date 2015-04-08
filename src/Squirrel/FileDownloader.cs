@@ -18,7 +18,15 @@ namespace Squirrel
             using (var wc = Utility.CreateWebClient()) {
             var failedUrl = default(string);
 
-            wc.DownloadProgressChanged += (sender, args) => progress(args.ProgressPercentage);
+            var lastSignalled = DateTime.MinValue;
+            wc.DownloadProgressChanged += (sender, args) => {
+                var now = DateTime.Now;
+
+                if (now - lastSignalled > TimeSpan.FromMilliseconds(500)) {
+                    lastSignalled = now;
+                    progress(args.ProgressPercentage);
+                }
+            };
 
         retry:
             try {
