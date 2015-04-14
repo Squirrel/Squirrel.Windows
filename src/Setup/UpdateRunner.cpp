@@ -141,6 +141,12 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
 	} else {
 		ExpandEnvironmentStrings(targetDir, L"%HOMEDRIVE%\\ProgramData", _countof(targetDir));
+
+		// NB: HOMEDRIVE may be unset or jacked up
+		if (targetDir[0] == L':') {
+			wcscpy_s(targetDir, _countof(targetDir), L"C:\\ProgramData");
+		}
+
 		if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 			wchar_t err[4096];
 			_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
