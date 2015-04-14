@@ -243,9 +243,31 @@ namespace Squirrel
             return target.FullName;
         }
 
-        static string getLocalAppDataDirectory()
+        static string getLocalAppDataDirectory(string assemblyLocation = null)
         {
-            return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            // Try to divine our our own install location via reading tea leaves
+            //
+            // * We're Update.exe, running in the app's install folder
+            // * We're Update.exe, running on initial install from SquirrelTemp
+            // * We're a C# EXE with Squirrel linked in
+
+            var assembly = Assembly.GetEntryAssembly();
+            if (assemblyLocation == null && assembly == null) {
+                // dunno lol
+                return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            }
+
+            assemblyLocation = assemblyLocation ?? assembly.Location;
+
+            if (Path.GetFileName(assemblyLocation).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
+                // NB: Both the "SquirrelTemp" case and the "App's folder" case 
+                // mean that the root app dir is one up
+                var oneFolderUpFromAppFolder = Path.Combine(Path.GetDirectoryName(assemblyLocation), "..");
+                return Path.GetFullPath(oneFolderUpFromAppFolder);
+            }
+
+            var twoFoldersUpFromAppFolder = Path.Combine(Path.GetDirectoryName(assemblyLocation), "..\\..");
+            return Path.GetFullPath(twoFoldersUpFromAppFolder);
         }
     }
 }
