@@ -21,7 +21,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	hr = _Module.Init(NULL, hInstance);
 
 	CString cmdLine(lpCmdLine);
-	bool isQuiet = (cmdLine.Find(L"/quiet") >= 0);
+	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 
 	if (!CFxHelper::IsDotNet45OrHigherInstalled()) {
 		hr = CFxHelper::InstallDotNetFramework(isQuiet);
@@ -51,7 +51,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		goto out;
 	}
 
-	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine);
+	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine, false);
 
 out:
 	_Module.Term();
