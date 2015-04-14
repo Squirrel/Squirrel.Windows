@@ -364,7 +364,7 @@ namespace Squirrel
                 if (us != null && Path.GetFileName(us.Location).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
                     var appName = targetDir.Parent.Name;
 
-                    Process.Start(newSquirrel, "--updateSelf=" + appName);
+                    Process.Start(newSquirrel, "--updateSelf=" + us.Location);
                     return;
                 }
 

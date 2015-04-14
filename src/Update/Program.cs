@@ -78,7 +78,6 @@ namespace Squirrel.Update
                 string baseUrl = default(string);
                 string processStart = default(string);
                 string processStartArgs = default(string);
-                string appName = default(string);
                 string setupIcon = default(string);
                 string shortcutArgs = default(string);
                 bool shouldWait = false;
@@ -95,7 +94,7 @@ namespace Squirrel.Update
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
                     { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
                     { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
-                    { "updateSelf=", "Copy the currently executing Update.exe into the default location", v => { updateAction =  UpdateAction.UpdateSelf; appName = v; } },
+                    { "updateSelf=", "Copy the currently executing Update.exe into the default location", v => { updateAction =  UpdateAction.UpdateSelf; target = v; } },
                     { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
                     { "processStartAndWait=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; shouldWait = true; }, true},
                     "",
@@ -140,7 +139,7 @@ namespace Squirrel.Update
                     Update(target).Wait();
                     break;
                 case UpdateAction.UpdateSelf:
-                    UpdateSelf(appName).Wait();
+                    UpdateSelf(target).Wait();
                     break;
                 case UpdateAction.Releasify:
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon);
@@ -179,8 +178,7 @@ namespace Squirrel.Update
             var ourAppName = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesPath, Encoding.UTF8))
                 .First().PackageName;
 
-            var rootDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45, rootDir)) {
+            using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
                 Directory.CreateDirectory(mgr.RootAppDirectory);
 
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
@@ -231,32 +229,13 @@ namespace Squirrel.Update
             }
         }
 
-        public async Task UpdateSelf(string appName)
+        public async Task UpdateSelf(string fileToReplace)
         {
-            var localAppDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var targetDir = new DirectoryInfo(
-                Path.Combine(localAppDir, appName));
-
             waitForParentToExit();
-
-            if (!targetDir.Exists) {
-                throw new ArgumentException("Target app isn't installed!");
-            }
-
-            if (!targetDir.FullName.StartsWith(localAppDir, StringComparison.OrdinalIgnoreCase)) {
-                throw new ArgumentException();
-            }
-
             var src = Assembly.GetExecutingAssembly().Location;
-            if (targetDir.FullName.Equals(src, StringComparison.OrdinalIgnoreCase)) {
-                throw new ArgumentException("Can't update yourself with yourself, that's silly");
-            }
 
             await Task.Run(() => {
-                File.Copy(
-                    src,
-                    Path.Combine(targetDir.FullName, "Update.exe"), 
-                    true);
+                File.Copy(src, fileToReplace, true);
             });
         }
 
