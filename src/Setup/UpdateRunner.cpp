@@ -140,7 +140,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	if (!useFallbackDir) {
 		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
 	} else {
-		ExpandEnvironmentStrings(targetDir, L"%HOMEDRIVE%\\ProgramData", _countof(targetDir));
+		ExpandEnvironmentStrings(L"%HOMEDRIVE%\\ProgramData", targetDir, _countof(targetDir));
 
 		// NB: HOMEDRIVE may be unset or jacked up
 		if (targetDir[0] == L':') {
