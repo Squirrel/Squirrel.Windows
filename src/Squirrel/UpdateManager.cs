@@ -152,6 +152,10 @@ namespace Squirrel
             get { return rootAppDirectory; }
         }
 
+        public bool IsInstalledApp {
+            get { return Assembly.GetExecutingAssembly().Location.StartsWith(RootAppDirectory, StringComparison.OrdinalIgnoreCase); }
+        }
+
         public void Dispose()
         {
             var disp = Interlocked.Exchange(ref updateLock, null);
