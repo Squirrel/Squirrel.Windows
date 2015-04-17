@@ -179,6 +179,7 @@ namespace Squirrel.Update
                 .First().PackageName;
 
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
+                this.Log().Info("About to install to: " + mgr.RootAppDirectory);
                 Directory.CreateDirectory(mgr.RootAppDirectory);
 
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
@@ -198,12 +199,9 @@ namespace Squirrel.Update
 
             this.Log().Info("Starting update, downloading from " + updateUrl);
 
-            // NB: Always basing the rootAppDirectory relative to ours allows us to create Portable
-            // Applications
-            var ourDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "..");
-
-            using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45, ourDir)) {
+            using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
                 bool ignoreDeltaUpdates = false;
+                this.Log().Info("About to update to: " + mgr.RootAppDirectory);
 
             retry:
                 try {
@@ -243,12 +241,8 @@ namespace Squirrel.Update
         {
             appName = appName ?? getAppNameFromDirectory();
 
-            // NB: Always basing the rootAppDirectory relative to ours allows us to create Portable
-            // Applications
-            var ourDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "..");
-
             this.Log().Info("Fetching update information, downloading from " + updateUrl);
-            using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45, ourDir)) {
+            using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
                 var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
 
@@ -271,12 +265,8 @@ namespace Squirrel.Update
         {
             this.Log().Info("Starting uninstall for app: " + appName);
 
-            // NB: Always basing the rootAppDirectory relative to ours allows us to create Portable
-            // Applications
-            var ourDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "..");
-
             appName = appName ?? getAppNameFromDirectory();
-            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45, ourDir)) {
+            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
                 await mgr.FullUninstall();
                 mgr.RemoveUninstallerRegistryEntry();
             }
@@ -404,11 +394,7 @@ namespace Squirrel.Update
             var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
             var locations = parseShortcutLocations(shortcutArgs);
 
-            // NB: Always basing the rootAppDirectory relative to ours allows us to create Portable
-            // Applications
-            var ourDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "..");
-
-            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45, ourDir)) {
+            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
                 mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false);
             }
         }
@@ -424,11 +410,7 @@ namespace Squirrel.Update
             var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
             var locations = parseShortcutLocations(shortcutArgs);
 
-            // NB: Always basing the rootAppDirectory relative to ours allows us to create Portable
-            // Applications
-            var ourDir = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "..");
-
-            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45, ourDir)) {
+            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
                 mgr.RemoveShortcutsForExecutable(exeName, locations ?? defaultLocations);
             }
         }
