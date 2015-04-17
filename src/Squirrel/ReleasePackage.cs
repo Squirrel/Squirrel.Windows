@@ -126,7 +126,7 @@ namespace Squirrel
 
             string tempPath = null;
 
-            using (Utility.WithTempDirectory(out tempPath)) {
+            using (Utility.WithTempDirectory(out tempPath, null)) {
                 var tempDir = new DirectoryInfo(tempPath);
                 var fz = new FastZip();
 

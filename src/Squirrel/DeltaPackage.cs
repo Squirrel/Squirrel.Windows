@@ -20,6 +20,12 @@ namespace Squirrel
 
     public class DeltaPackageBuilder : IEnableLogger, IDeltaPackageBuilder
     {
+        readonly string localAppDirectory;
+        public DeltaPackageBuilder(string localAppDataOverride = null)
+        {
+            this.localAppDirectory = localAppDataOverride;
+        }
+
         public ReleasePackage CreateDeltaPackage(ReleasePackage basePackage, ReleasePackage newPackage, string outputFile)
         {
             Contract.Requires(basePackage != null);
@@ -48,8 +54,8 @@ namespace Squirrel
             string baseTempPath = null;
             string tempPath = null;
 
-            using (Utility.WithTempDirectory(out baseTempPath))
-            using (Utility.WithTempDirectory(out tempPath)) {
+            using (Utility.WithTempDirectory(out baseTempPath, null))
+            using (Utility.WithTempDirectory(out tempPath, null)) {
                 var baseTempInfo = new DirectoryInfo(baseTempPath);
                 var tempInfo = new DirectoryInfo(tempPath);
 
@@ -89,8 +95,8 @@ namespace Squirrel
             string workingPath;
             string deltaPath;
 
-            using (Utility.WithTempDirectory(out deltaPath))
-            using (Utility.WithTempDirectory(out workingPath)) {
+            using (Utility.WithTempDirectory(out deltaPath, localAppDirectory))
+            using (Utility.WithTempDirectory(out workingPath, localAppDirectory)) {
                 var fz = new FastZip();
                 fz.ExtractZip(deltaPackage.InputPackageFile, deltaPath, null);
                 fz.ExtractZip(basePackage.InputPackageFile, workingPath, null);
@@ -187,7 +193,7 @@ namespace Squirrel
             var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @".diff$", ""));
 
             var tempTargetFile = default(string);
-            Utility.WithTempFile(out tempTargetFile);
+            Utility.WithTempFile(out tempTargetFile, localAppDirectory);
 
             try {
                 // NB: Zero-length diffs indicate the file hasn't actually changed
