@@ -140,12 +140,14 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	if (!useFallbackDir) {
 		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
 	} else {
-		ExpandEnvironmentStrings(L"%HOMEDRIVE%\\ProgramData", targetDir, _countof(targetDir));
+		wchar_t username[64];
+		wchar_t appDataDir[MAX_PATH];
+		ULONG unameSize = _countof(username);
 
-		// NB: HOMEDRIVE may be unset or jacked up
-		if (targetDir[0] == L':') {
-			wcscpy_s(targetDir, _countof(targetDir), L"C:\\ProgramData");
-		}
+		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
+		GetUserNameEx(NameUniqueId, username, &unameSize);
+
+		_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
 
 		if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 			wchar_t err[4096];
@@ -166,7 +168,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 			DisplayErrorMessage(CString(err), NULL);
 		}
 
-		return -1;
+		goto failedExtract;
 	}
 
 	swprintf_s(logFile, L"%s\\SquirrelSetup.log", targetDir);
