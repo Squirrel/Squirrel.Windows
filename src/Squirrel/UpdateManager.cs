@@ -48,15 +48,7 @@ namespace Squirrel
                 return;
             }
 
-            // Determine the rootAppDirectory in such a way so that Portable 
-            // Apps are more likely to work
-            var entry = Assembly.GetEntryAssembly();
-            if (entry != null) {
-                rootDirectory = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(entry.Location), "..", ".."));
-            }
-
             this.rootAppDirectory = Path.Combine(rootDirectory ?? GetLocalAppDataDirectory(), applicationName);
-
         }
 
         public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null)
