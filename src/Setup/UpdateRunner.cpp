@@ -140,12 +140,14 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	if (!useFallbackDir) {
 		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
 	} else {
-		wchar_t username[64];
+		wchar_t username[512];
+		wchar_t uid[128];
 		wchar_t appDataDir[MAX_PATH];
 		ULONG unameSize = _countof(username);
 
 		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
-		GetUserNameEx(NameUniqueId, username, &unameSize);
+		GetUserName(username, &unameSize);
+		DWORD lastError = GetLastError();
 
 		_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
 
