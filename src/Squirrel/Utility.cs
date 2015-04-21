@@ -246,10 +246,10 @@ namespace Squirrel
             return prefix + directoryChars.Value[index % directoryChars.Value.Length] + tempNameForIndex(index / directoryChars.Value.Length, "");
         }
 
-        public static DirectoryInfo GetTempDirectory()
+        public static DirectoryInfo GetTempDirectory(string localAppDirectory)
         {
             var tempDir = Environment.GetEnvironmentVariable("SQUIRREL_TEMP");
-            tempDir = tempDir ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SquirrelTemp");
+            tempDir = tempDir ?? Path.Combine(localAppDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SquirrelTemp");
 
             var di = new DirectoryInfo(tempDir);
             if (!di.Exists) di.Create();
@@ -257,9 +257,9 @@ namespace Squirrel
             return di;
         }
 
-        public static IDisposable WithTempDirectory(out string path)
+        public static IDisposable WithTempDirectory(out string path, string localAppDirectory = null)
         {
-            var di = GetTempDirectory();
+            var di = GetTempDirectory(localAppDirectory);
             var tempDir = default(DirectoryInfo);
 
             var names = Enumerable.Range(0, 1<<20).Select(x => tempNameForIndex(x, "temp"));
@@ -279,9 +279,9 @@ namespace Squirrel
             return Disposable.Create(() => Task.Run(async () => await DeleteDirectory(tempDir.FullName)).Wait());
         }
 
-        public static IDisposable WithTempFile(out string path)
+        public static IDisposable WithTempFile(out string path, string localAppDirectory = null)
         {
-            var di = GetTempDirectory();
+            var di = GetTempDirectory(localAppDirectory);
             var names = Enumerable.Range(0, 1<<20).Select(x => tempNameForIndex(x, "temp"));
 
             path = "";

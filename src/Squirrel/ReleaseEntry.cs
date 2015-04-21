@@ -192,7 +192,7 @@ namespace Squirrel
             // place
             var entries = entriesQueue.ToList();
             var tempFile = default(string);
-            Utility.WithTempFile(out tempFile);
+            Utility.WithTempFile(out tempFile, releasePackagesDir);
 
             try {
                 using (var of = File.OpenWrite(tempFile)) {

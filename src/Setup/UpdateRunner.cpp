@@ -128,7 +128,7 @@ HRESULT CUpdateRunner::ShellExecuteFromExplorer(LPWSTR pszFile, LPWSTR pszParame
 		CComVariant(SW_SHOWDEFAULT));
 }
 
-int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
+int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir)
 {
 	PROCESS_INFORMATION pi = { 0 };
 	STARTUPINFO si = { 0 };
@@ -137,15 +137,40 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	wchar_t logFile[MAX_PATH];
 	std::vector<CString> to_delete;
 
-	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
+	if (!useFallbackDir) {
+		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
+	} else {
+		wchar_t username[512];
+		wchar_t uid[128];
+		wchar_t appDataDir[MAX_PATH];
+		ULONG unameSize = _countof(username);
+
+		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
+		GetUserName(username, &unameSize);
+		DWORD lastError = GetLastError();
+
+		_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
+
+		if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
+			wchar_t err[4096];
+			_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
+			DisplayErrorMessage(CString(err), NULL);
+
+			return -1;
+		}
+	}
+
 	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
 
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
 		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
-		DisplayErrorMessage(CString(err), NULL);
 
-		return -1;
+		if (useFallbackDir) {
+			DisplayErrorMessage(CString(err), NULL);
+		}
+
+		goto failedExtract;
 	}
 
 	swprintf_s(logFile, L"%s\\SquirrelSetup.log", targetDir);
@@ -233,6 +258,11 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine)
 	return (int) dwExitCode;
 
 failedExtract:
+	if (!useFallbackDir) {
+		// Take another pass at it, using C:\ProgramData instead
+		return ExtractUpdaterAndRun(lpCommandLine, true);
+	}
+
 	DisplayErrorMessage(CString(L"Failed to extract installer"), NULL);
 	return (int) dwExitCode;
 }

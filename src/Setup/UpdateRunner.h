@@ -7,5 +7,5 @@ private:
 public:
 	static HRESULT AreWeUACElevated();
 	static HRESULT ShellExecuteFromExplorer(LPWSTR pszFile, LPWSTR pszParameters);
-	static int ExtractUpdaterAndRun(wchar_t* lpCommandLine);
+	static int ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir);
 };

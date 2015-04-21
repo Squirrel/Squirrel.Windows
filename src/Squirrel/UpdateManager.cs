@@ -48,15 +48,7 @@ namespace Squirrel
                 return;
             }
 
-            // Determine the rootAppDirectory in such a way so that Portable 
-            // Apps are more likely to work
-            var entry = Assembly.GetEntryAssembly();
-            if (entry != null) {
-                rootDirectory = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(entry.Location), "..", ".."));
-            }
-
-            this.rootAppDirectory = Path.Combine(rootDirectory ?? getLocalAppDataDirectory(), applicationName);
-
+            this.rootAppDirectory = Path.Combine(rootDirectory ?? GetLocalAppDataDirectory(), applicationName);
         }
 
         public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null)
@@ -152,6 +144,10 @@ namespace Squirrel
             get { return rootAppDirectory; }
         }
 
+        public bool IsInstalledApp {
+            get { return Assembly.GetExecutingAssembly().Location.StartsWith(RootAppDirectory, StringComparison.OrdinalIgnoreCase); }
+        }
+
         public void Dispose()
         {
             var disp = Interlocked.Exchange(ref updateLock, null);
@@ -188,6 +184,33 @@ namespace Squirrel
             // whatever WaitForInputIdle considers a message loop.
             Thread.Sleep(500);
             Environment.Exit(0);
+        }
+
+        public static string GetLocalAppDataDirectory(string assemblyLocation = null)
+        {
+            // Try to divine our our own install location via reading tea leaves
+            //
+            // * We're Update.exe, running in the app's install folder
+            // * We're Update.exe, running on initial install from SquirrelTemp
+            // * We're a C# EXE with Squirrel linked in
+
+            var assembly = Assembly.GetEntryAssembly();
+            if (assemblyLocation == null && assembly == null) {
+                // dunno lol
+                return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            }
+
+            assemblyLocation = assemblyLocation ?? assembly.Location;
+
+            if (Path.GetFileName(assemblyLocation).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
+                // NB: Both the "SquirrelTemp" case and the "App's folder" case 
+                // mean that the root app dir is one up
+                var oneFolderUpFromAppFolder = Path.Combine(Path.GetDirectoryName(assemblyLocation), "..");
+                return Path.GetFullPath(oneFolderUpFromAppFolder);
+            }
+
+            var twoFoldersUpFromAppFolder = Path.Combine(Path.GetDirectoryName(assemblyLocation), "..\\..");
+            return Path.GetFullPath(twoFoldersUpFromAppFolder);
         }
 
         ~UpdateManager()
@@ -241,11 +264,6 @@ namespace Squirrel
 
             if (!target.Exists) throw new Exception("Update.exe not found, not a Squirrel-installed app?");
             return target.FullName;
-        }
-
-        static string getLocalAppDataDirectory()
-        {
-            return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         }
     }
 }

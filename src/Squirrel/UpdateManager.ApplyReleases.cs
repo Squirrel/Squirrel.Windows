@@ -316,7 +316,7 @@ namespace Squirrel
                     var basePkg = new ReleasePackage(Path.Combine(rootAppDirectory, "packages", currentVersion.Filename));
                     var deltaPkg = new ReleasePackage(Path.Combine(rootAppDirectory, "packages", releasesToApply.First().Filename));
 
-                    var deltaBuilder = new DeltaPackageBuilder();
+                    var deltaBuilder = new DeltaPackageBuilder(Directory.GetParent(this.rootAppDirectory).FullName);
 
                     return deltaBuilder.ApplyDeltaPackage(basePkg, deltaPkg,
                         Regex.Replace(deltaPkg.InputPackageFile, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
@@ -364,7 +364,7 @@ namespace Squirrel
                 if (us != null && Path.GetFileName(us.Location).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
                     var appName = targetDir.Parent.Name;
 
-                    Process.Start(newSquirrel, "--updateSelf=" + appName);
+                    Process.Start(newSquirrel, "--updateSelf=" + us.Location);
                     return;
                 }
 
