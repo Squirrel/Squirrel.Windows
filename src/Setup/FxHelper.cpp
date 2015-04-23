@@ -6,6 +6,19 @@
 static const wchar_t* ndpPath = L"SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full";
 static const int fx45ReleaseVersion = 378389;
 
+// According to https://msdn.microsoft.com/en-us/library/8z6watww%28v=vs.110%29.aspx,
+// to install .NET 4.5 we must be Vista SP2+, Windows 7 SP1+, or later.
+bool CFxHelper::CanInstallDotNet4_5()
+{
+	if (!IsWindowsVistaSP2OrGreater())
+		return false;
+	if (IsWindows7SP1OrGreater())
+		return true;
+	// At this point, we might be: an acceptable version of Vista, or an unacceptable version of Win7.
+	// Being windows 7 is the remaining failure case.
+	return !IsWindows7OrGreater();
+}
+
 bool CFxHelper::IsDotNet45OrHigherInstalled()
 {
 	ATL::CRegKey key;
