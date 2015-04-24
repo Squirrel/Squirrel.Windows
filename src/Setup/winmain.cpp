@@ -23,10 +23,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	CString cmdLine(lpCmdLine);
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 
-	if (!CFxHelper::CanInstallDotNet4_5())
-	{
+	if (!CFxHelper::CanInstallDotNet4_5()) {
 		// Explain this as nicely as possible and give up.
-		MessageBox(0L, L"This program cannot run on this sytem; it requires Windows Vista SP2 or Windows 7 SP1 or a later version.", L"Incompatible Operating System", 0);
+		MessageBox(0L, L"This program cannot run on this sytem; it requires Windows Vista or a later version.", L"Incompatible Operating System", 0);
 		exitCode = E_FAIL;
 		goto out;
 	}
