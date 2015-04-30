@@ -23,6 +23,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	CString cmdLine(lpCmdLine);
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 
+	if (!CFxHelper::CanInstallDotNet4_5()) {
+		// Explain this as nicely as possible and give up.
+		MessageBox(0L, L"This program cannot run on Windows XP or before; it requires a later version of Windows.", L"Incompatible Operating System", 0);
+		exitCode = E_FAIL;
+		goto out;
+	}
+
 	if (!CFxHelper::IsDotNet45OrHigherInstalled()) {
 		hr = CFxHelper::InstallDotNetFramework(isQuiet);
 		if (FAILED(hr)) {

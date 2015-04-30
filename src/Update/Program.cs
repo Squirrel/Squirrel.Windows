@@ -428,7 +428,7 @@ namespace Squirrel.Update
                 File.ReadAllText(Utility.LocalReleaseFileForAppDir(appDir), Encoding.UTF8));
 
             var latestAppDir = releases
-                .OrderBy(x => x.Version)
+                .OrderByDescending(x => x.Version)
                 .Select(x => Utility.AppDirForRelease(appDir, x))
                 .FirstOrDefault(x => Directory.Exists(x));
 
