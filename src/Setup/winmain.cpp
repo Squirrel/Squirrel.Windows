@@ -25,7 +25,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	if (!CFxHelper::CanInstallDotNet4_5()) {
 		// Explain this as nicely as possible and give up.
-		MessageBox(0L, L"This program cannot run on Windows XP or before; it requires a later version of Windows.", L"Incompatible Operating System", 0);
+		MessageBox(0L, L"Bloom cannot run on Windows XP or before; it requires a later version of Windows. You can still find Bloom 3.0, which runs on XP, on our website.", L"Incompatible Operating System", 0);
 		exitCode = E_FAIL;
 		goto out;
 	}
