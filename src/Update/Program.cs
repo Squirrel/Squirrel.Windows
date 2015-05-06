@@ -52,11 +52,23 @@ namespace Squirrel.Update
             //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
             //Thread.Sleep(10 * 60 * 1000);
 
+            using (var logger = new SetupLogLogger(isUninstalling) {Level = LogLevel.Info}) {
+                Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
+                try {
+                    return executeCommandLine(args);
+                } catch (Exception ex) {
+                    logger.Write("Unhandled exception: " + ex, LogLevel.Fatal);
+                    throw;
+                }
+                // Ideally we would deregister the logger from the Locator before it was disposed - this is a hazard as it is at the moment
+            }
+        }
+
+        int executeCommandLine(string[] args)
+        {
             var animatedGifWindowToken = new CancellationTokenSource();
 
-            using (Disposable.Create(() => animatedGifWindowToken.Cancel()))
-            using (var logger = new SetupLogLogger(isUninstalling) { Level = Splat.LogLevel.Info }) {
-                Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
+            using (Disposable.Create(() => animatedGifWindowToken.Cancel())) {
 
                 this.Log().Info("Starting Squirrel Updater: " + String.Join(" ", args));
 
@@ -662,13 +674,13 @@ namespace Squirrel.Update
             }
         }
 
-        public void Write(string message, Splat.LogLevel logLevel)
+        public void Write(string message, LogLevel logLevel)
         {
             if (logLevel < Level) {
                 return;
             }
 
-            lock (gate) inner.WriteLine(message);
+            lock (gate) inner.WriteLine("{0}> {1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), message);
         }
 
         public void Dispose()
