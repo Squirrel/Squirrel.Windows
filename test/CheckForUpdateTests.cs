@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 
@@ -42,41 +43,29 @@ namespace Squirrel.Tests
         }
 
         [Fact]
-        public void CorruptedReleaseFileMeansWeStartFromScratch()
+        public async Task CorruptedReleaseFileMeansWeStartFromScratch()
         {
-            Assert.False(true, "Rewrite this to be an integration test");
+            string remotePkgPath;
+            string localPath;
 
-            /*
-            string localPackagesDir = Path.Combine(".", "theApp", "packages");
-            string localReleasesFile = Path.Combine(localPackagesDir, "RELEASES");
+            using (Utility.WithTempDirectory(out localPath))
+            using (Utility.WithTempDirectory(out remotePkgPath)) {
 
-            var fileInfo = new Mock<FileInfoBase>();
-            fileInfo.Setup(x => x.Exists).Returns(true);
-            fileInfo.Setup(x => x.OpenRead())
-                .Returns(new MemoryStream(Encoding.UTF8.GetBytes("lol this isn't right")));
+                // Make a bad local releases file
+                File.WriteAllText(Path.Combine(localPath, "RELEASES"), "this isn't right");
 
-            var dirInfo = new Mock<DirectoryInfoBase>();
-            dirInfo.Setup(x => x.Exists).Returns(true);
+                var localPackagesDir = Path.Combine(localPath, "theApp", "packages");
 
-            var fs = new Mock<IFileSystemFactory>();
-            fs.Setup(x => x.GetFileInfo(localReleasesFile)).Returns(fileInfo.Object);
-            fs.Setup(x => x.CreateDirectoryRecursive(localPackagesDir)).Verifiable();
-            fs.Setup(x => x.DeleteDirectoryRecursive(localPackagesDir)).Verifiable();
-            fs.Setup(x => x.GetDirectoryInfo(localPackagesDir)).Returns(dirInfo.Object);
+                var dlPath = IntegrationTestHelper.GetPath("fixtures", "");
+                using (var mgr = new UpdateManager(dlPath, "theApp", FrameworkVersion.Net45, localPath)) {
 
-            var urlDownloader = new Mock<IUrlDownloader>();
-            var dlPath = IntegrationTestHelper.GetPath("fixtures", "RELEASES-OnePointOne");
-            urlDownloader.Setup(x => x.DownloadUrl(It.IsAny<string>(), It.IsAny<IObserver<int>>()))
-                .Returns(Observable.Return(File.ReadAllText(dlPath, Encoding.UTF8)));
-
-            var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, ".", fs.Object, urlDownloader.Object);
-            using (fixture) {
-                fixture.CheckForUpdate().First();
+                    Assert.False(Directory.Exists(localPackagesDir));
+                    
+                    await mgr.CheckForUpdate();
+                    
+                    Assert.True(Directory.Exists(localPackagesDir));
+                }
             }
-
-            fs.Verify(x => x.CreateDirectoryRecursive(localPackagesDir), Times.Once());
-            fs.Verify(x => x.DeleteDirectoryRecursive(localPackagesDir), Times.Once());
-            */
         }
 
         [Fact]
