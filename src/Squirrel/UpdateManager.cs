@@ -25,13 +25,11 @@ namespace Squirrel
         readonly string applicationName;
         readonly IFileDownloader urlDownloader;
         readonly string updateUrlOrPath;
-        readonly FrameworkVersion appFrameworkVersion;
 
         IDisposable updateLock;
 
         public UpdateManager(string urlOrPath, 
             string applicationName,
-            FrameworkVersion appFrameworkVersion,
             string rootDirectory = null,
             IFileDownloader urlDownloader = null)
         {
@@ -40,7 +38,6 @@ namespace Squirrel
 
             updateUrlOrPath = urlOrPath;
             this.applicationName = applicationName;
-            this.appFrameworkVersion = appFrameworkVersion;
             this.urlDownloader = urlDownloader ?? new FileDownloader();
 
             if (rootDirectory != null) {

@@ -7,18 +7,12 @@ using Splat;
 
 namespace Squirrel
 {
-    public enum FrameworkVersion {
-        Net40,
-        Net45,
-    }
-
     [DataContract]
     public class UpdateInfo : IEnableLogger
     {
         [DataMember] public ReleaseEntry CurrentlyInstalledVersion { get; protected set; }
         [DataMember] public ReleaseEntry FutureReleaseEntry { get; protected set; }
         [DataMember] public List<ReleaseEntry> ReleasesToApply { get; protected set; }
-        [DataMember] public FrameworkVersion AppFrameworkVersion { get; protected set; }
 
         [IgnoreDataMember]
         public bool IsBootstrapping {
@@ -28,7 +22,7 @@ namespace Squirrel
         [IgnoreDataMember]
         public string PackageDirectory { get; protected set; }
 
-        protected UpdateInfo(ReleaseEntry currentlyInstalledVersion, IEnumerable<ReleaseEntry> releasesToApply, string packageDirectory, FrameworkVersion appFrameworkVersion)
+        protected UpdateInfo(ReleaseEntry currentlyInstalledVersion, IEnumerable<ReleaseEntry> releasesToApply, string packageDirectory)
         {
             // NB: When bootstrapping, CurrentlyInstalledVersion is null!
             CurrentlyInstalledVersion = currentlyInstalledVersion;
@@ -36,8 +30,6 @@ namespace Squirrel
             FutureReleaseEntry = ReleasesToApply.Any() ?
                 ReleasesToApply.MaxBy(x => x.Version).FirstOrDefault() :
                 CurrentlyInstalledVersion;
-
-            AppFrameworkVersion = appFrameworkVersion;
 
             this.PackageDirectory = packageDirectory;
         }
@@ -57,7 +49,7 @@ namespace Squirrel
                 .ToDictionary(k => k.Item1, v => v.Item2);
         }
 
-        public static UpdateInfo Create(ReleaseEntry currentVersion, IEnumerable<ReleaseEntry> availableReleases, string packageDirectory, FrameworkVersion appFrameworkVersion)
+        public static UpdateInfo Create(ReleaseEntry currentVersion, IEnumerable<ReleaseEntry> availableReleases, string packageDirectory)
         {
             Contract.Requires(availableReleases != null);
             Contract.Requires(!String.IsNullOrEmpty(packageDirectory));
@@ -68,11 +60,11 @@ namespace Squirrel
             }
 
             if (currentVersion == null) {
-                return new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory, appFrameworkVersion);
+                return new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory);
             }
 
             if (currentVersion.Version == latestFull.Version) {
-                return new UpdateInfo(currentVersion, Enumerable.Empty<ReleaseEntry>(), packageDirectory, appFrameworkVersion);
+                return new UpdateInfo(currentVersion, Enumerable.Empty<ReleaseEntry>(), packageDirectory);
             }
 
             var newerThanUs = availableReleases
@@ -82,8 +74,8 @@ namespace Squirrel
             var deltasSize = newerThanUs.Where(x => x.IsDelta).Sum(x => x.Filesize);
 
             return (deltasSize < latestFull.Filesize && deltasSize > 0) ? 
-                new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory, appFrameworkVersion) : 
-                new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory, appFrameworkVersion);
+                new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory) :
+                new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory);
         }
     }
 }

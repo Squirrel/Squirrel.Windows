@@ -18,9 +18,6 @@ namespace Squirrel
     {
         internal class ApplyReleasesImpl : IEnableLogger
         {
-            // TODO: Kill this entire concept
-            readonly FrameworkVersion appFrameworkVersion = FrameworkVersion.Net45;
-
             readonly string rootAppDirectory;
 
             public ApplyReleasesImpl(string rootAppDirectory)
@@ -234,7 +231,7 @@ namespace Squirrel
                 // with the 4.0 version.
                 this.Log().Info("Writing files to app directory: {0}", target.FullName);
 
-                var toWrite = pkg.GetLibFiles().Where(x => pathIsInFrameworkProfile(x, appFrameworkVersion))
+                var toWrite = pkg.GetLibFiles().Where(x => pathIsInFrameworkProfile(x))
                     .OrderBy(x => x.Path)
                     .ToList();
 
@@ -279,14 +276,9 @@ namespace Squirrel
                 }, "Failed to write file: " + target.FullName);
             }
 
-            static bool pathIsInFrameworkProfile(IPackageFile packageFile, FrameworkVersion appFrameworkVersion)
+            static bool pathIsInFrameworkProfile(IPackageFile packageFile)
             {
                 if (!packageFile.Path.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase)) {
-                    return false;
-                }
-
-                if (appFrameworkVersion == FrameworkVersion.Net40
-                    && packageFile.Path.StartsWith("lib\\net45", StringComparison.InvariantCultureIgnoreCase)) {
                     return false;
                 }
 

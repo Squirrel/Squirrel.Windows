@@ -190,7 +190,7 @@ namespace Squirrel.Update
             var ourAppName = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesPath, Encoding.UTF8))
                 .First().PackageName;
 
-            using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager(sourceDirectory, ourAppName)) {
                 this.Log().Info("About to install to: " + mgr.RootAppDirectory);
                 Directory.CreateDirectory(mgr.RootAppDirectory);
 
@@ -211,7 +211,7 @@ namespace Squirrel.Update
 
             this.Log().Info("Starting update, downloading from " + updateUrl);
 
-            using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager(updateUrl, appName)) {
                 bool ignoreDeltaUpdates = false;
                 this.Log().Info("About to update to: " + mgr.RootAppDirectory);
 
@@ -254,7 +254,7 @@ namespace Squirrel.Update
             appName = appName ?? getAppNameFromDirectory();
 
             this.Log().Info("Fetching update information, downloading from " + updateUrl);
-            using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager(updateUrl, appName)) {
                 var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
 
@@ -278,7 +278,7 @@ namespace Squirrel.Update
             this.Log().Info("Starting uninstall for app: " + appName);
 
             appName = appName ?? getAppNameFromDirectory();
-            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager("", appName)) {
                 await mgr.FullUninstall();
                 mgr.RemoveUninstallerRegistryEntry();
             }
@@ -406,7 +406,7 @@ namespace Squirrel.Update
             var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
             var locations = parseShortcutLocations(shortcutArgs);
 
-            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager("", appName)) {
                 mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false);
             }
         }
@@ -422,7 +422,7 @@ namespace Squirrel.Update
             var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
             var locations = parseShortcutLocations(shortcutArgs);
 
-            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager("", appName)) {
                 mgr.RemoveShortcutsForExecutable(exeName, locations ?? defaultLocations);
             }
         }

@@ -15,9 +15,6 @@ namespace Squirrel
         {
             readonly string rootAppDirectory;
 
-            // TODO: rip this out
-            readonly FrameworkVersion appFrameworkVersion = FrameworkVersion.Net45;
-
             public CheckForUpdateImpl(string rootAppDirectory)
             {
                 this.rootAppDirectory = rootAppDirectory;
@@ -146,7 +143,7 @@ namespace Squirrel
                 if (latestFullRelease == currentRelease) {
                     this.Log().Info("No updates, remote and local are the same");
 
-                    var info = UpdateInfo.Create(currentRelease, new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
+                    var info = UpdateInfo.Create(currentRelease, new[] {latestFullRelease}, packageDirectory);
                     return info;
                 }
 
@@ -156,15 +153,15 @@ namespace Squirrel
 
                 if (!localReleases.Any()) {
                     this.Log().Warn("First run or local directory is corrupt, starting from scratch");
-                    return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
+                    return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory);
                 }
 
                 if (localReleases.Max(x => x.Version) > remoteReleases.Max(x => x.Version)) {
                     this.Log().Warn("hwhat, local version is greater than remote version");
-                    return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory, appFrameworkVersion);
+                    return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory);
                 }
 
-                return UpdateInfo.Create(currentRelease, remoteReleases, packageDirectory, appFrameworkVersion);
+                return UpdateInfo.Create(currentRelease, remoteReleases, packageDirectory);
             }
         }
     }

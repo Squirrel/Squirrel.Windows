@@ -28,7 +28,7 @@ namespace Squirrel.Tests
             urlDownloader.Setup(x => x.DownloadUrl(It.IsAny<string>(), It.IsAny<IObserver<int>>()))
                 .Returns(Observable.Return(File.ReadAllText(dlPath, Encoding.UTF8)));
 
-            var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, ".", fs.Object, urlDownloader.Object);
+            var fixture = new UpdateManager("http://lol", "theApp", ".", fs.Object, urlDownloader.Object);
             var result = default(UpdateInfo);
 
             using (fixture) {
@@ -69,7 +69,7 @@ namespace Squirrel.Tests
             urlDownloader.Setup(x => x.DownloadUrl(It.IsAny<string>(), It.IsAny<IObserver<int>>()))
                 .Returns(Observable.Return(File.ReadAllText(dlPath, Encoding.UTF8)));
 
-            var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, ".", fs.Object, urlDownloader.Object);
+            var fixture = new UpdateManager("http://lol", "theApp", ".", fs.Object, urlDownloader.Object);
             using (fixture) {
                 fixture.CheckForUpdate().First();
             }
@@ -104,7 +104,7 @@ namespace Squirrel.Tests
             urlDownloader.Setup(x => x.DownloadUrl(It.IsAny<string>(), It.IsAny<IObserver<int>>()))
                 .Returns(Observable.Return("lol this isn't right"));
 
-            var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, ".", fs.Object, urlDownloader.Object);
+            var fixture = new UpdateManager("http://lol", "theApp", ".", fs.Object, urlDownloader.Object);
 
             using (fixture) {
                 Assert.Throws<Exception>(() => fixture.CheckForUpdate().First());   

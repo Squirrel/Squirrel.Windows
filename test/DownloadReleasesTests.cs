@@ -36,7 +36,7 @@ namespace Squirrel.Tests
             fs.Setup(x => x.GetFileInfo(Path.Combine(".", "theApp", "packages", filename))).Returns(fileInfo.Object);
 
             var fixture = ExposedObject.From(
-                new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, ".", fs.Object, urlDownloader.Object));
+                new UpdateManager("http://lol", "theApp", ".", fs.Object, urlDownloader.Object));
 
             bool shouldDie = true;
             try {
@@ -76,7 +76,7 @@ namespace Squirrel.Tests
             fs.Setup(x => x.GetFileInfo(Path.Combine(".", "theApp", "packages", filename))).Returns(fileInfo.Object);
 
             var fixture = ExposedObject.From(
-                new UpdateManager("http://lol", "theApp", FrameworkVersion.Net40, ".", fs.Object, urlDownloader.Object));
+                new UpdateManager("http://lol", "theApp", ".", fs.Object, urlDownloader.Object));
 
             bool shouldDie = true;
             try {
@@ -122,7 +122,7 @@ namespace Squirrel.Tests
                 // we're skipping that in the test we have to do it ourselves
                 Directory.CreateDirectory(Path.Combine(tempDir, "SampleUpdatingApp", "packages"));
 
-                var fixture = new UpdateManager("http://localhost:30405", "SampleUpdatingApp", FrameworkVersion.Net40, tempDir);
+                var fixture = new UpdateManager("http://localhost:30405", "SampleUpdatingApp", tempDir);
                 using (fixture) {
                     var progress = new List<int>();
                     await fixture.DownloadReleases(entriesToDownload, progress.Add);
@@ -166,7 +166,7 @@ namespace Squirrel.Tests
                 // we're skipping that in the test we have to do it ourselves
                 Directory.CreateDirectory(Path.Combine(tempDir, "SampleUpdatingApp", "packages"));
 
-                var fixture = new UpdateManager(updateDir.FullName, "SampleUpdatingApp", FrameworkVersion.Net40, tempDir);
+                var fixture = new UpdateManager(updateDir.FullName, "SampleUpdatingApp", tempDir);
                 using (fixture) {
                     var progress = new List<int>();
 
