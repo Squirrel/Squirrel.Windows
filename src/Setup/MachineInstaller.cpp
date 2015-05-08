@@ -26,7 +26,6 @@ bool findPackageFromEmbeddedZip(wchar_t* buf, DWORD cbSize)
 	int index = 0;
 	do {
 		ZIPENTRY zentry;
-		wchar_t targetFile[MAX_PATH];
 
 		zr = GetZipItem(zipFile, index, &zentry);
 		if (zr != ZR_OK && zr != ZR_MORE) {
@@ -107,5 +106,36 @@ int MachineInstaller::PerformMachineInstallSetup()
 
 bool MachineInstaller::ShouldSilentInstall()
 {
-	return false;
+	// Figure out the package name from our own EXE name 
+	wchar_t ourFile[MAX_PATH];
+	HMODULE hMod = GetModuleHandle(NULL);
+	GetModuleFileName(hMod, ourFile, _countof(ourFile));
+
+	CString fullPath = CString(ourFile);
+	CString pkgName = CString(ourFile + fullPath.ReverseFind(L'\\'));
+	pkgName.Replace(L".exe", L"");
+	
+	wchar_t installFolder[MAX_PATH];
+
+	// C:\Users\Username\AppData\Local\$pkgName
+	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, installFolder);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, pkgName);
+
+	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) return false;
+
+	// C:\ProgramData\$pkgName\$username
+	wchar_t username[512];
+	DWORD dontcare;
+	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, installFolder);
+	GetUserName(username, &dontcare);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, pkgName);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, username);
+
+	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) return false;
+
+	// Neither exist, create them
+	return true;
 }
