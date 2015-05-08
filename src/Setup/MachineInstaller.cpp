@@ -126,9 +126,9 @@ bool MachineInstaller::ShouldSilentInstall()
 
 	// C:\ProgramData\$pkgName\$username
 	wchar_t username[512];
-	DWORD dontcare;
+	DWORD unamesize = _countof(username);
 	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, installFolder);
-	GetUserName(username, &dontcare);
+	GetUserName(username, &unamesize);
 	wcscat(installFolder, L"\\");
 	wcscat(installFolder, pkgName);
 	wcscat(installFolder, L"\\");
