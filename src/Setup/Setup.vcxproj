@@ -145,6 +145,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="FxHelper.h" />
+    <ClInclude Include="MachineInstaller.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Setup.h" />
     <ClInclude Include="stdafx.h" />
@@ -154,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FxHelper.cpp" />
+    <ClCompile Include="MachineInstaller.cpp" />
     <ClCompile Include="unzip.cpp" />
     <ClCompile Include="UpdateRunner.cpp" />
     <ClCompile Include="winmain.cpp" />
