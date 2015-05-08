@@ -5,6 +5,7 @@
 #include "Setup.h"
 #include "FxHelper.h"
 #include "UpdateRunner.h"
+#include "MachineInstaller.h"
 
 CAppModule _Module;
 
@@ -14,13 +15,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_ int nCmdShow)
 {
 	int exitCode = -1;
+	CString cmdLine(lpCmdLine);
+
+	if (cmdLine.Find(L"--checkInstall") >= 0) {
+		// If we're already installed, exit as fast as possible
+		if (!MachineInstaller::ShouldSilentInstall()) {
+			exitCode = 0;
+			goto out;
+		}
+	}
+
 	HRESULT hr = ::CoInitialize(NULL);
 	ATLASSERT(SUCCEEDED(hr));
 
 	AtlInitCommonControls(ICC_COOL_CLASSES | ICC_BAR_CLASSES);
 	hr = _Module.Init(NULL, hInstance);
 
-	CString cmdLine(lpCmdLine);
+	if (cmdLine.Find(L"--machine") >= 0) {
+		exitCode = MachineInstaller::PerformMachineInstallSetup();
+		goto out;
+	}
+
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 
 	if (!CFxHelper::CanInstallDotNet4_5()) {
