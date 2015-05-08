@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using NuGet;
 using Splat;
 using System.Threading;
+using Squirrel.Shell;
 
 namespace Squirrel
 {

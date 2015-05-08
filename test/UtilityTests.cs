@@ -8,6 +8,7 @@ using Splat;
 using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
+using Squirrel.Shell;
 
 namespace Squirrel.Tests.Core
 {
