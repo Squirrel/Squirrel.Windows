@@ -94,7 +94,6 @@
     <Compile Include="IUpdateManager.cs" />
     <Compile Include="MarkdownSharp.cs" />
     <Compile Include="NativeMethods.cs" />
-    <Compile Include="PackageExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReleaseEntry.cs" />
     <Compile Include="ReleaseExtensions.cs" />
