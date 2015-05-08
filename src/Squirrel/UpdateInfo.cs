@@ -74,7 +74,7 @@ namespace Squirrel
             var deltasSize = newerThanUs.Where(x => x.IsDelta).Sum(x => x.Filesize);
 
             return (deltasSize < latestFull.Filesize && deltasSize > 0) ? 
-                new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory) :
+                new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory) : 
                 new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory);
         }
     }
