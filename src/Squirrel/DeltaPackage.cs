@@ -214,12 +214,19 @@ namespace Squirrel
                 }
 
                 if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
-                    this.Log().Info("Applying Diff to {0}", relativeFilePath);
+                    this.Log().Info("Applying MSDiff to {0}", relativeFilePath);
                     var msDelta = new MsDeltaCompression();
                     msDelta.ApplyDelta(inputFile, finalTarget, tempTargetFile);
 
                     verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
-                   
+                } else if (relativeFilePath.EndsWith(".bsdiff", StringComparison.InvariantCultureIgnoreCase)) {
+                    using (var of = File.OpenWrite(tempTargetFile))
+                    using (var inf = File.OpenRead(finalTarget)) {
+                        this.Log().Info("Applying BSDiff to {0}", relativeFilePath);
+                        BinaryPatchUtility.Apply(inf, () => File.OpenRead(inputFile), of);
+                    }
+
+                    verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
                 } else {
                     using (var of = File.OpenWrite(tempTargetFile))
                     using (var inf = File.OpenRead(inputFile)) {
