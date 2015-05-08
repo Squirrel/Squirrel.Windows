@@ -5,7 +5,7 @@
 #include "MachineInstaller.h"
 #include "resource.h"
 
-bool findPackageFromEmbeddedZip(wchar_t* buf, DWORD cbSize)
+bool findPackageFromEmbeddedZip(wchar_t* buf, DWORD cbSize) 
 {
 	bool ret = false;
 

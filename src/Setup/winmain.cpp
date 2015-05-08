@@ -31,12 +31,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	AtlInitCommonControls(ICC_COOL_CLASSES | ICC_BAR_CLASSES);
 	hr = _Module.Init(NULL, hInstance);
 
+	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
+
 	if (cmdLine.Find(L"--machine") >= 0) {
 		exitCode = MachineInstaller::PerformMachineInstallSetup();
-		goto out;
+		if (exitCode != 0) goto out;
+		isQuiet = true;
 	}
-
-	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 
 	if (!CFxHelper::CanInstallDotNet4_5()) {
 		// Explain this as nicely as possible and give up.
