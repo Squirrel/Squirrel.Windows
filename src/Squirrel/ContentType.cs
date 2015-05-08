@@ -10,6 +10,7 @@ namespace Squirrel
         {
             var elements = new [] {
                 Tuple.Create("Default", "diff", "application/octet" ),
+                Tuple.Create("Default", "bsdiff", "application/octet" ),
                 Tuple.Create("Default", "exe", "application/octet" ),
                 Tuple.Create("Default", "dll", "application/octet" ),
                 Tuple.Create("Default", "shasum", "text/plain" ),
