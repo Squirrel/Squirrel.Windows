@@ -189,7 +189,7 @@ namespace Squirrel
                     // versions which don't understand bsdiff will fail out
                     // until they get upgraded, instead of seeing the missing
                     // file and just removing it.
-                    File.WriteAllText(targetFile + ".diff", "1");
+                    File.WriteAllText(targetFile.FullName + ".diff", "1");
                 } catch (Exception ex) {
                     this.Log().WarnException(String.Format("We really couldn't create a delta for {0}", targetFile.Name), ex);
                     return;
