@@ -4,6 +4,7 @@
 #include "unzip.h"
 #include "MachineInstaller.h"
 #include "resource.h"
+#include <sddl.h>
 
 bool findPackageFromEmbeddedZip(wchar_t* buf, DWORD cbSize) 
 {
@@ -50,11 +51,6 @@ bool findPackageFromEmbeddedZip(wchar_t* buf, DWORD cbSize)
 	return ret;
 }
 
-bool createAdminOnlySecurityAttributes(LPSECURITY_ATTRIBUTES pAttributes)
-{
-	return false;
-}
-
 int MachineInstaller::PerformMachineInstallSetup()
 {
 	wchar_t packageName[512];
@@ -68,12 +64,24 @@ int MachineInstaller::PerformMachineInstallSetup()
 	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, machineInstallFolder);
 	wcscat(machineInstallFolder, L"\\SquirrelMachineInstalls");
 
-	SECURITY_ATTRIBUTES secattrs;
-	createAdminOnlySecurityAttributes(&secattrs);
+	// NB: This is the DACL for Program Files
+	PSECURITY_DESCRIPTOR descriptor;
+	ConvertStringSecurityDescriptorToSecurityDescriptor(
+		L"D:PAI(A;;FA;;;S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464)(A;CIIO;GA;;;S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464)(A;;0x1301bf;;;SY)(A;OICIIO;GA;;;SY)(A;;0x1301bf;;;BA)(A;OICIIO;GA;;;BA)(A;;0x1200a9;;;BU)(A;OICIIO;GXGR;;;BU)(A;OICIIO;GA;;;CO)(A;;0x1200a9;;;AC)(A;OICIIO;GXGR;;;AC)",
+		SDDL_REVISION_1,
+		&descriptor, NULL);
 
-	if (!CreateDirectory(machineInstallFolder, NULL/*&secattrs*/) && GetLastError() != ERROR_ALREADY_EXISTS) {
+	SECURITY_ATTRIBUTES attrs;
+	attrs.nLength = sizeof(SECURITY_ATTRIBUTES);
+	attrs.bInheritHandle = false;
+	attrs.lpSecurityDescriptor = descriptor;
+
+	if (!CreateDirectory(machineInstallFolder, &attrs) && GetLastError() != ERROR_ALREADY_EXISTS) {
+		LocalFree(descriptor);
 		return GetLastError();
 	}
+
+	LocalFree(descriptor);
 
 	wcscat(machineInstallFolder, L"\\");
 	wcscat(machineInstallFolder, packageName);
