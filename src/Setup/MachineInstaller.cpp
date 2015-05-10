@@ -34,7 +34,7 @@ bool findPackageFromEmbeddedZip(wchar_t* buf, DWORD cbSize)
 		if (wcsstr(zentry.name, L"nupkg")) {
 			ZeroMemory(buf, cbSize);
 
-			int idx = wcscspn(zentry.name, L"nupkg");
+			int idx = wcscspn(zentry.name, L"-");
 			memcpy(buf, zentry.name, sizeof(wchar_t) * idx);
 			ret = true;
 			break;
