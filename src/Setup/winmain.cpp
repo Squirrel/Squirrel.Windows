@@ -33,7 +33,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 
-	if (cmdLine.Find(L"--machine") >= 0) {
+	if (cmdLine.Find(L"--machine") >= 0 || CUpdateRunner::AreWeUACElevated() == S_OK) {
 		exitCode = MachineInstaller::PerformMachineInstallSetup();
 		if (exitCode != 0) goto out;
 		isQuiet = true;
