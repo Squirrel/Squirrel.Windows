@@ -117,6 +117,12 @@ namespace Squirrel
 
                 await this.ErrorIfThrows(() => Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
+
+                // NB: We drop this file here so that --checkInstall will ignore 
+                // this folder - if we don't do this, users who "accidentally" run as 
+                // administrator will find the app reinstalling itself on every
+                // reboot
+                File.WriteAllText(Path.Combine(rootAppDirectory, ".dead"), " ");
             }
 
             public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly)

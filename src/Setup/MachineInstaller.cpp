@@ -130,7 +130,20 @@ bool MachineInstaller::ShouldSilentInstall()
 	wcscat(installFolder, L"\\");
 	wcscat(installFolder, L"packages");
 
-	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) return false;
+	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) {
+		return false;
+	}
+
+	// C:\Users\Username\AppData\Local\$pkgName\.dead (was machine-installed but user uninstalled)
+	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, installFolder);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, pkgName);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, L".dead");
+
+	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) {
+		return false;
+	}
 
 	// C:\ProgramData\$pkgName\$username\packages
 	wchar_t username[512];
@@ -144,8 +157,26 @@ bool MachineInstaller::ShouldSilentInstall()
 	wcscat(installFolder, L"\\");
 	wcscat(installFolder, L"packages");
 
-	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) return false;
+	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) {
+		return false;
+	}
 
-	// Neither exist, create them
+	// C:\ProgramData\$pkgName\$username\.dead
+	wchar_t username[512];
+	DWORD unamesize = _countof(username);
+	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, installFolder);
+	GetUserName(username, &unamesize);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, pkgName);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, username);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, L".dead");
+
+	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) {
+		return false;
+	}
+
+	// None of these exist, we should install
 	return true;
 }
