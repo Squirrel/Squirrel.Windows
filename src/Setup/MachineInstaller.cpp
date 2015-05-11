@@ -123,14 +123,16 @@ bool MachineInstaller::ShouldSilentInstall()
 	
 	wchar_t installFolder[MAX_PATH];
 
-	// C:\Users\Username\AppData\Local\$pkgName
+	// C:\Users\Username\AppData\Local\$pkgName\packages
 	SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, installFolder);
 	wcscat(installFolder, L"\\");
 	wcscat(installFolder, pkgName);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, L"packages");
 
 	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) return false;
 
-	// C:\ProgramData\$pkgName\$username
+	// C:\ProgramData\$pkgName\$username\packages
 	wchar_t username[512];
 	DWORD unamesize = _countof(username);
 	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, installFolder);
@@ -139,6 +141,8 @@ bool MachineInstaller::ShouldSilentInstall()
 	wcscat(installFolder, pkgName);
 	wcscat(installFolder, L"\\");
 	wcscat(installFolder, username);
+	wcscat(installFolder, L"\\");
+	wcscat(installFolder, L"packages");
 
 	if (GetFileAttributes(installFolder) != INVALID_FILE_ATTRIBUTES) return false;
 
