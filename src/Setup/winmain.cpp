@@ -23,6 +23,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 			exitCode = 0;
 			goto out;
 		}
+
+		// Make sure update.exe gets silent
+		wcscat(lpCmdLine, L" --silent");
 	}
 
 	HRESULT hr = ::CoInitialize(NULL);
@@ -32,11 +35,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	hr = _Module.Init(NULL, hInstance);
 
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
+	bool weAreUACElevated = CUpdateRunner::AreWeUACElevated() == S_OK;
+	bool explicitMachineInstall = (cmdLine.Find(L"--machine") >= 0);
 
-	if (cmdLine.Find(L"--machine") >= 0 || CUpdateRunner::AreWeUACElevated() == S_OK) {
+	if (explicitMachineInstall || weAreUACElevated) {
 		exitCode = MachineInstaller::PerformMachineInstallSetup();
 		if (exitCode != 0) goto out;
 		isQuiet = true;
+
+		// Make sure update.exe gets silent
+		if (explicitMachineInstall) {
+			wcscat(lpCmdLine, L" --silent");
+		}
 	}
 
 	if (!CFxHelper::CanInstallDotNet4_5()) {
@@ -60,11 +70,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		}
 	}
 
-	hr = CUpdateRunner::AreWeUACElevated();
-
 	// If we're UAC-elevated, we shouldn't be because it will give us permissions
 	// problems later. Just silently rerun ourselves.
-	if (hr == S_OK) {
+	if (weAreUACElevated) {
 		wchar_t buf[4096];
 		HMODULE hMod = GetModuleHandle(NULL);
 		GetModuleFileNameW(hMod, buf, 4096);
