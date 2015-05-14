@@ -30,8 +30,8 @@ namespace Squirrel
             {
                 progress = progress ?? (_ => { });
 
-                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
-                progress(10);
+                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion, x => progress(x*4/5));
+                progress(80);
 
                 if (release == null) {
                     if (attemptingFullInstall) {
@@ -45,22 +45,22 @@ namespace Squirrel
 
                 var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release), 
                     "Failed to install package to app dir");
-                progress(30);
+                progress(84);
 
                 var currentReleases = await this.ErrorIfThrows(() => updateLocalReleasesFile(),
                     "Failed to update local releases file");
-                progress(50);
+                progress(88);
 
                 var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
                 executeSelfUpdate(newVersion);
 
                 await this.ErrorIfThrows(() => invokePostInstall(newVersion, attemptingFullInstall, false, silentInstall),
                     "Failed to invoke post-install");
-                progress(75);
+                progress(92);
 
                 this.Log().Info("Starting fixPinnedExecutables");
                 this.ErrorIfThrows(() => fixPinnedExecutables(updateInfo.FutureReleaseEntry.Version));
-                progress(80);
+                progress(96);
 
                 try {
                     var currentVersion = updateInfo.CurrentlyInstalledVersion != null ?
@@ -292,9 +292,11 @@ namespace Squirrel
                 return true;
             }
 
-            async Task<ReleaseEntry> createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion)
+            async Task<ReleaseEntry> createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion, Action<int> progress = null, int done = 0)
             {
                 Contract.Requires(releasesToApply != null);
+
+				progress = progress ?? (_ => { });
 
                 // If there are no remote releases at all, bail
                 if (!releasesToApply.Any()) {
@@ -328,8 +330,10 @@ namespace Squirrel
                 var fi = new FileInfo(ret.InputPackageFile);
                 var entry = ReleaseEntry.GenerateFromFile(fi.OpenRead(), fi.Name);
 
+	            progress((done + 1)*100/(done + releasesToApply.Count()));
+
                 // Recursively combine the rest of them
-                return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry);
+                return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progress, done + 1);
             }
 
             void cleanUpOldVersions(Version currentlyExecutingVersion, Version newCurrentVersion)
@@ -661,6 +665,9 @@ namespace Squirrel
                 case ShortcutLocation.StartMenu:
                     dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", applicationName);
                     break;
+				case ShortcutLocation.StartMenuPrograms:
+					dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
+		            break;
                 case ShortcutLocation.Startup:
                     dir = Environment.GetFolderPath (Environment.SpecialFolder.Startup);
                     break;
