@@ -33,8 +33,14 @@ namespace Squirrel
                 if (Utility.IsHttpUrl(updateUrlOrPath)) {
                     // From Internet
                     Exception lastException = null;
-                    for (int i = 0; i < 4; i++) { // try up to this many times to get them all
-                        try {
+                    for (int attempts = 0; ; attempts++) {
+                        // Filter out ones we downloaded successfully (perhaps on an earlier run of the program).
+                        // We don't want to waste time and bandwidth downloading anything we already have.
+                        releasesToDownload = releasesToDownload.Where(x => !isPackageOk(x)).ToList();
+                        if (releasesToDownload.Count == 0 || attempts >= 4) // we got them all (or exceeded max attempt limit)
+                            break;
+                        try
+                        {
                             await releasesToDownload.ForEachAsync(async x => {
                                 var targetFile = Path.Combine(packagesDirectory, x.Filename);
                                 double component = 0;
@@ -60,14 +66,10 @@ namespace Squirrel
                         catch (WebException ex) {
                             lastException = ex;
                         }
-                        // Filter out ones we downloaded successfully.
-                        releasesToDownload = releasesToDownload.Where(x => !File.Exists(Path.Combine(packagesDirectory, x.Filename))).ToList();
-                        if (releasesToDownload.Count == 0)
-                            break; // got them all.
                     }
                     // If we failed to get all the files, throw the last exception we got; it may provide some clue what went wrong.
                     if (releasesToDownload.Count > 0)
-                        throw lastException ?? new ApplicationException("Download somehow failed to get all the files though no exception was thrown");
+                        throw lastException ?? new ApplicationException("Download somehow failed to get a full set of valid deltas though no exception was thrown");
                 } else {
                     // From Disk
                     await releasesToDownload.ForEachAsync(x => {
@@ -104,6 +106,30 @@ namespace Squirrel
             Task checksumAllPackages(IEnumerable<ReleaseEntry> releasesDownloaded)
             {
                 return releasesDownloaded.ForEachAsync(x => checksumPackage(x));
+            }
+
+            bool isPackageOk(ReleaseEntry downloadedRelease)
+            {
+                var targetPackage = new FileInfo(
+                    Path.Combine(rootAppDirectory, "packages", downloadedRelease.Filename));
+
+                if (!targetPackage.Exists)
+                {
+                    return false;
+                }
+
+                if (targetPackage.Length != downloadedRelease.Filesize)
+                {
+                    return false;
+                }
+
+                using (var file = targetPackage.OpenRead())
+                {
+                    var hash = Utility.CalculateStreamSHA1(file);
+
+                    return hash.Equals(downloadedRelease.SHA1, StringComparison.OrdinalIgnoreCase);
+                }
+                
             }
 
             void checksumPackage(ReleaseEntry downloadedRelease)
