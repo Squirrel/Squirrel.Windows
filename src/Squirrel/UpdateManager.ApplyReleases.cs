@@ -33,6 +33,11 @@ namespace Squirrel
                 progress = progress ?? (_ => { });
 
                 var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion, x => progress(x*4/5));
+                // The numbers in these progress reports are rather arbitrary. Experience indicates that applying the deltas takes most of the time.
+                // Allocating 80% to that process is a crude approximation. The remaining identifiable steps are simply allocated equal time chunks
+                // of 4% each.
+                // These changes should probably not be pushed upstream without further enhancement. The time to apply deltas is probably dependent
+                // on the size and complexity of the package being updated.
                 progress(80);
 
                 if (release == null) {
@@ -297,7 +302,7 @@ namespace Squirrel
             {
                 Contract.Requires(releasesToApply != null);
 
-				progress = progress ?? (_ => { });
+                progress = progress ?? (_ => { });
 
                 // If there are no remote releases at all, bail
                 if (!releasesToApply.Any()) {
@@ -331,7 +336,7 @@ namespace Squirrel
                 var fi = new FileInfo(ret.InputPackageFile);
                 var entry = ReleaseEntry.GenerateFromFile(fi.OpenRead(), fi.Name);
 
-	            progress((done + 1)*100/(done + releasesToApply.Count()));
+                progress((done + 1)*100/(done + releasesToApply.Count()));
 
                 // Recursively combine the rest of them
                 return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progress, done + 1);
@@ -666,9 +671,9 @@ namespace Squirrel
                 case ShortcutLocation.StartMenu:
                     dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", applicationName);
                     break;
-				case ShortcutLocation.StartMenuPrograms:
-					dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
-		            break;
+                case ShortcutLocation.StartMenuPrograms:
+                    dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
+                    break;
                 case ShortcutLocation.Startup:
                     dir = Environment.GetFolderPath (Environment.SpecialFolder.Startup);
                     break;
