@@ -36,8 +36,8 @@ namespace Squirrel
                 await this.WarnIfThrows(() => wc.DownloadFileTaskAsync(failedUrl ?? url, targetFile),
                     "Failed downloading URL: " + (failedUrl ?? url));
             } catch (Exception) {
-				if (File.Exists(targetFile))
-					File.Delete(targetFile); // don't leave incomplete downloads around
+                if (File.Exists(targetFile))
+                    File.Delete(targetFile); // don't leave incomplete downloads around
                 // NB: Some super brain-dead services are case-sensitive yet 
                 // corrupt case on upload. I can't even.
                 if (failedUrl != null) throw;
