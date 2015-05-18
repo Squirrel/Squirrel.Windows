@@ -113,23 +113,18 @@ namespace Squirrel
                 var targetPackage = new FileInfo(
                     Path.Combine(rootAppDirectory, "packages", downloadedRelease.Filename));
 
-                if (!targetPackage.Exists)
-                {
+                if (!targetPackage.Exists) {
                     return false;
                 }
 
-                if (targetPackage.Length != downloadedRelease.Filesize)
-                {
+                if (targetPackage.Length != downloadedRelease.Filesize) {
                     return false;
                 }
 
-                using (var file = targetPackage.OpenRead())
-                {
+                using (var file = targetPackage.OpenRead()) {
                     var hash = Utility.CalculateStreamSHA1(file);
-
                     return hash.Equals(downloadedRelease.SHA1, StringComparison.OrdinalIgnoreCase);
                 }
-                
             }
 
             void checksumPackage(ReleaseEntry downloadedRelease)
