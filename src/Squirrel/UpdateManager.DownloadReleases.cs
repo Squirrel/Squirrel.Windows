@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Splat;
@@ -19,38 +20,56 @@ namespace Squirrel
                 this.rootAppDirectory = rootAppDirectory;
             }
 
-            public async Task DownloadReleases(string updateUrlOrPath, IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null, IFileDownloader urlDownloader = null)
+            public async Task DownloadReleases(string updateUrlOrPath, IEnumerable<ReleaseEntry> releasesToDownload1, Action<int> progress = null, IFileDownloader urlDownloader = null)
             {
                 progress = progress ?? (_ => { });
                 urlDownloader = urlDownloader ?? new FileDownloader();
                 var packagesDirectory = Path.Combine(rootAppDirectory, "packages");
+                var releasesToDownload = new List<ReleaseEntry>(releasesToDownload1);
 
                 double current = 0;
                 double toIncrement = 100.0 / releasesToDownload.Count();
 
                 if (Utility.IsHttpUrl(updateUrlOrPath)) {
                     // From Internet
-                    await releasesToDownload.ForEachAsync(async x => {
-                        var targetFile = Path.Combine(packagesDirectory, x.Filename);
-                        double component = 0;
-                        await downloadRelease(updateUrlOrPath, x, urlDownloader, targetFile, p => {
-                            lock (progress) {
-                                current -= component;
-                                component = toIncrement / 100.0 * p;
-                                progress((int)Math.Round(current += component));
-                            }
-                        });
-                        // With a lot of small updates, and since notifications are only sent every half second
-                        // for each one, we can easily miss half or more of the progress on each download.
-                        // To make sure we eventually get to 100% of the whole process, we need to update
-                        // progress (and especially the total in current) to indicate that this one is complete.
-                        lock (progress)
+                    Exception lastException = null;
+                    for (int attempts = 0; ; attempts++) {
+                        // Filter out ones we downloaded successfully (perhaps on an earlier run of the program).
+                        // We don't want to waste time and bandwidth downloading anything we already have.
+                        releasesToDownload = releasesToDownload.Where(x => !isPackageOk(x)).ToList();
+                        if (releasesToDownload.Count == 0 || attempts >= 4) // we got them all (or exceeded max attempt limit)
+                            break;
+                        try
                         {
-                            current -= component;
-                            component = toIncrement;
-                            progress((int)Math.Round(current += component));
+                            await releasesToDownload.ForEachAsync(async x => {
+                                var targetFile = Path.Combine(packagesDirectory, x.Filename);
+                                double component = 0;
+                                await downloadRelease(updateUrlOrPath, x, urlDownloader, targetFile, p => {
+                                    lock (progress) {
+                                        current -= component;
+                                        component = toIncrement/100.0*p;
+                                        progress((int) Math.Round(current += component));
+                                    }
+                                });
+                                // With a lot of small updates, and since notifications are only sent every half second
+                                // for each one, we can easily miss half or more of the progress on each download.
+                                // To make sure we eventually get to 100% of the whole process, we need to update
+                                // progress (and especially the total in current) to indicate that this one is complete.
+                                lock (progress)
+                                {
+                                    current -= component;
+                                    component = toIncrement;
+                                    progress((int) Math.Round(current += component));
+                                }
+                            });
                         }
-                    });
+                        catch (WebException ex) {
+                            lastException = ex;
+                        }
+                    }
+                    // If we failed to get all the files, throw the last exception we got; it may provide some clue what went wrong.
+                    if (releasesToDownload.Count > 0)
+                        throw lastException ?? new ApplicationException("Download somehow failed to get a full set of valid deltas though no exception was thrown");
                 } else {
                     // From Disk
                     await releasesToDownload.ForEachAsync(x => {
@@ -87,6 +106,25 @@ namespace Squirrel
             Task checksumAllPackages(IEnumerable<ReleaseEntry> releasesDownloaded)
             {
                 return releasesDownloaded.ForEachAsync(x => checksumPackage(x));
+            }
+
+            bool isPackageOk(ReleaseEntry downloadedRelease)
+            {
+                var targetPackage = new FileInfo(
+                    Path.Combine(rootAppDirectory, "packages", downloadedRelease.Filename));
+
+                if (!targetPackage.Exists) {
+                    return false;
+                }
+
+                if (targetPackage.Length != downloadedRelease.Filesize) {
+                    return false;
+                }
+
+                using (var file = targetPackage.OpenRead()) {
+                    var hash = Utility.CalculateStreamSHA1(file);
+                    return hash.Equals(downloadedRelease.SHA1, StringComparison.OrdinalIgnoreCase);
+                }
             }
 
             void checksumPackage(ReleaseEntry downloadedRelease)
