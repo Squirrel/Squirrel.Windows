@@ -15,7 +15,7 @@ namespace Squirrel
     public interface IDeltaPackageBuilder
     {
         ReleasePackage CreateDeltaPackage(ReleasePackage basePackage, ReleasePackage newPackage, string outputFile);
-        ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile);
+        ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile, Action<int> progress = null);
     }
 
     public class DeltaPackageBuilder : IEnableLogger, IDeltaPackageBuilder
@@ -87,10 +87,12 @@ namespace Squirrel
             return new ReleasePackage(outputFile);
         }
 
-        public ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile)
+        public ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile, Action<int> progress = null)
         {
             Contract.Requires(deltaPackage != null);
             Contract.Requires(!String.IsNullOrEmpty(outputFile) && !File.Exists(outputFile));
+            if (progress == null)
+                progress = i => { };
 
             string workingPath;
             string deltaPath;
@@ -99,7 +101,17 @@ namespace Squirrel
             using (Utility.WithTempDirectory(out workingPath, localAppDirectory)) {
                 var fz = new FastZip();
                 fz.ExtractZip(deltaPackage.InputPackageFile, deltaPath, null);
+                // The percentages here are somewhat arbitrary and reflect typical Bloom file sizes.
+                // Probably not appropriate to push upstream.
+                // If you are thinking about improving this using FastZip's Progress event, check with JohnT.
+                // I experimented with it and found that the PercentCompleted which it reports is useless,
+                // toggling between 0 and 100% repeatedly...possibly it applies to a particular file?
+                // I also found that it is VERY expensive to turn on progress reporting while unzipping;
+                // seems to slow the process down to the point of making it take two to three times as long.
+                // This may of course improve in a later version of the library.
+                progress(10);
                 fz.ExtractZip(basePackage.InputPackageFile, workingPath, null);
+                progress(35);
 
                 var pathsVisited = new List<string>();
 
@@ -134,9 +146,11 @@ namespace Squirrel
                         this.Log().Info("Updating metadata file: {0}", x);
                         File.Copy(Path.Combine(deltaPath, x), Path.Combine(workingPath, x), true);
                     });
+                progress(50);
 
                 this.Log().Info("Repacking into full package: {0}", outputFile);
                 fz.CreateZip(outputFile, workingPath, true, null);
+                progress(100);
             }
 
             return new ReleasePackage(outputFile);

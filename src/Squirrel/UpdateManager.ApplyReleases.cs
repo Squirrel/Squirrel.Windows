@@ -303,6 +303,8 @@ namespace Squirrel
                 Contract.Requires(releasesToApply != null);
 
                 progress = progress ?? (_ => { });
+                var startProgress = (done)*100/(done + releasesToApply.Count());
+                var endProgress = (done + 1)*100/(done + releasesToApply.Count());
 
                 // If there are no remote releases at all, bail
                 if (!releasesToApply.Any()) {
@@ -326,7 +328,8 @@ namespace Squirrel
                     var deltaBuilder = new DeltaPackageBuilder(Directory.GetParent(this.rootAppDirectory).FullName);
 
                     return deltaBuilder.ApplyDeltaPackage(basePkg, deltaPkg,
-                        Regex.Replace(deltaPkg.InputPackageFile, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
+                        Regex.Replace(deltaPkg.InputPackageFile, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+                        x => progress(startProgress + (endProgress - startProgress) * x / 100));
                 });
 
                 if (releasesToApply.Count() == 1) {
@@ -336,7 +339,7 @@ namespace Squirrel
                 var fi = new FileInfo(ret.InputPackageFile);
                 var entry = ReleaseEntry.GenerateFromFile(fi.OpenRead(), fi.Name);
 
-                progress((done + 1)*100/(done + releasesToApply.Count()));
+                progress(endProgress);
 
                 // Recursively combine the rest of them
                 return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progress, done + 1);
