@@ -151,7 +151,7 @@ namespace Squirrel.Update
                     Update(target).Wait();
                     break;
                 case UpdateAction.UpdateSelf:
-                    UpdateSelf(target).Wait();
+                    UpdateSelf().Wait();
                     break;
                 case UpdateAction.Releasify:
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon);
@@ -239,13 +239,16 @@ namespace Squirrel.Update
             }
         }
 
-        public async Task UpdateSelf(string fileToReplace)
+        public async Task UpdateSelf()
         {
             waitForParentToExit();
             var src = Assembly.GetExecutingAssembly().Location;
+            var updateDotExeForOurPackage = Path.Combine(
+                Path.GetDirectoryName(src),
+                "..", "Update.exe");
 
             await Task.Run(() => {
-                File.Copy(src, fileToReplace, true);
+                File.Copy(src, updateDotExeForOurPackage, true);
             });
         }
 
