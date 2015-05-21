@@ -57,10 +57,6 @@
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
     </Reference>
-    <Reference Include="NuGet.Core, Version=2.8.60318.667, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\NuGet.Core.2.8.5\lib\net40-Client\NuGet.Core.dll</HintPath>
-    </Reference>
     <Reference Include="Splat, Version=1.6.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Splat.1.6.2\lib\Net45\Splat.dll</HintPath>
       <Private>True</Private>
@@ -116,10 +112,6 @@
     <ProjectReference Include="..\src\Squirrel\Squirrel.csproj">
       <Project>{1436e22a-fe3c-4d68-9a85-9e74df2e6a92}</Project>
       <Name>Squirrel</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\src\Update\Update.csproj">
-      <Project>{1eebacbc-6982-4696-bd4e-899ed0ac6cd2}</Project>
-      <Name>Update</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
