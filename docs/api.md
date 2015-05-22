@@ -7,9 +7,7 @@ This is the assembly your project should reference in order to use Squirrel in-a
 Main entry point for using Squirrel functionality. Here's an example of how to create one:
 
 ```cs
-using (var mgr = new UpdateManager(
-    @"http://your-server/releases", "your-nuget-package-id",
-    FrameworkVersion.Net45))
+using (var mgr = new UpdateManager("http://your-server/releases"))
 {
     // Use updateManager
 }

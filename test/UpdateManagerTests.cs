@@ -25,12 +25,12 @@ namespace Squirrel.Tests
 
                 using (Utility.WithTempDirectory(out path)) {
                     using (Utility.WithTempDirectory(out remotePkgPath))
-                    using (var mgr = new UpdateManager(remotePkgPath, "theApp", FrameworkVersion.Net45, path)) {
+                    using (var mgr = new UpdateManager(remotePkgPath, "theApp", path)) {
                         IntegrationTestHelper.CreateFakeInstalledApp("1.0.0.1", remotePkgPath);
                         await mgr.FullInstall();
                     }
 
-                    using (var mgr = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45, path)) {
+                    using (var mgr = new UpdateManager("http://lol", "theApp", path)) {
                         await mgr.CreateUninstallerRegistryEntry();
                         var regKey = await mgr.CreateUninstallerRegistryEntry();
 
@@ -93,7 +93,7 @@ namespace Squirrel.Tests
                         "Squirrel.Core.1.0.0.0-full.nupkg",
                     }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(remotePackageDir.FullName, x)));
 
-                    using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", FrameworkVersion.Net45, tempDir)) {
+                    using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", tempDir)) {
                         await fixture.FullInstall();
                     }
 
@@ -140,7 +140,7 @@ namespace Squirrel.Tests
 
                     // check for an update
                     UpdateInfo updateInfo;
-                    using (var mgr = new UpdateManager(remotePackages, "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader())) {
+                    using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeUrlDownloader())) {
                         updateInfo = await mgr.CheckForUpdate();
                     }
 
@@ -185,7 +185,7 @@ namespace Squirrel.Tests
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
                     UpdateInfo updateInfo;
-                    using (var mgr = new UpdateManager(remotePackages, "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader())) {
+                    using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeUrlDownloader())) {
                         updateInfo = await mgr.CheckForUpdate();
                     }
 
@@ -226,7 +226,7 @@ namespace Squirrel.Tests
                     await fixture.updateLocalReleasesFile();
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
-                    using (var mgr = new UpdateManager(remotePackages, "theApp", FrameworkVersion.Net40, tempDir, new FakeUrlDownloader())) {
+                    using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeUrlDownloader())) {
                         UpdateInfo updateInfo;
                         updateInfo = await mgr.CheckForUpdate();
                         Assert.True(updateInfo.ReleasesToApply.First().IsDelta);
@@ -243,7 +243,7 @@ namespace Squirrel.Tests
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir)) {
                     var directory = Path.Combine(tempDir, "missing-folder");
-                    var fixture = new UpdateManager(directory, "MyAppName", FrameworkVersion.Net40);
+                    var fixture = new UpdateManager(directory, "MyAppName");
 
                     using (fixture) {
                         await Assert.ThrowsAsync<Exception>(() => fixture.CheckForUpdate());
@@ -256,7 +256,7 @@ namespace Squirrel.Tests
             {
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir)) {
-                    var fixture = new UpdateManager(tempDir, "MyAppName", FrameworkVersion.Net40);
+                    var fixture = new UpdateManager(tempDir, "MyAppName");
 
                     using (fixture) {
                         await Assert.ThrowsAsync<Exception>(() => fixture.CheckForUpdate());
@@ -269,7 +269,7 @@ namespace Squirrel.Tests
             {
                 string tempDir;
                 using (Utility.WithTempDirectory(out tempDir)) {
-                    var fixture = new UpdateManager(tempDir, "MyAppName", FrameworkVersion.Net40);
+                    var fixture = new UpdateManager(tempDir, "MyAppName");
                     File.WriteAllText(Path.Combine(tempDir, "RELEASES"), "");
 
                     using (fixture) {
@@ -282,7 +282,7 @@ namespace Squirrel.Tests
             public async Task WhenUrlResultsInWebExceptionWeShouldThrow()
             {
                 // This should result in a WebException (which gets caught) unless you can actually access http://lol
-                using (var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45)) {
+                using (var fixture = new UpdateManager("http://lol", "theApp")) {
                     await Assert.ThrowsAsync(typeof(WebException), () => fixture.CheckForUpdate());
                 }
             }
@@ -296,7 +296,7 @@ namespace Squirrel.Tests
                 input = Environment.ExpandEnvironmentVariables(input);
                 var expected = expectedVersion != null ? new Version(expectedVersion) : default(Version);
 
-                using (var fixture = new UpdateManager("http://lol", "theApp", FrameworkVersion.Net45)) {
+                using (var fixture = new UpdateManager("http://lol", "theApp")) {
                     Assert.Equal(expected, fixture.CurrentlyInstalledVersion(input));
                 }
             }

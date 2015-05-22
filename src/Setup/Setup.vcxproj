@@ -101,6 +101,7 @@
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -113,6 +114,9 @@
     <Manifest>
       <AdditionalManifestFiles>compat.manifest</AdditionalManifestFiles>
     </Manifest>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='CIBuild|Win32'">
     <ClCompile>
@@ -141,6 +145,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="FxHelper.h" />
+    <ClInclude Include="MachineInstaller.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Setup.h" />
     <ClInclude Include="stdafx.h" />
@@ -150,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FxHelper.cpp" />
+    <ClCompile Include="MachineInstaller.cpp" />
     <ClCompile Include="unzip.cpp" />
     <ClCompile Include="UpdateRunner.cpp" />
     <ClCompile Include="winmain.cpp" />

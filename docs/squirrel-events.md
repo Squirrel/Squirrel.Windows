@@ -48,7 +48,7 @@ If you are writing a C# app, it is **highly encouraged** to use the `SquirrelAwa
 ```cs
 static bool ShowTheWelcomeWizard;
 
-using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45))
+using (var mgr = new UpdateManager(updateUrl))
 {
     // Note, in most of these scenarios, the app exits after this method
     // completes!
