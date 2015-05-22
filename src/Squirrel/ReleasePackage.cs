@@ -101,7 +101,6 @@ namespace Squirrel
             // ever expect one entry here (crash hard otherwise)
             var frameworks = package.GetSupportedFrameworks();
             if (frameworks.Count() > 1) {
-
                 var platforms = frameworks
                     .Aggregate(new StringBuilder(), (sb, f) => sb.Append(f.ToString() + "; "));
 
@@ -109,7 +108,6 @@ namespace Squirrel
                     "The input package file {0} targets multiple platforms - {1} - and cannot be transformed into a release package.", InputPackageFile, platforms));
 
             } else if (!frameworks.Any()) {
-
                 throw new InvalidOperationException(String.Format(
                     "The input package file {0} targets no platform and cannot be transformed into a release package.", InputPackageFile));
             }

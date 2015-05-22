@@ -11,7 +11,7 @@
 ```cs
 // NB: For this version, always say your app is using .NET 4.5, even if it's
 // totally not
-using (var mgr = new UpdateManager("https://path/to/my/update/folder", "nuget-package-id", FrameworkVersion.Net45)) 
+using (var mgr = new UpdateManager("https://path/to/my/update/folder")) 
 {
     await mgr.UpdateApp();
 }

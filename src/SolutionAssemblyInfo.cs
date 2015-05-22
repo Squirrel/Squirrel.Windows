@@ -10,7 +10,7 @@ using System.Resources;
 ////[assembly: AssemblyDescription("DEFINED IN ACTUAL ASSEMBLYINFO")]
 
 [assembly: AssemblyCompany("Paul Betts")]
-[assembly: AssemblyCopyright("Copyright © Paul Betts 2013 - 2014")]
+[assembly: AssemblyCopyright("Copyright © Paul Betts 2013-2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("en-US")]
@@ -25,4 +25,4 @@ using System.Resources;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 
-[assembly: AssemblyVersion("0.9.4")]
+[assembly: AssemblyVersion("0.99.1")]

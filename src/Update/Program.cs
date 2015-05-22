@@ -52,11 +52,23 @@ namespace Squirrel.Update
             //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
             //Thread.Sleep(10 * 60 * 1000);
 
+            using (var logger = new SetupLogLogger(isUninstalling) {Level = LogLevel.Info}) {
+                Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
+                try {
+                    return executeCommandLine(args);
+                } catch (Exception ex) {
+                    logger.Write("Unhandled exception: " + ex, LogLevel.Fatal);
+                    throw;
+                }
+                // Ideally we would deregister the logger from the Locator before it was disposed - this is a hazard as it is at the moment
+            }
+        }
+
+        int executeCommandLine(string[] args)
+        {
             var animatedGifWindowToken = new CancellationTokenSource();
 
-            using (Disposable.Create(() => animatedGifWindowToken.Cancel()))
-            using (var logger = new SetupLogLogger(isUninstalling) { Level = Splat.LogLevel.Info }) {
-                Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
+            using (Disposable.Create(() => animatedGifWindowToken.Cancel())) {
 
                 this.Log().Info("Starting Squirrel Updater: " + String.Join(" ", args));
 
@@ -139,7 +151,7 @@ namespace Squirrel.Update
                     Update(target).Wait();
                     break;
                 case UpdateAction.UpdateSelf:
-                    UpdateSelf(target).Wait();
+                    UpdateSelf().Wait();
                     break;
                 case UpdateAction.Releasify:
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon);
@@ -178,7 +190,7 @@ namespace Squirrel.Update
             var ourAppName = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesPath, Encoding.UTF8))
                 .First().PackageName;
 
-            using (var mgr = new UpdateManager(sourceDirectory, ourAppName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager(sourceDirectory, ourAppName)) {
                 this.Log().Info("About to install to: " + mgr.RootAppDirectory);
                 Directory.CreateDirectory(mgr.RootAppDirectory);
 
@@ -199,7 +211,7 @@ namespace Squirrel.Update
 
             this.Log().Info("Starting update, downloading from " + updateUrl);
 
-            using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager(updateUrl, appName)) {
                 bool ignoreDeltaUpdates = false;
                 this.Log().Info("About to update to: " + mgr.RootAppDirectory);
 
@@ -227,13 +239,16 @@ namespace Squirrel.Update
             }
         }
 
-        public async Task UpdateSelf(string fileToReplace)
+        public async Task UpdateSelf()
         {
             waitForParentToExit();
             var src = Assembly.GetExecutingAssembly().Location;
+            var updateDotExeForOurPackage = Path.Combine(
+                Path.GetDirectoryName(src),
+                "..", "Update.exe");
 
             await Task.Run(() => {
-                File.Copy(src, fileToReplace, true);
+                File.Copy(src, updateDotExeForOurPackage, true);
             });
         }
 
@@ -242,7 +257,7 @@ namespace Squirrel.Update
             appName = appName ?? getAppNameFromDirectory();
 
             this.Log().Info("Fetching update information, downloading from " + updateUrl);
-            using (var mgr = new UpdateManager(updateUrl, appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager(updateUrl, appName)) {
                 var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
 
@@ -266,7 +281,7 @@ namespace Squirrel.Update
             this.Log().Info("Starting uninstall for app: " + appName);
 
             appName = appName ?? getAppNameFromDirectory();
-            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager("", appName)) {
                 await mgr.FullUninstall();
                 mgr.RemoveUninstallerRegistryEntry();
             }
@@ -394,7 +409,7 @@ namespace Squirrel.Update
             var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
             var locations = parseShortcutLocations(shortcutArgs);
 
-            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager("", appName)) {
                 mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false);
             }
         }
@@ -410,7 +425,7 @@ namespace Squirrel.Update
             var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
             var locations = parseShortcutLocations(shortcutArgs);
 
-            using (var mgr = new UpdateManager("", appName, FrameworkVersion.Net45)) {
+            using (var mgr = new UpdateManager("", appName)) {
                 mgr.RemoveShortcutsForExecutable(exeName, locations ?? defaultLocations);
             }
         }
@@ -450,7 +465,7 @@ namespace Squirrel.Update
 
             try {
                 this.Log().Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");
-                Process.Start(new ProcessStartInfo(targetExe.FullName, arguments ?? ""));
+                Process.Start(new ProcessStartInfo(targetExe.FullName, arguments ?? "") { WorkingDirectory = Path.GetDirectoryName(targetExe.FullName) });
             } catch (Exception ex) {
                 this.Log().ErrorException("Failed to start process", ex);
             }
@@ -662,13 +677,13 @@ namespace Squirrel.Update
             }
         }
 
-        public void Write(string message, Splat.LogLevel logLevel)
+        public void Write(string message, LogLevel logLevel)
         {
             if (logLevel < Level) {
                 return;
             }
 
-            lock (gate) inner.WriteLine(message);
+            lock (gate) inner.WriteLine("{0}> {1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), message);
         }
 
         public void Dispose()

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using NuGet;
 using Splat;
 using System.Threading;
+using Squirrel.Shell;
 
 namespace Squirrel
 {
@@ -18,9 +19,6 @@ namespace Squirrel
     {
         internal class ApplyReleasesImpl : IEnableLogger
         {
-            // TODO: Kill this entire concept
-            readonly FrameworkVersion appFrameworkVersion = FrameworkVersion.Net45;
-
             readonly string rootAppDirectory;
 
             public ApplyReleasesImpl(string rootAppDirectory)
@@ -124,6 +122,12 @@ namespace Squirrel
 
                 await this.ErrorIfThrows(() => Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
+
+                // NB: We drop this file here so that --checkInstall will ignore 
+                // this folder - if we don't do this, users who "accidentally" run as 
+                // administrator will find the app reinstalling itself on every
+                // reboot
+                File.WriteAllText(Path.Combine(rootAppDirectory, ".dead"), " ");
             }
 
             public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly)
@@ -239,7 +243,7 @@ namespace Squirrel
                 // with the 4.0 version.
                 this.Log().Info("Writing files to app directory: {0}", target.FullName);
 
-                var toWrite = pkg.GetLibFiles().Where(x => pathIsInFrameworkProfile(x, appFrameworkVersion))
+                var toWrite = pkg.GetLibFiles().Where(x => pathIsInFrameworkProfile(x))
                     .OrderBy(x => x.Path)
                     .ToList();
 
@@ -284,14 +288,9 @@ namespace Squirrel
                 }, "Failed to write file: " + target.FullName);
             }
 
-            static bool pathIsInFrameworkProfile(IPackageFile packageFile, FrameworkVersion appFrameworkVersion)
+            static bool pathIsInFrameworkProfile(IPackageFile packageFile)
             {
                 if (!packageFile.Path.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase)) {
-                    return false;
-                }
-
-                if (appFrameworkVersion == FrameworkVersion.Net40
-                    && packageFile.Path.StartsWith("lib\\net45", StringComparison.InvariantCultureIgnoreCase)) {
                     return false;
                 }
 

@@ -75,9 +75,7 @@ And `ReleaseEntry` contains the specifics of each release:
 First, check the location where your application updates are hosted:
 
 ```cs
-var updateManager = new UpdateManager(@"C:\Users\brendanforster\Desktop\TestApp",
-                                     "TestApp",
-                                     FrameworkVersion.Net40);
+var updateManager = new UpdateManager(@"C:\Users\brendanforster\Desktop\TestApp");
 
 var updateInfo = await updateManager.CheckForUpdate();
 

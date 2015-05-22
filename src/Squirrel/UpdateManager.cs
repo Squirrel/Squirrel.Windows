@@ -25,13 +25,11 @@ namespace Squirrel
         readonly string applicationName;
         readonly IFileDownloader urlDownloader;
         readonly string updateUrlOrPath;
-        readonly FrameworkVersion appFrameworkVersion;
 
         IDisposable updateLock;
 
         public UpdateManager(string urlOrPath, 
-            string applicationName,
-            FrameworkVersion appFrameworkVersion,
+            string applicationName = null,
             string rootDirectory = null,
             IFileDownloader urlDownloader = null)
         {
@@ -39,16 +37,15 @@ namespace Squirrel
             Contract.Requires(!String.IsNullOrEmpty(applicationName));
 
             updateUrlOrPath = urlOrPath;
-            this.applicationName = applicationName;
-            this.appFrameworkVersion = appFrameworkVersion;
+            this.applicationName = applicationName ?? UpdateManager.getApplicationName();
             this.urlDownloader = urlDownloader ?? new FileDownloader();
 
             if (rootDirectory != null) {
-                this.rootAppDirectory = Path.Combine(rootDirectory, applicationName);
+                this.rootAppDirectory = Path.Combine(rootDirectory, this.applicationName);
                 return;
             }
 
-            this.rootAppDirectory = Path.Combine(rootDirectory ?? GetLocalAppDataDirectory(), applicationName);
+            this.rootAppDirectory = Path.Combine(rootDirectory ?? GetLocalAppDataDirectory(), this.applicationName);
         }
 
         public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null)
@@ -138,6 +135,10 @@ namespace Squirrel
 
             if (appDirName == null) return null;
             return appDirName.ToVersion();
+        }
+
+        public string ApplicationName {
+            get { return applicationName; }
         }
 
         public string RootAppDirectory {
@@ -243,6 +244,12 @@ namespace Squirrel
                 updateLock = ret;
                 return ret;
             });
+        }
+
+        static string getApplicationName()
+        {
+            var fi = new FileInfo(getUpdateExe());
+            return fi.Directory.Name;
         }
 
         static string getUpdateExe()
