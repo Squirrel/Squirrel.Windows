@@ -302,13 +302,14 @@ namespace Squirrel
                 Contract.Requires(releasesToApply != null);
 
                 progress = progress ?? (_ => { });
-                var startProgress = (done)*100/(done + releasesToApply.Count());
-                var endProgress = (done + 1)*100/(done + releasesToApply.Count());
 
                 // If there are no remote releases at all, bail
                 if (!releasesToApply.Any()) {
                     return null;
                 }
+
+				var startProgress = (done) * 100 / (done + releasesToApply.Count());
+				var endProgress = (done + 1) * 100 / (done + releasesToApply.Count());
 
                 // If there are no deltas in our list, we're already done
                 if (releasesToApply.All(x => !x.IsDelta)) {
