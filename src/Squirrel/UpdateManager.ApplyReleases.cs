@@ -425,7 +425,7 @@ namespace Squirrel
                     squirrelApps.ForEach(x => CreateShortcutsForExecutable(Path.GetFileName(x), ShortcutLocation.Desktop | ShortcutLocation.StartMenu, isInitialInstall == false));
                 }
 
-                if (!isInitialInstall || silentInstall) return;
+                if (silentInstall) return;
 
                 var firstRunParam = isInitialInstall ? "--squirrel-firstrun" : "";
                 squirrelApps
