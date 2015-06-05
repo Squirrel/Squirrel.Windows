@@ -13,7 +13,7 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 	};
 
 	// TODO: Something about contacting support?
-	if (logFile != NULL) {
+	if (logFile == NULL) {
 		dlg.SetButtons(&buttons[1], 1, 1);
 	} else {
 		dlg.SetButtons(buttons, 2, 1);
