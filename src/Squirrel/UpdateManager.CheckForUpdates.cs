@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Splat;
 
 namespace Squirrel
@@ -39,6 +40,8 @@ namespace Squirrel
                     this.Log().WarnException("Failed to load local releases, starting from scratch", ex);
                     shouldInitialize = true;
                 }
+
+				restart:
 
                 if (shouldInitialize) await initializeClientAppDirectory();
 
@@ -111,8 +114,18 @@ namespace Squirrel
                 }
 
                 ret = determineUpdateInfo(localReleases, remoteReleases, ignoreDeltaUpdates);
-                
                 progress(100);
+	            if (!ret.ReleasesToApply.Any())
+	            {
+		            if (
+			            MessageBox.Show("This version of Bloom is already installed. Do you want to repair the installation?",
+				            "Repair?", MessageBoxButtons.YesNo) == DialogResult.Yes)
+		            {
+			            shouldInitialize = true;
+			            localReleases = Enumerable.Empty<ReleaseEntry>();
+						goto restart;
+		            }
+	            }
                 return ret;
             }
 

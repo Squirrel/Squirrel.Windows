@@ -135,7 +135,7 @@ namespace Squirrel.Update
                 case UpdateAction.Install:
                     var progressSource = new ProgressSource();
                     if (!silentInstall) { 
-                        AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token, progressSource);
+                        AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(0), animatedGifWindowToken.Token, progressSource);
                     }
 
                     Install(silentInstall, progressSource, Path.GetFullPath(target)).Wait();
