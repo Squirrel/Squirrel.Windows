@@ -6,6 +6,7 @@
 #include "FxHelper.h"
 #include "UpdateRunner.h"
 #include "MachineInstaller.h"
+#include <cstdio>
 
 CAppModule _Module;
 
@@ -46,6 +47,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Make sure update.exe gets silent
 		if (explicitMachineInstall) {
 			wcscat(lpCmdLine, L" --silent");
+			printf("Machine-wide installation was successful! Users will see the app once they log out / log in again.\n");
 		}
 	}
 
