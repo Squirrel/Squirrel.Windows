@@ -114,6 +114,11 @@
         "$(SolutionDir)packages\ILRepack.1.26.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName) $(TargetFileName).tmp.dll Mono.Cecil.dll NuGet.Core.dll
         del "$(TargetFileName).tmp.dll"
     </PostBuildEvent>
+  <PropertyGroup>
+    <PostBuildEvent>cd "$(TargetDir)"
+"$(SolutionDir)packages\ILRepack.1.26.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) Mono.Cecil.dll NuGet.Core.dll
+del "$(TargetFileName)"
+ren "$(TargetFileName).tmp" "$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
