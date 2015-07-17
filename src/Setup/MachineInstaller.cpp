@@ -63,9 +63,16 @@ int MachineInstaller::PerformMachineInstallSetup()
 	wcscat(machineInstallFolder, L"\\SquirrelMachineInstalls");
 
 	// NB: This is the DACL for Program Files
+	wchar_t sddl[512] = L"D:PAI(A;;FA;;;S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464)(A;CIIO;GA;;;S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464)(A;;0x1301bf;;;SY)(A;OICIIO;GA;;;SY)(A;;0x1301bf;;;BA)(A;OICIIO;GA;;;BA)(A;;0x1200a9;;;BU)(A;OICIIO;GXGR;;;BU)(A;OICIIO;GA;;;CO)";
+
+	if (IsWindows8OrGreater()) {
+		// Add ALL APPLICATION PACKAGES account (Only available on Windows 8 and greater)
+		wcscat(sddl, L"(A;;0x1200a9;;;AC)(A;OICIIO;GXGR;;;AC)");
+	}
+
 	PSECURITY_DESCRIPTOR descriptor;
 	ConvertStringSecurityDescriptorToSecurityDescriptor(
-		L"D:PAI(A;;FA;;;S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464)(A;CIIO;GA;;;S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464)(A;;0x1301bf;;;SY)(A;OICIIO;GA;;;SY)(A;;0x1301bf;;;BA)(A;OICIIO;GA;;;BA)(A;;0x1200a9;;;BU)(A;OICIIO;GXGR;;;BU)(A;OICIIO;GA;;;CO)(A;;0x1200a9;;;AC)(A;OICIIO;GXGR;;;AC)",
+		sddl,
 		SDDL_REVISION_1,
 		&descriptor, NULL);
 
