@@ -465,7 +465,7 @@ namespace Squirrel
                 this.Log().Info("Processing shortcut '{0}'", shortcut.Target);
 
                 foreach (var oldAppDirectory in oldAppDirectories) {
-                    if (!shortcut.Target.StartsWith(oldAppDirectory, StringComparison.OrdinalIgnoreCase)) {
+                    if (!shortcut.Target.StartsWith(oldAppDirectory, StringComparison.OrdinalIgnoreCase) && !shortcut.IconPath.StartsWith(oldAppDirectory, StringComparison.OrdinalIgnoreCase)) {
                         this.Log().Info("Does not match '{0}', continuing to next directory", oldAppDirectory);
                         continue;
                     }
@@ -483,9 +483,14 @@ namespace Squirrel
                                 shortcut.WorkingDirectory.Substring(oldAppDirectory.Length + 1));
                         }
 
+                        // replace working directory too if appropriate
+                        if (shortcut.IconPath.StartsWith(oldAppDirectory, StringComparison.OrdinalIgnoreCase)) {
+                            this.Log().Info("Changing new directory to '{0}'", newAppPath);
+                            shortcut.IconPath = Path.Combine(newAppPath, shortcut.IconPath.Substring(oldAppDirectory.Length + 1));
+                        }
+
                         shortcut.Save();
-                    }
-                    else {
+                    } else {
                         this.Log().Info("Unpinning {0} from taskbar", shortcut.Target);
                         TaskbarHelper.UnpinFromTaskbar(shortcut.Target);
                     }
