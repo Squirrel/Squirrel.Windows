@@ -13,6 +13,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using MarkdownSharp;
 using NuGet;
 using Splat;
+using ICSharpCode.SharpZipLib.Core;
 
 namespace Squirrel
 {
@@ -126,10 +127,9 @@ namespace Squirrel
 
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 var tempDir = new DirectoryInfo(tempPath);
-                var fz = new FastZip();
 
-                fz.ExtractZip(InputPackageFile, tempPath, null);
-                                
+                extractZipDecoded(InputPackageFile, tempPath);
+             
                 this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
 
@@ -149,10 +149,84 @@ namespace Squirrel
                     contentsPostProcessHook(tempPath);
                 }
 
-                fz.CreateZip(outputFile, tempPath, true, null);
-                                
+                createZipEncoded(outputFile, tempPath);
+
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;
+            }
+        }
+
+        // nupkg file %-encodes zip entry names. This method decodes entry names before writing to disk.
+        // We must do this, or PathTooLongException may be thrown for some unicode entry names.
+        void extractZipDecoded(string zipFilePath, string outFolder)
+        {
+            var zf = new ZipFile(zipFilePath);
+            foreach (ZipEntry zipEntry in zf)
+            {
+                if (!zipEntry.IsFile)
+                {
+                    continue;
+                }
+                String entryFileName = Uri.UnescapeDataString(zipEntry.Name);
+
+                byte[] buffer = new byte[4096];
+                Stream zipStream = zf.GetInputStream(zipEntry);
+
+                String fullZipToPath = Path.Combine(outFolder, entryFileName);
+                string directoryName = Path.GetDirectoryName(fullZipToPath);
+                if (directoryName.Length > 0)
+                    Directory.CreateDirectory(directoryName);
+
+                using (FileStream streamWriter = File.Create(fullZipToPath))
+                {
+                    StreamUtils.Copy(zipStream, streamWriter, buffer);
+                }
+            }
+        }
+
+        // Create zip file with entry names %-encoded, as nupkg file does.
+        void createZipEncoded(string zipFilePath, string folder)
+        {
+            folder = Path.GetFullPath(folder);
+            var offset = folder.Length + (folder.EndsWith("\\") ? 1 : 0);
+
+            FileStream fsOut = File.Create(zipFilePath);
+            ZipOutputStream zipStream = new ZipOutputStream(fsOut);
+
+            zipStream.SetLevel(5);
+
+            compressFolderEncoded(folder, zipStream, offset);
+
+            zipStream.IsStreamOwner = true;
+            zipStream.Close();
+        }
+
+        void compressFolderEncoded(string path, ZipOutputStream zipStream, int folderOffset)
+        {
+            string[] files = Directory.GetFiles(path);
+
+            foreach (string filename in files)
+            {
+                FileInfo fi = new FileInfo(filename);
+                string entryName = filename.Substring(folderOffset);
+                entryName = ZipEntry.CleanName(entryName);
+                entryName = Uri.EscapeUriString(entryName);
+                ZipEntry newEntry = new ZipEntry(entryName);
+                newEntry.DateTime = fi.LastWriteTime;
+                newEntry.Size = fi.Length;
+                zipStream.PutNextEntry(newEntry);
+
+                byte[] buffer = new byte[4096];
+                using (FileStream streamReader = File.OpenRead(filename))
+                {
+                    StreamUtils.Copy(streamReader, zipStream, buffer);
+                }
+                zipStream.CloseEntry();
+            }
+            string[] folders = Directory.GetDirectories(path);
+            foreach (string folder in folders)
+            {
+                compressFolderEncoded(folder, zipStream, folderOffset);
             }
         }
 
