@@ -158,7 +158,7 @@ namespace Squirrel.Update
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon);
                     break;
                 case UpdateAction.Shortcut:
-                    Shortcut(target, shortcutArgs);
+                    Shortcut(target, shortcutArgs, processStartArgs);
                     break;
                 case UpdateAction.Deshortcut:
                     Deshortcut(target, shortcutArgs);
@@ -399,7 +399,7 @@ namespace Squirrel.Update
 
         }
 
-        public void Shortcut(string exeName, string shortcutArgs)
+        public void Shortcut(string exeName, string shortcutArgs, string processStartArgs)
         {
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
@@ -411,7 +411,7 @@ namespace Squirrel.Update
             var locations = parseShortcutLocations(shortcutArgs);
 
             using (var mgr = new UpdateManager("", appName)) {
-                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false);
+                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false, processStartArgs);
             }
         }
 

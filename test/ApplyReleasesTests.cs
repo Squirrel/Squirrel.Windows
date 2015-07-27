@@ -459,7 +459,7 @@ namespace Squirrel.Tests
                 }
 
                 var fixture = new UpdateManager.ApplyReleasesImpl(Path.Combine(path, "theApp"));
-                fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup | ShortcutLocation.AppRoot, false);
+                fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup | ShortcutLocation.AppRoot, false, null);
 
                 // NB: COM is Weird.
                 Thread.Sleep(1000);

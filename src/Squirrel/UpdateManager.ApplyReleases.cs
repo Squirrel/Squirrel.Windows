@@ -125,7 +125,7 @@ namespace Squirrel
                 File.WriteAllText(Path.Combine(rootAppDirectory, ".dead"), " ");
             }
 
-            public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly)
+            public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments)
             {
                 this.Log().Info("About to create shortcuts for {0}, rootAppDir {1}", exeName, rootAppDirectory);
 
@@ -169,6 +169,10 @@ namespace Squirrel
                             Description = zf.Description,
                             Arguments = "--processStart " + exeName,
                         };
+
+                        if (!String.IsNullOrWhiteSpace(programArguments)) {
+                            sl.Arguments += String.Format(" -a \"{0}\"", programArguments);
+                        }
 
                         sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
 
@@ -399,7 +403,7 @@ namespace Squirrel
 
                     // Create shortcuts for apps automatically if they didn't
                     // create any Squirrel-aware apps
-                    squirrelApps.ForEach(x => CreateShortcutsForExecutable(Path.GetFileName(x), ShortcutLocation.Desktop | ShortcutLocation.StartMenu, isInitialInstall == false));
+                    squirrelApps.ForEach(x => CreateShortcutsForExecutable(Path.GetFileName(x), ShortcutLocation.Desktop | ShortcutLocation.StartMenu, isInitialInstall == false, null));
                 }
 
                 if (!isInitialInstall || silentInstall) return;

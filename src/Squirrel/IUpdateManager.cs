@@ -119,7 +119,8 @@ namespace Squirrel
         /// <param name="locations">The locations to install the shortcut</param>
         /// <param name="updateOnly">Set to false during initial install, true 
         /// during app update.</param>
-        void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly);
+        /// <param name="programArguments">The arguments to code into the shortcut</param>
+        void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments);
 
         /// <summary>
         /// Removes shortcuts created by CreateShortcutsForExecutable
@@ -176,7 +177,8 @@ namespace Squirrel
             This.CreateShortcutsForExecutable(Path.GetFileName(
                 Assembly.GetEntryAssembly().Location),
                 ShortcutLocation.Desktop | ShortcutLocation.StartMenu, 
-                Environment.CommandLine.Contains("squirrel-install") == false);
+                Environment.CommandLine.Contains("squirrel-install") == false,
+                null);
         }
 
         public static void RemoveShortcutForThisExe(this IUpdateManager This)
