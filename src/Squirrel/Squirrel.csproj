@@ -67,7 +67,6 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Net.Http" />
-    <Reference Include="System.Net.Http.Formatting, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="Microsoft.CSharp" />
@@ -90,6 +89,7 @@
     <Compile Include="ReleaseExtensions.cs" />
     <Compile Include="ReleasePackage.cs" />
     <Compile Include="ShellFile.cs" />
+    <Compile Include="SimpleJson\SimpleJson.cs" />
     <Compile Include="SquirrelAwareApp.cs" />
     <Compile Include="SquirrelAwareExecutableDetector.cs" />
     <Compile Include="TaskbarHelper.cs" />
@@ -106,7 +106,6 @@
     <Compile Include="UpdateManager.InstallHelpers.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-
   <PropertyGroup>
     <PostBuildEvent>
       cd "$(TargetDir)"

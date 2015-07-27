@@ -20,16 +20,16 @@
 // VERSION: 0.38.0
 
 // NOTE: uncomment the following line to make SimpleJson class internal.
-//#define SIMPLE_JSON_INTERNAL
+#define SIMPLE_JSON_INTERNAL
 
 // NOTE: uncomment the following line to make JsonArray and JsonObject class internal.
 //#define SIMPLE_JSON_OBJARRAYINTERNAL
 
 // NOTE: uncomment the following line to enable dynamic support.
-//#define SIMPLE_JSON_DYNAMIC
+#define SIMPLE_JSON_DYNAMIC
 
 // NOTE: uncomment the following line to enable DataContract support.
-//#define SIMPLE_JSON_DATACONTRACT
+#define SIMPLE_JSON_DATACONTRACT
 
 // NOTE: uncomment the following line to enable IReadOnlyCollection<T> and IReadOnlyList<T> support.
 //#define SIMPLE_JSON_READONLY_COLLECTIONS
@@ -66,12 +66,12 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
-using Squirrel.Update.Reflection;
+using Squirrel.Json.Reflection;
 
 // ReSharper disable LoopCanBeConvertedToQuery
 // ReSharper disable RedundantExplicitArrayCreation
 // ReSharper disable SuggestUseVarKeywordEvident
-namespace Squirrel.Update
+namespace Squirrel.Json
 {
     /// <summary>
     /// Represents the json array.
@@ -484,7 +484,7 @@ namespace Squirrel.Update
     }
 }
 
-namespace Squirrel.Update
+namespace Squirrel.Json
 {
     /// <summary>
     /// This class encodes and decodes JSON strings.

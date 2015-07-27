@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Mono.Options;
 using Splat;
 using Squirrel;
+using Squirrel.Json;
 using System.Drawing;
 using System.Windows;
 using System.Windows.Shell;
