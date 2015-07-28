@@ -453,7 +453,7 @@ namespace Squirrel.Update
             this.Log().Info("Want to launch '{0}'", targetExe);
 
             // Check for path canonicalization attacks
-            if (!targetExe.FullName.StartsWith(latestAppDir)) {
+            if (!targetExe.FullName.StartsWith(latestAppDir, StringComparison.Ordinal)) {
                 throw new ArgumentException();
             }
 
