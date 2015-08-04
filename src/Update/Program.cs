@@ -555,7 +555,7 @@ namespace Squirrel.Update
             }
 
             Tuple<int, string> processResult = await Utility.InvokeProcessAsync(exe,
-                String.Format("sign {0} {1}", signingOpts, exePath), CancellationToken.None);
+                String.Format("sign {0} \"{1}\"", signingOpts, exePath), CancellationToken.None);
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
