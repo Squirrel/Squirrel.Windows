@@ -207,7 +207,7 @@ namespace Squirrel
         void applyDiffToFile(string deltaPath, string relativeFilePath, string workingDirectory)
         {
             var inputFile = Path.Combine(deltaPath, relativeFilePath);
-            var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @".diff$", ""));
+            var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @"\.(bs)?diff$", ""));
 
             var tempTargetFile = default(string);
             Utility.WithTempFile(out tempTargetFile, localAppDirectory);
