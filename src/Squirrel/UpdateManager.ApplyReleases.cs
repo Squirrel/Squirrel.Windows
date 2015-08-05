@@ -12,6 +12,8 @@ using NuGet;
 using Splat;
 using System.Threading;
 using Squirrel.Shell;
+using ICSharpCode.SharpZipLib.Zip;
+using ICSharpCode.SharpZipLib.Core;
 
 namespace Squirrel
 {
@@ -211,79 +213,51 @@ namespace Squirrel
                 fixPinnedExecutables(zf.Version.Version);
             }
 
-            async Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
+            Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
             {
-                var pkg = new ZipPackage(Path.Combine(updateInfo.PackageDirectory, release.Filename));
-                var target = getDirectoryForRelease(release.Version);
+                return Task.Run(async () => {
+                    var zipper = new FastZip();
+                    var target = getDirectoryForRelease(release.Version);
 
-                // NB: This might happen if we got killed partially through applying the release
-                if (target.Exists) {
-                    this.Log().Warn("Found partially applied release folder, killing it: " + target.FullName);
-                    await Utility.DeleteDirectory(target.FullName);
-                }
-
-                target.Create();
-
-                // Copy all of the files out of the lib/ dirs in the NuGet package
-                // into our target App directory.
-                //
-                // NB: We sort this list in order to guarantee that if a Net20
-                // and a Net40 version of a DLL get shipped, we always end up
-                // with the 4.0 version.
-                this.Log().Info("Writing files to app directory: {0}", target.FullName);
-
-                var toWrite = pkg.GetLibFiles().Where(x => pathIsInFrameworkProfile(x))
-                    .OrderBy(x => x.Path)
-                    .ToList();
-
-                // NB: Because of the above NB, we cannot use ForEachAsync here, we 
-                // have to copy these files in-order. Once we fix assembly resolution, 
-                // we can kill both of these NBs.
-                await Task.Run(() => toWrite.ForEach(x => copyFileToLocation(target, x)));
-                await pkg.GetContentFiles().ForEachAsync(x => copyFileToLocation(target, x));
-
-                return target.FullName;
-            }
-
-            bool findShortTemporaryDir(out string path)
-            {
-                var dir = Environment.ExpandEnvironmentVariables("%HOMEDRIVE%\\ProgramData\\sqtmp");
-                try {
-                    Directory.CreateDirectory(dir);
-                    path = dir;
-                    return true;
-                } catch (IOException ex) {
-                    this.Log().WarnException("Couldn't create short temp dir, trying normal one", ex);
-                    path = Path.GetTempPath();
-                    return false;
-                }
-            }
-
-            void copyFileToLocation(FileSystemInfo target, IPackageFile x)
-            {
-                var targetPath = Path.Combine(target.FullName, x.EffectivePath);
-
-                var fi = new FileInfo(targetPath);
-                if (fi.Exists) fi.Delete();
-
-                var dir = new DirectoryInfo(Path.GetDirectoryName(targetPath));
-                if (!dir.Exists) dir.Create();
-
-                this.ErrorIfThrows(() => {
-                    using (var inf = x.GetStream())
-                    using (var of = fi.Open(FileMode.CreateNew, FileAccess.Write)) {
-                        inf.CopyTo(of);
+                    // NB: This might happen if we got killed partially through applying the release
+                    if (target.Exists) {
+                        this.Log().Warn("Found partially applied release folder, killing it: " + target.FullName);
+                        await Utility.DeleteDirectory(target.FullName);
                     }
-                }, "Failed to write file: " + target.FullName);
-            }
 
-            static bool pathIsInFrameworkProfile(IPackageFile packageFile)
-            {
-                if (!packageFile.Path.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase)) {
-                    return false;
-                }
+                    target.Create();
 
-                return true;
+                    this.Log().Info("Writing files to app directory: {0}", target.FullName);
+                    zipper.ExtractZip(
+                        Path.Combine(updateInfo.PackageDirectory, release.Filename),
+                        target.FullName, FastZip.Overwrite.Always, (o) => true, null, @"lib", true);
+
+                    // Move all of the files out of the lib/ dirs in the NuGet package
+                    // into our target App directory.
+                    //
+                    // NB: We sort this list in order to guarantee that if a Net20
+                    // and a Net40 version of a DLL get shipped, we always end up
+                    // with the 4.0 version.
+                    var libDir = target.GetDirectories().First(x => x.Name.Equals("lib", StringComparison.OrdinalIgnoreCase));
+                    var toMove = libDir.GetDirectories().OrderBy(x => x.Name);
+
+                    toMove.ForEach(ld => {
+                        ld.GetDirectories()
+                            .ForEachAsync(subdir => subdir.MoveTo(subdir.FullName.Replace(ld.FullName, target.FullName)))
+                            .Wait();
+
+                        ld.GetFiles()
+                            .ForEachAsync(file => {
+                                var tgt = Path.Combine(target.FullName, file.Name);
+                                this.Log().Info("Moving file {0} to {1}", file.FullName, tgt);
+                                file.MoveTo(tgt);
+                            })
+                            .Wait();
+                    });
+
+                    await Utility.DeleteDirectory(libDir.FullName);
+                    return target.FullName;
+                });
             }
 
             async Task<ReleaseEntry> createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion)
@@ -324,22 +298,6 @@ namespace Squirrel
 
                 // Recursively combine the rest of them
                 return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry);
-            }
-
-            void cleanUpOldVersions(Version currentlyExecutingVersion, Version newCurrentVersion)
-            {
-                var directory = new DirectoryInfo(rootAppDirectory);
-                if (!directory.Exists) {
-                    this.Log().Warn("cleanUpOldVersions: the directory '{0}' does not exist", rootAppDirectory);
-                    return;
-                }
-                
-                foreach (var v in getReleases()) {
-                    var version = v.Name.ToVersion();
-                    if (version == currentlyExecutingVersion || version == newCurrentVersion) continue;
-
-                    Utility.DeleteDirectoryAtNextReboot(v.FullName);
-                }
             }
 
             void executeSelfUpdate(Version currentVersion)
@@ -679,7 +637,6 @@ namespace Squirrel
 
                 return Path.Combine(dir, title + ".lnk");
             }
-
         }
     }
 }
