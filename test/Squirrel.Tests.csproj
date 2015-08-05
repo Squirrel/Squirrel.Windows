@@ -113,6 +113,10 @@
       <Project>{1436e22a-fe3c-4d68-9a85-9e74df2e6a92}</Project>
       <Name>Squirrel</Name>
     </ProjectReference>
+    <ProjectReference Include="..\vendor\nuget\src\Core\Core.csproj">
+      <Project>{f879f274-efa0-4157-8404-33a19b4e6aec}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
