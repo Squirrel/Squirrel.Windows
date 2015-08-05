@@ -664,18 +664,22 @@ namespace Squirrel.Update
 
         public SetupLogLogger(bool saveInTemp)
         {
-            try {
-                var dir = saveInTemp ?
-                    Path.GetTempPath() :
-                    Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            for (int i=0; i < 10; i++) {
+                try {
+                    var dir = saveInTemp ?
+                        Path.GetTempPath() :
+                        Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
-                var file = Path.Combine(dir, "SquirrelSetup.log");
-                inner = new StreamWriter(file, true, Encoding.UTF8);
-            } catch (Exception ex) {
-                // Didn't work? Log to stderr
-                Console.Error.WriteLine("Couldn't open log file, writing to stderr: " + ex.ToString());
-                inner = Console.Error;
+                    var file = Path.Combine(dir, String.Format("SquirrelSetup.{0}.log", i).Replace(".0.log", ".log"));
+                    inner = new StreamWriter(file, true, Encoding.UTF8);
+                    return;
+                } catch (Exception ex) {
+                    // Didn't work? Keep going
+                    Console.Error.WriteLine("Couldn't open log file, trying new file: " + ex.ToString());
+                }
             }
+
+            inner = Console.Error;
         }
 
         public void Write(string message, LogLevel logLevel)
