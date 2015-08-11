@@ -199,6 +199,10 @@ namespace Squirrel.Update
                 this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
+                var updateComTarget = Path.Combine(mgr.RootAppDirectory, "Update.com");
+                this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateComTarget, true),
+                    "Failed to copy Update.com to " + updateTarget);
+
                 await mgr.FullInstall(silentInstall, progressSource.Raise);
 
                 await this.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
@@ -506,6 +510,7 @@ namespace Squirrel.Update
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 this.ErrorIfThrows(() => {
                     File.Copy(Assembly.GetEntryAssembly().Location, Path.Combine(tempPath, "Update.exe"));
+                    File.Copy(Assembly.GetEntryAssembly().Location.Replace(".exe", ".com"), Path.Combine(tempPath, "Update.com"));
                     File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
                 }, "Failed to write package files to temp dir: " + tempPath);
 
