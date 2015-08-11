@@ -112,8 +112,10 @@ namespace Squirrel
                 deltaPathRelativePaths
                     .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
                     .Where(x => !x.EndsWith(".shasum", StringComparison.InvariantCultureIgnoreCase))
+                    .Where(x => !x.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase) ||
+                                !deltaPathRelativePaths.Contains(x.Replace(".diff", ".bsdiff")))
                     .ForEach(file => {
-                        pathsVisited.Add(Regex.Replace(file, @".diff$", "").ToLowerInvariant());
+                        pathsVisited.Add(Regex.Replace(file, @"\.(bs)?diff$", "").ToLowerInvariant());
                         applyDiffToFile(deltaPath, file, workingPath);
                     });
 
@@ -207,7 +209,7 @@ namespace Squirrel
         void applyDiffToFile(string deltaPath, string relativeFilePath, string workingDirectory)
         {
             var inputFile = Path.Combine(deltaPath, relativeFilePath);
-            var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @".diff$", ""));
+            var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @"\.(bs)?diff$", ""));
 
             var tempTargetFile = default(string);
             Utility.WithTempFile(out tempTargetFile, localAppDirectory);
@@ -254,7 +256,7 @@ namespace Squirrel
 
         void verifyPatchedFile(string relativeFilePath, string inputFile, string tempTargetFile)
         {
-            var shaFile = Regex.Replace(inputFile, @"\.diff$", ".shasum");
+            var shaFile = Regex.Replace(inputFile, @"\.(bs)?diff$", ".shasum");
             var expectedReleaseEntry = ReleaseEntry.ParseReleaseEntry(File.ReadAllText(shaFile, Encoding.UTF8));
             var actualReleaseEntry = ReleaseEntry.GenerateFromFile(tempTargetFile);
 
