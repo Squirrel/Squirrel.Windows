@@ -7,11 +7,20 @@
 ```cs
 // NB: For this version, always say your app is using .NET 4.5, even if it's
 // totally not
-using (var mgr = new UpdateManager("https://path/to/my/update/folder")) 
+Task.Run(async () =>
 {
-    await mgr.UpdateApp();
-}
+  using (var mgr = new UpdateManager("https://path/to/my/update/folder")) 
+  {
+     // release will be null if no update, otherwise, it will
+     // contain info about the new release. You can use it
+     // to inform the user.
+     var release = await mgr.UpdateApp();
+     
+  }
+});
 ```
+If you use this code in the Application Exit event handler, don't forget to wait on task completion.
+
 
 * Use NuGet Package Explorer (or any other way) to create a NuGet package for your app. Make sure that package doesn't have any dependencies. Here's a good example package:
 
