@@ -193,6 +193,13 @@ namespace Squirrel.Update
 
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName)) {
                 this.Log().Info("About to install to: " + mgr.RootAppDirectory);
+                if (Directory.Exists(mgr.RootAppDirectory)) {
+                    this.Log().Warn("Install path {0} already exists, burning it to the ground", mgr.RootAppDirectory);
+
+                    await this.ErrorIfThrows(() => Utility.DeleteDirectory(mgr.RootAppDirectory),
+                        "Failed to remove existing directory on full install, is the app still running???");
+                }
+ 
                 Directory.CreateDirectory(mgr.RootAppDirectory);
 
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
