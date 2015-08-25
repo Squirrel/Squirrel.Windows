@@ -198,6 +198,9 @@ namespace Squirrel.Update
 
                     await this.ErrorIfThrows(() => Utility.DeleteDirectory(mgr.RootAppDirectory),
                         "Failed to remove existing directory on full install, is the app still running???");
+
+                    this.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.RootAppDirectory), 3),
+                        "Couldn't recreate app directory, perhaps Antivirus is blocking it"));
                 }
  
                 Directory.CreateDirectory(mgr.RootAppDirectory);
