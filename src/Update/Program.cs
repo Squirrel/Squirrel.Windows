@@ -671,7 +671,8 @@ namespace Squirrel.Update
                         Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 
                     var file = Path.Combine(dir, String.Format("SquirrelSetup.{0}.log", i).Replace(".0.log", ".log"));
-                    inner = new StreamWriter(file, true, Encoding.UTF8);
+                    var str = File.Open(file, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+                    inner = new StreamWriter(str, Encoding.UTF8, 4096, false);
                     return;
                 } catch (Exception ex) {
                     // Didn't work? Keep going
