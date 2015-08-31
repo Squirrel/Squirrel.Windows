@@ -180,6 +180,7 @@ namespace Squirrel
                     StreamUtils.Copy(zipStream, streamWriter, buffer);
                 }
             }
+            zf.Close();
         }
 
         // Create zip file with entry names %-encoded, as nupkg file does.
