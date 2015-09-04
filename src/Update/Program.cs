@@ -117,7 +117,7 @@ namespace Squirrel.Update
                     { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
-                    { "i=|setupIcon", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
+                    { "i=|icon", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
                     { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
@@ -158,7 +158,7 @@ namespace Squirrel.Update
                     Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon);
                     break;
                 case UpdateAction.Shortcut:
-                    Shortcut(target, shortcutArgs, processStartArgs);
+                    Shortcut(target, shortcutArgs, processStartArgs, setupIcon);
                     break;
                 case UpdateAction.Deshortcut:
                     Deshortcut(target, shortcutArgs);
@@ -409,7 +409,7 @@ namespace Squirrel.Update
 
         }
 
-        public void Shortcut(string exeName, string shortcutArgs, string processStartArgs)
+        public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
         {
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
