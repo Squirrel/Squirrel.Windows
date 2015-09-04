@@ -421,7 +421,7 @@ namespace Squirrel.Update
             var locations = parseShortcutLocations(shortcutArgs);
 
             using (var mgr = new UpdateManager("", appName)) {
-                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false, processStartArgs);
+                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false, processStartArgs, icon);
             }
         }
 
