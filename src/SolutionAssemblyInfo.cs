@@ -9,8 +9,8 @@ using System.Resources;
 ////[assembly: AssemblyProduct("DEFINED IN ACTUAL ASSEMBLYINFO")]
 ////[assembly: AssemblyDescription("DEFINED IN ACTUAL ASSEMBLYINFO")]
 
-[assembly: AssemblyCompany("Paul Betts")]
-[assembly: AssemblyCopyright("Copyright © Paul Betts 2013-2015")]
+[assembly: AssemblyCompany("GitHub")]
+[assembly: AssemblyCopyright("Copyright © GitHub 2013-2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: NeutralResourcesLanguage("en-US")]
