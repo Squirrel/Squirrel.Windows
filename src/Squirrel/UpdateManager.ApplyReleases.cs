@@ -294,6 +294,7 @@ namespace Squirrel
                             .ForEachAsync(file => {
                                 var tgt = Path.Combine(target.FullName, file.Name);
                                 this.Log().Info("Moving file {0} to {1}", file.FullName, tgt);
+                                if (File.Exists(tgt)) Utility.DeleteFileHarder(tgt, true);
                                 file.MoveTo(tgt);
                             })
                             .Wait();
