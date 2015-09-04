@@ -62,6 +62,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		hr = CFxHelper::InstallDotNetFramework(isQuiet);
 		if (FAILED(hr)) {
 			exitCode = hr; // #yolo
+			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing .NET 4.5 or higher manually"), NULL);
 			goto out;
 		}
 	
