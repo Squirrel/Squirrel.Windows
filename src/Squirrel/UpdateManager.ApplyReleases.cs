@@ -171,7 +171,7 @@ namespace Squirrel
                 return ret;
             }
 
-            public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments)
+            public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments, string icon)
             {
                 this.Log().Info("About to create shortcuts for {0}, rootAppDir {1}", exeName, rootAppDirectory);
 
@@ -209,7 +209,7 @@ namespace Squirrel
 
                         sl = new ShellLink {
                             Target = updateExe,
-                            IconPath = exePath,
+                            IconPath = icon ?? exePath,
                             IconIndex = 0,
                             WorkingDirectory = Path.GetDirectoryName(exePath),
                             Description = zf.Description,
