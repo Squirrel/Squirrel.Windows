@@ -470,5 +470,29 @@ namespace Squirrel.Tests
                 Thread.Sleep(1000);
             }
         }
+
+        [Fact]
+        public async Task GetShortcutsSmokeTest()
+        {
+            string remotePkgPath;
+            string path;
+
+            using (Utility.WithTempDirectory(out path)) {
+                using (Utility.WithTempDirectory(out remotePkgPath))
+                using (var mgr = new UpdateManager(remotePkgPath, "theApp", path)) {
+                    IntegrationTestHelper.CreateFakeInstalledApp("1.0.0.1", remotePkgPath);
+                    await mgr.FullInstall();
+                }
+
+                var fixture = new UpdateManager.ApplyReleasesImpl(Path.Combine(path, "theApp"));
+                var result = fixture.GetShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup, null);
+
+                Assert.Equal(3, result.Keys.Count);
+
+                // NB: Squirrel-Aware first-run might still be running, slow
+                // our roll before blowing away the temp path
+                Thread.Sleep(1000);
+            }
+        }
     }
 }
