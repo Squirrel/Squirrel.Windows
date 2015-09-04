@@ -127,6 +127,50 @@ namespace Squirrel
                 File.WriteAllText(Path.Combine(rootAppDirectory, ".dead"), " ");
             }
 
+            public Dictionary<ShortcutLocation, ShellLink> GetShortcutsForExecutable(string exeName, ShortcutLocation locations, string programArguments)
+            {
+                this.Log().Info("About to create shortcuts for {0}, rootAppDir {1}", exeName, rootAppDirectory);
+
+                var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
+                var thisRelease = Utility.FindCurrentVersion(releases);
+                var updateExe = Path.Combine(rootAppDirectory, "update.exe");
+
+                var zf = new ZipPackage(Path.Combine(
+                    Utility.PackageDirectoryForAppDir(rootAppDirectory),
+                    thisRelease.Filename));
+
+                var exePath = Path.Combine(Utility.AppDirForRelease(rootAppDirectory, thisRelease), exeName);
+                var fileVerInfo = FileVersionInfo.GetVersionInfo(exePath);
+
+                var ret = new Dictionary<ShortcutLocation, ShellLink>();
+                foreach (var f in (ShortcutLocation[]) Enum.GetValues(typeof(ShortcutLocation))) {
+                    if (!locations.HasFlag(f)) continue;
+
+                    var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
+
+                    this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
+
+                    ShellLink sl;
+                    sl = new ShellLink {
+                        Target = updateExe,
+                        IconPath = exePath,
+                        IconIndex = 0,
+                        WorkingDirectory = Path.GetDirectoryName(exePath),
+                        Description = zf.Description,
+                        Arguments = "--processStart " + exeName,
+                    };
+
+                    if (!String.IsNullOrWhiteSpace(programArguments)) {
+                        sl.Arguments += String.Format(" -a \"{0}\"", programArguments);
+                    }
+
+                    sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
+                    ret.Add(f, sl);
+                }
+
+                return ret;
+            }
+
             public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments)
             {
                 this.Log().Info("About to create shortcuts for {0}, rootAppDir {1}", exeName, rootAppDirectory);
