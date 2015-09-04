@@ -49,6 +49,28 @@ namespace Squirrel.Tests.Core
         }
 
         [Fact]
+        public void ApplyDeltaWithBothBsdiffAndNormalDiffDoesntFail()
+        {
+            var basePackage = new ReleasePackage(IntegrationTestHelper.GetPath("fixtures", "slack-1.1.8-full.nupkg"));
+            var deltaPackage = new ReleasePackage(IntegrationTestHelper.GetPath("fixtures", "slack-1.2.0-delta.nupkg"));
+            var outFile = Path.GetTempFileName() + ".nupkg";
+
+            try {
+                var deltaBuilder = new DeltaPackageBuilder();
+                deltaBuilder.ApplyDeltaPackage(basePackage, deltaPackage, outFile);
+
+                var result = new ZipPackage(outFile);
+
+                result.Id.ShouldEqual("slack");
+                result.Version.ShouldEqual(new SemanticVersion("1.2.0"));
+            } finally {
+                if (File.Exists(outFile)) {
+                    File.Delete(outFile);
+                }
+            }
+        }
+
+        [Fact]
         public void ApplyMultipleDeltaPackagesGeneratesCorrectHash()
         {
             Assert.True(false, "Rewrite this test, the original uses too many heavyweight fixtures");
