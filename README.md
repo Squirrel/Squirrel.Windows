@@ -37,9 +37,18 @@ Windows apps should be as fast and as easy to install and update as apps like Go
 * Creating an update for my app should be a very simple process that is easily automated
 * Support for multiple "channels" (a-la Chrome Dev/Beta/Release)
 
-## Want to peek under the hood a bit?
+#### Building Squirrel
 
-Check out [the specs directory](/specs) for more information about how the framework works.
+For the Impatient:
+
+```sh
+git clone https://github.com/squirrel/squirrel.windows
+git submodule update --init --recursive       ## THIS IS THE PART YOU PROBABLY FORGOT
+.\.nuget\nuget.exe restore
+msbuild /p:Configuration=Release
+```
+
+Squirrel.Windows is a fairly typical C# / C++ project, the only special part is making sure to clone submodules via the command above.
 
 ## How can I get involved?
 
