@@ -581,6 +581,7 @@ namespace Squirrel.Update
         {
             var verStrings = new Dictionary<string, string>() {
                 { "CompanyName", package.Authors.First() },
+                { "LegalCopyright", package.Copyright ?? "Copyright © 2015 " + package.Authors.First() },
                 { "FileDescription", package.Summary ?? package.Description ?? "Installer for " + package.Id },
                 { "ProductName", package.Description ?? package.Summary ?? package.Id },
             };
