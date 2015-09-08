@@ -92,6 +92,7 @@ namespace Squirrel.Update
                 string processStart = default(string);
                 string processStartArgs = default(string);
                 string setupIcon = default(string);
+                string icon = default(string);
                 string shortcutArgs = default(string);
                 bool shouldWait = false;
 
@@ -117,8 +118,8 @@ namespace Squirrel.Update
                     { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
-                    { "i=|icon", "Path to an ICO file that will be used for icon shortcuts", v => setupIcon = v},
-                    { "setupIcon", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
+                    { "i=|icon", "Path to an ICO file that will be used for icon shortcuts", v => icon = v},
+                    { "setupIcon=", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
                     { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
@@ -127,6 +128,10 @@ namespace Squirrel.Update
                 };
 
                 opts.Parse(args);
+
+                // NB: setupIcon and icon are just aliases for compatibility
+                // reasons, because of a dumb breaking rename I made in 1.0.1
+                setupIcon = setupIcon ?? icon;
 
                 if (updateAction == UpdateAction.Unset) {
                     ShowHelp();
