@@ -10,6 +10,7 @@
     <dependencies>
       <dependency id="DeltaCompressionDotNet" version="1.0.0" />
       <dependency id="Splat" version="1.6.2" />
+      <dependency id="Mono.Cecil" version="0.9.6.1" />
     </dependencies>
 
     <id>squirrel.windows</id>
