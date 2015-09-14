@@ -13,6 +13,20 @@ using (var mgr = new UpdateManager("http://your-server/releases"))
 }
 ```
 
+### GitHub UpdateManager
+
+To use GitHub Releases as the location where your application updates are hosted:  
+
+```cs
+var updateManager = UpdateManager.GitHubUpdateManager('https://github.com/myuser/myrepo');
+
+// or to include pre-releases
+
+var updateManager = UpdateManager.GitHubUpdateManager('https://github.com/myuser/myrepo', prerelease: true);
+```
+
+Issue #442 contains a brief explanation of how this works.
+
 ### Methods for managing updates
 
 These methods are the primary methods you'll use to interact with app updates and apply them.
