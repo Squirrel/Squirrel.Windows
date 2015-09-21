@@ -10,17 +10,20 @@ namespace Squirrel.Tests.Core
     public class ReleaseEntryTests
     {
         [Theory]
-        [InlineData(@"94689fede03fed7ab59c24337673a27837f0c3ec MyCoolApp-1.0.nupkg 1004502", "MyCoolApp-1.0.nupkg", 1004502, null)]
-        [InlineData(@"3a2eadd15dd984e4559f2b4d790ec8badaeb6a39   MyCoolApp-1.1.nupkg   1040561", "MyCoolApp-1.1.nupkg", 1040561, null)]
-        [InlineData(@"14db31d2647c6d2284882a2e101924a9c409ee67  MyCoolApp-1.1.nupkg.delta  80396", "MyCoolApp-1.1.nupkg.delta", 80396, null)]
-        [InlineData(@"0000000000000000000000000000000000000000  http://test.org/Folder/MyCoolApp-1.2.nupkg  2569", "MyCoolApp-1.2.nupkg", 2569, "http://test.org/Folder/")]
-        [InlineData(@"0000000000000000000000000000000000000000  https://www.test.org/Folder/MyCoolApp-1.2-delta.nupkg  1231953", "MyCoolApp-1.2-delta.nupkg", 1231953, "https://www.test.org/Folder/")]
-        public void ParseValidReleaseEntryLines(string releaseEntry, string fileName, long fileSize, string baseUrl)
+        [InlineData(@"94689fede03fed7ab59c24337673a27837f0c3ec MyCoolApp-1.0.nupkg 1004502", "MyCoolApp-1.0.nupkg", 1004502, null, null)]
+        [InlineData(@"3a2eadd15dd984e4559f2b4d790ec8badaeb6a39   MyCoolApp-1.1.nupkg   1040561", "MyCoolApp-1.1.nupkg", 1040561, null, null)]
+        [InlineData(@"14db31d2647c6d2284882a2e101924a9c409ee67  MyCoolApp-1.1.nupkg.delta  80396", "MyCoolApp-1.1.nupkg.delta", 80396, null, null)]
+        [InlineData(@"0000000000000000000000000000000000000000  http://test.org/Folder/MyCoolApp-1.2.nupkg  2569", "MyCoolApp-1.2.nupkg", 2569, "http://test.org/Folder/", null)]
+        [InlineData(@"0000000000000000000000000000000000000000  http://test.org/Folder/MyCoolApp-1.2.nupkg?query=param  2569", "MyCoolApp-1.2.nupkg", 2569, "http://test.org/Folder/", "?query=param")]
+        [InlineData(@"0000000000000000000000000000000000000000  https://www.test.org/Folder/MyCoolApp-1.2-delta.nupkg  1231953", "MyCoolApp-1.2-delta.nupkg", 1231953, "https://www.test.org/Folder/", null)]
+        [InlineData(@"0000000000000000000000000000000000000000  https://www.test.org/Folder/MyCoolApp-1.2-delta.nupkg?query=param  1231953", "MyCoolApp-1.2-delta.nupkg", 1231953, "https://www.test.org/Folder/", "?query=param")]
+        public void ParseValidReleaseEntryLines(string releaseEntry, string fileName, long fileSize, string baseUrl, string query)
         {
             var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
             Assert.Equal(fileName, fixture.Filename);
             Assert.Equal(fileSize, fixture.Filesize);
             Assert.Equal(baseUrl, fixture.BaseUrl);
+            Assert.Equal(query, fixture.Query);
         }
 
         [Theory]
