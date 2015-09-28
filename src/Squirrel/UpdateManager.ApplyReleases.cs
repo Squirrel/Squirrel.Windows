@@ -98,6 +98,11 @@ namespace Squirrel
 
                         if (isAppFolderDead(currentRelease.FullName)) throw new Exception("App folder is dead, but we're trying to uninstall it?");
 
+                        var allApps = currentRelease.EnumerateFiles()
+                            .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                            .Where(x => !x.Name.StartsWith("squirrel.", StringComparison.OrdinalIgnoreCase) && !x.Name.StartsWith("update.", StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+
                         if (squirrelAwareApps.Count > 0) {
                             await squirrelAwareApps.ForEachAsync(async exe => {
                                 using (var cts = new CancellationTokenSource()) { 
@@ -111,12 +116,18 @@ namespace Squirrel
                                 }
                             }, 1 /*at a time*/);
                         } else {
-                            var allApps = currentRelease.EnumerateFiles()
-                                .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                                .Where(x => !x.Name.StartsWith("squirrel.", StringComparison.OrdinalIgnoreCase))
-                                .ToList();
-
                             allApps.ForEach(x => RemoveShortcutsForExecutable(x.Name, ShortcutLocation.StartMenu | ShortcutLocation.Desktop));
+                        }
+
+                        // NB: Some people attempt to uninstall apps while 
+                        // they're still running. I cannot even.
+                        var toKill = allApps
+                            .SelectMany(x => Process.GetProcessesByName(x.Name.Replace(".exe", "")))
+                            .ToList();
+
+                        if (toKill.Count > 0) {
+                            toKill.ForEach(x => x.Kill());
+                            Thread.Sleep(750);
                         }
                     } catch (Exception ex) {
                         this.Log().WarnException("Failed to run pre-uninstall hooks, uninstalling anyways", ex);
