@@ -28,7 +28,7 @@ namespace Squirrel
                 this.rootAppDirectory = rootAppDirectory;
             }
 
-            public async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall, bool attemptingFullInstall, Action<int> progress = null)
+            public async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall, bool attemptingFullInstall, Action<int> progress = null, string argsOfSetup = null)
             {
                 progress = progress ?? (_ => { });
 
@@ -38,7 +38,7 @@ namespace Squirrel
                 if (release == null) {
                     if (attemptingFullInstall) {
                         this.Log().Info("No release to install, running the app");
-                        await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, false, true, silentInstall);
+                        await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, false, true, silentInstall, argsOfSetup);
                     }
 
                     progress(100);
@@ -56,7 +56,7 @@ namespace Squirrel
                 var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
                 executeSelfUpdate(newVersion);
 
-                await this.ErrorIfThrows(() => invokePostInstall(newVersion, attemptingFullInstall, false, silentInstall),
+                await this.ErrorIfThrows(() => invokePostInstall(newVersion, attemptingFullInstall, false, silentInstall, argsOfSetup),
                     "Failed to invoke post-install");
                 progress(75);
 
@@ -388,7 +388,7 @@ namespace Squirrel
                     File.Copy(newSquirrel, Path.Combine(targetDir.Parent.FullName, "Update.exe"), true));
             }
 
-            async Task invokePostInstall(Version currentVersion, bool isInitialInstall, bool firstRunOnly, bool silentInstall)
+            async Task invokePostInstall(Version currentVersion, bool isInitialInstall, bool firstRunOnly, bool silentInstall, string argsOfSetup)
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
                 var args = isInitialInstall ?
@@ -430,7 +430,7 @@ namespace Squirrel
 
                 if (!isInitialInstall || silentInstall) return;
 
-                var firstRunParam = isInitialInstall ? "--squirrel-firstrun" : "";
+                var firstRunParam = isInitialInstall ? "--squirrel-firstrun " + argsOfSetup : "";
                 squirrelApps
                     .Select(exe => new ProcessStartInfo(exe, firstRunParam) { WorkingDirectory = Path.GetDirectoryName(exe) })
                     .ForEach(info => Process.Start(info));
