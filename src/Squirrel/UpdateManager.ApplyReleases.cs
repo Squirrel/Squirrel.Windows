@@ -87,11 +87,11 @@ namespace Squirrel
 
             public async Task FullUninstall()
             {
-                var currentRelease = getReleases().MaxBy(x => x.Name.ToVersion()).FirstOrDefault();
+                var currentRelease = getReleases().MaxBy(x => x.Name.ToSemanticVersion()).FirstOrDefault();
 
                 this.Log().Info("Starting full uninstall");
                 if (currentRelease.Exists) {
-                    var version = currentRelease.Name.ToVersion();
+                    var version = currentRelease.Name.ToSemanticVersion();
 
                     try {
                         var squirrelAwareApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName);
@@ -134,7 +134,7 @@ namespace Squirrel
                     }
                 }
 
-                fixPinnedExecutables(new Version(255, 255, 255, 255));
+                fixPinnedExecutables(new SemanticVersion(255, 255, 255, 255));
 
                 await this.ErrorIfThrows(() => Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
@@ -246,7 +246,7 @@ namespace Squirrel
                     }, "Can't write shortcut: " + file);
                 }
 
-                fixPinnedExecutables(zf.Version.Version);
+                fixPinnedExecutables(zf.Version);
             }
 
             public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
@@ -273,7 +273,7 @@ namespace Squirrel
                     }, "Couldn't delete shortcut: " + file);
                 }
 
-                fixPinnedExecutables(zf.Version.Version);
+                fixPinnedExecutables(zf.Version);
             }
 
             Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
@@ -364,7 +364,7 @@ namespace Squirrel
                 return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry);
             }
 
-            void executeSelfUpdate(Version currentVersion)
+            void executeSelfUpdate(SemanticVersion currentVersion)
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
                 var newSquirrel = Path.Combine(targetDir.FullName, "Squirrel.exe");
@@ -388,7 +388,7 @@ namespace Squirrel
                     File.Copy(newSquirrel, Path.Combine(targetDir.Parent.FullName, "Update.exe"), true));
             }
 
-            async Task invokePostInstall(Version currentVersion, bool isInitialInstall, bool firstRunOnly, bool silentInstall)
+            async Task invokePostInstall(SemanticVersion currentVersion, bool isInitialInstall, bool firstRunOnly, bool silentInstall)
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
                 var args = isInitialInstall ?
@@ -436,7 +436,7 @@ namespace Squirrel
                     .ForEach(info => Process.Start(info));
             }
 
-            void fixPinnedExecutables(Version newCurrentVersion) 
+            void fixPinnedExecutables(SemanticVersion newCurrentVersion)
             {
                 if (Environment.OSVersion.Version < new Version(6, 1)) {
                     this.Log().Warn("fixPinnedExecutables: Found OS Version '{0}', exiting...", Environment.OSVersion.VersionString);
@@ -532,7 +532,7 @@ namespace Squirrel
             // directory are "dead" (i.e. already uninstalled, but not deleted), and
             // we blow them away. This is to make sure that we don't attempt to run
             // an uninstaller on an already-uninstalled version.
-            async Task cleanDeadVersions(Version originalVersion, Version currentVersion, bool forceUninstall = false)
+            async Task cleanDeadVersions(SemanticVersion originalVersion, SemanticVersion currentVersion, bool forceUninstall = false)
             {
                 if (currentVersion == null) return;
 
@@ -651,7 +651,7 @@ namespace Squirrel
                     .Where(x => x.Name.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase));
             }
 
-            DirectoryInfo getDirectoryForRelease(Version releaseVersion)
+            DirectoryInfo getDirectoryForRelease(SemanticVersion releaseVersion)
             {
                 return new DirectoryInfo(Path.Combine(rootAppDirectory, "app-" + releaseVersion));
             }

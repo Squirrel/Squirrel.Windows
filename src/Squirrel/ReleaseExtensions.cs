@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NuGet;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,39 +10,19 @@ namespace Squirrel
 {
     public static class VersionExtensions
     {
-        public static Version ToVersion(this IReleasePackage package)
+        private static readonly Regex _suffixRegex = new Regex(@"(-full|-delta)?\.nupkg$", RegexOptions.Compiled);
+        private static readonly Regex _versionRegex = new Regex(@"\d+(\.\d+){0,3}(-[a-z][0-9a-z-]*)?$", RegexOptions.Compiled);
+
+        public static SemanticVersion ToSemanticVersion(this IReleasePackage package)
         {
-            return package.InputPackageFile.ToVersion();
+            return package.InputPackageFile.ToSemanticVersion();
         }
 
-        public static Version ToVersion(this string fileName)
+        public static SemanticVersion ToSemanticVersion(this string fileName)
         {
-            var parts = (new FileInfo(fileName)).Name
-                .Replace(".nupkg", "").Replace("-delta", "")
-                .Split('.', '-').Reverse();
-
-            var numberRegex = new Regex(@"^\d+$");
-
-            var versionFields = parts
-                .Where(x => numberRegex.IsMatch(x))
-                .Select(Int32.Parse)
-                .Reverse()
-                .ToArray();
-
-            if (versionFields.Length < 2 || versionFields.Length > 4) {
-                return null;
-            }
-
-            switch (versionFields.Length) {
-            case 2:
-                return new Version(versionFields[0], versionFields[1]);
-            case 3:
-                return new Version(versionFields[0], versionFields[1], versionFields[2]);
-            case 4:
-                return new Version(versionFields[0], versionFields[1], versionFields[2], versionFields[3]);
-            }
-
-            return null;
+            var name = _suffixRegex.Replace(fileName, "");
+            var version = _versionRegex.Match(name).Value;
+            return new SemanticVersion(version);
         }
     }
 }
