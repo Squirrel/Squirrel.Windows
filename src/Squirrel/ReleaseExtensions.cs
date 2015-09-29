@@ -10,8 +10,8 @@ namespace Squirrel
 {
     public static class VersionExtensions
     {
-        private static readonly Regex _suffixRegex = new Regex(@"(-full|-delta)?\.nupkg$", RegexOptions.Compiled);
-        private static readonly Regex _versionRegex = new Regex(@"\d+(\.\d+){0,3}(-[a-z][0-9a-z-]*)?$", RegexOptions.Compiled);
+        static readonly Regex _suffixRegex = new Regex(@"(-full|-delta)?\.nupkg$", RegexOptions.Compiled);
+        static readonly Regex _versionRegex = new Regex(@"\d+(\.\d+){0,3}(-[a-z][0-9a-z-]*)?$", RegexOptions.Compiled);
 
         public static SemanticVersion ToSemanticVersion(this IReleasePackage package)
         {
