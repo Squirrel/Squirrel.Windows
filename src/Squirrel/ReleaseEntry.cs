@@ -33,17 +33,18 @@ namespace Squirrel
         [DataMember] public string SHA1 { get; protected set; }
         [DataMember] public string BaseUrl { get; protected set; }
         [DataMember] public string Filename { get; protected set; }
+        [DataMember] public string Query { get; protected set; }
         [DataMember] public long Filesize { get; protected set; }
         [DataMember] public bool IsDelta { get; protected set; }
 
-        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null)
+        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null, string query = null)
         {
             Contract.Requires(sha1 != null && sha1.Length == 40);
             Contract.Requires(filename != null);
             Contract.Requires(filename.Contains(Path.DirectorySeparatorChar) == false);
             Contract.Requires(filesize > 0);
 
-            SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Filesize = filesize; IsDelta = isDelta;
+            SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Query = query; Filesize = filesize; IsDelta = isDelta;
         }
 
         [IgnoreDataMember]
@@ -102,13 +103,25 @@ namespace Squirrel
             // Split the base URL and the filename if an URI is provided, 
             // throws if a path is provided
             string baseUrl = null;
+            string query = null;
 
             if(Utility.IsHttpUrl(filename)) {
-                var indexOfLastPathSeparator = filename.LastIndexOf("/") + 1;
+                var uri = new Uri(filename);
+                var path = uri.LocalPath;
+                var authority = uri.GetLeftPart(UriPartial.Authority);
 
-                baseUrl = filename.Substring(0, indexOfLastPathSeparator);
-                filename = filename.Substring(indexOfLastPathSeparator);
-            } 
+                if (String.IsNullOrEmpty(path) || String.IsNullOrEmpty(authority)) {
+                    throw new Exception("Invalid URL");
+                }
+
+                var indexOfLastPathSeparator = path.LastIndexOf("/") + 1;
+                baseUrl = authority + path.Substring(0, indexOfLastPathSeparator);
+                filename = path.Substring(indexOfLastPathSeparator);
+
+                if (!String.IsNullOrEmpty(uri.Query)) {
+                    query = uri.Query;
+                }
+            }
             
             if (filename.IndexOfAny(Path.GetInvalidFileNameChars()) > -1) {
                 throw new Exception("Filename can either be an absolute HTTP[s] URL, *or* a file name");
@@ -117,7 +130,7 @@ namespace Squirrel
             long size = Int64.Parse(m.Groups[3].Value);
             bool isDelta = filenameIsDeltaFile(filename);
 
-            return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl);
+            return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl, query);
         }
 
         public static IEnumerable<ReleaseEntry> ParseReleaseFile(string fileContents)

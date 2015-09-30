@@ -68,7 +68,11 @@ namespace Squirrel
                     updateBaseUrl += '/';
                 }
 
-                var sourceFileUrl = new Uri(new Uri(updateBaseUrl), releaseEntry.BaseUrl + releaseEntry.Filename).AbsoluteUri;
+                var releaseEntryUrl = releaseEntry.BaseUrl + releaseEntry.Filename;
+                if (!String.IsNullOrEmpty(releaseEntry.Query)) {
+                    releaseEntryUrl += releaseEntry.Query;
+                }
+                var sourceFileUrl = new Uri(new Uri(updateBaseUrl), releaseEntryUrl).AbsoluteUri;
                 File.Delete(targetFile);
 
                 return urlDownloader.DownloadFile(sourceFileUrl, targetFile, progress);
