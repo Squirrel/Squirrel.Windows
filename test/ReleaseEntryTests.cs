@@ -4,6 +4,7 @@ using System.Linq;
 using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
+using NuGet;
 
 namespace Squirrel.Tests.Core
 {
@@ -61,15 +62,30 @@ namespace Squirrel.Tests.Core
         }
 
         [Theory]
-        [InlineData("94689fede03fed7ab59c24337673a27837f0c3ec  MyCoolApp-1.0.nupkg  1004502", 1, 0)]
-        [InlineData("3a2eadd15dd984e4559f2b4d790ec8badaeb6a39  MyCoolApp-1.1.nupkg  1040561", 1, 1)]
-        [InlineData("14db31d2647c6d2284882a2e101924a9c409ee67  MyCoolApp-1.1-delta.nupkg  80396", 1, 1)]
-        public void ParseVersionTest(string releaseEntry, int expectedMajor, int expectedMinor)
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.nupkg                  123", 1, 2, 0, 0, "", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-full.nupkg             123", 1, 2, 0, 0, "", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-delta.nupkg            123", 1, 2, 0, 0, "", true)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-beta1.nupkg            123", 1, 2, 0, 0, "beta1", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-beta1-full.nupkg       123", 1, 2, 0, 0, "beta1", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-beta1-delta.nupkg      123", 1, 2, 0, 0, "beta1", true)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.nupkg                123", 1, 2, 3, 0, "", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-full.nupkg           123", 1, 2, 3, 0, "", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-delta.nupkg          123", 1, 2, 3, 0, "", true)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-beta1.nupkg          123", 1, 2, 3, 0, "beta1", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-beta1-full.nupkg     123", 1, 2, 3, 0, "beta1", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-beta1-delta.nupkg    123", 1, 2, 3, 0, "beta1", true)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4.nupkg              123", 1, 2, 3, 4, "", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-full.nupkg         123", 1, 2, 3, 4, "", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-delta.nupkg        123", 1, 2, 3, 4, "", true)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-beta1.nupkg        123", 1, 2, 3, 4, "beta1", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-beta1-full.nupkg   123", 1, 2, 3, 4, "beta1", false)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-beta1-delta.nupkg  123", 1, 2, 3, 4, "beta1", true)]
+        public void ParseVersionTest(string releaseEntry, int major, int minor, int patch, int revision, string prerelease, bool isDelta)
         {
             var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
 
-            Assert.Equal(expectedMajor, fixture.Version.Major);
-            Assert.Equal(expectedMinor, fixture.Version.Minor);
+            Assert.Equal(new SemanticVersion(new Version(major, minor, patch, revision), prerelease), fixture.Version);
+            Assert.Equal(isDelta, fixture.IsDelta);
         }
 
         [Fact]
@@ -117,7 +133,7 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenMultipleReleaseMatchesReturnEarlierResult()
         {
-            var expected = new Version("1.7.5");
+            var expected = new SemanticVersion("1.7.5-beta");
             var package = new ReleasePackage("Espera-1.7.6-beta.nupkg");
 
             var releaseEntries = new[] {
@@ -136,7 +152,7 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenMultipleReleasesFoundReturnPreviousVersion()
         {
-            var expected = new Version("1.7.6");
+            var expected = new SemanticVersion("1.7.6-beta");
             var input = new ReleasePackage("Espera-1.7.7-beta.nupkg");
 
             var releaseEntries = new[] {
@@ -155,7 +171,7 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WhenMultipleReleasesFoundInOtherOrderReturnPreviousVersion()
         {
-            var expected = new Version("1.7.6");
+            var expected = new SemanticVersion("1.7.6-beta");
             var input = new ReleasePackage("Espera-1.7.7-beta.nupkg");
 
             var releaseEntries = new[] {
@@ -175,9 +191,9 @@ namespace Squirrel.Tests.Core
         public void WhenReleasesAreOutOfOrderSortByVersion()
         {
             var path = Path.GetTempFileName();
-            var firstVersion = new Version("1.0.0");
-            var secondVersion = new Version("1.1.0");
-            var thirdVersion = new Version("1.2.0");
+            var firstVersion = new SemanticVersion("1.0.0");
+            var secondVersion = new SemanticVersion("1.1.0");
+            var thirdVersion = new SemanticVersion("1.2.0");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-delta.nupkg")),

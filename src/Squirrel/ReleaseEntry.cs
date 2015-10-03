@@ -20,7 +20,7 @@ namespace Squirrel
         long Filesize { get; }
         bool IsDelta { get; }
         string EntryAsString { get; }
-        Version Version { get; }
+        SemanticVersion Version { get; }
         string PackageName { get; }
 
         string GetReleaseNotes(string packageDirectory);
@@ -53,7 +53,7 @@ namespace Squirrel
         }
 
         [IgnoreDataMember]
-        public Version Version { get { return Filename.ToVersion(); } }
+        public SemanticVersion Version { get { return Filename.ToSemanticVersion(); } }
 
         [IgnoreDataMember]
         public string PackageName {
@@ -236,7 +236,7 @@ namespace Squirrel
 
             return releaseEntries
                 .Where(x => x.IsDelta == false)
-                .Where(x => x.Version < package.ToVersion())
+                .Where(x => x.Version < package.ToSemanticVersion())
                 .OrderByDescending(x => x.Version)
                 .Select(x => new ReleasePackage(Path.Combine(targetDir, x.Filename), true))
                 .FirstOrDefault();

@@ -129,7 +129,7 @@ namespace Squirrel
             installHelpers.RemoveShortcutsForExecutable(exeName, locations);
         }
 
-        public Version CurrentlyInstalledVersion(string executable = null)
+        public SemanticVersion CurrentlyInstalledVersion(string executable = null)
         {
             executable = executable ??
                 Path.GetDirectoryName(typeof(UpdateManager).Assembly.Location);
@@ -142,7 +142,7 @@ namespace Squirrel
                 .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
 
             if (appDirName == null) return null;
-            return appDirName.ToVersion();
+            return appDirName.ToSemanticVersion();
         }
 
         public string ApplicationName {

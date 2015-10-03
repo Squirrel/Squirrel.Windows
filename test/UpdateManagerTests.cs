@@ -10,6 +10,7 @@ using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 using System.Net;
+using NuGet;
 
 namespace Squirrel.Tests
 {
@@ -294,7 +295,7 @@ namespace Squirrel.Tests
             public void CurrentlyInstalledVersionTests(string input, string expectedVersion)
             {
                 input = Environment.ExpandEnvironmentVariables(input);
-                var expected = expectedVersion != null ? new Version(expectedVersion) : default(Version);
+                var expected = expectedVersion != null ? new SemanticVersion(expectedVersion) : default(SemanticVersion);
 
                 using (var fixture = new UpdateManager("http://lol", "theApp")) {
                     Assert.Equal(expected, fixture.CurrentlyInstalledVersion(input));
