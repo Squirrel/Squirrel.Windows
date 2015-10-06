@@ -5,9 +5,10 @@
 * In your app at an appropriate time (not at startup, don't interrupt the user's work), call:
 
 ```cs
-// NB: For this version, always say your app is using .NET 4.5, even if it's
-// totally not
-using (var mgr = new UpdateManager("https://path/to/my/update/folder")) 
+//Do not forget to add Squirrel namespace!
+using Squirrel;
+
+using (var mgr = new UpdateManager("https://path/to/my/update/folder"))
 {
     await mgr.UpdateApp();
 }
@@ -15,7 +16,7 @@ using (var mgr = new UpdateManager("https://path/to/my/update/folder"))
 
 * Use NuGet Package Explorer (or any other way) to create a NuGet package for your app. Make sure that package doesn't have any dependencies. Here's a good example package:
 
-![](http://cl.ly/image/261D2x2X1e3G/content#png) 
+![](http://cl.ly/image/261D2x2X1e3G/content#png)
 
 * Open the NuGet Package Console, and type `Squirrel --releasify path/to/the/nuget/package.nupkg`
 
