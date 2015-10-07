@@ -62,16 +62,17 @@ namespace Squirrel
                 retry:
 
                     try {
-                        var url = String.Format("{0}/{1}", updateUrlOrPath, "RELEASES");
-                        if (latestLocalRelease != null) { 
-                            url = String.Format("{0}/RELEASES?id={1}&localVersion={2}&arch={3}", 
-                                updateUrlOrPath, 
-                                Uri.EscapeUriString(latestLocalRelease.PackageName), 
-                                Uri.EscapeUriString(latestLocalRelease.Version.ToString()),
-                                Environment.Is64BitOperatingSystem ? "amd64" : "x86");
+                        var uri = Utility.AppendPathToUri(new Uri(updateUrlOrPath), "RELEASES");
+                        if (latestLocalRelease != null) {
+                            uri = Utility.AddQueryParamsToUri(uri, new Dictionary<string, string>
+                            {
+                                { "id", latestLocalRelease.PackageName },
+                                { "localVersion", latestLocalRelease.Version.ToString() },
+                                { "arch", Environment.Is64BitOperatingSystem ? "amd64" : "x86" }
+                            });
                         }
 
-                        var data = await urlDownloader.DownloadUrl(url);
+                        var data = await urlDownloader.DownloadUrl(uri.ToString());
                         releaseFile = Encoding.UTF8.GetString(data);
                     } catch (WebException ex) {
                         this.Log().InfoException("Download resulted in WebException (returning blank release list)", ex);
