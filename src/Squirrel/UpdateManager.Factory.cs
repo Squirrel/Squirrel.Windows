@@ -34,7 +34,8 @@ namespace Squirrel
             string applicationName = null,
             string rootDirectory = null,
             IFileDownloader urlDownloader = null,
-            bool prerelease = false)
+            bool prerelease = false,
+            string accessToken = null)
         {
             var repoUri = new Uri(repoUrl);
             var userAgent = new ProductInfoHeaderValue("Squirrel", Assembly.GetExecutingAssembly().GetName().Version.ToString());
@@ -43,9 +44,16 @@ namespace Squirrel
                 throw new Exception("Repo URL must be to the root URL of the repo e.g. https://github.com/myuser/myrepo");
             }
 
+            var releasesApiBuilder = new StringBuilder("/repos")
+                .Append(repoUri.AbsolutePath)
+                .Append("/releases");
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+                releasesApiBuilder.Append("?access_token=").Append(accessToken);
+
             using (var client = new HttpClient() { BaseAddress = new Uri(gitHubUrl) }) {
                 client.DefaultRequestHeaders.UserAgent.Add(userAgent);
-                var response = await client.GetAsync(String.Format("/repos{0}/releases", repoUri.PathAndQuery));
+                var response = await client.GetAsync(releasesApiBuilder.ToString());
                 response.EnsureSuccessStatusCode();
 
                 var releases = SimpleJson.DeserializeObject<List<Release>>(await response.Content.ReadAsStringAsync());
