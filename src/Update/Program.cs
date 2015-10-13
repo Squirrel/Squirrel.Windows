@@ -374,9 +374,13 @@ namespace Squirrel.Update
 
             foreach (var file in toProcess) { File.Delete(file.FullName); }
 
-            var newReleaseEntries = processed.Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl)).ToList();
-            var distinctPreviousReleases = previousReleases.Where(x => !newReleaseEntries.Select(e => e.Version).Contains(x.Version));
+            var newReleaseEntries = processed
+                .Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl))
+                .ToList();
+            var distinctPreviousReleases = previousReleases
+                .Where(x => !newReleaseEntries.Select(e => e.Version).Contains(x.Version));
             var releaseEntries = distinctPreviousReleases.Concat(newReleaseEntries).ToList();
+
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
             var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");

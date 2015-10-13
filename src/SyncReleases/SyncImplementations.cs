@@ -16,12 +16,13 @@ namespace SyncReleases
         {
             var releasesUri = Utility.AppendPathToUri(targetUri, "RELEASES");
             var releasesIndex = await retryAsync(3, () => downloadReleasesIndex(releasesUri));
+
             File.WriteAllText(Path.Combine(releasesDir.FullName, "RELEASES"), releasesIndex);
 
             var releasesToDownload = ReleaseEntry.ParseReleaseFile(releasesIndex)
                 .Where(x => !x.IsDelta)
                 .OrderByDescending(x => x.Version)
-                .Take(5)
+                .Take(1)
                 .Select(x => new {
                     LocalPath = Path.Combine(releasesDir.FullName, x.Filename),
                     RemoteUrl = new Uri(Utility.EnsureTrailingSlash(targetUri), x.BaseUrl + x.Filename)
