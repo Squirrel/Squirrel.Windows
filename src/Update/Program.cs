@@ -635,6 +635,65 @@ namespace Squirrel.Update
             }
         }
 
+        static async Task createMsiPackage(string setupExe, IPackage package)
+        {
+            var pathToWix = pathToWixTools();
+            var setupExeDir = Path.GetDirectoryName(setupExe);
+
+            var templateText = File.ReadAllText(Path.Combine(pathToWix, "template.wxs"));
+            var templateResult = CopStache.Render(templateText, new Dictionary<string, string> {
+                { "Id", package.Id },
+                { "Title", package.Title },
+                { "Author", package.Authors.First() },
+                { "Summary", package.Summary ?? package.Description ?? package.Id },
+            });
+
+            var wxsTarget = Path.Combine(setupExeDir, "Setup.wxs");
+            File.WriteAllText(wxsTarget, templateResult, Encoding.UTF8);
+
+            var candleParams = String.Format("-nologo -ext WixNetFxExtension {0}", wxsTarget);
+            var processResult = await Utility.InvokeProcessAsync(
+                Path.Combine(pathToWix, "candle.exe"), candleParams, CancellationToken.None);
+
+            if (processResult.Item1 != 0) {
+                var msg = String.Format(
+                    "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    "candle.exe", candleParams, processResult.Item2);
+
+                throw new Exception(msg);
+            }
+
+            var lightParams = String.Format("-dc1:high -sval {0}", wxsTarget.Replace(".wxs", ".wixobj"));
+            processResult = await Utility.InvokeProcessAsync(
+                Path.Combine(pathToWix, "light.exe"), lightParams, CancellationToken.None);
+
+            if (processResult.Item1 != 0) {
+                var msg = String.Format(
+                    "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    "light.exe", candleParams, processResult.Item2);
+
+                throw new Exception(msg);
+            }
+        }
+
+        static string pathToWixTools()
+        {
+            var ourPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); 
+
+            // Same Directory? (i.e. released)
+            if (File.Exists(Path.Combine(ourPath, "candle.exe"))) {
+                return ourPath;
+            }
+
+            // Debug Mode (i.e. in vendor)
+            var debugPath = Path.Combine(ourPath, "..", "..", "..", "vendor", "wix", "candle.exe");
+            if (File.Exists(debugPath)) {
+                return Path.GetFullPath(debugPath);
+            }
+
+            throw new Exception("WiX tools can't be found");
+        }
+
         static string getAppNameFromDirectory(string path = null)
         {
             path = path ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
