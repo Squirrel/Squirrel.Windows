@@ -417,6 +417,7 @@ namespace Squirrel.Update
                 signPEFile(targetSetupExe, signingOpts).Wait();
             }
 
+            createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
         }
 
         public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
