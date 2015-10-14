@@ -11,10 +11,16 @@ namespace Squirrel.Update
     {
         public static string Render(string template, Dictionary<string, string> identifiers)
         {
-            var buf = new StringBuilder(template);
+            var buf = new StringBuilder();
 
-            foreach (var key in identifiers.Keys) {
-                buf.Replace("{{" + key + "}}", SecurityElement.Escape(identifiers[key]));
+            foreach (var line in template.Split('\n')) {
+                identifiers["RandomGuid"] = (new Guid()).ToString();
+
+                foreach (var key in identifiers.Keys) {
+                    buf.Replace("{{" + key + "}}", SecurityElement.Escape(identifiers[key]));
+                }
+
+                buf.AppendLine(line);
             }
 
             return buf.ToString();
