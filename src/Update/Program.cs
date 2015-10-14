@@ -656,7 +656,7 @@ namespace Squirrel.Update
             var wxsTarget = Path.Combine(setupExeDir, "Setup.wxs");
             File.WriteAllText(wxsTarget, templateResult, Encoding.UTF8);
 
-            var candleParams = String.Format("-nologo -ext WixNetFxExtension {0}", wxsTarget);
+            var candleParams = String.Format("-nologo -ext WixNetFxExtension -out \"{0}\" \"{1}\"", wxsTarget.Replace(".wxs", ".wixobj"), wxsTarget);
             var processResult = await Utility.InvokeProcessAsync(
                 Path.Combine(pathToWix, "candle.exe"), candleParams, CancellationToken.None);
 
@@ -668,7 +668,7 @@ namespace Squirrel.Update
                 throw new Exception(msg);
             }
 
-            var lightParams = String.Format("-ext WixNetFxExtension -sval -out {0} {1}", wxsTarget.Replace(".wxs", ".msi"), wxsTarget.Replace(".wxs", ".wixobj"));
+            var lightParams = String.Format("-ext WixNetFxExtension -sval -out \"{0}\" \"{1}\"", wxsTarget.Replace(".wxs", ".msi"), wxsTarget.Replace(".wxs", ".wixobj"));
             processResult = await Utility.InvokeProcessAsync(
                 Path.Combine(pathToWix, "light.exe"), lightParams, CancellationToken.None);
 
