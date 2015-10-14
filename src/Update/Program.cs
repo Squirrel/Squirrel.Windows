@@ -95,6 +95,7 @@ namespace Squirrel.Update
                 string icon = default(string);
                 string shortcutArgs = default(string);
                 bool shouldWait = false;
+                bool noMsi = false;
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -125,6 +126,7 @@ namespace Squirrel.Update
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
                     { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                     { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
+                    { "no-msi", "Don't generate an MSI package", v => noMsi = true},
                 };
 
                 opts.Parse(args);
@@ -161,7 +163,7 @@ namespace Squirrel.Update
                     UpdateSelf().Wait();
                     break;
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi);
                     break;
                 case UpdateAction.Shortcut:
                     Shortcut(target, shortcutArgs, processStartArgs, setupIcon);
@@ -304,7 +306,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true)
         {
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
@@ -417,7 +419,9 @@ namespace Squirrel.Update
                 signPEFile(targetSetupExe, signingOpts).Wait();
             }
 
-            createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
+            if (generateMsi) {
+                createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
+            }
         }
 
         public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
