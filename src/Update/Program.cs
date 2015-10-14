@@ -675,6 +675,14 @@ namespace Squirrel.Update
 
                 throw new Exception(msg);
             }
+
+            var toDelete = new[] {
+                wxsTarget,
+                wxsTarget.Replace(".wxs", ".wixobj"),
+                wxsTarget.Replace(".wxs", ".wixpdb"),
+            };
+
+            await Utility.ForEachAsync(toDelete, x => Utility.DeleteFileHarder(x));
         }
 
         static string pathToWixTools()
