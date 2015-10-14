@@ -95,6 +95,7 @@ namespace Squirrel.Update
                 string icon = default(string);
                 string shortcutArgs = default(string);
                 bool shouldWait = false;
+                bool noMsi = false;
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -125,6 +126,7 @@ namespace Squirrel.Update
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
                     { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                     { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
+                    { "no-msi", "Don't generate an MSI package", v => noMsi = true},
                 };
 
                 opts.Parse(args);
@@ -161,7 +163,7 @@ namespace Squirrel.Update
                     UpdateSelf().Wait();
                     break;
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi);
                     break;
                 case UpdateAction.Shortcut:
                     Shortcut(target, shortcutArgs, processStartArgs, setupIcon);
@@ -304,7 +306,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true)
         {
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
@@ -417,6 +419,9 @@ namespace Squirrel.Update
                 signPEFile(targetSetupExe, signingOpts).Wait();
             }
 
+            if (generateMsi) {
+                createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
+            }
         }
 
         public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
@@ -633,6 +638,73 @@ namespace Squirrel.Update
             } else {
                 Console.WriteLine(processResult.Item2);
             }
+        }
+
+        static async Task createMsiPackage(string setupExe, IPackage package)
+        {
+            var pathToWix = pathToWixTools();
+            var setupExeDir = Path.GetDirectoryName(setupExe);
+
+            var templateText = File.ReadAllText(Path.Combine(pathToWix, "template.wxs"));
+            var templateResult = CopStache.Render(templateText, new Dictionary<string, string> {
+                { "Id", package.Id },
+                { "Title", package.Title },
+                { "Author", package.Authors.First() },
+                { "Summary", package.Summary ?? package.Description ?? package.Id },
+            });
+
+            var wxsTarget = Path.Combine(setupExeDir, "Setup.wxs");
+            File.WriteAllText(wxsTarget, templateResult, Encoding.UTF8);
+
+            var candleParams = String.Format("-nologo -ext WixNetFxExtension -out \"{0}\" \"{1}\"", wxsTarget.Replace(".wxs", ".wixobj"), wxsTarget);
+            var processResult = await Utility.InvokeProcessAsync(
+                Path.Combine(pathToWix, "candle.exe"), candleParams, CancellationToken.None);
+
+            if (processResult.Item1 != 0) {
+                var msg = String.Format(
+                    "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    "candle.exe", candleParams, processResult.Item2);
+
+                throw new Exception(msg);
+            }
+
+            var lightParams = String.Format("-ext WixNetFxExtension -sval -out \"{0}\" \"{1}\"", wxsTarget.Replace(".wxs", ".msi"), wxsTarget.Replace(".wxs", ".wixobj"));
+            processResult = await Utility.InvokeProcessAsync(
+                Path.Combine(pathToWix, "light.exe"), lightParams, CancellationToken.None);
+
+            if (processResult.Item1 != 0) {
+                var msg = String.Format(
+                    "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    "light.exe", lightParams, processResult.Item2);
+
+                throw new Exception(msg);
+            }
+
+            var toDelete = new[] {
+                wxsTarget,
+                wxsTarget.Replace(".wxs", ".wixobj"),
+                wxsTarget.Replace(".wxs", ".wixpdb"),
+            };
+
+            await Utility.ForEachAsync(toDelete, x => Utility.DeleteFileHarder(x));
+        }
+
+        static string pathToWixTools()
+        {
+            var ourPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); 
+
+            // Same Directory? (i.e. released)
+            if (File.Exists(Path.Combine(ourPath, "candle.exe"))) {
+                return ourPath;
+            }
+
+            // Debug Mode (i.e. in vendor)
+            var debugPath = Path.Combine(ourPath, "..", "..", "..", "vendor", "wix", "candle.exe");
+            if (File.Exists(debugPath)) {
+                return Path.GetFullPath(debugPath);
+            }
+
+            throw new Exception("WiX tools can't be found");
         }
 
         static string getAppNameFromDirectory(string path = null)

@@ -450,42 +450,13 @@ namespace Squirrel
             }
         }
 
-        public static async Task DeleteDirectoryWithFallbackToNextReboot(string dir)
+        public static async Task DeleteDirectoryOrJustGiveUp(string dir)
         {
             try {
                 await Utility.DeleteDirectory(dir);
             } catch (Exception ex) {
-                var message = String.Format("Uninstall failed to delete dir '{0}', punting to next reboot", dir);
-                LogHost.Default.WarnException(message, ex);
-
-                Utility.DeleteDirectoryAtNextReboot(dir);
+                var message = String.Format("Uninstall failed to delete dir '{0}'", dir);
             }
-        }
-
-        public static void DeleteDirectoryAtNextReboot(string directoryPath)
-        {
-            var di = new DirectoryInfo(directoryPath);
-
-            if (!di.Exists) {
-                Log().Warn("DeleteDirectoryAtNextReboot: does not exist - {0}", directoryPath);
-                return;
-            }
-
-            // NB: MoveFileEx blows up if you're a non-admin, so you always need a backup plan
-            di.GetFiles().ForEach(x => safeDeleteFileAtNextReboot(x.FullName));
-            di.GetDirectories().ForEach(x => DeleteDirectoryAtNextReboot(x.FullName));
-
-            safeDeleteFileAtNextReboot(directoryPath);
-        }
-
-        static void safeDeleteFileAtNextReboot(string name)
-        {
-            if (MoveFileEx(name, null, MoveFileFlags.MOVEFILE_DELAY_UNTIL_REBOOT)) return;
-
-            // Thank You, http://www.pinvoke.net/default.aspx/coredll.getlasterror
-            var lastError = Marshal.GetLastWin32Error();
-
-            Log().Error("safeDeleteFileAtNextReboot: failed - {0} - {1}", name, lastError);
         }
 
         public static void LogIfThrows(this IFullLogger This, LogLevel level, string message, Action block)

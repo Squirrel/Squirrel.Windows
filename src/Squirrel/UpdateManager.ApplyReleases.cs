@@ -136,7 +136,7 @@ namespace Squirrel
 
                 fixPinnedExecutables(new SemanticVersion(255, 255, 255, 255));
 
-                await this.ErrorIfThrows(() => Utility.DeleteDirectoryWithFallbackToNextReboot(rootAppDirectory),
+                await this.ErrorIfThrows(() => Utility.DeleteDirectoryOrJustGiveUp(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
 
                 // NB: We drop this file here so that --checkInstall will ignore 
@@ -592,7 +592,7 @@ namespace Squirrel
                 // Finally, clean up the app-X.Y.Z directories
                 await toCleanup.ForEachAsync(async x => {
                     try {
-                        await Utility.DeleteDirectoryWithFallbackToNextReboot(x.FullName);
+                        await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
 
                         if (Directory.Exists(x.FullName)) {
                             // NB: If we cannot clean up a directory, we need to make 
