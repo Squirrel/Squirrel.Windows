@@ -664,14 +664,14 @@ namespace Squirrel.Update
                 throw new Exception(msg);
             }
 
-            var lightParams = String.Format("-dc1:high -sval {0}", wxsTarget.Replace(".wxs", ".wixobj"));
+            var lightParams = String.Format("-ext WixNetFxExtension -sval -out {0} {1}", wxsTarget.Replace(".wxs", ".msi"), wxsTarget.Replace(".wxs", ".wixobj"));
             processResult = await Utility.InvokeProcessAsync(
                 Path.Combine(pathToWix, "light.exe"), lightParams, CancellationToken.None);
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
                     "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
-                    "light.exe", candleParams, processResult.Item2);
+                    "light.exe", lightParams, processResult.Item2);
 
                 throw new Exception(msg);
             }
