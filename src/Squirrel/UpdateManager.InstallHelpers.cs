@@ -79,7 +79,7 @@ namespace Squirrel
                     new { Key = "DisplayVersion", Value = zp.Version.ToString() },
                     new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyymmdd") },
                     new { Key = "InstallLocation", Value = rootAppDirectory },
-                    new { Key = "Publisher", Value = zp.Authors.First() },
+                    new { Key = "Publisher", Value = String.Join(",", zp.Authors) },
                     new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
                     new { Key = "UninstallString", Value = uninstallCmd },
                     new { Key = "URLUpdateInfo", Value = zp.ProjectUrl != null ? zp.ProjectUrl.ToString() : "", }
