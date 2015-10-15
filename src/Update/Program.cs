@@ -603,9 +603,10 @@ namespace Squirrel.Update
 
         static async Task setPEVersionInfoAndIcon(string exePath, IPackage package, string iconPath = null)
         {
+            var company = String.Join(",", package.Authors);
             var verStrings = new Dictionary<string, string>() {
-                { "CompanyName", package.Authors.First() },
-                { "LegalCopyright", package.Copyright ?? "Copyright © " + DateTime.Now.Year.ToString() + " " + package.Authors.First() },
+                { "CompanyName", company },
+                { "LegalCopyright", package.Copyright ?? "Copyright © " + DateTime.Now.Year.ToString() + " " + company },
                 { "FileDescription", package.Summary ?? package.Description ?? "Installer for " + package.Id },
                 { "ProductName", package.Description ?? package.Summary ?? package.Id },
             };
@@ -644,12 +645,13 @@ namespace Squirrel.Update
         {
             var pathToWix = pathToWixTools();
             var setupExeDir = Path.GetDirectoryName(setupExe);
+            var company = String.Join(",", package.Authors);
 
             var templateText = File.ReadAllText(Path.Combine(pathToWix, "template.wxs"));
             var templateResult = CopStache.Render(templateText, new Dictionary<string, string> {
                 { "Id", package.Id },
                 { "Title", package.Title },
-                { "Author", package.Authors.First() },
+                { "Author", company },
                 { "Summary", package.Summary ?? package.Description ?? package.Id },
             });
 
