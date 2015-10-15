@@ -17,13 +17,13 @@
     </Directory>
 
     <DirectoryRef Id="APPLICATIONROOTDIRECTORY">
-      <Component Id="{{Id}}.exe" Guid="08AD3BE1-EDA8-4182-BF8F-F47F805E28B8">
+      <Component Id="{{Id}}.exe" Guid="{{RandomGuid}}">
         <File Id="{{Id}}.exe" Name="{{Id}}.exe" Source="./Setup.exe" KeyPath="yes" />
       </Component>
     </DirectoryRef>
 
     <DirectoryRef Id="TARGETDIR">
-      <Component Id="RegistryEntries" Guid="4438A0C1-7F86-4737-B929-8476305E1183">
+      <Component Id="RegistryEntries" Guid="{{RandomGuid}}">
         <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run">
           <RegistryValue Type="expandable" Name="{{Id}}MachineInstaller" Value="%ProgramFiles%\{{Title}} Installer\{{Id}}.exe --checkInstall" />
         </RegistryKey>
