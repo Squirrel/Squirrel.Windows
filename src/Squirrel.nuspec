@@ -29,5 +29,6 @@
     <file src="SyncReleases\bin\Release\SyncReleases.exe" target="tools" />
     <file src="Update\signtool.exe" target="tools\signtool.exe" />
     <file src="Update\rcedit.exe" target="tools\rcedit.exe" />
+    <file src="..\vendor\wix\*" target="tools" />
   </files>
 </package>
