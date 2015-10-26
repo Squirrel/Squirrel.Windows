@@ -58,7 +58,7 @@ namespace Squirrel
 
                 var releases = SimpleJson.DeserializeObject<List<Release>>(await response.Content.ReadAsStringAsync());
                 var latestRelease = releases
-                    .Where(x => prerelease ? x.Prerelease : !x.Prerelease)
+                    .Where(x => prerelease || !x.Prerelease)
                     .OrderByDescending(x => x.PublishedAt)
                     .First();
 
