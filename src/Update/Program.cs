@@ -421,6 +421,10 @@ namespace Squirrel.Update
 
             if (generateMsi) {
                 createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
+
+                if (signingOpts != null) {
+                    signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
+                }
             }
         }
 
