@@ -14,6 +14,7 @@ using System.Threading;
 using Squirrel.Shell;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
+using Microsoft.Win32;
 
 namespace Squirrel
 {
@@ -522,6 +523,24 @@ namespace Squirrel
                     }
 
                     break;
+                }
+            }
+
+            void unshimOurselves()
+            {
+                var regKey = default(RegistryKey);
+
+                try {
+                    regKey = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags");
+
+                    var toDelete = regKey.GetValueNames()
+                        .Where(x => x.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase));
+
+                    toDelete.ForEach(x => regKey.DeleteValue(x));
+                } catch (Exception e) {
+                    this.Log().WarnException("Couldn't rewrite shim RegKey, most likely no apps are shimmed", e);
+                } finally {
+                    if (regKey != null) regKey.Dispose();
                 }
             }
 
