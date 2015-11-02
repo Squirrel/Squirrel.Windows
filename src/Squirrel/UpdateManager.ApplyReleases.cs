@@ -14,6 +14,7 @@ using System.Threading;
 using Squirrel.Shell;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
+using Microsoft.Win32;
 
 namespace Squirrel
 {
@@ -71,6 +72,9 @@ namespace Squirrel
 
                 this.ErrorIfThrows(() => trayFixer.RemoveDeadEntries(allExes, rootAppDirectory, updateInfo.FutureReleaseEntry.Version.ToString()));
                 progress(80);
+
+                unshimOurselves();
+                progress(85);
 
                 try {
                     var currentVersion = updateInfo.CurrentlyInstalledVersion != null ?
@@ -523,6 +527,33 @@ namespace Squirrel
 
                     break;
                 }
+            }
+
+            internal void unshimOurselves()
+            {
+                new[] { RegistryView.Registry32, RegistryView.Registry64 }.ForEach(view => {
+                    var baseKey = default(RegistryKey);
+                    var regKey = default(RegistryKey);
+
+                    try {
+                        baseKey = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, view);
+                        regKey = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers");
+
+                        var toDelete = regKey.GetValueNames()
+                            .Where(x => x.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+
+                        toDelete.ForEach(x => regKey.DeleteValue(x));
+
+                        //toDelete.ForEach(x =>
+                        //    this.Log().LogIfThrows(LogLevel.Warn, "Failed to delete key: " + x, () => regKey.DeleteValue(x)));
+                    } catch (Exception e) {
+                        this.Log().WarnException("Couldn't rewrite shim RegKey, most likely no apps are shimmed", e);
+                    } finally {
+                        if (regKey != null) regKey.Dispose();
+                        if (baseKey != null) baseKey.Dispose();
+                    }
+                });
             }
 
             // NB: Once we uninstall the old version of the app, we try to schedule
