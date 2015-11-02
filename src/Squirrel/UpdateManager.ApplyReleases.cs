@@ -543,10 +543,8 @@ namespace Squirrel
                             .Where(x => x.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase))
                             .ToList();
 
-                        toDelete.ForEach(x => regKey.DeleteValue(x));
-
-                        //toDelete.ForEach(x =>
-                        //    this.Log().LogIfThrows(LogLevel.Warn, "Failed to delete key: " + x, () => regKey.DeleteValue(x)));
+                        toDelete.ForEach(x =>
+                            this.Log().LogIfThrows(LogLevel.Warn, "Failed to delete key: " + x, () => regKey.DeleteValue(x)));
                     } catch (Exception e) {
                         this.Log().WarnException("Couldn't rewrite shim RegKey, most likely no apps are shimmed", e);
                     } finally {
