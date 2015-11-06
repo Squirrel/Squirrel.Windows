@@ -16,7 +16,6 @@ using Squirrel;
 using Squirrel.Json;
 using System.Drawing;
 using System.Windows;
-//using System.Windows.Shell;
 using NuGet;
 
 namespace Squirrel.Update
