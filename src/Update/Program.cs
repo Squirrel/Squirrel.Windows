@@ -16,7 +16,7 @@ using Squirrel;
 using Squirrel.Json;
 using System.Drawing;
 using System.Windows;
-using System.Windows.Shell;
+//using System.Windows.Shell;
 using NuGet;
 
 namespace Squirrel.Update
@@ -141,6 +141,7 @@ namespace Squirrel.Update
                 }
 
                 switch (updateAction) {
+#if !MONO
                 case UpdateAction.Install:
                     var progressSource = new ProgressSource();
                     if (!silentInstall) { 
@@ -162,9 +163,6 @@ namespace Squirrel.Update
                 case UpdateAction.UpdateSelf:
                     UpdateSelf().Wait();
                     break;
-                case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi);
-                    break;
                 case UpdateAction.Shortcut:
                     Shortcut(target, shortcutArgs, processStartArgs, setupIcon);
                     break;
@@ -173,6 +171,10 @@ namespace Squirrel.Update
                     break;
                 case UpdateAction.ProcessStart:
                     ProcessStart(processStart, processStartArgs, shouldWait);
+                    break;
+#endif
+                case UpdateAction.Releasify:
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi);
                     break;
                 }
             }
@@ -742,6 +744,7 @@ namespace Squirrel.Update
         static int consoleCreated = 0;
         static void ensureConsole()
         {
+#if !MONO
             if (Interlocked.CompareExchange(ref consoleCreated, 1, 0) == 1) return;
 
             if (!NativeMethods.AttachConsole(-1)) {
@@ -750,6 +753,7 @@ namespace Squirrel.Update
 
             NativeMethods.GetStdHandle(StandardHandles.STD_ERROR_HANDLE);
             NativeMethods.GetStdHandle(StandardHandles.STD_OUTPUT_HANDLE);
+#endif
         }
     }
 

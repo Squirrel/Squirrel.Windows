@@ -180,6 +180,7 @@ namespace Squirrel
         public static Task<Tuple<int, string>> InvokeProcessAsync(string fileName, string arguments, CancellationToken ct)
         {
             var psi = new ProcessStartInfo(fileName, arguments);
+
             psi.UseShellExecute = false;
             psi.WindowStyle = ProcessWindowStyle.Hidden;
             psi.ErrorDialog = false;

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -30,22 +30,14 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PostBuildEvent>cd "$(TargetDir)"
+"$(SolutionDir)packages\ILRepack.1.26.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) ICSharpCode.SharpZipLib.dll Microsoft.Web.XmlTransform.dll Splat.dll Squirrel.dll Octokit.dll NuGet.Squirrel.dll
+del "$(TargetFileName)"
+ren "$(TargetFileName).tmp" "$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.0.518, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\ext\ICSharpCode.SharpZipLib.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
-    </Reference>
-    <Reference Include="Octokit, Version=0.10.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Octokit.0.10.0\lib\net45\Octokit.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Splat, Version=1.6.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Splat.1.6.2\lib\Net45\Splat.dll</HintPath>
-      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -55,6 +47,15 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\..\ext\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
+    <Reference Include="Octokit, Version=0.10.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\..\packages\Octokit.0.10.0\lib\net45\Octokit.dll</HintPath>
+    </Reference>
+    <Reference Include="Splat, Version=1.6.2.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\..\packages\Splat.1.6.2\lib\Net45\Splat.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\SolutionAssemblyInfo.cs">
@@ -71,19 +72,13 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\vendor\nuget\src\Core\Core.csproj">
-      <Project>{f879f274-efa0-4157-8404-33a19b4e6aec}</Project>
+      <Project>{F879F274-EFA0-4157-8404-33A19B4E6AEC}</Project>
       <Name>Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\Squirrel\Squirrel.csproj">
-      <Project>{1436e22a-fe3c-4d68-9a85-9e74df2e6a92}</Project>
+      <Project>{1436E22A-FE3C-4D68-9A85-9E74DF2E6A92}</Project>
       <Name>Squirrel</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PostBuildEvent>cd "$(TargetDir)"
-"$(SolutionDir)packages\ILRepack.1.26.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) ICSharpCode.SharpZipLib.dll Microsoft.Web.XmlTransform.dll Splat.dll Squirrel.dll Octokit.dll NuGet.Squirrel.dll
-del "$(TargetFileName)"
-ren "$(TargetFileName).tmp" "$(TargetFileName)"</PostBuildEvent>
-  </PropertyGroup>
 </Project>

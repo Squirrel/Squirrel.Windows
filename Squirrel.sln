@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
+# Visual Studio 2012
 VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squirrel", "src\Squirrel\Squirrel.csproj", "{1436E22A-FE3C-4D68-9A85-9E74DF2E6A92}"
@@ -66,6 +66,30 @@ Global
 		{1436E22A-FE3C-4D68-9A85-9E74DF2E6A92}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1436E22A-FE3C-4D68-9A85-9E74DF2E6A92}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{1436E22A-FE3C-4D68-9A85-9E74DF2E6A92}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.CIBuild|Any CPU.ActiveCfg = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.CIBuild|Any CPU.Build.0 = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.CIBuild|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.CIBuild|Mixed Platforms.Build.0 = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Coverage|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Coverage|Any CPU.Build.0 = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Coverage|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Coverage|Mixed Platforms.Build.0 = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Release|Any CPU.Build.0 = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{98AEB048-E27D-42F4-9440-505B7F78BAFD}.CIBuild|Any CPU.ActiveCfg = CIBuild|Any CPU
 		{98AEB048-E27D-42F4-9440-505B7F78BAFD}.CIBuild|Any CPU.Build.0 = CIBuild|Any CPU
 		{98AEB048-E27D-42F4-9440-505B7F78BAFD}.CIBuild|Mixed Platforms.ActiveCfg = CIBuild|Any CPU
@@ -114,30 +138,6 @@ Global
 		{C1D40624-A484-438A-B846-052F321C89D1}.Release|Any CPU.Build.0 = Release|Win32
 		{C1D40624-A484-438A-B846-052F321C89D1}.Release|Mixed Platforms.ActiveCfg = Release|Win32
 		{C1D40624-A484-438A-B846-052F321C89D1}.Release|Mixed Platforms.Build.0 = Release|Win32
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.CIBuild|Any CPU.ActiveCfg = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.CIBuild|Any CPU.Build.0 = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.CIBuild|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.CIBuild|Mixed Platforms.Build.0 = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Coverage|Any CPU.ActiveCfg = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Coverage|Any CPU.Build.0 = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Coverage|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Coverage|Mixed Platforms.Build.0 = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Release|Any CPU.Build.0 = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Mono Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{EB521191-1EBF-4D06-8541-ED192E2EE378}.CIBuild|Any CPU.ActiveCfg = Release|Any CPU
 		{EB521191-1EBF-4D06-8541-ED192E2EE378}.CIBuild|Any CPU.Build.0 = Release|Any CPU
 		{EB521191-1EBF-4D06-8541-ED192E2EE378}.CIBuild|Mixed Platforms.ActiveCfg = Release|Any CPU
@@ -186,6 +186,8 @@ Global
 		{F879F274-EFA0-4157-8404-33A19B4E6AEC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F879F274-EFA0-4157-8404-33A19B4E6AEC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{F879F274-EFA0-4157-8404-33A19B4E6AEC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
