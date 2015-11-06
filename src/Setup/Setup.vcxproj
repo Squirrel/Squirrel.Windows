@@ -27,7 +27,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <OutputPath>.\</OutputPath>
+    <OutputPath>.</OutputPath>
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(ProjectDir)bin\$(Configuration)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Configuration)\</IntDir>
@@ -39,7 +39,7 @@
     <PlatformToolset>v120_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <OutputPath>.\</OutputPath>
+    <OutputPath>.</OutputPath>
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/wtl90</IncludePath>
     <OutDir>$(ProjectDir)bin\$(Configuration)\</OutDir>
@@ -51,7 +51,7 @@
     <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <OutputPath>.\</OutputPath>
+    <OutputPath>.</OutputPath>
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>C:\WinDDK\7600.16385.1\inc\atl71;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)/wtl90</IncludePath>
     <OutDir>$(ProjectDir)bin\$(Configuration)\</OutDir>
