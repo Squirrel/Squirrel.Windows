@@ -743,7 +743,8 @@ namespace Squirrel.Update
         static int consoleCreated = 0;
         static void ensureConsole()
         {
-#if !MONO
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT) return;
+
             if (Interlocked.CompareExchange(ref consoleCreated, 1, 0) == 1) return;
 
             if (!NativeMethods.AttachConsole(-1)) {
@@ -752,7 +753,6 @@ namespace Squirrel.Update
 
             NativeMethods.GetStdHandle(StandardHandles.STD_ERROR_HANDLE);
             NativeMethods.GetStdHandle(StandardHandles.STD_OUTPUT_HANDLE);
-#endif
         }
     }
 
