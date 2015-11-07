@@ -392,21 +392,11 @@ namespace Squirrel.Update
             File.Copy(bootstrapperExe, targetSetupExe, true);
             var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
 
+            var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
+
             try {
-                var zip = File.ReadAllBytes(zipPath);
-
-                IntPtr handle = NativeMethods.BeginUpdateResource(targetSetupExe, false);
-                if (handle == IntPtr.Zero) {
-                    throw new Win32Exception();
-                }
-
-                if (!NativeMethods.UpdateResource(handle, "DATA", new IntPtr(131), 0x0409, zip, zip.Length)) {
-                    throw new Win32Exception();
-                }
-
-                if (!NativeMethods.EndUpdateResource(handle, false)) {
-                    throw new Win32Exception();
-                }
+                Utility.InvokeProcessAsync(writeZipToSetup, String.Format("\"{0}\" \"{1}\"", targetSetupExe, zipPath), CancellationToken.None)
+                    .Wait();
             } catch (Exception ex) {
                 this.Log().ErrorException("Failed to update Setup.exe with new Zip file", ex);
             } finally {
@@ -623,27 +613,34 @@ namespace Squirrel.Update
             }
 
             // Try to find rcedit.exe
-            var exe = @".\rcedit.exe";
-            if (!File.Exists(exe)) {
-                exe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                    "rcedit.exe");
-
-                // Run down PATH and hope for the best
-                if (!File.Exists(exe)) exe = "rcedit.exe";
-            }
+            string exe = findExecutable("rcedit.exe");
 
             var processResult = await Utility.InvokeProcessAsync(exe, args.ToString(), CancellationToken.None);
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
-                    "Failed to modify resources, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    "Failed to modify resources, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
                     exe, args, processResult.Item2);
 
                 throw new Exception(msg);
             } else {
                 Console.WriteLine(processResult.Item2);
             }
+        }
+
+        static string findExecutable(string toFind)
+        {
+            var exe = @".\" + toFind;
+            if (!File.Exists(exe)) {
+                exe = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    toFind);
+
+                // Run down PATH and hope for the best
+                if (!File.Exists(exe)) exe = toFind;
+            }
+
+            return exe;
         }
 
         static async Task createMsiPackage(string setupExe, IPackage package)
