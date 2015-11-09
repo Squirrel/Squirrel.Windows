@@ -24,7 +24,9 @@
     <file src="Squirrel\bin\Release\NuGet.Squirrel.*" target="lib\Net45" />
     <file src="Squirrel\bin\Release\ICSharpCode.*" target="lib\Net45" />
     <file src="Setup\bin\Release\Setup.exe" target="tools" />
+    <file src="WriteZipToSetup\bin\Release\WriteZipToSetup.exe" target="tools" />
     <file src="Update\bin\Release\Update.exe" target="tools\Squirrel.exe" />
+    <file src="Update\bin\Release\Update-Mono.exe" target="tools\Squirrel-Mono.exe" />
     <file src="Update\bin\Release\Update.com" target="tools\Squirrel.com" />
     <file src="SyncReleases\bin\Release\SyncReleases.exe" target="tools" />
     <file src="Update\signtool.exe" target="tools\signtool.exe" />
