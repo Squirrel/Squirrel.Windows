@@ -19,4 +19,5 @@ using System.Runtime.InteropServices;
 
 [assembly: InternalsVisibleTo("Squirrel.Tests")]
 [assembly: InternalsVisibleTo("Update")]
+[assembly: InternalsVisibleTo("Update-Mono")]
 [assembly: InternalsVisibleTo("SyncReleases")]

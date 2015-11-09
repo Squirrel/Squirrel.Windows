@@ -319,9 +319,9 @@ namespace Squirrel.Update
                 }
             }
 
-            targetDir = targetDir ?? ".\\Releases";
+            targetDir = targetDir ?? Path.Combine(".", "Releases");
             packagesDir = packagesDir ?? ".";
-            bootstrapperExe = bootstrapperExe ?? ".\\Setup.exe";
+            bootstrapperExe = bootstrapperExe ?? Path.Combine(".", "Setup.exe");
 
             if (!Directory.Exists(targetDir)) {
                 Directory.CreateDirectory(targetDir);
@@ -395,8 +395,8 @@ namespace Squirrel.Update
             var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
 
             try {
-                Utility.InvokeProcessAsync(writeZipToSetup, String.Format("\"{0}\" \"{1}\"", targetSetupExe, zipPath), CancellationToken.None)
-                    .Wait();
+                var result = Utility.InvokeProcessAsync(writeZipToSetup, String.Format("\"{0}\" \"{1}\"", targetSetupExe, zipPath), CancellationToken.None).Result;
+                if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
             } catch (Exception ex) {
                 this.Log().ErrorException("Failed to update Setup.exe with new Zip file", ex);
             } finally {
@@ -598,6 +598,7 @@ namespace Squirrel.Update
 
         static async Task setPEVersionInfoAndIcon(string exePath, IPackage package, string iconPath = null)
         {
+            var realExePath = Path.GetFullPath(exePath);
             var company = String.Join(",", package.Authors);
             var verStrings = new Dictionary<string, string>() {
                 { "CompanyName", company },
@@ -606,7 +607,7 @@ namespace Squirrel.Update
                 { "ProductName", package.Description ?? package.Summary ?? package.Id },
             };
 
-            var args = verStrings.Aggregate(new StringBuilder("\"" + exePath + "\""), (acc, x) => { acc.AppendFormat(" --set-version-string \"{0}\" \"{1}\"", x.Key, x.Value); return acc; });
+            var args = verStrings.Aggregate(new StringBuilder("\"" + realExePath + "\""), (acc, x) => { acc.AppendFormat(" --set-version-string \"{0}\" \"{1}\"", x.Key, x.Value); return acc; });
             args.AppendFormat(" --set-file-version {0} --set-product-version {0}", package.Version.ToString());
             if (iconPath != null) {
                 args.AppendFormat(" --set-icon \"{0}\"", Path.GetFullPath(iconPath));
