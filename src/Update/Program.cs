@@ -94,7 +94,7 @@ namespace Squirrel.Update
                 string icon = default(string);
                 string shortcutArgs = default(string);
                 bool shouldWait = false;
-                bool noMsi = false;
+                bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
