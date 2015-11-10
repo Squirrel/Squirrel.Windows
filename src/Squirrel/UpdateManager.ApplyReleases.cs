@@ -465,6 +465,11 @@ namespace Squirrel
                     Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                     "Microsoft\\Internet Explorer\\Quick Launch\\User Pinned\\TaskBar");
 
+                if (!Directory.Exists(taskbarPath)) {
+                    this.Log().Info("fixPinnedExecutables: PinnedExecutables directory doesn't exitsts, skiping...");
+                    return;
+                }
+
                 Func<FileInfo, ShellLink> resolveLink = file => {
                     try {
                         return new ShellLink(file.FullName);
