@@ -78,7 +78,7 @@ namespace Squirrel
                 return;
             }
 
-            if (iconStreamData.Length < 20) return;
+            if (iconStreamData == null || iconStreamData.Length < 20) return;
             var toKeep = new List<byte[]>();
             var header = default(IconStreamsHeader);
 
