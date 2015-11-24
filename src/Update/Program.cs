@@ -572,7 +572,7 @@ namespace Squirrel.Update
 
         static async Task signPEFile(string exePath, string signingOpts)
         {
-#if !MONO
+#if MONO
             // Use Mono's signcode tool
             var exe = "signcode";
 #endif;
