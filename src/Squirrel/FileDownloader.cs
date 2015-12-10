@@ -11,7 +11,7 @@ namespace Squirrel
         Task<byte[]> DownloadUrl(string url);
     }
 
-    class FileDownloader : IFileDownloader, IEnableLogger
+    public class FileDownloader : IFileDownloader, IEnableLogger
     {
         private readonly WebClient _providedClient;
 
