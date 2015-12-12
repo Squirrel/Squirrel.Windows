@@ -572,6 +572,12 @@ namespace Squirrel.Update
 
         static async Task signPEFile(string exePath, string signingOpts)
         {
+#if MONO
+            // Use Mono's signcode tool
+            var exe = "signcode";
+#endif;
+
+#if !MONO
             // Try to find SignTool.exe
             var exe = @".\signtool.exe";
             if (!File.Exists(exe)) {
@@ -582,6 +588,7 @@ namespace Squirrel.Update
                 // Run down PATH and hope for the best
                 if (!File.Exists(exe)) exe = "signtool.exe";
             }
+#endif;
 
             Tuple<int, string> processResult = await Utility.InvokeProcessAsync(exe,
                 String.Format("sign {0} \"{1}\"", signingOpts, exePath), CancellationToken.None);
