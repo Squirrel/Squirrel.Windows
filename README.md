@@ -20,8 +20,10 @@ Windows apps should be as fast and as easy to install and update as apps like Go
 * No UAC dialogs, which means....
 * ...installs to the local user account (i.e. under `%LocalAppData%`)
 * Uninstall gives a chance for the application to clean up (i.e. I get to run a chunk of code on uninstall)
-* No Reboots. None!
+* No Reboots. None¹!
 * Can pull down the .NET Framework if need be
+
+¹ This is a special meaning of "None" which allows for the fact that on some machines, a .NET Framework installation might *require* a reboot.  This is rare but unavoidable when it happens.
 
 #### Updates
 
