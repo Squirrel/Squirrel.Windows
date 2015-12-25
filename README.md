@@ -1,6 +1,8 @@
 | Squirrel.Windows |
 |:---|
 
+![](docs/images/Squirrel-Logo.png)
+
 # Squirrel: It's like ClickOnce but Works™
 
 Squirrel is both a set of tools and a library, to completely manage both installation and updating your Desktop Windows application, written in either C# or any other language (i.e., Squirrel can manage native C++ applications).
