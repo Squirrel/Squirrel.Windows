@@ -25,7 +25,7 @@ var updateManager = UpdateManager.GitHubUpdateManager('https://github.com/myuser
 var updateManager = UpdateManager.GitHubUpdateManager('https://github.com/myuser/myrepo', prerelease: true);
 ```
 
-Issue #442 contains a brief explanation of how this works.
+[Issue #442](https://github.com/Squirrel/Squirrel.Windows/issues/442) contains a brief explanation of how this works.
 
 ### Methods for managing updates
 
