@@ -43,7 +43,7 @@ Squirrel --releasify MyApp.nupkg -g .\loading.gif -n "/a /f CodeCert.pfx /p MySe
 ```
 
 
-### Machine-Wide Installs via MSI (#466)
+### Machine-Wide Installs via MSI ([#466](https://github.com/Squirrel/Squirrel.Windows/issues/466))
 
 Squirrel's Releasify command generates an MSI file suitable for installation via Group Policy. This MSI isn't a general-purpose installer, this means that once you run the MSI, users from now on will get the app installed, on next Login.
 
