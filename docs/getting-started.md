@@ -14,7 +14,7 @@ using (var mgr = new UpdateManager("https://path/to/my/update/folder"))
 }
 ```
 
-* Use NuGet Package Explorer (or any other way) to create a NuGet package for your app. Make sure that package doesn't have any dependencies. Here's a good example package:
+* Use NuGet Package Explorer (or any other way) to create a NuGet package (.nupkg) from a .nuspec for your app. Make sure that package doesn't have any dependencies. Here's a good example package:
 
 ![](http://cl.ly/image/261D2x2X1e3G/content#png)
 
@@ -33,7 +33,7 @@ You should have a folder called `Releases` with three files in it. Publish those
 
 ## What about shortcuts?
 
-Every EXE in your package will automatically get a shortcut. If you don't want this to be the case, follow the steps for handling Squirrel events below.
+Every EXE in your package will automatically get a shortcut. If you don't want this to be the case, follow the steps for handling Squirrel events below. (But don't use a dot in the executable name, see: [#530](../../../issues/530))
 
 ## Handling Squirrel events
 
