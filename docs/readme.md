@@ -34,13 +34,11 @@ The **[Getting Started Guide](getting-started/0-overview.md)** provides a step-b
   * [GitHub](using/github.md) - overview of using GitHub for installing, distributing, and updating. 
   * [Machine-wide Installs](using/machine-wide-installs.md) - generating an MSI file suitable for installation via Group Policy.
   * [Debugging Installs](using/debugging-installs.md) - tips for debugging Squirrel.Windows initial installs.
-
 * **Packaging** - documentation related to packaging app files and preparing them for release.
   * [NuGet Package Metadata](using/nuget-package-metadata.md) - overview of the NuGet metadata and its uses by Squirrel.
   * [Squirrel Command Line](using/squirrel-command-line.md) - command line options for `Squirrel --releasify`
   * [Delta Packages](using/delta-packages.md) - an overview of how `Squirrel.exe` creates delta packages.
   * [Application Signing](using/application-signing.md) - adding code signing to `Setup.exe` and your application.
-
 * **Distributing** - documentation related to distributing the Setup.exe and update package files.
   * [Microsoft IIS](using/microsoft-iis.md) - overview of using Microsoft IIS for distributing your application. 
   * [Amazon S3](using/amazon-s3.md) - overview of using Amazon S3 for distributing your application. 
@@ -51,7 +49,6 @@ The **[Getting Started Guide](getting-started/0-overview.md)** provides a step-b
   * [GitHub](using/github.md) - overview of using GitHub for installing, distributing, and updating.  
   * [Debugging Updates](using/debugging-updates.md) - tips for debugging Squirrel.Windows updates.
 
-  
   
 ## Contributing
 
