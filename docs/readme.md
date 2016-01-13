@@ -1,4 +1,4 @@
-| [docs](.) / Table of Contents |
+| [docs](.) / readme.md |
 |:---|
 
 ![](artwork/Squirrel-Logo.png)
