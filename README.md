@@ -26,6 +26,11 @@ Refer to our full list of goals for [integrating, packaging, distributing, insta
 See the documentation [Table of Contents](docs/readme.md) for an overview of the available documentation for Squirrel.Windows. It includes a [Getting Started Guide](docs/getting-started/0-overview.md) as well as additional topics related to using Squirrel in your applications. 
 
 
+## Building Squirrel from source
+
+See the [contributing documentation](docs/contributing/contributing.md)
+
+
 ## License and Usage
 
 See [COPYING](COPYING) for details on copyright and usage of the Squirrel.Windows software.

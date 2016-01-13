@@ -65,7 +65,8 @@ By default, application shortcuts are created on the desktop and the Windows Sta
 
 * [Loading GIF](loading-gif.md) - specify a "loading" image during initial install of large applications.
 * [Machine-wide Installs](machine-wide-installs.md) - generating an MSI file suitable for installation via Group Policy.
-* [NuGet Package Metadata](using/nuget-package-metadata.md) - overview of the NuGet metadata and its uses by Squirrel.
+* [NuGet Package Metadata](nuget-package-metadata.md) - overview of the NuGet metadata and its uses by Squirrel.
+* [Naming sources](naming.md) - A more complete view of how Squirrel names everything.
 
 ---
 | Return: [Table of Contents](../readme.md) |
