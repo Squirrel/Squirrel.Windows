@@ -8,11 +8,11 @@ In addition to the [nuget-package-metadata](nuget-package-metadata.md), there ar
 ## Shortcut name
 1. Use `[assembly: AssemblyProduct("MyApp")` from your exe
 2. Squirrel Package `title`
-3. Use `[assembly: AssemblyDescription("MyApp")
+3. Use `[assembly: AssemblyDescription("MyApp")`
 4. Your exe filename
 
 ## Install location
-1. `%appdata%/<nugetpackageid>` - **NOTE** Using .'s in your pacakge id will cause issues
+1. `%appdata%/<nugetpackageid>` - **NOTE** Using .'s in your package id will cause issues
 
 ## Program and Features entry
 1. Squirrel Package `title` 
