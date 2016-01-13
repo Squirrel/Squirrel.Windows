@@ -663,7 +663,7 @@ namespace Squirrel.Update
 
             var candleParams = String.Format("-nologo -ext WixNetFxExtension -out \"{0}\" \"{1}\"", wxsTarget.Replace(".wxs", ".wixobj"), wxsTarget);
             var processResult = await Utility.InvokeProcessAsync(
-                Path.Combine(pathToWix, "candle.exe"), candleParams, CancellationToken.None);
+                Path.Combine(pathToWix, "candle.exe"), candleParams, CancellationToken.None, setupExeDir);
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
@@ -675,7 +675,7 @@ namespace Squirrel.Update
 
             var lightParams = String.Format("-ext WixNetFxExtension -sval -out \"{0}\" \"{1}\"", wxsTarget.Replace(".wxs", ".msi"), wxsTarget.Replace(".wxs", ".wixobj"));
             processResult = await Utility.InvokeProcessAsync(
-                Path.Combine(pathToWix, "light.exe"), lightParams, CancellationToken.None);
+                Path.Combine(pathToWix, "light.exe"), lightParams, CancellationToken.None, setupExeDir);
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
