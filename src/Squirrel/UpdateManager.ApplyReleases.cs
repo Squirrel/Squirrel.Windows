@@ -188,6 +188,7 @@ namespace Squirrel
                     }
 
                     sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
+                    sl.SetAppUserModelRelaunchCommand(String.Format("{0} {1}", sl.Target, sl.Arguments));
                     ret.Add(f, sl);
                 }
 
