@@ -227,7 +227,7 @@ namespace Squirrel
                     this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
 
                     ShellLink sl;
-                    this.ErrorIfThrows(() => {
+                    this.ErrorIfThrows(() => Utility.Retry(() => {
                         File.Delete(file);
 
                         sl = new ShellLink {
@@ -247,7 +247,7 @@ namespace Squirrel
 
                         this.Log().Info("About to save shortcut: {0} (target {1}, workingDir {2}, args {3})", file, sl.Target, sl.WorkingDirectory, sl.Arguments);
                         if (ModeDetector.InUnitTestRunner() == false) sl.Save(file);
-                    }, "Can't write shortcut: " + file);
+                    }, 4), "Can't write shortcut: " + file);
                 }
 
                 fixPinnedExecutables(zf.Version);
