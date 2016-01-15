@@ -462,6 +462,7 @@ namespace Squirrel
 
                 var resolveLink = new Func<FileInfo, ShellLink>(file => {
                     try {
+                        this.Log().Info("Examining Pin: " + file);
                         return new ShellLink(file.FullName);
                     } catch (Exception ex) {
                         var message = String.Format("File '{0}' could not be converted into a valid ShellLink", file.FullName);
@@ -470,13 +471,14 @@ namespace Squirrel
                     }
                 });
 
-                var shellLinks = (new DirectoryInfo(taskbarPath)).GetFiles("*.lnk")
-                    .Select(resolveLink)
-                    .Where(x => x != null && x.Target != null && x.Target.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase))
-                    .ToArray();
+                var shellLinks = (new DirectoryInfo(taskbarPath)).GetFiles("*.lnk").Select(resolveLink).ToArray();
 
                 foreach (var shortcut in shellLinks) {
                     try {
+                        if (shortcut == null) continue;
+                        if (String.IsNullOrWhiteSpace(shortcut.Target)) continue;
+                        if (!shortcut.Target.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) continue;
+
                         updateLink(shortcut, newAppPath);
                     } catch (Exception ex) {
                         var message = String.Format("fixPinnedExecutables: shortcut failed: {0}", shortcut.Target);
@@ -489,26 +491,45 @@ namespace Squirrel
             {
                 this.Log().Info("Processing shortcut '{0}'", shortcut.ShortCutFile);
 
+                var target = Environment.ExpandEnvironmentVariables(shortcut.Target);
+                var targetIsUpdateDotExe = target.EndsWith("update.exe", StringComparison.OrdinalIgnoreCase);
+
+                this.Log().Info("Old shortcut target: '{0}'", target);
+                if (!targetIsUpdateDotExe) {
+                    target = Path.Combine(newAppPath, Path.GetFileName(shortcut.Target));
+                }
+                this.Log().Info("New shortcut target: '{0}'", target);
+
                 shortcut.WorkingDirectory = newAppPath;
-                shortcut.Target = Path.Combine(newAppPath, Path.GetFileName(shortcut.Target));
+                shortcut.Target = target;
 
                 // NB: If the executable was in a previous version but not in this 
                 // one, we should disappear this pin.
-                if (!File.Exists(shortcut.Target)) {
-                    var tgt = shortcut.Target;
+                if (!File.Exists(target)) {
                     shortcut.Dispose();
-
-                    this.ErrorIfThrows(() => Utility.DeleteFileHarder(tgt), "Failed to delete outdated pinned shortcut to: " + tgt);
+                    this.ErrorIfThrows(() => Utility.DeleteFileHarder(target), "Failed to delete outdated pinned shortcut to: " + target);
+                    return;
                 }
 
-                shortcut.IconPath = Path.Combine(newAppPath, Path.GetFileName(shortcut.IconPath));
-                if (!File.Exists(shortcut.IconPath)) {
-                    this.Log().Warn("Tried to use {0} for icon path but didn't exist, falling back to EXE", shortcut.IconPath);
-                    shortcut.IconPath = shortcut.Target;
+                this.Log().Info("Old iconPath is: '{0}'", shortcut.IconPath);
+                var iconPath = Path.Combine(newAppPath, Path.GetFileName(shortcut.IconPath));
+                if (!File.Exists(iconPath) && targetIsUpdateDotExe) {
+                    var executable = shortcut.Arguments.Replace("--processStart ", "");
+                    iconPath = Path.Combine(newAppPath, executable);
+                }
+
+                this.Log().Info("Setting iconPath to: '{0}'", iconPath);
+                shortcut.IconPath = iconPath;
+
+                if (!File.Exists(iconPath)) {
+                    this.Log().Warn("Tried to use {0} for icon path but didn't exist, falling back to EXE", iconPath);
+
+                    shortcut.IconPath = target;
                     shortcut.IconIndex = 0;
                 }
 
                 this.ErrorIfThrows(() => Utility.Retry(() => shortcut.Save(), 2), "Couldn't write shortcut " + shortcut.ShortCutFile);
+                this.Log().Info("Finished shortcut successfully");
             }
 
             internal void unshimOurselves()
