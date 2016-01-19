@@ -177,7 +177,7 @@ namespace Squirrel
             }
         }
 
-        public static Task<Tuple<int, string>> InvokeProcessAsync(string fileName, string arguments, CancellationToken ct)
+        public static Task<Tuple<int, string>> InvokeProcessAsync(string fileName, string arguments, CancellationToken ct, string workingDirectory = "")
         {
             var psi = new ProcessStartInfo(fileName, arguments);
             if (Environment.OSVersion.Platform != PlatformID.Win32NT && fileName.EndsWith (".exe", StringComparison.OrdinalIgnoreCase)) {
@@ -190,6 +190,7 @@ namespace Squirrel
             psi.CreateNoWindow = true;
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
+            psi.WorkingDirectory = workingDirectory;
 
             return InvokeProcessAsync(psi, ct);
         }
