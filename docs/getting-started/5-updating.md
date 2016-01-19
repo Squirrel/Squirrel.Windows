@@ -17,7 +17,8 @@ To release a new update, you must first build, pack, and releasify your updated 
    	**`Properties\AssemblyInfo.cs`**
    
    	~~~cs
-  	[assembly: AssemblyVersion("1.0.1")]	[assembly: AssemblyFileVersion("1.0.1")]
+  	[assembly: AssemblyVersion("1.0.1")]
+	[assembly: AssemblyFileVersion("1.0.1")]
    	~~~
 2. **Switch to Release** - switch your build configuration to `Release`.
 3. **Build MyApp** - build your application to ensure the latest changes are included in the package we will be creating.
@@ -39,7 +40,7 @@ Use the [Package Manager Console](https://docs.NuGet.org/consume/package-manager
 PM> Squirrel --releasify MyApp.1.0.1.nupkg
 ~~~ 
 
-**Tip:** If you get an error stating that `...'Squirrel' is not recognized...` then you may simply need to restart Visual Studio so the `Package Manager Console` will have loaded all the package tools. This behavior has been seen on the Community Edition of VS 2013.
+**Tip:** If you get an error stating that `...'Squirrel' is not recognized...` then you may simply need to restart Visual Studio so the `Package Manager Console` will have loaded all the package tools. This behavior has been seen on the Community Edition of VS 2013 and 2015.
 
 #### Releasify Output
 
