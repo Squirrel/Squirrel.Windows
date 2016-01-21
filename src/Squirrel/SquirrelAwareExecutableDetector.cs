@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using Mono.Cecil;
 
 namespace Squirrel
 {
@@ -36,20 +35,21 @@ namespace Squirrel
         static int? GetAssemblySquirrelAwareVersion(string executable)
         {
             try {
-                var assembly = AssemblyDefinition.ReadAssembly(executable);
-                if (!assembly.HasCustomAttributes) return null;
+                Assembly assembly = Assembly.LoadFile(executable);
+                object[] attributes = assembly.GetCustomAttributes(typeof(AssemblyMetadataAttribute), false);
+                if (attributes == null || attributes.Length == 0)
+                    return null;
 
-                var attrs = assembly.CustomAttributes;
-                var attribute = attrs.FirstOrDefault(x => {
-                    if (x.AttributeType.FullName != typeof(AssemblyMetadataAttribute).FullName) return false;
-                    if (x.ConstructorArguments.Count != 2) return false;
-                    return x.ConstructorArguments[0].Value.ToString() == "SquirrelAwareVersion";
-                });
+                AssemblyMetadataAttribute attribute = null;
+                if (attributes.Length > 0)
+                {
+                    attribute = attributes[0] as AssemblyMetadataAttribute;
+                }
 
                 if (attribute == null) return null;
 
                 int result;
-                if (!Int32.TryParse(attribute.ConstructorArguments[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out result)) {
+                if (!Int32.TryParse(attribute.Value, NumberStyles.Integer, CultureInfo.CurrentCulture, out result)) {
                     return null;
                 }
 
