@@ -12,6 +12,16 @@ namespace Squirrel
 {
     static class SquirrelAwareExecutableDetector
     {
+        static SquirrelAwareExecutableDetector()
+        {
+            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += new ResolveEventHandler(ReflectionOnlyAssemblyResolve);
+        }
+
+        static Assembly ReflectionOnlyAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            return Assembly.ReflectionOnlyLoad(args.Name);
+        }
+
         public static List<string> GetAllSquirrelAwareApps(string directory, int minimumVersion = 1)
         {
             var di = new DirectoryInfo(directory);
@@ -35,10 +45,10 @@ namespace Squirrel
         static int? GetAssemblySquirrelAwareVersion(string executable)
         {
             try {
-                //ReflectionOnlyLoadFrom to load assembly without dependencies in isolated reflection-only context
                 Assembly assembly = Assembly.ReflectionOnlyLoadFrom(executable);
 
-                var attributeDataList = CustomAttributeData.GetCustomAttributes(assembly);
+                //assembly.GetCustomAttributes() does not work on ReflectionOnlyLoaded assembly :(
+                var attributeDataList = assembly.GetCustomAttributesData();
                 if (attributeDataList == null || attributeDataList.Count == 0)
                     return null;
 
@@ -56,7 +66,7 @@ namespace Squirrel
 
                 }
                 return null;
-            } 
+            }
             catch (FileLoadException) { return null; }
             catch (BadImageFormatException) { return null; }
         }
