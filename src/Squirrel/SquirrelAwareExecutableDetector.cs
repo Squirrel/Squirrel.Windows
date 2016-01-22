@@ -35,25 +35,27 @@ namespace Squirrel
         static int? GetAssemblySquirrelAwareVersion(string executable)
         {
             try {
-                Assembly assembly = Assembly.LoadFile(executable);
-                object[] attributes = assembly.GetCustomAttributes(typeof(AssemblyMetadataAttribute), false);
-                if (attributes == null || attributes.Length == 0)
+                //ReflectionOnlyLoadFrom to load assembly without dependencies in isolated reflection-only context
+                Assembly assembly = Assembly.ReflectionOnlyLoadFrom(executable);
+
+                var attributeDataList = CustomAttributeData.GetCustomAttributes(assembly);
+                if (attributeDataList == null || attributeDataList.Count == 0)
                     return null;
 
-                AssemblyMetadataAttribute attribute = null;
-                if (attributes.Length > 0)
-                {
-                    attribute = attributes[0] as AssemblyMetadataAttribute;
+                foreach (var attributeData in attributeDataList.Where(ad => ad.AttributeType == typeof(AssemblyMetadataAttribute))){
+                    var constructorArguments = attributeData.ConstructorArguments;
+                    if (constructorArguments[0].Value as string == "SquirrelAwareVersion"){
+                        int result;
+                        if (!Int32.TryParse(constructorArguments[1].Value as string, NumberStyles.Integer, CultureInfo.CurrentCulture, out result))
+                        {
+                            return null;
+                        }
+
+                        return result;
+                    }
+
                 }
-
-                if (attribute == null) return null;
-
-                int result;
-                if (!Int32.TryParse(attribute.Value, NumberStyles.Integer, CultureInfo.CurrentCulture, out result)) {
-                    return null;
-                }
-
-                return result;
+                return null;
             } 
             catch (FileLoadException) { return null; }
             catch (BadImageFormatException) { return null; }
