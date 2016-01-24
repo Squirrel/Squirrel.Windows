@@ -63,7 +63,7 @@ The `Squirrel --releasify` command completes the following:
 * **Create `Releases` Directory** - creates a Releases directory (in the `MyApp.sln` directory by default). 
 * **Create `Setup.exe`** - creates a `Setup.exe` file which includes the latest version of the application to be installed. * **Create `RELEASES` File** - creates a file that provides a list of all release files for MyApp to be used during the update process
 * **Create `MyApp.1.0.0-full.nupkg`** - copies the package you created to the `Releases` directory.
-* **Create `MyApp.*.*.*-delta.nupkg`** - if you are releasing an update, releasify creates a delta file package to reduce the update package size (see [5. Updating](5-updating.md) for details).
+* **Create `MyApp.*.*.*-delta.nupkg`** - if you are releasing an update, releasify creates a delta file package to reduce the update package size (see [Updating](5-updating.md) for details).
 
 **`C:\Projects\MyApp\Releases`**
 
