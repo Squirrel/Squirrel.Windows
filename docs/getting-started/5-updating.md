@@ -39,7 +39,7 @@ Use the [Package Manager Console](https://docs.NuGet.org/consume/package-manager
 PM> Squirrel --releasify MyApp.1.0.1.nupkg
 ~~~ 
 
-**Tip:** If you get an error stating that `...'Squirrel' is not recognized...` then you may simply need to restart Visual Studio so the `Package Manager Console` will have loaded all the package tools. This behavior has been seen on the Community Edition of VS 2013.
+**Tip:** If you get an error stating that `...'Squirrel' is not recognized...` then you may simply need to restart Visual Studio so the `Package Manager Console` will have loaded all the package tools. This behavior has been seen on the Community Edition of VS 2013 and 2015.
 
 #### Releasify Output
 

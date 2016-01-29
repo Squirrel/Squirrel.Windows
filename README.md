@@ -25,6 +25,16 @@ Refer to our full list of goals for [integrating, packaging, distributing, insta
 
 See the documentation [Table of Contents](docs/readme.md) for an overview of the available documentation for Squirrel.Windows. It includes a [Getting Started Guide](docs/getting-started/0-overview.md) as well as additional topics related to using Squirrel in your applications. 
 
+## Building Squirrel
+For the impatient:
+
+```sh
+git clone https://github.com/squirrel/squirrel.windows
+git submodule update --init --recursive       ## THIS IS THE PART YOU PROBABLY FORGOT
+.\.NuGet\NuGet.exe restore
+msbuild /p:Configuration=Release
+```
+See [Contributing](docs/contributing/contributing.md) for additional information on building and contributing to Squirrel.
 
 ## License and Usage
 
