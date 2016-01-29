@@ -35,6 +35,7 @@ The **[Getting Started Guide](getting-started/0-overview.md)** provides a step-b
   * [Machine-wide Installs](using/machine-wide-installs.md) - generating an MSI file suitable for installation via Group Policy.
   * [Debugging Installs](using/debugging-installs.md) - tips for debugging Squirrel.Windows initial installs.
 * **Packaging** - documentation related to packaging app files and preparing them for release.
+  * [Naming Conventions](using/naming.md) - overview of sources used in naming (e.g., shortcut name).
   * [NuGet Package Metadata](using/nuget-package-metadata.md) - overview of the NuGet metadata and its uses by Squirrel.
   * [Squirrel Command Line](using/squirrel-command-line.md) - command line options for `Squirrel --releasify`
   * [Delta Packages](using/delta-packages.md) - an overview of how `Squirrel.exe` creates delta packages.
