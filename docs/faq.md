@@ -39,9 +39,11 @@ Yes you can, see [Microsoft IIS](using/microsoft-iis.md) for details.
 C:\>%LocalAppData\MyApp\Update.exe
 This program is blocked by group policy. For more information, contact your system administrator.
   ```
-
+  
   The best course of action is to request that executables for Squirrel and your application be whitelisted by your corporate overlords.
-
+  
+4. **No Shortcuts are Created for my Application**
+   Verify that the NuGet Package Metadata `id` property doesn't have a [space or \[dot\]](https://github.com/Squirrel/Squirrel.Windows/issues/530) in it.
 
 ## Updating
 
