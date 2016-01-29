@@ -1,5 +1,5 @@
-
-# More Packaging
+| [docs](..)  / [using](.) / octopack.md
+|:---|
 
 # Using OctoPack
 
@@ -16,6 +16,7 @@ You'll then need to add a files specification to match Squirrel's expected .nupk
 ~~~
 
 If you're building using Visual Studio, you will also need to edit your .csproj file to include a property group.
+
 ~~~
   <PropertyGroup>
     <RunOctoPack>true</RunOctoPack>
@@ -23,3 +24,10 @@ If you're building using Visual Studio, you will also need to edit your .csproj 
 ~~~
 
 If you're using a build server, see OctoPack's guides on how to trigger it to be run.
+
+---
+| Return: [Table of Contents](../readme.md) |
+|----|
+
+
+

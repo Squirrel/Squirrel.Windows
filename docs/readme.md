@@ -36,6 +36,7 @@ The **[Getting Started Guide](getting-started/0-overview.md)** provides a step-b
   * [Debugging Installs](using/debugging-installs.md) - tips for debugging Squirrel.Windows initial installs.
 * **Packaging** - documentation related to packaging app files and preparing them for release.
   * [NuGet Package Metadata](using/nuget-package-metadata.md) - overview of the NuGet metadata and its uses by Squirrel.
+  * [Using OctoPack](using/octopack.md) - steps to use OctoPack to build the source NuGet package to provide to `squirrel --releasify`.
   * [Squirrel Command Line](using/squirrel-command-line.md) - command line options for `Squirrel --releasify`
   * [Delta Packages](using/delta-packages.md) - an overview of how `Squirrel.exe` creates delta packages.
   * [Application Signing](using/application-signing.md) - adding code signing to `Setup.exe` and your application.
