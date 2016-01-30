@@ -15,7 +15,7 @@ For simplicity, any unneeded references and files have been removed from the sol
 
 ![](images/1-MyApp-Solution.png)
 
-If you wish to follow along, you can [download](Example/MyApp.zip) a zip file of the MyApp solution.
+If you wish to follow along, you can [download](example/MyApp.zip) a zip file of the MyApp solution.
 
 ## Overview
 This guide will go over the following steps to demonstrate using Squirrel.Windows to distribute and update MyApp.
