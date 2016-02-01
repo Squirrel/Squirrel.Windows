@@ -15,6 +15,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_ LPWSTR lpCmdLine,
                       _In_ int nCmdShow)
 {
+	// Attempt to mitigate http://textslashplain.com/2015/12/18/dll-hijacking-just-wont-die
+	SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+
 	int exitCode = -1;
 	CString cmdLine(lpCmdLine);
 
