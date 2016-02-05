@@ -89,6 +89,7 @@ namespace Squirrel
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
+            this.KillAllExecutablesBelongingToPackage();
             await applyReleases.FullUninstall();
         }
 
