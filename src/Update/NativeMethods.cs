@@ -35,12 +35,6 @@ namespace Squirrel.Update
         public static extern int NtQueryInformationProcess(IntPtr hProcess, PROCESSINFOCLASS pic, ref PROCESS_BASIC_INFORMATION pbi, int cb, out int pSize);
 
         [DllImport("kernel32.dll", SetLastError=true)]
-        public static extern IntPtr OpenProcess(ProcessAccess dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, int dwProcessId);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(IntPtr hHandle);
-
-        [DllImport("kernel32.dll", SetLastError=true)]
         public static extern UInt32 WaitForSingleObject(IntPtr hHandle, UInt32 dwMilliseconds);
 
         [DllImport("kernel32.dll", EntryPoint = "GetStdHandle")]
