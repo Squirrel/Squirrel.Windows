@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Win32;
 using NuGet;
 using Splat;
+using System.Reflection;
 
 namespace Squirrel
 {
@@ -100,6 +101,38 @@ namespace Squirrel
                 }
 
                 return key;
+            }
+
+            public void KillAllProcessesBelongingToPackage(string rootAppDirectory, List<string> executablesInPackage)
+            {
+                var executableLookup = executablesInPackage.Aggregate(new HashSet<string>(), (acc, x) => {
+                    // Plz don't kill Squirrel while in Squirrel lol
+                    if (x.Equals("squirrel.exe", StringComparison.OrdinalIgnoreCase)) return acc;
+                    if (x.Equals("update.exe", StringComparison.OrdinalIgnoreCase)) return acc;
+
+                    acc.Add(x.ToLowerInvariant());
+                    return acc;
+                });
+
+                var ourExe = Assembly.GetEntryAssembly();
+                var ourExePath = ourExe != null ? ourExe.Location : null;
+
+                UnsafeUtility.EnumerateProcesses()
+                    .Where(x => {
+                        // Processes we can't query will have an empty process name, we can't kill them
+                        // anyways
+                        if (String.IsNullOrWhiteSpace(x.Item1)) return false;
+
+                        // Files that aren't in our root app directory are untouched
+                        if (!x.Item1.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) return false;
+
+                        // Never kill our own EXE
+                        if (ourExePath != null && x.Item1.Equals(ourExePath, StringComparison.OrdinalIgnoreCase)) return false;
+
+                        var name = Path.GetFileName(x.Item1).ToLowerInvariant();
+                        return executableLookup.Contains(name);
+                    })
+                    .ForEach(x => Process.GetProcessById(x.Item2).Kill());
             }
 
             public Task<RegistryKey> CreateUninstallerRegistryEntry()
