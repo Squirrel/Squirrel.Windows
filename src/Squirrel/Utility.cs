@@ -602,9 +602,10 @@ namespace Squirrel
             }
 
             return Enumerable.Range(0, length)
+                .Where(i => pids[i] > 0)
                 .Select(i => {
                     try {
-                        var hProcess = NativeMethods.OpenProcess(NativeMethods.ProcessAccessFlags.QueryLimitedInformation, false, pids[i]);
+                        var hProcess = NativeMethods.OpenProcess(ProcessAccess.QueryLimitedInformation, false, pids[i]);
                         if (hProcess == IntPtr.Zero) throw new Win32Exception();
 
                         var sb = new StringBuilder(256);
