@@ -131,6 +131,14 @@ namespace Squirrel.Tests.Core
             }
         }
 
+        [Fact]
+        public void WeCanFetchAllProcesses()
+        {
+            var result = UnsafeUtility.EnumerateProcesses();
+            Assert.True(result.Count > 1);
+            Assert.True(result.Count != 2048);
+        }
+
         static void CreateSampleDirectory(string directory)
         {
             Random prng = new Random();

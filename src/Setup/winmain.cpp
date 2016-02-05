@@ -10,13 +10,19 @@
 
 CAppModule _Module;
 
+typedef BOOL(WINAPI *SetDefaultDllDirectoriesFunction)(DWORD DirectoryFlags);
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_opt_ HINSTANCE hPrevInstance,
                       _In_ LPWSTR lpCmdLine,
                       _In_ int nCmdShow)
 {
 	// Attempt to mitigate http://textslashplain.com/2015/12/18/dll-hijacking-just-wont-die
-	SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+	HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
+	ATLASSERT(hKernel32 != NULL);
+
+	SetDefaultDllDirectoriesFunction pfn = (SetDefaultDllDirectoriesFunction) GetProcAddress(hKernel32, "SetDefaultDllDirectories");
+	if (pfn) { (*pfn)(LOAD_LIBRARY_SEARCH_SYSTEM32); }
 
 	int exitCode = -1;
 	CString cmdLine(lpCmdLine);

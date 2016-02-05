@@ -586,6 +586,44 @@ namespace Squirrel
         }
     }
 
+    static unsafe class UnsafeUtility
+    {
+        public static List<Tuple<string, int>> EnumerateProcesses()
+        {
+            int length = 0;
+            var pids = new int[2048];
+
+            fixed(int* p = pids) {
+                if (!NativeMethods.EnumProcesses((IntPtr)p, sizeof(int) * pids.Length, out length)) {
+                    throw new Win32Exception("Failed to enumerate processes");
+                }
+
+                if (length < 1) throw new Exception("Failed to enumerate processes");
+            }
+
+            return Enumerable.Range(0, length)
+                .Where(i => pids[i] > 0)
+                .Select(i => {
+                    try {
+                        var hProcess = NativeMethods.OpenProcess(ProcessAccess.QueryLimitedInformation, false, pids[i]);
+                        if (hProcess == IntPtr.Zero) throw new Win32Exception();
+
+                        var sb = new StringBuilder(256);
+                        var capacity = sb.Capacity;
+                        if (!NativeMethods.QueryFullProcessImageName(hProcess, 0, sb, ref capacity)) {
+                            throw new Win32Exception();
+                        }
+
+                        NativeMethods.CloseHandle(hProcess);
+                        return Tuple.Create(sb.ToString(), pids[i]);
+                    } catch (Exception) {
+                        return Tuple.Create(default(string), pids[i]);
+                    }
+                })
+                .ToList();
+        }
+    }
+
     sealed class SingleGlobalInstance : IDisposable, IEnableLogger
     {
         IDisposable handle = null;
