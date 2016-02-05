@@ -125,7 +125,11 @@ namespace Squirrel
 
                         return true;
                     })
-                    .ForEach(x => Process.GetProcessById(x.Item2).Kill());
+                    .ForEach(x => {
+                        try {
+                            this.WarnIfThrows(() => Process.GetProcessById(x.Item2).Kill());
+                        } catch {}
+                    });
             }
 
             public Task<RegistryKey> CreateUninstallerRegistryEntry()
