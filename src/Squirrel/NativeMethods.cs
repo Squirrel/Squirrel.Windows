@@ -57,11 +57,12 @@ namespace Squirrel
             int cb,
             out int pBytesReturned);
 
-        [DllImport("psapi.dll", SetLastError=true)]
-        public static extern int GetProcessImageFileName(
+        [DllImport("kernel32.dll", SetLastError=true)]
+        public static extern bool QueryFullProcessImageName(
             IntPtr hProcess, 
+            [In] int justPassZeroHere,
             [Out] StringBuilder lpImageFileName, 
-            [In] [MarshalAs(UnmanagedType.U4)] int nSize);
+            [In] [MarshalAs(UnmanagedType.U4)] ref int nSize);
 
         [DllImport("kernel32.dll", SetLastError=true)]
         public static extern IntPtr OpenProcess(

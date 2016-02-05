@@ -609,7 +609,8 @@ namespace Squirrel
                         if (hProcess == IntPtr.Zero) throw new Win32Exception();
 
                         var sb = new StringBuilder(256);
-                        if (NativeMethods.GetProcessImageFileName(hProcess, sb, sb.Capacity) < 1) {
+                        var capacity = sb.Capacity;
+                        if (!NativeMethods.QueryFullProcessImageName(hProcess, 0, sb, ref capacity)) {
                             throw new Win32Exception();
                         }
 
