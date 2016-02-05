@@ -145,6 +145,12 @@ namespace Squirrel
             return appDirName.ToSemanticVersion();
         }
 
+        public void KillAllExecutablesBelongingToPackage()
+        {
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            installHelpers.KillAllProcessesBelongingToPackage();
+        }
+
         public string ApplicationName {
             get { return applicationName; }
         }

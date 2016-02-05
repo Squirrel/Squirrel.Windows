@@ -103,17 +103,8 @@ namespace Squirrel
                 return key;
             }
 
-            public void KillAllProcessesBelongingToPackage(string rootAppDirectory, List<string> executablesInPackage)
+            public void KillAllProcessesBelongingToPackage()
             {
-                var executableLookup = executablesInPackage.Aggregate(new HashSet<string>(), (acc, x) => {
-                    // Plz don't kill Squirrel while in Squirrel lol
-                    if (x.Equals("squirrel.exe", StringComparison.OrdinalIgnoreCase)) return acc;
-                    if (x.Equals("update.exe", StringComparison.OrdinalIgnoreCase)) return acc;
-
-                    acc.Add(x.ToLowerInvariant());
-                    return acc;
-                });
-
                 var ourExe = Assembly.GetEntryAssembly();
                 var ourExePath = ourExe != null ? ourExe.Location : null;
 
@@ -130,7 +121,9 @@ namespace Squirrel
                         if (ourExePath != null && x.Item1.Equals(ourExePath, StringComparison.OrdinalIgnoreCase)) return false;
 
                         var name = Path.GetFileName(x.Item1).ToLowerInvariant();
-                        return executableLookup.Contains(name);
+                        if (name == "squirrel.exe" || name == "update.exe") return false;
+
+                        return true;
                     })
                     .ForEach(x => Process.GetProcessById(x.Item2).Kill());
             }
