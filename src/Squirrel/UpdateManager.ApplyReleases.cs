@@ -511,20 +511,23 @@ namespace Squirrel
                 }
 
                 this.Log().Info("Old iconPath is: '{0}'", shortcut.IconPath);
-                var iconPath = Path.Combine(newAppPath, Path.GetFileName(shortcut.IconPath));
-                if (!File.Exists(iconPath) && targetIsUpdateDotExe) {
-                    var executable = shortcut.Arguments.Replace("--processStart ", "");
-                    iconPath = Path.Combine(newAppPath, executable);
-                }
+                if (!File.Exists(shortcut.IconPath) || shortcut.IconPath.IndexOf("app-", StringComparison.OrdinalIgnoreCase) > 1) {
+                    var iconPath = Path.Combine(newAppPath, Path.GetFileName(shortcut.IconPath));
 
-                this.Log().Info("Setting iconPath to: '{0}'", iconPath);
-                shortcut.IconPath = iconPath;
+                    if (!File.Exists(iconPath) && targetIsUpdateDotExe) {
+                        var executable = shortcut.Arguments.Replace("--processStart ", "");
+                        iconPath = Path.Combine(newAppPath, executable);
+                    }
 
-                if (!File.Exists(iconPath)) {
-                    this.Log().Warn("Tried to use {0} for icon path but didn't exist, falling back to EXE", iconPath);
+                    this.Log().Info("Setting iconPath to: '{0}'", iconPath);
+                    shortcut.IconPath = iconPath;
 
-                    shortcut.IconPath = target;
-                    shortcut.IconIndex = 0;
+                    if (!File.Exists(iconPath)) {
+                        this.Log().Warn("Tried to use {0} for icon path but didn't exist, falling back to EXE", iconPath);
+
+                        shortcut.IconPath = target;
+                        shortcut.IconIndex = 0;
+                    }
                 }
 
                 this.ErrorIfThrows(() => Utility.Retry(() => shortcut.Save(), 2), "Couldn't write shortcut " + shortcut.ShortCutFile);
