@@ -26,15 +26,22 @@ If you are writing a C# app, it is **highly encouraged** to use the `SquirrelAwa
 ```cs
 static bool ShowTheWelcomeWizard;
 ...
-using (var mgr = new UpdateManager(updateUrl))
+static int Main(string[] args) 
 {
-    // Note, in most of these scenarios, the app exits after this method
-    // completes!
-    SquirrelAwareApp.HandleEvents(
-      onInitialInstall: v => mgr.CreateShortcutForThisExe(),
-      onAppUpdate: v => mgr.CreateShortcutForThisExe(),
-      onAppUninstall: v => mgr.RemoveShortcutForThisExe(),
-      onFirstRun: () => ShowTheWelcomeWizard = true);
+    // NB: Note here that HandleEvents is being called as early in startup
+    // as possible in the app. This is very important! Do _not_ call this
+    // method as part of your app's "check for updates" code.
+
+    using (var mgr = new UpdateManager(updateUrl))
+    {
+        // Note, in most of these scenarios, the app exits after this method
+        // completes!
+        SquirrelAwareApp.HandleEvents(
+          onInitialInstall: v => mgr.CreateShortcutForThisExe(),
+          onAppUpdate: v => mgr.CreateShortcutForThisExe(),
+          onAppUninstall: v => mgr.RemoveShortcutForThisExe(),
+          onFirstRun: () => ShowTheWelcomeWizard = true);
+    }
 }
 ```
 
