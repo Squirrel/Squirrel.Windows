@@ -147,6 +147,10 @@ namespace Squirrel
                 // this folder - if we don't do this, users who "accidentally" run as 
                 // administrator will find the app reinstalling itself on every
                 // reboot
+                if (!Directory.Exists(rootAppDirectory)) {
+                    Directory.CreateDirectory(rootAppDirectory);
+                }
+
                 File.WriteAllText(Path.Combine(rootAppDirectory, ".dead"), " ");
             }
 
