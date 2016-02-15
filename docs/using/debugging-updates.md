@@ -26,8 +26,10 @@ Executing MyApp from Visual Studio will now cause it to complete the update proc
 You can catch thrown exceptions and log the results. 
 
 ~~~cs
-Task.Run(async () =>{    try    {        using (var mgr = new UpdateManager("C:\\Projects\\MyApp\\Releases"))        {            await mgr.UpdateApp();        }    }    catch (Exception ex)    {
-    	 // perform logging here or inform user here...    }});
+using (var mgr = new UpdateManager("C:\\Projects\\MyApp\\Releases"))
+{
+    await mgr.UpdateApp();
+}
 ~~~
 
 Alternatively, set up Splat Logging, see [here](https://github.com/Squirrel/Squirrel.Windows.Next/blob/6d7ae23602a3d9a7636265403d42c1090260e6dc/src/Update/Program.cs#L53) for an example.
