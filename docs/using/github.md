@@ -47,7 +47,10 @@ using Squirrel;
 **`static void Main()`**
 
 ~~~cs
-Task task = Task.Run(async () =>{    using (var mgr = UpdateManager.GitHubUpdateManager("https://github.com/myuser/myapp"))    {        await mgr.Result.UpdateApp();    }});
+using (var mgr = UpdateManager.GitHubUpdateManager("https://github.com/myuser/myapp"))
+{
+  await mgr.Result.UpdateApp();
+}
 ~~~
 
 **Tip:** You can also specify that the update manager should use `prerelease` for updating (see method signature for details).
