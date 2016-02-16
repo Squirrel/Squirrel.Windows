@@ -138,7 +138,9 @@ namespace Squirrel
                     }
                 }
 
-                fixPinnedExecutables(new SemanticVersion(255, 255, 255, 255));
+                try {
+                    this.ErrorIfThrows(() => fixPinnedExecutables(new SemanticVersion(255, 255, 255, 255), true));
+                } catch { }
 
                 await this.ErrorIfThrows(() => Utility.DeleteDirectoryOrJustGiveUp(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
@@ -444,7 +446,7 @@ namespace Squirrel
                     .ForEach(info => Process.Start(info));
             }
 
-            void fixPinnedExecutables(SemanticVersion newCurrentVersion)
+            void fixPinnedExecutables(SemanticVersion newCurrentVersion, bool removeAll = false)
             {
                 if (Environment.OSVersion.Version < new Version(6, 1)) {
                     this.Log().Warn("fixPinnedExecutables: Found OS Version '{0}', exiting...", Environment.OSVersion.VersionString);
@@ -482,7 +484,12 @@ namespace Squirrel
                         if (String.IsNullOrWhiteSpace(shortcut.Target)) continue;
                         if (!shortcut.Target.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) continue;
 
-                        updateLink(shortcut, newAppPath);
+                        if (removeAll) {
+                            Utility.DeleteFileHarder(shortcut.ShortCutFile);
+                        } else {
+                            updateLink(shortcut, newAppPath);
+                        }
+
                     } catch (Exception ex) {
                         var message = String.Format("fixPinnedExecutables: shortcut failed: {0}", shortcut.Target);
                         this.Log().ErrorException(message, ex);
