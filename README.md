@@ -30,6 +30,7 @@ For the impatient:
 
 ```sh
 git clone https://github.com/squirrel/squirrel.windows
+cd squirrel.windows
 git submodule update --init --recursive       ## THIS IS THE PART YOU PROBABLY FORGOT
 .\.NuGet\NuGet.exe restore
 msbuild /p:Configuration=Release
