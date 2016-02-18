@@ -26,7 +26,7 @@ If you're building using Visual Studio, you will also need to edit your .csproj 
 If you're using a build server, see OctoPack's guides on how to trigger it to be run.
 
 ---
-| Return: [Table of Contents](../readme.md) |
+| Return: [Packaging Tools](packaging-tools.md) |
 |----|
 
 
