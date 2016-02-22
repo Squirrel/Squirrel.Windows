@@ -9,7 +9,7 @@ namespace Squirrel.Update
 {
     public static class CopStache
     {
-    	//qwew
+    	//qwew  123
         public static string Render(string template, Dictionary<string, string> identifiers)
         {
             var buf = new StringBuilder();
