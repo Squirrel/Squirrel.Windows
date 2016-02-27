@@ -14,10 +14,9 @@ namespace Squirrel
             }
 
             var children = typesElement.ChildNodes.OfType<XmlElement>();
-            for (var child in children)
-            {
-                if (child.GetAttribute("Extension") == "")
-                {
+
+            foreach (var child in children) {
+                if (child.GetAttribute("Extension") == "") {
                     typesElement.RemoveChild(child);
                 }
             }
