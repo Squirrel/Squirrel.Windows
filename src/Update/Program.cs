@@ -658,6 +658,7 @@ namespace Squirrel.Update
                 { "Id", package.Id },
                 { "Title", package.Title },
                 { "Author", company },
+                { "Version", package.Version.ToString() },
                 { "Summary", package.Summary ?? package.Description ?? package.Id },
             });
 
