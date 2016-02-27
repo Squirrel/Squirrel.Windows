@@ -17,6 +17,7 @@ using Squirrel.Json;
 using System.Drawing;
 using System.Windows;
 using NuGet;
+using System.Text.RegularExpressions;
 
 namespace Squirrel.Update
 {
@@ -658,7 +659,7 @@ namespace Squirrel.Update
                 { "Id", package.Id },
                 { "Title", package.Title },
                 { "Author", company },
-                { "Version", package.Version.ToString() },
+                { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
                 { "Summary", package.Summary ?? package.Description ?? package.Id },
             });
 
