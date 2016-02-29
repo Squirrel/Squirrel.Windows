@@ -24,7 +24,7 @@ The first step in preparing the application for distribution is to build the app
 
 Squirrel uses [NuGet](https://www.NuGet.org/) for bundling application files and various application properties (e.g., application name, version, description) in a single release package.
 
-Section [NuGet Package Metadata](../using/nuget-package-metadata.md) provides additional details on using NuGet and `.nuspec` files to automate the packing of your application. We will be going through the process using the [NuGet Package Explorer](https://npe.codeplex.com/) to manually create a NuGet package.
+Section [NuGet Package Metadata](../using/nuget-package-metadata.md) provides additional details on using NuGet and `.nuspec` files to automate the packing of your application. We will be going through the process using the [NuGet Package Explorer](https://github.com/NuGetPackageExplorer/NuGetPackageExplorer) to manually create a NuGet package.
 
 1. **Creating a New NuGet Package** - the first step is to create a new NuGet package.
 2. **Edit Metadata** - update package metadata for MyApp.
