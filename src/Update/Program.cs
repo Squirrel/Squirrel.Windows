@@ -207,7 +207,7 @@ namespace Squirrel.Update
                     this.Log().Warn("Install path {0} already exists, burning it to the ground", mgr.RootAppDirectory);
 
                     mgr.KillAllExecutablesBelongingToPackage();
-                    await Task.Delay(250);
+                    await Task.Delay(500);
 
                     await this.ErrorIfThrows(() => Utility.DeleteDirectory(mgr.RootAppDirectory),
                         "Failed to remove existing directory on full install, is the app still running???");
