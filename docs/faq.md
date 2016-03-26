@@ -11,6 +11,14 @@ Frequently Asked Questions for Squirrel.Windows, organized by area below.
    Yes, you can package a non-c# application in the same manner as described in the Getting Started guide. For additional customization, see [custom squirrel events for non-c# apps](using/custom-squirrel-events-non-CS.md).  
 1. **How do I migrate a ClickOnce app to Squirrel?**  
    You may want to look into the [ClickOnceToSquirrelMigrator](https://github.com/flagbug/ClickOnceToSquirrelMigrator) migration helper.
+1. **How can I determine if my app is a Squirrel app? I provide a squirrel and non-squirrel install version and want to know which is running.**  
+   You can check for the `Update.exe` in the parent directory to determine if the app is using Squirrel ([see #574](https://github.com/Squirrel/Squirrel.Windows/issues/574#issuecomment-176043311)).
+   
+   ```
+var assembly = Assembly.GetEntryAssembly();   
+var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), '..', 'Update.exe');
+var isInstalled = File.Exists(updateDotExe);
+   ```
 
 ## Packaging
 
@@ -43,7 +51,10 @@ This program is blocked by group policy. For more information, contact your syst
   The best course of action is to request that executables for Squirrel and your application be whitelisted by your corporate overlords.
 4. **No Shortcuts are Created for my Application**
    Verify that the NuGet Package Metadata `id` property doesn't have a [space or \[dot\]](https://github.com/Squirrel/Squirrel.Windows/issues/530) in it.
-
+5. **Can I use a different name for the `Setup.exe` install application?**  
+   Yes, you can rename the `Setup.exe` to what ever you wish (e.g., `MyAppSetup.exe`) ([see #611](https://github.com/Squirrel/Squirrel.Windows/issues/611))
+6. **Virus scanner is returning false positives on `MyApp.exe` or `Update.exe`. What can I do?**  
+   [Application Signing](using/application-signing.md) will help. In addition, you can submit false positives to the various antivirus authors (e.g., [Symantec](https://submit.symantec.com/false_positive/), [Microsoft](https://www.microsoft.com/security/portal/Submission/Submit.aspx), [AVG](http://www.avg.com/submit-sample), [Comodo](https://www.comodo.com/home/internet-security/submit.php), [McAfee](https://support.mcafeesaas.com/MCAFEE/_cs/AnswerDetail.aspx?aid=65), [List of Submission Locations](http://www.techsupportalert.com/content/how-report-malware-or-false-positives-multiple-antivirus-vendors.htm), [see #218](https://github.com/Squirrel/Squirrel.Windows/issues/218#issuecomment-166406180)).
 
 ## Updating
 
