@@ -112,6 +112,36 @@ namespace Squirrel.Tests
             }
 
             [Fact]
+            public async Task SpecialCharactersInitialInstallTest()
+            {
+                string tempDir;
+                using (Utility.WithTempDirectory(out tempDir))
+                {
+                    var remotePackageDir = Directory.CreateDirectory(Path.Combine(tempDir, "remotePackages"));
+                    var localAppDir = Path.Combine(tempDir, "theApp");
+
+                    new[] {
+                        "SpecialCharacters-0.1.0-full.nupkg",
+                    }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(remotePackageDir.FullName, x)));
+
+                    using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", tempDir))
+                    {
+                        await fixture.FullInstall();
+                    }
+
+                    var releasePath = Path.Combine(localAppDir, "packages", "RELEASES");
+                    File.Exists(releasePath).ShouldBeTrue();
+
+                    var entries = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasePath, Encoding.UTF8));
+                    entries.Count().ShouldEqual(1);
+
+                    new[] {
+                        "file space name.txt"
+                    }.ForEach(x => File.Exists(Path.Combine(localAppDir, "app-0.1.0", x)).ShouldBeTrue());
+                }
+            }
+
+            [Fact]
             public async Task WhenBothFilesAreInSyncNoUpdatesAreApplied()
             {
                 string tempDir;
