@@ -1,5 +1,5 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
-  <Product Id="*" Name="{{Title}} Machine-Wide Installer" Language="1033" Version="1.2.4" UpgradeCode="{{RandomGuid}}" Manufacturer="{{Author}}">
+  <Product Id="*" Name="{{Title}} Machine-Wide Installer" Language="1033" Version="{{Version}}" UpgradeCode="{{RandomGuid}}" Manufacturer="{{Author}}">
 
     <Package Description="#Description" Comments="Comments" InstallerVersion="200" Compressed="yes"/>
 		<Media Id="1" Cabinet="contents.cab" EmbedCab="yes" CompressionLevel="high"/>

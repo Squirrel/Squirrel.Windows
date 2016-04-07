@@ -349,6 +349,7 @@ namespace Squirrel
             doc.Load(path);
 
             ContentType.Merge(doc);
+            ContentType.Clean(doc);
 
             using (var sw = new StreamWriter(path, false, Encoding.UTF8)) {
                 doc.Save(sw);
