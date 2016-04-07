@@ -25,7 +25,7 @@ The package will install a number of dependent packages as well as tools that wi
 
 ## Basic Updating
 
-For the basic example we are going to have MyApp update from your local file system rather than distributing the files via the web.  See section [2.2 More Packaging](2.2-More-Packaging.md) for additional options related to the distributing the update files.
+For the basic example we are going to have MyApp update from your local file system rather than distributing the files via the web.  See section [Packaging](2-packaging.md) for additional options related to the distributing the update files.
 
 ### Basic Squirrel.Windows Update Code
 The following code is added to MyApp `Program.cs` to cause the application to check for, download, and install any new releases of MyApp in the background while you use the application. 
@@ -38,14 +38,14 @@ using Squirrel;
 
 **`static void Main()`**
 
-~~~csTask.Run(async () =>{
-	using (var mgr = new UpdateManager("C:\\Projects\\MyApp\\Releases"))
-	{
-		await mgr.UpdateApp();
-	}});
+~~~cs
+using (var mgr = new UpdateManager("C:\\Projects\\MyApp\\Releases"))
+{
+    await mgr.UpdateApp();
+}
 ~~~
 
-The code above demonstrates the most basic update mechanism using the `UpdateApp()` method in an asynchronous task. The actions it takes will be discussed further in section [1.5 Updating](1.5-Updating.md).
+The code above demonstrates the most basic update mechanism using the `UpdateApp()` method in an asynchronous task. The actions it takes will be discussed further in section [Updating](5-updating.md).
 
 **Caution:** The path you provide the `UpdateManager` is the path to the directory where the `RELEASES` file is located (which is also named `Releases` by default), and not the actual `RELEASES` file.
 

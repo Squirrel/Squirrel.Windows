@@ -41,6 +41,8 @@ This program is blocked by group policy. For more information, contact your syst
   ```
 
   The best course of action is to request that executables for Squirrel and your application be whitelisted by your corporate overlords.
+4. **No Shortcuts are Created for my Application**
+   Verify that the NuGet Package Metadata `id` property doesn't have a [space or \[dot\]](https://github.com/Squirrel/Squirrel.Windows/issues/530) in it.
 
 
 ## Updating
@@ -50,7 +52,9 @@ This program is blocked by group policy. For more information, contact your syst
 2. **I've Distributed a Broken Copy of Update.exe. How can I fix this?**  
    Sometimes, you might ship a broken copy of `Update.exe` that succeeds the initial install, but doesn't do what you want for some reason. To fix this, you can force an update of the `Update.exe` by including a copy of `Squirrel.exe` in your app update package. If Squirrel sees this, it will copy in this latest version to the local app installation.
 3. **How can you replace DLLs while they're loaded? Impossible!**  
-   You can't. So, how can you do it? The basic trick that ClickOnce uses is, you have a folder of EXEs and DLLs, and an Application Shortcut. When ClickOnce goes to update its stuff, it builds a completely *new* folder of binaries, then the last thing it does is rewrite the app shortcut to point to the new folder. See []
+   You can't. So, how can you do it? The basic trick that ClickOnce uses is, you have a folder of EXEs and DLLs, and an Application Shortcut. When ClickOnce goes to update its stuff, it builds a completely *new* folder of binaries, then the last thing it does is rewrite the app shortcut to point to the new folder.
+4. **My previous application version is still around after the update. Doesn't Squirrel clean up old versions?**  
+   The current and immediately previous version of your application are not deleted on clean up (see [issue #589](https://github.com/Squirrel/Squirrel.Windows/issues/589)). 
 
 ---
 | Return: [Table of Contents](readme.md) |

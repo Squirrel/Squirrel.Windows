@@ -85,15 +85,6 @@ namespace Squirrel.Shell
                     };
                 }
             }
-
-            public static PROPERTYKEY PKEY_AppUserModel_RelaunchCommand {
-                get {
-                    return new PROPERTYKEY() {
-                        fmtid = Guid.ParseExact("{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}", "B"),
-                        pid = new UIntPtr(2),
-                    };
-                }
-            }
         }
 
         [ComImport]
@@ -875,14 +866,6 @@ namespace Squirrel.Shell
             var propStore = (IPropertyStore)linkW;
             var pkey = PROPERTYKEY.PKEY_AppUserModel_ID;
             var str = PropVariant.FromString (appId);
-            propStore.SetValue(ref pkey, ref str);
-        }
-
-        public void SetAppUserModelRelaunchCommand(string commandWithArgs)
-        {
-            var propStore = (IPropertyStore)linkW;
-            var pkey = PROPERTYKEY.PKEY_AppUserModel_ID;
-            var str = PropVariant.FromString (commandWithArgs);
             propStore.SetValue(ref pkey, ref str);
         }
 

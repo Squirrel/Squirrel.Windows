@@ -138,7 +138,9 @@ namespace Squirrel
                     }
                 }
 
-                fixPinnedExecutables(new SemanticVersion(255, 255, 255, 255));
+                try {
+                    this.ErrorIfThrows(() => fixPinnedExecutables(new SemanticVersion(255, 255, 255, 255), true));
+                } catch { }
 
                 await this.ErrorIfThrows(() => Utility.DeleteDirectoryOrJustGiveUp(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
@@ -147,6 +149,10 @@ namespace Squirrel
                 // this folder - if we don't do this, users who "accidentally" run as 
                 // administrator will find the app reinstalling itself on every
                 // reboot
+                if (!Directory.Exists(rootAppDirectory)) {
+                    Directory.CreateDirectory(rootAppDirectory);
+                }
+
                 File.WriteAllText(Path.Combine(rootAppDirectory, ".dead"), " ");
             }
 
@@ -188,7 +194,6 @@ namespace Squirrel
                     }
 
                     sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
-                    sl.SetAppUserModelRelaunchCommand(String.Format("{0} {1}", sl.Target, sl.Arguments));
                     ret.Add(f, sl);
                 }
 
@@ -441,7 +446,7 @@ namespace Squirrel
                     .ForEach(info => Process.Start(info));
             }
 
-            void fixPinnedExecutables(SemanticVersion newCurrentVersion)
+            void fixPinnedExecutables(SemanticVersion newCurrentVersion, bool removeAll = false)
             {
                 if (Environment.OSVersion.Version < new Version(6, 1)) {
                     this.Log().Warn("fixPinnedExecutables: Found OS Version '{0}', exiting...", Environment.OSVersion.VersionString);
@@ -479,7 +484,12 @@ namespace Squirrel
                         if (String.IsNullOrWhiteSpace(shortcut.Target)) continue;
                         if (!shortcut.Target.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) continue;
 
-                        updateLink(shortcut, newAppPath);
+                        if (removeAll) {
+                            Utility.DeleteFileHarder(shortcut.ShortCutFile);
+                        } else {
+                            updateLink(shortcut, newAppPath);
+                        }
+
                     } catch (Exception ex) {
                         var message = String.Format("fixPinnedExecutables: shortcut failed: {0}", shortcut.Target);
                         this.Log().ErrorException(message, ex);
@@ -512,20 +522,23 @@ namespace Squirrel
                 }
 
                 this.Log().Info("Old iconPath is: '{0}'", shortcut.IconPath);
-                var iconPath = Path.Combine(newAppPath, Path.GetFileName(shortcut.IconPath));
-                if (!File.Exists(iconPath) && targetIsUpdateDotExe) {
-                    var executable = shortcut.Arguments.Replace("--processStart ", "");
-                    iconPath = Path.Combine(newAppPath, executable);
-                }
+                if (!File.Exists(shortcut.IconPath) || shortcut.IconPath.IndexOf("app-", StringComparison.OrdinalIgnoreCase) > 1) {
+                    var iconPath = Path.Combine(newAppPath, Path.GetFileName(shortcut.IconPath));
 
-                this.Log().Info("Setting iconPath to: '{0}'", iconPath);
-                shortcut.IconPath = iconPath;
+                    if (!File.Exists(iconPath) && targetIsUpdateDotExe) {
+                        var executable = shortcut.Arguments.Replace("--processStart ", "");
+                        iconPath = Path.Combine(newAppPath, executable);
+                    }
 
-                if (!File.Exists(iconPath)) {
-                    this.Log().Warn("Tried to use {0} for icon path but didn't exist, falling back to EXE", iconPath);
+                    this.Log().Info("Setting iconPath to: '{0}'", iconPath);
+                    shortcut.IconPath = iconPath;
 
-                    shortcut.IconPath = target;
-                    shortcut.IconIndex = 0;
+                    if (!File.Exists(iconPath)) {
+                        this.Log().Warn("Tried to use {0} for icon path but didn't exist, falling back to EXE", iconPath);
+
+                        shortcut.IconPath = target;
+                        shortcut.IconIndex = 0;
+                    }
                 }
 
                 this.ErrorIfThrows(() => Utility.Retry(() => shortcut.Save(), 2), "Couldn't write shortcut " + shortcut.ShortCutFile);

@@ -89,6 +89,7 @@ namespace Squirrel
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
+            this.KillAllExecutablesBelongingToPackage();
             await applyReleases.FullUninstall();
         }
 
@@ -143,6 +144,12 @@ namespace Squirrel
 
             if (appDirName == null) return null;
             return appDirName.ToSemanticVersion();
+        }
+
+        public void KillAllExecutablesBelongingToPackage()
+        {
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            installHelpers.KillAllProcessesBelongingToPackage();
         }
 
         public string ApplicationName {
