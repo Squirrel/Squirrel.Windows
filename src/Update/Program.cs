@@ -655,13 +655,21 @@ namespace Squirrel.Update
             var company = String.Join(",", package.Authors);
 
             var templateText = File.ReadAllText(Path.Combine(pathToWix, "template.wxs"));
-            var templateResult = CopStache.Render(templateText, new Dictionary<string, string> {
+            var templateData = new Dictionary<string, string> {
                 { "Id", package.Id },
                 { "Title", package.Title },
                 { "Author", company },
                 { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
                 { "Summary", package.Summary ?? package.Description ?? package.Id },
-            });
+            };
+
+            // NB: We need some GUIDs that are based on the package ID, but unique (i.e.
+            // "Unique but consistent").
+            for (int i=1; i <= 10; i++) {
+                templateData[String.Format("IdAsGuid{0}", i)] = Utility.CreateGuidFromHash(String.Format("{0}:{1}", package.Id, i)).ToString();
+            }
+
+            var templateResult = CopStache.Render(templateText, templateData);
 
             var wxsTarget = Path.Combine(setupExeDir, "Setup.wxs");
             File.WriteAllText(wxsTarget, templateResult, Encoding.UTF8);
