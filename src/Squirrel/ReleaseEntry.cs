@@ -51,7 +51,13 @@ namespace Squirrel
 
         [IgnoreDataMember]
         public string EntryAsString {
-            get { return String.Format("{0} {1}{2} {3}", SHA1, BaseUrl, Filename, Filesize); }
+            get {
+                if (StagingPercentage != null) {
+                    return String.Format("{0} {1}{2} {3} # ${4}", SHA1, BaseUrl, Filename, Filesize, stagingPercentageAsString(StagingPercentage.Value));
+                } else {
+                    return String.Format("{0} {1}{2} {3}", SHA1, BaseUrl, Filename, Filesize);
+                }
+            }
         }
 
         [IgnoreDataMember]
@@ -225,6 +231,11 @@ namespace Squirrel
             }
 
             return entries;
+        }
+
+        static string stagingPercentageAsString(float percentage)
+        {
+            return String.Format("{0:F0}%", percentage * 100.0));
         }
 
         static bool filenameIsDeltaFile(string filename)
