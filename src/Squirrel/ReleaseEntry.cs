@@ -22,6 +22,7 @@ namespace Squirrel
         string EntryAsString { get; }
         SemanticVersion Version { get; }
         string PackageName { get; }
+        float? StagingPercentage { get; }
 
         string GetReleaseNotes(string packageDirectory);
         Uri GetIconUrl(string packageDirectory);
@@ -36,15 +37,16 @@ namespace Squirrel
         [DataMember] public string Query { get; protected set; }
         [DataMember] public long Filesize { get; protected set; }
         [DataMember] public bool IsDelta { get; protected set; }
+        [DataMember] public float? StagingPercentage { get; protected set; }
 
-        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null, string query = null)
+        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null, string query = null, float? stagingPercentage = null)
         {
             Contract.Requires(sha1 != null && sha1.Length == 40);
             Contract.Requires(filename != null);
             Contract.Requires(filename.Contains(Path.DirectorySeparatorChar) == false);
             Contract.Requires(filesize > 0);
 
-            SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Query = query; Filesize = filesize; IsDelta = isDelta;
+            SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Query = query; Filesize = filesize; IsDelta = isDelta; StagingPercentage = stagingPercentage;
         }
 
         [IgnoreDataMember]
