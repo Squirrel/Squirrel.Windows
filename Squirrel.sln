@@ -22,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionLevel", "SolutionLe
 	ProjectSection(SolutionItems) = preProject
 		src\SolutionAssemblyInfo.cs = src\SolutionAssemblyInfo.cs
 		src\Squirrel.nuspec = src\Squirrel.nuspec
+		vendor\wix\template.wxs = vendor\wix\template.wxs
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "vendor\nuget\src\Core\Core.csproj", "{F879F274-EFA0-4157-8404-33A19B4E6AEC}"

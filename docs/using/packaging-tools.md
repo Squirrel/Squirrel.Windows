@@ -11,6 +11,7 @@ The following tools can simplify and/or automate the packaging process.
 * [Visual Studio Build Packaging](visual-studio-packaging.md) - integrating NuGet packaging into your visual studio build process.
 * [OctoPack](octopack.md) - steps to use OctoPack to build the source NuGet package to provide to `squirrel --releasify`.
 * [Auto.Squirrel Package Manager](https://github.com/tenacious/Auto.Squirrel) - tool to fully automatize the application deploy, from build to upload the updated files.
+* [Paket](http://fsprojects.github.io/Paket/template-files.html) -  dependency manager for .NET and mono projects, which is designed to work well with NuGet packages and also enables referencing files directly from Git repositories or any HTTP resource.
  
 
 ## See Also

@@ -6,6 +6,7 @@
     <owners>Paul Betts</owners>
     <licenseUrl>https://github.com/squirrel/Squirrel.Windows/blob/master/COPYING</licenseUrl>
     <projectUrl>https://github.com/squirrel/Squirrel.Windows</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/Squirrel/Squirrel.Windows/master/docs/artwork/Squirrel-Logo-Square.png</iconUrl>
 
     <dependencies>
       <dependency id="DeltaCompressionDotNet" version="1.0.0" />
