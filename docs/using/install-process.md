@@ -23,7 +23,7 @@ The installation root really only needs to consist of two types of folders:
 * **App Folders** - the "installed" application files for a given version of MyApp.
 
 ```
-\%LocalAppData%
+\%LocalAppData%\MyApp
    \packages
       MyApp-1.0.0.nupkg
       MyApp-1.0.1-delta.nupkg

@@ -179,7 +179,7 @@ namespace Squirrel
             var msDelta = new MsDeltaCompression();
             try {
                 msDelta.CreateDelta(baseFileListing[relativePath], targetFile.FullName, targetFile.FullName + ".diff");
-            } catch (Win32Exception) {
+            } catch (Exception) {
                 this.Log().Warn("We couldn't create a delta for {0}, attempting to create bsdiff", targetFile.Name);
 
                 var of = default(FileStream);

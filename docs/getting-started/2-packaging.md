@@ -69,6 +69,10 @@ The `Squirrel --releasify` command completes the following:
 
 ![](images/1.2-releases-directory.png)
 
+## See Also
+
+* [Visual Studio Build Packaging](../using/visual-studio-packaging.md) - integrating NuGet packaging into your visual studio build process to include packing and releasifying.
+
 
 ---
 | Previous: [1. Integrating](1-integrating.md) | Next: [3. Distributing](3-distributing.md)|

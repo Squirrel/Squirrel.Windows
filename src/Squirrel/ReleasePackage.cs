@@ -128,7 +128,7 @@ namespace Squirrel
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 var tempDir = new DirectoryInfo(tempPath);
 
-                extractZipDecoded(InputPackageFile, tempPath);
+                ExtractZipDecoded(InputPackageFile, tempPath);
              
                 this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
@@ -158,7 +158,7 @@ namespace Squirrel
 
         // nupkg file %-encodes zip entry names. This method decodes entry names before writing to disk.
         // We must do this, or PathTooLongException may be thrown for some unicode entry names.
-        void extractZipDecoded(string zipFilePath, string outFolder)
+        public static void ExtractZipDecoded(string zipFilePath, string outFolder, string directoryFilter = null)
         {
             var zf = new ZipFile(zipFilePath);
 
@@ -172,12 +172,15 @@ namespace Squirrel
 
                 var fullZipToPath = Path.Combine(outFolder, entryFileName);
                 var directoryName = Path.GetDirectoryName(fullZipToPath);
-                if (directoryName.Length > 0) {
-                    Directory.CreateDirectory(directoryName);
-                }
+                var directoryFilter_ = new NameFilter(directoryFilter);
+                if (directoryFilter_.IsMatch(directoryName)) {
+                    if (directoryName.Length > 0) {
+                        Directory.CreateDirectory(directoryName);
+                    }
 
-                using (FileStream streamWriter = File.Create(fullZipToPath)) {
-                    StreamUtils.Copy(zipStream, streamWriter, buffer);
+                    using (FileStream streamWriter = File.Create(fullZipToPath)) {
+                        StreamUtils.Copy(zipStream, streamWriter, buffer);
+                    }
                 }
             }
             zf.Close();
