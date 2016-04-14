@@ -122,17 +122,6 @@ namespace Squirrel
                         } else {
                             allApps.ForEach(x => RemoveShortcutsForExecutable(x.Name, ShortcutLocation.StartMenu | ShortcutLocation.Desktop));
                         }
-
-                        // NB: Some people attempt to uninstall apps while 
-                        // they're still running. I cannot even.
-                        var toKill = allApps
-                            .SelectMany(x => Process.GetProcessesByName(x.Name.Replace(".exe", "")))
-                            .ToList();
-
-                        if (toKill.Count > 0) {
-                            toKill.ForEach(x => x.Kill());
-                            Thread.Sleep(750);
-                        }
                     } catch (Exception ex) {
                         this.Log().WarnException("Failed to run pre-uninstall hooks, uninstalling anyways", ex);
                     }
