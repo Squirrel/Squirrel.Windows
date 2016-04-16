@@ -88,6 +88,28 @@ namespace Squirrel.Tests.Core
             Assert.Equal(isDelta, fixture.IsDelta);
         }
 
+        [Theory]
+        [InlineData("94689fede03fed7ab59c24337673a27837f0c3ec Squirrel-1.0.0.0-full.nupkg 1004502", "Squirrel")]
+        [InlineData("3a2eadd15dd984e4559f2b4d790ec8badaeb6a39 Squirrel.Core-1.2.0.0-full.nupkg 80396", "Squirrel.Core")]
+        [InlineData("14db31d2647c6d2284882a2e101924a9c409ee67 Squirrel.Core.NoDependencies-1.1.0.0-delta.nupkg 15830", "Squirrel.Core.NoDependencies")]
+        public void ParsePackageNameFromReleaseEntryTest(string releaseEntry, string packageName)
+        {
+            var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
+
+            Assert.Equal(packageName, fixture.PackageName);
+        }
+
+        [Theory]
+        [InlineData("94689fede03fed7ab59c24337673a27837f0c3ec Squirrel-1.0.0.0.nupkg 1004502")]
+        [InlineData("3a2eadd15dd984e4559f2b4d790ec8badaeb6a39 Squirrel.Core-1.2.0.0-beta.nupkg 80396")]
+
+        public void ParseThrowsWhenInvalidPackageNameInReleaseEntryLine(string releaseEntry)
+        {
+            var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
+
+            Assert.Throws<Exception>(() => fixture.PackageName);
+        }
+
         [Fact]
         public void CanParseGeneratedReleaseEntryAsString()
         {

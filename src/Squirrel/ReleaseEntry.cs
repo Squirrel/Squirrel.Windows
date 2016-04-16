@@ -55,9 +55,19 @@ namespace Squirrel
         [IgnoreDataMember]
         public SemanticVersion Version { get { return Filename.ToSemanticVersion(); } }
 
+        static readonly Regex packageRegex = new Regex(@"^(?<packageName>.*)-(?<version>\d+\.\d+\.\d+\.\d+)-(?<releaseType>full|delta).nupkg$");
         [IgnoreDataMember]
         public string PackageName {
-            get { return Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' })); }
+            get
+            {
+                var match = packageRegex.Match(Filename);
+
+                if (!match.Success) {
+                    throw new Exception(String.Format("Could not parse package name from filename '{0}' in RELEASE file.", Filename));
+                }
+
+                return match.Groups["packageName"].Value;
+            }
         }
 
         public string GetReleaseNotes(string packageDirectory)
