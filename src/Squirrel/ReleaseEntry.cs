@@ -88,16 +88,23 @@ namespace Squirrel
 
         static readonly Regex entryRegex = new Regex(@"^([0-9a-fA-F]{40})\s+(\S+)\s+(\d+)[\r]*$");
         static readonly Regex commentRegex = new Regex(@"#.*$");
+        static readonly Regex stagingRegex = new Regex(@"#\s+(\d{1,3})%$");
         public static ReleaseEntry ParseReleaseEntry(string entry)
         {
             Contract.Requires(entry != null);
+
+            float? stagingPercentage = null;
+            var m = stagingRegex.Match(entry);
+            if (m != null) {
+                stagingPercentage = Single.Parse(m.Groups[0].Value);
+            }
 
             entry = commentRegex.Replace(entry, "");
             if (String.IsNullOrWhiteSpace(entry)) {
                 return null;
             }
 
-            var m = entryRegex.Match(entry);
+            m = entryRegex.Match(entry);
             if (!m.Success) {
                 throw new Exception("Invalid release entry: " + entry);
             }
@@ -138,7 +145,7 @@ namespace Squirrel
             long size = Int64.Parse(m.Groups[3].Value);
             bool isDelta = filenameIsDeltaFile(filename);
 
-            return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl, query);
+            return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl, query, stagingPercentage);
         }
 
         public static IEnumerable<ReleaseEntry> ParseReleaseFile(string fileContents)
@@ -157,6 +164,24 @@ namespace Squirrel
 
             return ret.Any(x => x == null) ? null : ret;
         }
+
+        public static IEnumerable<ReleaseEntry> ParseReleaseFileAndApplyStaging(string fileContents, Guid userToken)
+        {
+            if (String.IsNullOrEmpty(fileContents)) {
+                return new ReleaseEntry[0];
+            }
+
+            fileContents = Utility.RemoveByteOrderMarkerIfPresent(fileContents);
+
+            var ret = fileContents.Split('\n')
+                .Where(x => !String.IsNullOrWhiteSpace(x))
+                .Select(ParseReleaseEntry)
+                .Where(x => x != null)
+                .ToArray();
+
+            return ret.Any(x => x == null) ? null : ret;
+        }
+
 
         public static void WriteReleaseFile(IEnumerable<ReleaseEntry> releaseEntries, Stream stream)
         {
@@ -235,7 +260,7 @@ namespace Squirrel
 
         static string stagingPercentageAsString(float percentage)
         {
-            return String.Format("{0:F0}%", percentage * 100.0));
+            return String.Format("{0:F0}%", percentage * 100.0);
         }
 
         static bool filenameIsDeltaFile(string filename)
