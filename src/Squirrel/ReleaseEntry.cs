@@ -148,6 +148,17 @@ namespace Squirrel
             return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl, query, stagingPercentage);
         }
 
+        public bool IsStagingMatch(Guid? userId)
+        {
+            if (!StagingPercentage.HasValue) return true;
+            if (!userId.HasValue) return false;
+
+            uint val = BitConverter.ToUInt32(userId.Value.ToByteArray(), 12);
+
+            double percentage = ((double)val / (double)UInt32.MaxValue);
+            return percentage < StagingPercentage.Value;
+        }
+
         public static IEnumerable<ReleaseEntry> ParseReleaseFile(string fileContents)
         {
             if (String.IsNullOrEmpty(fileContents)) {
@@ -165,7 +176,7 @@ namespace Squirrel
             return ret.Any(x => x == null) ? null : ret;
         }
 
-        public static IEnumerable<ReleaseEntry> ParseReleaseFileAndApplyStaging(string fileContents, Guid userToken)
+        public static IEnumerable<ReleaseEntry> ParseReleaseFileAndApplyStaging(string fileContents, Guid? userToken)
         {
             if (String.IsNullOrEmpty(fileContents)) {
                 return new ReleaseEntry[0];
@@ -176,7 +187,7 @@ namespace Squirrel
             var ret = fileContents.Split('\n')
                 .Where(x => !String.IsNullOrWhiteSpace(x))
                 .Select(ParseReleaseEntry)
-                .Where(x => x != null)
+                .Where(x => x != null && x.IsStagingMatch(userToken))
                 .ToArray();
 
             return ret.Any(x => x == null) ? null : ret;
