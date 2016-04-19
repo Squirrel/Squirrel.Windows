@@ -165,7 +165,7 @@ namespace Squirrel.Tests
 
                 Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.1.0", "args.txt")));
                 Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt")));
-                Assert.False(Directory.Exists(Path.Combine(tempDir, "theApp")));
+                Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", ".dead")));
             }
         }
 
