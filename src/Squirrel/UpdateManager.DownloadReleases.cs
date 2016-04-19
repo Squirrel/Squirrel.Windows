@@ -109,6 +109,35 @@ namespace Squirrel
                     }
                 }
             }
+
+            internal Guid? getOrCreateStagedUserId()
+            {
+                var stagedUserIdFile = Path.Combine(rootAppDirectory, "packages", ".betaId");
+                var ret = default(Guid);
+
+                try {
+                    if (!Guid.TryParse(File.ReadAllText(stagedUserIdFile, Encoding.UTF8), out ret)) {
+                        throw new Exception("File was read but contents were invalid");
+                    }
+
+                    return ret;
+                } catch (Exception ex) {
+                    this.Log().InfoException("Couldn't read staging user ID, creating a blank one", ex);
+                }
+
+                var prng = new Random();
+                var buf = new byte[4096];
+                prng.NextBytes(buf);
+
+                ret = Utility.CreateGuidFromHash(buf);
+                try {
+                    File.WriteAllText(stagedUserIdFile, ret.ToString(), Encoding.UTF8);
+                    return ret;
+                } catch (Exception ex) {
+                    this.Log().WarnException("Couldn't write out staging user ID, this user probably shouldn't get beta anything", ex);
+                    return null;
+                }
+            }
         }
     }
 }
