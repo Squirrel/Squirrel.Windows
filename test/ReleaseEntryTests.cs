@@ -320,8 +320,6 @@ namespace Squirrel.Tests.Core
             Assert.Equal(3, releases.Length);
         }
 
-
-
         [Fact]
         public void ParseReleaseFileShouldReturnNothingForBlankFiles()
         {

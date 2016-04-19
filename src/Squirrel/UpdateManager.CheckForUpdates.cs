@@ -30,6 +30,7 @@ namespace Squirrel
                 progress = progress ?? (_ => { });
 
                 var localReleases = Enumerable.Empty<ReleaseEntry>();
+                var stagingId = getOrCreateStagedUserId();
 
                 bool shouldInitialize = false;
                 try {
@@ -117,7 +118,7 @@ namespace Squirrel
                 }
 
                 var ret = default(UpdateInfo);
-                var remoteReleases = ReleaseEntry.ParseReleaseFile(releaseFile); 
+                var remoteReleases = ReleaseEntry.ParseReleaseFileAndApplyStaging(releaseFile, stagingId); 
                 progress(66);
 
                 if (!remoteReleases.Any()) {
@@ -176,6 +177,37 @@ namespace Squirrel
                 }
 
                 return UpdateInfo.Create(currentRelease, remoteReleases, packageDirectory);
+            }
+
+            internal Guid? getOrCreateStagedUserId()
+            {
+                var stagedUserIdFile = Path.Combine(rootAppDirectory, "packages", ".betaId");
+                var ret = default(Guid);
+
+                try {
+                    if (!Guid.TryParse(File.ReadAllText(stagedUserIdFile, Encoding.UTF8), out ret)) {
+                        throw new Exception("File was read but contents were invalid");
+                    }
+
+                    this.Log().Info("Using existing staging user ID: {0}", ret.ToString());
+                    return ret;
+                } catch (Exception ex) {
+                    this.Log().InfoException("Couldn't read staging user ID, creating a blank one", ex);
+                }
+
+                var prng = new Random();
+                var buf = new byte[4096];
+                prng.NextBytes(buf);
+
+                ret = Utility.CreateGuidFromHash(buf);
+                try {
+                    File.WriteAllText(stagedUserIdFile, ret.ToString(), Encoding.UTF8);
+                    this.Log().Info("Generated new staging user ID: {0}", ret.ToString());
+                    return ret;
+                } catch (Exception ex) {
+                    this.Log().WarnException("Couldn't write out staging user ID, this user probably shouldn't get beta anything", ex);
+                    return null;
+                }
             }
         }
     }
