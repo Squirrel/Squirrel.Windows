@@ -88,6 +88,26 @@ namespace Squirrel.Tests.Core
             Assert.Equal(isDelta, fixture.IsDelta);
         }
 
+        [Theory]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.nupkg                  123 # 10%", 1, 2, 0, 0, "", false, 0.1f)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-full.nupkg             123 # 90%", 1, 2, 0, 0, "", false, 0.9f)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-delta.nupkg            123", 1, 2, 0, 0, "", true, null)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-delta.nupkg            123 # 5%", 1, 2, 0, 0, "", true, 0.05f)]
+        public void ParseStagingPercentageTest(string releaseEntry, int major, int minor, int patch, int revision, string prerelease, bool isDelta, float? stagingPercentage)
+        {
+            var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
+
+            Assert.Equal(new SemanticVersion(new Version(major, minor, patch, revision), prerelease), fixture.Version);
+            Assert.Equal(isDelta, fixture.IsDelta);
+
+            if (stagingPercentage.HasValue) {
+                Assert.True(Math.Abs(fixture.StagingPercentage.Value - stagingPercentage.Value) < 0.001);
+            } else {
+                Assert.Null(fixture.StagingPercentage);
+            }
+        }
+
+
         [Fact]
         public void CanParseGeneratedReleaseEntryAsString()
         {
