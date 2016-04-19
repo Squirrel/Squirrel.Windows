@@ -109,7 +109,6 @@ namespace Squirrel
                     }
                 }
             }
-
         }
     }
 }
