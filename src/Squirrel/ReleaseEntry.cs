@@ -95,7 +95,7 @@ namespace Squirrel
 
             float? stagingPercentage = null;
             var m = stagingRegex.Match(entry);
-            if (m != null) {
+            if (m != null && m.Success) {
                 stagingPercentage = Single.Parse(m.Groups[0].Value);
             }
 
