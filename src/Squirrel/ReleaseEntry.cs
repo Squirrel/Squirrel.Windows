@@ -53,7 +53,7 @@ namespace Squirrel
         public string EntryAsString {
             get {
                 if (StagingPercentage != null) {
-                    return String.Format("{0} {1}{2} {3} # ${4}", SHA1, BaseUrl, Filename, Filesize, stagingPercentageAsString(StagingPercentage.Value));
+                    return String.Format("{0} {1}{2} {3} # {4}", SHA1, BaseUrl, Filename, Filesize, stagingPercentageAsString(StagingPercentage.Value));
                 } else {
                     return String.Format("{0} {1}{2} {3}", SHA1, BaseUrl, Filename, Filesize);
                 }
