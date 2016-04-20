@@ -115,7 +115,7 @@ namespace Squirrel
 
             string filename = m.Groups[2].Value;
 
-            // Split the base URL and the filename if an URI is provided, 
+            // Split the base URL and the filename if an URI is provided,
             // throws if a path is provided
             string baseUrl = null;
             string query = null;
@@ -137,7 +137,7 @@ namespace Squirrel
                     query = uri.Query;
                 }
             }
-            
+
             if (filename.IndexOfAny(Path.GetInvalidFileNameChars()) > -1) {
                 throw new Exception("Filename can either be an absolute HTTP[s] URL, *or* a file name");
             }
@@ -150,6 +150,9 @@ namespace Squirrel
 
         public bool IsStagingMatch(Guid? userId)
         {
+            // A "Staging match" is when a user falls into the affirmative
+            // bucket - i.e. if the staging is at 10%, this user is the one out
+            // of ten case.
             if (!StagingPercentage.HasValue) return true;
             if (!userId.HasValue) return false;
 

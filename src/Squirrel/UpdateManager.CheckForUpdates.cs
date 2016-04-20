@@ -23,7 +23,7 @@ namespace Squirrel
             public async Task<UpdateInfo> CheckForUpdate(
                 string localReleaseFile,
                 string updateUrlOrPath,
-                bool ignoreDeltaUpdates = false, 
+                bool ignoreDeltaUpdates = false,
                 Action<int> progress = null,
                 IFileDownloader urlDownloader = null)
             {
@@ -45,11 +45,11 @@ namespace Squirrel
 
                 string releaseFile;
 
-                var latestLocalRelease = localReleases.Count() > 0 ? 
-                    localReleases.MaxBy(x => x.Version).First() : 
+                var latestLocalRelease = localReleases.Count() > 0 ?
+                    localReleases.MaxBy(x => x.Version).First() :
                     default(ReleaseEntry);
 
-                // Fetch the remote RELEASES file, whether it's a local dir or an 
+                // Fetch the remote RELEASES file, whether it's a local dir or an
                 // HTTP URL
                 if (Utility.IsHttpUrl(updateUrlOrPath)) {
                     if (updateUrlOrPath.EndsWith("/")) {
@@ -89,7 +89,7 @@ namespace Squirrel
 
                     if (!Directory.Exists(updateUrlOrPath)) {
                         var message = String.Format(
-                            "The directory {0} does not exist, something is probably broken with your application", 
+                            "The directory {0} does not exist, something is probably broken with your application",
                             updateUrlOrPath);
 
                         throw new Exception(message);
@@ -98,7 +98,7 @@ namespace Squirrel
                     var fi = new FileInfo(Path.Combine(updateUrlOrPath, "RELEASES"));
                     if (!fi.Exists) {
                         var message = String.Format(
-                            "The file {0} does not exist, something is probably broken with your application", 
+                            "The file {0} does not exist, something is probably broken with your application",
                             fi.FullName);
 
                         this.Log().Warn(message);
@@ -118,7 +118,7 @@ namespace Squirrel
                 }
 
                 var ret = default(UpdateInfo);
-                var remoteReleases = ReleaseEntry.ParseReleaseFileAndApplyStaging(releaseFile, stagingId); 
+                var remoteReleases = ReleaseEntry.ParseReleaseFileAndApplyStaging(releaseFile, stagingId);
                 progress(66);
 
                 if (!remoteReleases.Any()) {
@@ -126,7 +126,7 @@ namespace Squirrel
                 }
 
                 ret = determineUpdateInfo(localReleases, remoteReleases, ignoreDeltaUpdates);
-                
+
                 progress(100);
                 return ret;
             }
@@ -192,7 +192,7 @@ namespace Squirrel
                     this.Log().Info("Using existing staging user ID: {0}", ret.ToString());
                     return ret;
                 } catch (Exception ex) {
-                    this.Log().InfoException("Couldn't read staging user ID, creating a blank one", ex);
+                    this.Log().DebugException("Couldn't read staging user ID, creating a blank one", ex);
                 }
 
                 var prng = new Random();
