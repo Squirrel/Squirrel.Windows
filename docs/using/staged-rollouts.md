@@ -23,7 +23,7 @@ e3f67244e4166a65310c816221a12685c83f8e6f myapp-1.0.0-full.nupkg 600725
 
 Note that the syntax is `# nn%` - due to a bug in earlier versions of Squirrel.Windows, for now, you *must* put the `#` immediately following the file size, no spaces. Once all of your users have Squirrel 1.4.0 or higher, you can add a space after the `#` (similar to a comment).
 
-Assuming that this rollout is going well, at some point you can upload a new version of the releases file:
+Assuming that this rollout is going well, at some point you can upload a new version of the `RELEASES` file:
 
 ```
 e3f67244e4166a65310c816221a12685c83f8e6f myapp-1.0.0-full.nupkg 600725
