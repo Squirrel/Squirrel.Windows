@@ -88,6 +88,26 @@ namespace Squirrel.Tests.Core
             Assert.Equal(isDelta, fixture.IsDelta);
         }
 
+        [Theory]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.nupkg                  123 # 10%", 1, 2, 0, 0, "", false, 0.1f)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-full.nupkg             123 # 90%", 1, 2, 0, 0, "", false, 0.9f)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-delta.nupkg            123", 1, 2, 0, 0, "", true, null)]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-delta.nupkg            123 # 5%", 1, 2, 0, 0, "", true, 0.05f)]
+        public void ParseStagingPercentageTest(string releaseEntry, int major, int minor, int patch, int revision, string prerelease, bool isDelta, float? stagingPercentage)
+        {
+            var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
+
+            Assert.Equal(new SemanticVersion(new Version(major, minor, patch, revision), prerelease), fixture.Version);
+            Assert.Equal(isDelta, fixture.IsDelta);
+
+            if (stagingPercentage.HasValue) {
+                Assert.True(Math.Abs(fixture.StagingPercentage.Value - stagingPercentage.Value) < 0.001);
+            } else {
+                Assert.Null(fixture.StagingPercentage);
+            }
+        }
+
+
         [Fact]
         public void CanParseGeneratedReleaseEntryAsString()
         {
@@ -219,15 +239,102 @@ namespace Squirrel.Tests.Core
         }
 
         [Fact]
+        public void StagingUsersGetBetaSoftware()
+        {
+            // NB: We're kind of using a hack here, in that we know that the 
+            // last 4 bytes are used as the percentage, and the percentage 
+            // effectively measures, "How close are you to zero". Guid.Empty
+            // is v close to zero, because it is zero.
+            var path = Path.GetTempFileName();
+            var ourGuid = Guid.Empty;
+
+            var releaseEntries = new[] {
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-full.nupkg", 0.1f)),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.1.0-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.0.0-full.nupkg"))
+            };
+
+            ReleaseEntry.WriteReleaseFile(releaseEntries, path);
+
+            var releases = ReleaseEntry.ParseReleaseFileAndApplyStaging(File.ReadAllText(path), ourGuid).ToArray();
+            Assert.Equal(3, releases.Length);
+        }
+
+        [Fact]
+        public void BorkedUsersGetProductionSoftware()
+        {
+            var path = Path.GetTempFileName();
+            var ourGuid = default(Guid?);
+
+            var releaseEntries = new[] {
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-full.nupkg", 0.1f)),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.1.0-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.0.0-full.nupkg"))
+            };
+
+            ReleaseEntry.WriteReleaseFile(releaseEntries, path);
+
+            var releases = ReleaseEntry.ParseReleaseFileAndApplyStaging(File.ReadAllText(path), ourGuid).ToArray();
+            Assert.Equal(2, releases.Length);
+        }
+
+        [Theory]
+        [InlineData("{22b29e6f-bd2e-43d2-85ca-ffffffffffff}")]
+        [InlineData("{22b29e6f-bd2e-43d2-85ca-888888888888}")]
+        [InlineData("{22b29e6f-bd2e-43d2-85ca-444444444444}")]
+        public void UnluckyUsersGetProductionSoftware(string inputGuid)
+        {
+            var path = Path.GetTempFileName();
+            var ourGuid = Guid.ParseExact(inputGuid, "B");
+
+            var releaseEntries = new[] {
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-full.nupkg", 0.1f)),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.1.0-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.0.0-full.nupkg"))
+            };
+
+            ReleaseEntry.WriteReleaseFile(releaseEntries, path);
+
+            var releases = ReleaseEntry.ParseReleaseFileAndApplyStaging(File.ReadAllText(path), ourGuid).ToArray();
+            Assert.Equal(2, releases.Length);
+        }
+
+        [Theory]
+        [InlineData("{22b29e6f-bd2e-43d2-85ca-333333333333}")]
+        [InlineData("{22b29e6f-bd2e-43d2-85ca-111111111111}")]
+        [InlineData("{22b29e6f-bd2e-43d2-85ca-000000000000}")]
+        public void LuckyUsersGetBetaSoftware(string inputGuid)
+        {
+            var path = Path.GetTempFileName();
+            var ourGuid = Guid.ParseExact(inputGuid, "B");
+
+            var releaseEntries = new[] {
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-full.nupkg", 0.25f)),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.1.0-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.0.0-full.nupkg"))
+            };
+
+            ReleaseEntry.WriteReleaseFile(releaseEntries, path);
+
+            var releases = ReleaseEntry.ParseReleaseFileAndApplyStaging(File.ReadAllText(path), ourGuid).ToArray();
+            Assert.Equal(3, releases.Length);
+        }
+
+        [Fact]
         public void ParseReleaseFileShouldReturnNothingForBlankFiles()
         {
             Assert.True(ReleaseEntry.ParseReleaseFile("").Count() == 0);
             Assert.True(ReleaseEntry.ParseReleaseFile(null).Count() == 0);
         }
 
-        static string MockReleaseEntry(string name)
+        static string MockReleaseEntry(string name, float? percentage = null)
         {
-            return string.Format("94689fede03fed7ab59c24337673a27837f0c3ec  {0}  1004502", name);
+            if (percentage.HasValue) {
+                var ret = String.Format("94689fede03fed7ab59c24337673a27837f0c3ec  {0}  1004502 # {1:F0}%", name, percentage * 100.0f);
+                return ret;
+            } else {
+                return String.Format("94689fede03fed7ab59c24337673a27837f0c3ec  {0}  1004502", name);
+            }
         }
     }
 }
