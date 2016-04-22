@@ -7,3 +7,8 @@ install:
 build_script: msbuild /p:Configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 test: off
+
+artifacts:
+  - path: bin\Release\*.exe
+  - path: bin\Release\*.com
+  - path: bin\Release\*.dll
