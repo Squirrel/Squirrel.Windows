@@ -5,3 +5,5 @@ install:
   - .\.NuGet\NuGet.exe restore
 
 build_script: msbuild /p:Configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+
+test: off
