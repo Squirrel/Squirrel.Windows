@@ -480,8 +480,6 @@ namespace Squirrel.Update
                 processed.Insert(0, dp.InputPackageFile);
             }
 
-            File.Delete(package);
-
             var newReleaseEntries = processed
                 .Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl))
                 .ToList();
