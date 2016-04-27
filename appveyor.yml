@@ -1,4 +1,4 @@
-configuration: Release
+﻿configuration: Release
 
 install:
   - git submodule update --init --recursive
@@ -9,6 +9,6 @@ build_script: msbuild /p:Configuration=Release /logger:"C:\Program Files\AppVeyo
 test: off
 
 artifacts:
-  - path: bin\Release\*.exe
-  - path: bin\Release\*.com
-  - path: bin\Release\*.dll
+  - path: src\Update\bin\Release\*.exe
+  - path: src\Update\bin\Release\*.com
+  - path: src\SyncReleases\bin\Release\*.exe
