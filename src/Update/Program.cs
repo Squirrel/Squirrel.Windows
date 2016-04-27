@@ -174,7 +174,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi);
+                    ReleasifyElectron(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi);
                     break;
                 }
             }
@@ -380,6 +380,107 @@ namespace Squirrel.Update
             }
 
             foreach (var file in toProcess) { File.Delete(file.FullName); }
+
+            var newReleaseEntries = processed
+                .Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl))
+                .ToList();
+            var distinctPreviousReleases = previousReleases
+                .Where(x => !newReleaseEntries.Select(e => e.Version).Contains(x.Version));
+            var releaseEntries = distinctPreviousReleases.Concat(newReleaseEntries).ToList();
+
+            ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
+
+            var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
+            var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
+
+            File.Copy(bootstrapperExe, targetSetupExe, true);
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
+
+            var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
+
+            try {
+                var result = Utility.InvokeProcessAsync(writeZipToSetup, String.Format("\"{0}\" \"{1}\"", targetSetupExe, zipPath), CancellationToken.None).Result;
+                if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
+            } catch (Exception ex) {
+                this.Log().ErrorException("Failed to update Setup.exe with new Zip file", ex);
+            } finally {
+                File.Delete(zipPath);
+            }
+
+            Utility.Retry(() =>
+                setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
+
+            if (signingOpts != null) {
+                signPEFile(targetSetupExe, signingOpts).Wait();
+            }
+
+            if (generateMsi) {
+                createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
+
+                if (signingOpts != null) {
+                    signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
+                }
+            }
+        }
+
+        private void ReleasifyElectron(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true)
+        {
+            if (baseUrl != null) {
+                if (!Utility.IsHttpUrl(baseUrl)) {
+                    throw new Exception(string.Format("Invalid --baseUrl '{0}'. A base URL must start with http or https and be a valid URI.", baseUrl));
+                }
+
+                if (!baseUrl.EndsWith("/")) {
+                    baseUrl += "/";
+                }
+            }
+
+            targetDir = targetDir ?? Path.Combine(".", "Releases");
+            packagesDir = packagesDir ?? ".";
+            bootstrapperExe = bootstrapperExe ?? Path.Combine(".", "Setup.exe");
+
+            if (!File.Exists(bootstrapperExe)) {
+                bootstrapperExe = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),
+                    "Setup.exe");
+            }
+
+            this.Log().Info("Bootstrapper EXE found at:" + bootstrapperExe);
+
+            var di = new DirectoryInfo(targetDir);
+
+            var processed = new List<string>();
+
+            var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
+            var previousReleases = new List<ReleaseEntry>();
+            if (File.Exists(releaseFilePath)) {
+                previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
+            }
+
+            this.Log().Info("Creating release package: " + package);
+
+            var rp = new ReleasePackage(package);
+            rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+                if (signingOpts == null) return;
+
+                new DirectoryInfo(pkgPath).GetAllFilesRecursively()
+                    .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                    .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
+                    .Wait();
+            });
+
+            processed.Add(rp.ReleasePackageFile);
+
+            var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
+            if (prev != null) {
+                var deltaBuilder = new DeltaPackageBuilder(null);
+
+                var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
+                    Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                processed.Insert(0, dp.InputPackageFile);
+            }
+
+            File.Delete(package);
 
             var newReleaseEntries = processed
                 .Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl))
