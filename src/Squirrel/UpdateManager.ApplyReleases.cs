@@ -175,7 +175,7 @@ namespace Squirrel
                         IconIndex = 0,
                         WorkingDirectory = Path.GetDirectoryName(exePath),
                         Description = zf.Description,
-                        Arguments = "--processStart " + exeName,
+                        Arguments = "--processStart \"" + exeName + "\"",
                     };
 
                     if (!String.IsNullOrWhiteSpace(programArguments)) {
@@ -231,7 +231,7 @@ namespace Squirrel
                             IconIndex = 0,
                             WorkingDirectory = Path.GetDirectoryName(exePath),
                             Description = zf.Description,
-                            Arguments = "--processStart " + exeName,
+                            Arguments = "--processStart \"" + exeName + "\"",
                         };
 
                         if (!String.IsNullOrWhiteSpace(programArguments)) {
