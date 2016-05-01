@@ -9,6 +9,7 @@ build_script: msbuild /p:Configuration=Release /logger:"C:\Program Files\AppVeyo
 test: off
 
 artifacts:
-  - path: src\Update\bin\Release\*.exe
-  - path: src\Update\bin\Release\*.com
+  - path: src\Update\bin\Release\Setup.exe
+  - path: src\Update\bin\Release\Update*.exe
+  - path: src\Update\bin\Release\Update*.pdb
   - path: src\SyncReleases\bin\Release\*.exe
