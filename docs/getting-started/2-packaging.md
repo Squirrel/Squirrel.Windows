@@ -24,7 +24,7 @@ The first step in preparing the application for distribution is to build the app
 
 Squirrel uses [NuGet](https://www.NuGet.org/) for bundling application files and various application properties (e.g., application name, version, description) in a single release package.
 
-Section [NuGet Package Metadata](../using/nuget-package-metadata.md) provides additional details on using NuGet and `.nuspec` files to automate the packing of your application. We will be going through the process using the [NuGet Package Explorer](https://npe.codeplex.com/) to manually create a NuGet package.
+Section [NuGet Package Metadata](../using/nuget-package-metadata.md) provides additional details on using NuGet and `.nuspec` files to automate the packing of your application. We will be going through the process using the [NuGet Package Explorer](https://github.com/NuGetPackageExplorer/NuGetPackageExplorer) to manually create a NuGet package.
 
 1. **Creating a New NuGet Package** - the first step is to create a new NuGet package.
 2. **Edit Metadata** - update package metadata for MyApp.
@@ -61,13 +61,18 @@ PM> Squirrel --releasify MyApp.1.0.0.nupkg
 The `Squirrel --releasify` command completes the following:
 
 * **Create `Releases` Directory** - creates a Releases directory (in the `MyApp.sln` directory by default). 
-* **Create `Setup.exe`** - creates a `Setup.exe` file which includes the latest version of the application to be installed. * **Create `RELEASES` File** - creates a file that provides a list of all release files for MyApp to be used during the update process
+* **Create `Setup.exe`** - creates a `Setup.exe` file which includes the latest version of the application to be installed.
+* **Create `RELEASES` File** - creates a file that provides a list of all release files for MyApp to be used during the update process
 * **Create `MyApp.1.0.0-full.nupkg`** - copies the package you created to the `Releases` directory.
 * **Create `MyApp.*.*.*-delta.nupkg`** - if you are releasing an update, releasify creates a delta file package to reduce the update package size (see [Updating](5-updating.md) for details).
 
 **`C:\Projects\MyApp\Releases`**
 
 ![](images/1.2-releases-directory.png)
+
+## See Also
+
+* [Visual Studio Build Packaging](../using/visual-studio-packaging.md) - integrating NuGet packaging into your visual studio build process to include packing and releasifying.
 
 
 ---

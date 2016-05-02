@@ -122,17 +122,6 @@ namespace Squirrel
                         } else {
                             allApps.ForEach(x => RemoveShortcutsForExecutable(x.Name, ShortcutLocation.StartMenu | ShortcutLocation.Desktop));
                         }
-
-                        // NB: Some people attempt to uninstall apps while 
-                        // they're still running. I cannot even.
-                        var toKill = allApps
-                            .SelectMany(x => Process.GetProcessesByName(x.Name.Replace(".exe", "")))
-                            .ToList();
-
-                        if (toKill.Count > 0) {
-                            toKill.ForEach(x => x.Kill());
-                            Thread.Sleep(750);
-                        }
                     } catch (Exception ex) {
                         this.Log().WarnException("Failed to run pre-uninstall hooks, uninstalling anyways", ex);
                     }
@@ -186,7 +175,7 @@ namespace Squirrel
                         IconIndex = 0,
                         WorkingDirectory = Path.GetDirectoryName(exePath),
                         Description = zf.Description,
-                        Arguments = "--processStart " + exeName,
+                        Arguments = "--processStart \"" + exeName + "\"",
                     };
 
                     if (!String.IsNullOrWhiteSpace(programArguments)) {
@@ -242,7 +231,7 @@ namespace Squirrel
                             IconIndex = 0,
                             WorkingDirectory = Path.GetDirectoryName(exePath),
                             Description = zf.Description,
-                            Arguments = "--processStart " + exeName,
+                            Arguments = "--processStart \"" + exeName + "\"",
                         };
 
                         if (!String.IsNullOrWhiteSpace(programArguments)) {
@@ -289,7 +278,6 @@ namespace Squirrel
             Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
             {
                 return Task.Run(async () => {
-                    var zipper = new FastZip();
                     var target = getDirectoryForRelease(release.Version);
 
                     // NB: This might happen if we got killed partially through applying the release
@@ -301,9 +289,8 @@ namespace Squirrel
                     target.Create();
 
                     this.Log().Info("Writing files to app directory: {0}", target.FullName);
-                    zipper.ExtractZip(
-                        Path.Combine(updateInfo.PackageDirectory, release.Filename),
-                        target.FullName, FastZip.Overwrite.Always, (o) => true, null, @"lib", true);
+                    ReleasePackage.ExtractZipDecoded(Path.Combine(updateInfo.PackageDirectory, release.Filename),
+                        target.FullName, @"lib");
 
                     // Move all of the files out of the lib/ dirs in the NuGet package
                     // into our target App directory.

@@ -53,6 +53,8 @@ using (var mgr = UpdateManager.GitHubUpdateManager("https://github.com/myuser/my
 }
 ~~~
 
+**Important:** Make sure your url doesn't end in a forward slash ("/"). Adding the trailing forward slash will cause it to fail with a 404 error ([see #641](https://github.com/Squirrel/Squirrel.Windows/issues/641#issuecomment-201478324)).
+
 **Tip:** You can also specify that the update manager should use `prerelease` for updating (see method signature for details).
 
 **Source:** See [Issue #442](https://github.com/Squirrel/Squirrel.Windows/issues/442) for more information.
