@@ -589,14 +589,18 @@ namespace Squirrel
         {
             return CreateGuidFromHash(text, Utility.IsoOidNamespace);
         }
-
+        public static Guid CreateGuidFromHash(byte[] data)
+        {
+            return CreateGuidFromHash(data, Utility.IsoOidNamespace);
+        }
 
         public static Guid CreateGuidFromHash(string text, Guid namespaceId)
         {
-            // convert the name to a sequence of octets (as defined by the standard 
-            // or conventions of its namespace) (step 3)
-            byte[] nameBytes = Encoding.UTF8.GetBytes(text);
+            return CreateGuidFromHash(Encoding.UTF8.GetBytes(text), namespaceId);
+        }
 
+        public static Guid CreateGuidFromHash(byte[] nameBytes, Guid namespaceId)
+        {
             // convert the namespace UUID to network order (step 3)
             byte[] namespaceBytes = namespaceId.ToByteArray();
             SwapByteOrder(namespaceBytes);
