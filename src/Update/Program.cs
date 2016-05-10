@@ -460,7 +460,7 @@ namespace Squirrel.Update
             this.Log().Info("Creating release package: " + package);
 
             var rp = new ReleasePackage(package);
-            rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+            rp.CreateReleasePackageElectron(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
                 if (signingOpts == null) return;
 
                 new DirectoryInfo(pkgPath).GetAllFilesRecursively()
