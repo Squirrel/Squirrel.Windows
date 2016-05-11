@@ -174,7 +174,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    ReleasifyElectron(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, baseUrl, setupIcon, !noMsi);
+                    ReleasifyElectron(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, baseUrl, !noMsi);
                     break;
                 }
             }
@@ -423,7 +423,7 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyElectron(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true)
+        private void ReleasifyElectron(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string baseUrl = null, bool generateMsi = true)
         {
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
@@ -498,9 +498,6 @@ namespace Squirrel.Update
             } finally {
                 File.Delete(zipPath);
             }
-
-            Utility.Retry(() =>
-                setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
             if (generateMsi) {
                 createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
