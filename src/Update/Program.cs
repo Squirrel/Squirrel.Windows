@@ -174,7 +174,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    ReleasifyElectron(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, baseUrl, !noMsi);
+                    ReleasifyElectron(target, releaseDir, bootstrapperExe, backgroundGif, baseUrl, !noMsi);
                     break;
                 }
             }
@@ -423,7 +423,7 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyElectron(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string baseUrl = null, bool generateMsi = true)
+        private void ReleasifyElectron(string package, string targetDir = null, string bootstrapperExe = null, string backgroundGif = null, string baseUrl = null, bool generateMsi = true)
         {
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
@@ -436,7 +436,6 @@ namespace Squirrel.Update
             }
 
             targetDir = targetDir ?? Path.Combine(".", "Releases");
-            packagesDir = packagesDir ?? ".";
             bootstrapperExe = bootstrapperExe ?? Path.Combine(".", "Setup.exe");
 
             if (!File.Exists(bootstrapperExe)) {
@@ -449,20 +448,15 @@ namespace Squirrel.Update
 
             var di = new DirectoryInfo(targetDir);
 
-            var processed = new List<string>();
-
             var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
             var previousReleases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
                 previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
             }
 
-            this.Log().Info("Creating release package: " + package);
-
+            var processed = new List<string>();
             var rp = new ReleasePackage(package);
-            rp.CreateReleasePackageElectron(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir);
-
-            processed.Add(rp.ReleasePackageFile);
+            processed.Add(package);
 
             var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
             if (prev != null) {
@@ -486,7 +480,7 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, null).Result;
+            var zipPath = createSetupEmbeddedZipElectron(Path.Combine(di.FullName, newestFullRelease.Filename), backgroundGif).Result;
 
             var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
 
@@ -646,6 +640,36 @@ namespace Squirrel.Update
 
                     await files.ForEachAsync(x => signPEFile(x, signingOpts));
                 }
+
+                this.ErrorIfThrows(() =>
+                    ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
+                    "Failed to create Zip file from directory: " + tempPath);
+
+                return target;
+            }
+        }
+        async Task<string> createSetupEmbeddedZipElectron(string fullPackage, string backgroundGif)
+        {
+            string tempPath;
+
+            this.Log().Info("Building embedded zip file for Setup.exe");
+            using (Utility.WithTempDirectory(out tempPath, null)) {
+                this.ErrorIfThrows(() => {
+                    File.Copy(Assembly.GetEntryAssembly().Location.Replace("-Mono.exe", ".exe"), Path.Combine(tempPath, "Update.exe"));
+                    File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
+                }, "Failed to write package files to temp dir: " + tempPath);
+
+                if (!String.IsNullOrWhiteSpace(backgroundGif)) {
+                    this.ErrorIfThrows(() => {
+                        File.Copy(backgroundGif, Path.Combine(tempPath, "background.gif"));
+                    }, "Failed to write animated GIF to temp dir: " + tempPath);
+                }
+
+                var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
+                ReleaseEntry.WriteReleaseFile(releases, Path.Combine(tempPath, "RELEASES"));
+
+                var target = Path.GetTempFileName();
+                File.Delete(target);
 
                 this.ErrorIfThrows(() =>
                     ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),

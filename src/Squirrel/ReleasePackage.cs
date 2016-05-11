@@ -156,38 +156,6 @@ namespace Squirrel
             }
         }
 
-      public string CreateReleasePackageElectron(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null)
-      {
-          Contract.Requires(!String.IsNullOrEmpty(outputFile));
-          releaseNotesProcessor = releaseNotesProcessor ?? (x => (new Markdown()).Transform(x));
-
-          if (ReleasePackageFile != null) {
-              return ReleasePackageFile;
-          }
-
-          // Recursively walk the dependency tree and extract all of the
-          // dependent packages into the a temporary directory
-          this.Log().Info("Creating release package: {0} => {1}", InputPackageFile, outputFile);
-
-          string tempPath;
-
-          using (Utility.WithTempDirectory(out tempPath, null)) {
-              var tempDir = new DirectoryInfo(tempPath);
-
-              ExtractZipDecoded(InputPackageFile, tempPath);
-
-              if (releaseNotesProcessor != null) {
-                  renderReleaseNotesMarkdown(tempDir.GetFiles("*.nuspec").First().FullName, releaseNotesProcessor);
-              }
-
-              createZipEncoded(outputFile, tempPath);
-
-              ReleasePackageFile = outputFile;
-              return ReleasePackageFile;
-          }
-      }
-
-
         // nupkg file %-encodes zip entry names. This method decodes entry names before writing to disk.
         // We must do this, or PathTooLongException may be thrown for some unicode entry names.
         public static void ExtractZipDecoded(string zipFilePath, string outFolder, string directoryFilter = null)
