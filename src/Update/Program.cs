@@ -174,7 +174,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    ReleasifyElectron(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi);
+                    ReleasifyElectron(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, baseUrl, setupIcon, !noMsi);
                     break;
                 }
             }
@@ -423,7 +423,7 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyElectron(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true)
+        private void ReleasifyElectron(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true)
         {
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
@@ -460,14 +460,7 @@ namespace Squirrel.Update
             this.Log().Info("Creating release package: " + package);
 
             var rp = new ReleasePackage(package);
-            rp.CreateReleasePackageElectron(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
-                if (signingOpts == null) return;
-
-                new DirectoryInfo(pkgPath).GetAllFilesRecursively()
-                    .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
-                    .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
-                    .Wait();
-            });
+            rp.CreateReleasePackageElectron(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir);
 
             processed.Add(rp.ReleasePackageFile);
 
@@ -493,7 +486,7 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, null).Result;
 
             var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
 
@@ -509,16 +502,8 @@ namespace Squirrel.Update
             Utility.Retry(() =>
                 setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
-            if (signingOpts != null) {
-                signPEFile(targetSetupExe, signingOpts).Wait();
-            }
-
             if (generateMsi) {
                 createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
-
-                if (signingOpts != null) {
-                    signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
-                }
             }
         }
 

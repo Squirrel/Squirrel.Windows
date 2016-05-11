@@ -156,7 +156,7 @@ namespace Squirrel
             }
         }
 
-      public string CreateReleasePackageElectron(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null, Action<string> contentsPostProcessHook = null)
+      public string CreateReleasePackageElectron(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null)
       {
           Contract.Requires(!String.IsNullOrEmpty(outputFile));
           releaseNotesProcessor = releaseNotesProcessor ?? (x => (new Markdown()).Transform(x));
@@ -165,15 +165,9 @@ namespace Squirrel
               return ReleasePackageFile;
           }
 
-          var package = new ZipPackage(InputPackageFile);
-
           // Recursively walk the dependency tree and extract all of the
           // dependent packages into the a temporary directory
           this.Log().Info("Creating release package: {0} => {1}", InputPackageFile, outputFile);
-          var dependencies = findAllDependentPackages(
-              package,
-              new LocalPackageRepository(packagesRootDir),
-              frameworkName: package.GetSupportedFrameworks().Single());
 
           string tempPath;
 
@@ -182,15 +176,8 @@ namespace Squirrel
 
               ExtractZipDecoded(InputPackageFile, tempPath);
 
-              this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
-              extractDependentPackagesElectron(dependencies, tempDir);
-
               if (releaseNotesProcessor != null) {
                   renderReleaseNotesMarkdown(tempDir.GetFiles("*.nuspec").First().FullName, releaseNotesProcessor);
-              }
-
-              if (contentsPostProcessHook != null) {
-                  contentsPostProcessHook(tempPath);
               }
 
               createZipEncoded(outputFile, tempPath);
@@ -292,25 +279,6 @@ namespace Squirrel
                         this.Log().Info("Ignoring {0} as the target framework is not compatible", outPath);
                         return;
                     }
-
-                    Directory.CreateDirectory(outPath.Directory.FullName);
-
-                    using (var of = File.Create(outPath.FullName)) {
-                        this.Log().Info("Writing {0} to {1}", file.Path, outPath);
-                        file.GetStream().CopyTo(of);
-                    }
-                });
-            });
-        }
-
-
-        void extractDependentPackagesElectron(IEnumerable<IPackage> dependencies, DirectoryInfo tempPath)
-        {
-            dependencies.ForEach(pkg => {
-                this.Log().Info("Scanning {0}", pkg.Id);
-
-                pkg.GetLibFiles().ForEach(file => {
-                    var outPath = new FileInfo(Path.Combine(tempPath.FullName, file.Path));
 
                     Directory.CreateDirectory(outPath.Directory.FullName);
 
