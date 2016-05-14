@@ -22,11 +22,11 @@ using System.Text.RegularExpressions;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, 
-        Deshortcut, ProcessStart, UpdateSelf,
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut,
+        Deshortcut, ProcessStart, UpdateSelf, CreateMsi
     }
 
-    class Program : IEnableLogger 
+    class Program : IEnableLogger
     {
         static OptionSet opts;
 
@@ -45,7 +45,7 @@ namespace Squirrel.Update
 
         int main(string[] args)
         {
-            // NB: Trying to delete the app directory while we have Setup.log 
+            // NB: Trying to delete the app directory while we have Setup.log
             // open will actually crash the uninstaller
             bool isUninstalling = args.Any(x => x.Contains("uninstall"));
 
@@ -107,6 +107,7 @@ namespace Squirrel.Update
                     { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
                     { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
+                    { "createMsi=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.CreateMsi; target = v; } },
                     { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
                     { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
                     { "updateSelf=", "Copy the currently executing Update.exe into the default location", v => { updateAction =  UpdateAction.UpdateSelf; target = v; } },
@@ -144,7 +145,7 @@ namespace Squirrel.Update
 #if !MONO
                 case UpdateAction.Install:
                     var progressSource = new ProgressSource();
-                    if (!silentInstall) { 
+                    if (!silentInstall) {
                         AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token, progressSource);
                     }
 
@@ -174,7 +175,11 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    ReleasifyElectron(target, releaseDir, bootstrapperExe, backgroundGif, baseUrl, !noMsi);
+                    ReleasifyElectron(target, releaseDir, baseUrl);
+                    break;
+
+                case UpdateAction.CreateMsi:
+                    createMsiPackage(bootstrapperExe, new ZipPackage(target)).Wait();
                     break;
                 }
             }
@@ -215,7 +220,7 @@ namespace Squirrel.Update
                     this.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.RootAppDirectory), 3),
                         "Couldn't recreate app directory, perhaps Antivirus is blocking it");
                 }
- 
+
                 Directory.CreateDirectory(mgr.RootAppDirectory);
 
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
@@ -423,7 +428,7 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyElectron(string package, string targetDir = null, string bootstrapperExe = null, string backgroundGif = null, string baseUrl = null, bool generateMsi = true)
+        private void ReleasifyElectron(string package, string targetDir = null, string baseUrl = null)
         {
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
@@ -436,15 +441,6 @@ namespace Squirrel.Update
             }
 
             targetDir = targetDir ?? Path.Combine(".", "Releases");
-            bootstrapperExe = bootstrapperExe ?? Path.Combine(".", "Setup.exe");
-
-            if (!File.Exists(bootstrapperExe)) {
-                bootstrapperExe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),
-                    "Setup.exe");
-            }
-
-            this.Log().Info("Bootstrapper EXE found at:" + bootstrapperExe);
 
             var di = new DirectoryInfo(targetDir);
 
@@ -476,26 +472,9 @@ namespace Squirrel.Update
 
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
-            var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
-            File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZipElectron(Path.Combine(di.FullName, newestFullRelease.Filename), backgroundGif).Result;
-
-            var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
-
-            try {
-                var result = Utility.InvokeProcessAsync(writeZipToSetup, String.Format("\"{0}\" \"{1}\"", targetSetupExe, zipPath), CancellationToken.None).Result;
-                if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
-            } catch (Exception ex) {
-                this.Log().ErrorException("Failed to update Setup.exe with new Zip file", ex);
-            } finally {
-                File.Delete(zipPath);
-            }
-
-            if (generateMsi) {
-                createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
-            }
+            ReleaseEntry.WriteReleaseFile(new[] { ReleaseEntry.GenerateFromFile(Path.Combine(di.FullName, newestFullRelease.Filename)) }, Path.Combine(di.FullName, "latestRelease"));
         }
 
         public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
@@ -542,7 +521,7 @@ namespace Squirrel.Update
             var releases = ReleaseEntry.ParseReleaseFile(
                 File.ReadAllText(Utility.LocalReleaseFileForAppDir(appDir), Encoding.UTF8));
 
-            // NB: We add the hacked up version in here to handle a migration 
+            // NB: We add the hacked up version in here to handle a migration
             // issue, where versions of Squirrel pre PR #450 will not understand
             // prerelease tags, so it will end up writing the release name sans
             // tags. However, the RELEASES file _will_ have them, so we need to look
@@ -697,7 +676,7 @@ namespace Squirrel.Update
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
-                    "Failed to sign, command invoked was: '{0} sign {1} {2}'", 
+                    "Failed to sign, command invoked was: '{0} sign {1} {2}'",
                     exe, signingOpts, exePath);
                 throw new Exception(msg);
             } else {
@@ -785,7 +764,7 @@ namespace Squirrel.Update
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
-                    "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
                     "candle.exe", candleParams, processResult.Item2);
 
                 throw new Exception(msg);
@@ -797,7 +776,7 @@ namespace Squirrel.Update
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
-                    "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
                     "light.exe", lightParams, processResult.Item2);
 
                 throw new Exception(msg);
@@ -814,7 +793,7 @@ namespace Squirrel.Update
 
         static string pathToWixTools()
         {
-            var ourPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); 
+            var ourPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
             // Same Directory? (i.e. released)
             if (File.Exists(Path.Combine(ourPath, "candle.exe"))) {
