@@ -428,8 +428,11 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyElectron(string package, string targetDir = null, string baseUrl = null)
+        private static void ReleasifyElectron(string package, string targetDir = null, string baseUrl = null)
         {
+            // check that package is valid
+            new ZipPackage(package).GetType();
+
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
                     throw new Exception(string.Format("Invalid --baseUrl '{0}'. A base URL must start with http or https and be a valid URI.", baseUrl));
@@ -451,12 +454,12 @@ namespace Squirrel.Update
             }
 
             var processed = new List<string>();
-            var rp = new ReleasePackage(package);
+            var rp = new ReleasePackage(package, true);
             processed.Add(package);
 
             var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
             if (prev != null) {
-                var deltaBuilder = new DeltaPackageBuilder(null);
+                var deltaBuilder = new DeltaPackageBuilder();
 
                 var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
                     Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
@@ -472,7 +475,7 @@ namespace Squirrel.Update
 
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
-            var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
+            var newestFullRelease = releaseEntries.MaxBy(x => x.Version).First(x => !x.IsDelta);
 
             ReleaseEntry.WriteReleaseFile(new[] { ReleaseEntry.GenerateFromFile(Path.Combine(di.FullName, newestFullRelease.Filename)) }, Path.Combine(di.FullName, "latestRelease"));
         }
