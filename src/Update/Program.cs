@@ -53,15 +53,24 @@ namespace Squirrel.Update
             //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
             //Thread.Sleep(10 * 60 * 1000);
 
-            using (var logger = new SetupLogLogger(isUninstalling) {Level = LogLevel.Info}) {
-                Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
-                try {
-                    return executeCommandLine(args);
-                } catch (Exception ex) {
-                    logger.Write("Unhandled exception: " + ex, LogLevel.Fatal);
-                    throw;
-                }
+            var logger = args.Any(x => x.StartsWith("--releasify") || x.StartsWith("--createMsi"))
+                             ? new ConsoleLogger()
+                             : (Splat.ILogger) new SetupLogLogger(isUninstalling);
+            logger.Level = LogLevel.Info;
+            Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
+            try
+            {
+                return executeCommandLine(args);
+            }
+            catch (Exception ex)
+            {
+                logger.Write("Unhandled exception: " + ex, LogLevel.Fatal);
+                throw;
+            }
+            finally
+            {
                 // Ideally we would deregister the logger from the Locator before it was disposed - this is a hazard as it is at the moment
+                (logger as IDisposable)?.Dispose();
             }
         }
 
@@ -71,6 +80,7 @@ namespace Squirrel.Update
 
             using (Disposable.Create(() => animatedGifWindowToken.Cancel())) {
 
+#if !MONO
                 this.Log().Info("Starting Squirrel Updater: " + String.Join(" ", args));
 
                 if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
@@ -78,7 +88,7 @@ namespace Squirrel.Update
                     // anything in response to these events
                     return 0;
                 }
-
+#endif
                 bool silentInstall = false;
                 var updateAction = default(UpdateAction);
 
@@ -435,7 +445,7 @@ namespace Squirrel.Update
 
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
-                    throw new Exception(string.Format("Invalid --baseUrl '{0}'. A base URL must start with http or https and be a valid URI.", baseUrl));
+                    throw new Exception($"Invalid --baseUrl '{baseUrl}'. A base URL must start with http or https and be a valid URI.");
                 }
 
                 if (!baseUrl.EndsWith("/")) {
@@ -477,7 +487,7 @@ namespace Squirrel.Update
 
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).First(x => !x.IsDelta);
 
-            ReleaseEntry.WriteReleaseFile(new[] { ReleaseEntry.GenerateFromFile(Path.Combine(di.FullName, newestFullRelease.Filename)) }, Path.Combine(di.FullName, "latestRelease"));
+            Console.Out.WriteLine(ReleaseEntry.GenerateFromFile(Path.Combine(di.FullName, newestFullRelease.Filename)).EntryAsString);
         }
 
         public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
@@ -907,6 +917,21 @@ namespace Squirrel.Update
                 inner.Flush();
                 inner.Dispose();
             }
+        }
+    }
+
+    internal class ConsoleLogger : Splat.ILogger
+    {
+        public LogLevel Level { get; set; }
+
+        public void Write(string message, LogLevel logLevel)
+        {
+            if (logLevel < Level) {
+                return;
+            }
+
+            var textWriter = logLevel > LogLevel.Warn ? Console.Error : Console.Out;
+            textWriter.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss}> {message}");
         }
     }
 }
