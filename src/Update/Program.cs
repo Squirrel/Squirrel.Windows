@@ -23,7 +23,7 @@ namespace Squirrel.Update
 {
     enum UpdateAction {
         Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, 
-        Deshortcut, ProcessStart, UpdateSelf,
+        Deshortcut, ProcessStart, UpdateSelf, CheckForUpdate
     }
 
     class Program : IEnableLogger 
@@ -105,6 +105,7 @@ namespace Squirrel.Update
                     { "install=", "Install the app whose package is in the specified directory", v => { updateAction = UpdateAction.Install; target = v; } },
                     { "uninstall", "Uninstall the app the same dir as Update.exe", v => updateAction = UpdateAction.Uninstall},
                     { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
+                    { "checkForUpdate=", "Check for one available update and writes new results to stdout as JSON", v => { updateAction = UpdateAction.CheckForUpdate; target = v; } },
                     { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
                     { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
                     { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
@@ -159,6 +160,9 @@ namespace Squirrel.Update
                     break;
                 case UpdateAction.Update:
                     Update(target).Wait();
+                    break;
+                case UpdateAction.CheckForUpdate:
+                    Console.WriteLine(CheckForUpdate(target).Result);
                     break;
                 case UpdateAction.UpdateSelf:
                     UpdateSelf().Wait();
@@ -291,6 +295,31 @@ namespace Squirrel.Update
                     currentVersion = updateInfo.CurrentlyInstalledVersion.Version.ToString(),
                     futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
                     releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
+                        version = x.Version.ToString(),
+                        releaseNotes = releaseNotes.ContainsKey(x) ? releaseNotes[x] : "",
+                    }).ToArray(),
+                };
+
+                return SimpleJson.SerializeObject(sanitizedUpdateInfo);
+            }
+        }
+
+        public async Task<string> CheckForUpdate(string updateUrl, string appName = null)
+        {
+            appName = appName ?? getAppNameFromDirectory();
+
+            this.Log().Info("Fetching update information, downloading from " + updateUrl);
+            using (var mgr = new UpdateManager(updateUrl, appName))
+            {
+                var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x));
+                var releaseNotes = updateInfo.FetchReleaseNotes();
+
+                var sanitizedUpdateInfo = new
+                {
+                    currentVersion = updateInfo.CurrentlyInstalledVersion.Version.ToString(),
+                    futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
+                    releasesToApply = updateInfo.ReleasesToApply.Select(x => new
+                    {
                         version = x.Version.ToString(),
                         releaseNotes = releaseNotes.ContainsKey(x) ? releaseNotes[x] : "",
                     }).ToArray(),
