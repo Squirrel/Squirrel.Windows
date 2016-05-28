@@ -19,7 +19,7 @@ https://github.com/myuser/MyApp/releases/latest
 
 The following steps are required to distribute your RELEASES and update NuGet packages with GitHub:
 
-1. **Commit Latest Code** - In order for GitHub to mark a new release as the `Latest`, you have at least on additional commit since since the last release tag was added (i.e., releases tags must not share the same commit).
+1. **Commit Latest Code** - In order for GitHub to mark a new release as the `Latest`, you have at least one additional commit since the last release tag was added (i.e., releases tags must not share the same commit).
 1. **Create a New Release** - [Create a new GitHub release](https://help.github.com/articles/creating-releases/) in your MyApp repository matching your current release version (e.g., 1.0.0).
 2. **Upload Release Files** - upload all of the files from `Releases` as assets of the GitHub release (e.g., RELEASES, MyApp.1.0.0-full.nupkg, MyApp.1.0.1-delta.nupkg, MyApp.1.0.1-full.nupkg). 
 3. **Set Pre-release (optional)** - if desired, set the release as a pre-release. 
