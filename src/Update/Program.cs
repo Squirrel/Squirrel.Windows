@@ -237,23 +237,32 @@ namespace Squirrel.Update
         {
             appName = appName ?? getAppNameFromDirectory();
 
+            Console.WriteLine("Starting update, downloading from " + updateUrl);
             this.Log().Info("Starting update, downloading from " + updateUrl);
 
             using (var mgr = new UpdateManager(updateUrl, appName)) {
                 bool ignoreDeltaUpdates = false;
+                Console.WriteLine("About to update to: " + mgr.RootAppDirectory);
                 this.Log().Info("About to update to: " + mgr.RootAppDirectory);
 
             retry:
                 try {
+                    Console.WriteLine("Checking for update");
                     var updateInfo = await mgr.CheckForUpdate(ignoreDeltaUpdates: ignoreDeltaUpdates, progress: x => Console.WriteLine(x / 3));
+                    Console.WriteLine("Update found, currentVersion: " + updateInfo.CurrentlyInstalledVersion.Version.ToString() + ", futureVersion: " +
+                                      updateInfo.FutureReleaseEntry.Version.ToString());
+                    Console.WriteLine("Downloading releases");
                     await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
+                    Console.WriteLine("Applying releases");
                     await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(66 + x / 3));
                 } catch (Exception ex) {
                     if (ignoreDeltaUpdates) {
+                        Console.WriteLine("Really couldn't apply updates!");
                         this.Log().ErrorException("Really couldn't apply updates!", ex);
                         throw;
                     }
 
+                    Console.WriteLine("Failed to apply updates, falling back to full updates");
                     this.Log().WarnException("Failed to apply updates, falling back to full updates", ex);
                     ignoreDeltaUpdates = true;
                     goto retry;
@@ -264,6 +273,7 @@ namespace Squirrel.Update
                 await this.ErrorIfThrows(() =>
                     mgr.CreateUninstallerRegistryEntry(),
                     "Failed to create uninstaller registry entry");
+                Console.WriteLine("Update success");
             }
         }
 
