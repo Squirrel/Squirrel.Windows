@@ -175,12 +175,13 @@ namespace Squirrel
                 return;
             }
 
-            this.Log().Info("Delta patching {0} => {1}", baseFileListing[relativePath], targetFile.FullName);
-            var msDelta = new MsDeltaCompression();
+            this.Log().Info(relativePath);
             try {
-                msDelta.CreateDelta(baseFileListing[relativePath], targetFile.FullName, targetFile.FullName + ".diff");
-            } catch (Exception) {
-                this.Log().Warn("We couldn't create a delta for {0}, attempting to create bsdiff", targetFile.Name);
+#if !MONO
+                new MsDeltaCompression().CreateDelta(baseFileListing[relativePath], targetFile.FullName, targetFile.FullName + ".diff");
+#endif
+            } catch (Exception e) {
+                this.Log().WarnException($"We couldn't create a delta for {targetFile.Name}, attempting to create bsdiff", e);
 
                 var of = default(FileStream);
                 try {
@@ -193,7 +194,7 @@ namespace Squirrel
                     // file and just removing it.
                     File.WriteAllText(targetFile.FullName + ".diff", "1");
                 } catch (Exception ex) {
-                    this.Log().WarnException(String.Format("We really couldn't create a delta for {0}", targetFile.Name), ex);
+                    this.Log().WarnException($"We really couldn't create a delta for {targetFile.Name}", ex);
                     return;
                 } finally {
                     if (of != null) of.Dispose();
