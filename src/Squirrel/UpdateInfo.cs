@@ -60,7 +60,7 @@ namespace Squirrel
             }
 
             if (currentVersion == null) {
-                return new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory);
+                return new UpdateInfo(null, new[] { latestFull }, packageDirectory);
             }
 
             if (currentVersion.Version == latestFull.Version) {
