@@ -173,35 +173,23 @@ namespace Squirrel
         }
 
         static bool exiting = false;
-        public static void RestartApp(string exeToStart = null, string arguments = null)
-        { 
-            // NB: Here's how this method works:
-            //
-            // 1. We're going to pass the *name* of our EXE and the params to 
-            //    Update.exe
-            // 2. Update.exe is going to grab our PID (via getting its parent), 
-            //    then wait for us to exit.
-            // 3. We exit cleanly, dropping any single-instance mutexes or 
-            //    whatever.
-            // 4. Update.exe unblocks, then we launch the app again, possibly 
-            //    launching a different version than we started with (this is why
-            //    we take the app's *name* rather than a full path)
 
-            exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
-            var argsArg = arguments != null ?
-                String.Format("-a \"{0}\"", arguments) : "";
-
-            exiting = true;
-
-            Process.Start(getUpdateExe(), String.Format("--processStartAndWait {0} {1}", exeToStart, argsArg));
-
-            // NB: We have to give update.exe some time to grab our PID, but
-            // we can't use WaitForInputIdle because we probably don't have
-            // whatever WaitForInputIdle considers a message loop.
-            Thread.Sleep(500);
-            Environment.Exit(0);
+		/// <summary>
+		/// Restarts the application, so the latest installed version will run.
+		/// </summary>
+		/// <param name="exitAppCodeToRun">
+		/// If not specified, Environment.Exit(0) is the default implementation, 
+		/// however you might want to call Application.Current.Shutdown(0) in WPF for a graceful termination,
+		/// or some other customized shut down logic
+		/// </param>
+		public static void RestartApp(string exeToStart = null, string arguments = null, Action exitAppCodeToRun = null)
+        {
+	        ScheduleAppRestartOnAppExit(exeToStart, arguments);
+			
+			exitAppCodeToRun = exitAppCodeToRun ?? (() => Environment.Exit(0));
+	        exitAppCodeToRun();
         }
-
+		
         public static string GetLocalAppDataDirectory(string assemblyLocation = null)
         {
             // Try to divine our our own install location via reading tea leaves
@@ -261,7 +249,35 @@ namespace Squirrel
             });
         }
 
-        static string getApplicationName()
+		static void ScheduleAppRestartOnAppExit(string exeToStart = null, string arguments = null)
+		{
+			// NB: Here's how this method works:
+			//
+			// 1. We're going to pass the *name* of our EXE and the params to 
+			//    Update.exe
+			// 2. Update.exe is going to grab our PID (via getting its parent), 
+			//    then wait for us to exit.
+			// 3. We exit cleanly, dropping any single-instance mutexes or 
+			//    whatever.
+			// 4. Update.exe unblocks, then we launch the app again, possibly 
+			//    launching a different version than we started with (this is why
+			//    we take the app's *name* rather than a full path)
+
+			exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
+			var argsArg = arguments != null ?
+				String.Format("-a \"{0}\"", arguments) : "";
+
+			exiting = true;
+
+			Process.Start(getUpdateExe(), String.Format("--processStartAndWait {0} {1}", exeToStart, argsArg));
+
+			// NB: We have to give update.exe some time to grab our PID, but
+			// we can't use WaitForInputIdle because we probably don't have
+			// whatever WaitForInputIdle considers a message loop.
+			Thread.Sleep(500);
+		}
+
+		static string getApplicationName()
         {
             var fi = new FileInfo(getUpdateExe());
             return fi.Directory.Name;
