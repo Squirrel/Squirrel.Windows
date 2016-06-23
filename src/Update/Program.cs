@@ -189,7 +189,7 @@ namespace Squirrel.Update
                     break;
 
                 case UpdateAction.CreateMsi:
-                    createMsiPackage(bootstrapperExe, new ZipPackage(target)).Wait();
+                    createMsiElectron(bootstrapperExe, new ZipPackage(target));
                     break;
                 }
             }
@@ -802,6 +802,27 @@ namespace Squirrel.Update
             };
 
             await Utility.ForEachAsync(toDelete, x => Utility.DeleteFileHarder(x));
+        }
+
+        static void createMsiElectron(string setupExe, IPackage package)
+        {
+            var templateText = File.ReadAllText(Path.Combine(pathToWixTools(), "template.wxs"));
+            var templateData = new Dictionary<string, string> {
+                { "Id", package.Id },
+                { "Title", package.Title },
+                { "Author", String.Join(",", package.Authors) },
+                { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
+                { "Summary", package.Summary ?? package.Description ?? package.Id },
+                { "SetupExecutable", setupExe },
+            };
+
+            // NB: We need some GUIDs that are based on the package ID, but unique (i.e.
+            // "Unique but consistent").
+            for (int i=1; i <= 10; i++) {
+                templateData[String.Format("IdAsGuid{0}", i)] = Utility.CreateGuidFromHash(String.Format("{0}:{1}", package.Id, i)).ToString();
+            }
+
+            File.WriteAllText(Path.Combine(Path.GetDirectoryName(setupExe), "Setup.wxs"), CopStache.Render(templateText, templateData), Encoding.UTF8);
         }
 
         static string pathToWixTools()
