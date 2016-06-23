@@ -279,7 +279,7 @@ namespace Squirrel
                 return Path.GetFullPath(assembly.Location);
             }
 
-            assembly = Assembly.GetExecutingAssembly();
+            assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
 
             var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..\\Update.exe");
             var target = new FileInfo(updateDotExe);
