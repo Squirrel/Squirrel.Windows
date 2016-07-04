@@ -482,7 +482,7 @@ namespace Squirrel.Update
                 .FirstOrDefault(x => Directory.Exists(x));
 
             // Check for the EXE name they want
-            var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName));
+            var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName.Replace("%20", " ")));
             this.Log().Info("Want to launch '{0}'", targetExe);
 
             // Check for path canonicalization attacks
