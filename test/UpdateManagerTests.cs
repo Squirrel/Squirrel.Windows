@@ -10,6 +10,7 @@ using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 using System.Net;
+using NuGet;
 
 namespace Squirrel.Tests
 {
@@ -107,6 +108,36 @@ namespace Squirrel.Tests
                         "ReactiveUI.dll",
                         "NSync.Core.dll",
                     }.ForEach(x => File.Exists(Path.Combine(localAppDir, "app-1.0.0.0", x)).ShouldBeTrue());
+                }
+            }
+
+            [Fact]
+            public async Task SpecialCharactersInitialInstallTest()
+            {
+                string tempDir;
+                using (Utility.WithTempDirectory(out tempDir))
+                {
+                    var remotePackageDir = Directory.CreateDirectory(Path.Combine(tempDir, "remotePackages"));
+                    var localAppDir = Path.Combine(tempDir, "theApp");
+
+                    new[] {
+                        "SpecialCharacters-0.1.0-full.nupkg",
+                    }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(remotePackageDir.FullName, x)));
+
+                    using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", tempDir))
+                    {
+                        await fixture.FullInstall();
+                    }
+
+                    var releasePath = Path.Combine(localAppDir, "packages", "RELEASES");
+                    File.Exists(releasePath).ShouldBeTrue();
+
+                    var entries = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasePath, Encoding.UTF8));
+                    entries.Count().ShouldEqual(1);
+
+                    new[] {
+                        "file space name.txt"
+                    }.ForEach(x => File.Exists(Path.Combine(localAppDir, "app-0.1.0", x)).ShouldBeTrue());
                 }
             }
 
@@ -294,7 +325,7 @@ namespace Squirrel.Tests
             public void CurrentlyInstalledVersionTests(string input, string expectedVersion)
             {
                 input = Environment.ExpandEnvironmentVariables(input);
-                var expected = expectedVersion != null ? new Version(expectedVersion) : default(Version);
+                var expected = expectedVersion != null ? new SemanticVersion(expectedVersion) : default(SemanticVersion);
 
                 using (var fixture = new UpdateManager("http://lol", "theApp")) {
                     Assert.Equal(expected, fixture.CurrentlyInstalledVersion(input));

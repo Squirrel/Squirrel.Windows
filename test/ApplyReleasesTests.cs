@@ -165,7 +165,7 @@ namespace Squirrel.Tests
 
                 Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.1.0", "args.txt")));
                 Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt")));
-                Assert.False(Directory.Exists(Path.Combine(tempDir, "theApp")));
+                Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", ".dead")));
             }
         }
 
@@ -459,11 +459,46 @@ namespace Squirrel.Tests
                 }
 
                 var fixture = new UpdateManager.ApplyReleasesImpl(Path.Combine(path, "theApp"));
-                fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup | ShortcutLocation.AppRoot, false);
+                fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup | ShortcutLocation.AppRoot, false, null, null);
 
                 // NB: COM is Weird.
                 Thread.Sleep(1000);
                 fixture.RemoveShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup | ShortcutLocation.AppRoot);
+
+                // NB: Squirrel-Aware first-run might still be running, slow
+                // our roll before blowing away the temp path
+                Thread.Sleep(1000);
+            }
+        }
+        
+        [Fact]
+        public void UnshimOurselvesSmokeTest()
+        {
+            // NB: This smoke test is really more of a manual test - try it
+            // by shimming Slack, then verifying the shim goes away
+            var appDir = Environment.ExpandEnvironmentVariables(@"%LocalAppData%\Slack");
+            var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+
+            fixture.unshimOurselves();
+        }
+
+        [Fact]
+        public async Task GetShortcutsSmokeTest()
+        {
+            string remotePkgPath;
+            string path;
+
+            using (Utility.WithTempDirectory(out path)) {
+                using (Utility.WithTempDirectory(out remotePkgPath))
+                using (var mgr = new UpdateManager(remotePkgPath, "theApp", path)) {
+                    IntegrationTestHelper.CreateFakeInstalledApp("1.0.0.1", remotePkgPath);
+                    await mgr.FullInstall();
+                }
+
+                var fixture = new UpdateManager.ApplyReleasesImpl(Path.Combine(path, "theApp"));
+                var result = fixture.GetShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup, null);
+
+                Assert.Equal(3, result.Keys.Count);
 
                 // NB: Squirrel-Aware first-run might still be running, slow
                 // our roll before blowing away the temp path

@@ -14,17 +14,18 @@ namespace SyncReleases
     {
         public static async Task SyncRemoteReleases(Uri targetUri, DirectoryInfo releasesDir)
         {
-            var releasesUri = new Uri(targetUri + "/RELEASES");
+            var releasesUri = Utility.AppendPathToUri(targetUri, "RELEASES");
             var releasesIndex = await retryAsync(3, () => downloadReleasesIndex(releasesUri));
+
             File.WriteAllText(Path.Combine(releasesDir.FullName, "RELEASES"), releasesIndex);
 
             var releasesToDownload = ReleaseEntry.ParseReleaseFile(releasesIndex)
                 .Where(x => !x.IsDelta)
                 .OrderByDescending(x => x.Version)
-                .Take(5)
+                .Take(1)
                 .Select(x => new {
                     LocalPath = Path.Combine(releasesDir.FullName, x.Filename),
-                    RemoteUrl = new Uri(targetUri + "/" + x.Filename)
+                    RemoteUrl = new Uri(Utility.EnsureTrailingSlash(targetUri), x.BaseUrl + x.Filename)
                  });
 
             foreach (var releaseToDownload in releasesToDownload) {
@@ -89,9 +90,8 @@ namespace SyncReleases
             ReleaseEntry.WriteReleaseFile(entries, Path.Combine(releaseDirectoryInfo.FullName, "RELEASES"));
         }
 
-        static async Task<string> downloadReleasesIndex(Uri repoUrl)
+        static async Task<string> downloadReleasesIndex(Uri uri)
         {
-            var uri = new Uri(repoUrl, "RELEASES");
             Console.WriteLine("Trying to download RELEASES index from {0}", uri);
 
             using (HttpClient client = new HttpClient()) {

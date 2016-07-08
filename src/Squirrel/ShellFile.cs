@@ -864,7 +864,9 @@ namespace Squirrel.Shell
         public void SetAppUserModelId(string appId)
         {
             var propStore = (IPropertyStore)linkW;
-            propStore.SetValue(PROPERTYKEY.PKEY_AppUserModel_ID, PropVariant.FromString(appId));
+            var pkey = PROPERTYKEY.PKEY_AppUserModel_ID;
+            var str = PropVariant.FromString (appId);
+            propStore.SetValue(ref pkey, ref str);
         }
 
         /// <summary>

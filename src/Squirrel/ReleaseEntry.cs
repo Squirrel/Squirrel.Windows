@@ -20,8 +20,9 @@ namespace Squirrel
         long Filesize { get; }
         bool IsDelta { get; }
         string EntryAsString { get; }
-        Version Version { get; }
+        SemanticVersion Version { get; }
         string PackageName { get; }
+        float? StagingPercentage { get; }
 
         string GetReleaseNotes(string packageDirectory);
         Uri GetIconUrl(string packageDirectory);
@@ -33,26 +34,34 @@ namespace Squirrel
         [DataMember] public string SHA1 { get; protected set; }
         [DataMember] public string BaseUrl { get; protected set; }
         [DataMember] public string Filename { get; protected set; }
+        [DataMember] public string Query { get; protected set; }
         [DataMember] public long Filesize { get; protected set; }
         [DataMember] public bool IsDelta { get; protected set; }
+        [DataMember] public float? StagingPercentage { get; protected set; }
 
-        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null)
+        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null, string query = null, float? stagingPercentage = null)
         {
             Contract.Requires(sha1 != null && sha1.Length == 40);
             Contract.Requires(filename != null);
             Contract.Requires(filename.Contains(Path.DirectorySeparatorChar) == false);
             Contract.Requires(filesize > 0);
 
-            SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Filesize = filesize; IsDelta = isDelta;
+            SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Query = query; Filesize = filesize; IsDelta = isDelta; StagingPercentage = stagingPercentage;
         }
 
         [IgnoreDataMember]
         public string EntryAsString {
-            get { return String.Format("{0} {1}{2} {3}", SHA1, BaseUrl, Filename, Filesize); }
+            get {
+                if (StagingPercentage != null) {
+                    return String.Format("{0} {1}{2} {3} # {4}", SHA1, BaseUrl, Filename, Filesize, stagingPercentageAsString(StagingPercentage.Value));
+                } else {
+                    return String.Format("{0} {1}{2} {3}", SHA1, BaseUrl, Filename, Filesize);
+                }
+            }
         }
 
         [IgnoreDataMember]
-        public Version Version { get { return Filename.ToVersion(); } }
+        public SemanticVersion Version { get { return Filename.ToSemanticVersion(); } }
 
         [IgnoreDataMember]
         public string PackageName {
@@ -78,17 +87,24 @@ namespace Squirrel
         }
 
         static readonly Regex entryRegex = new Regex(@"^([0-9a-fA-F]{40})\s+(\S+)\s+(\d+)[\r]*$");
-        static readonly Regex commentRegex = new Regex(@"#.*$");
+        static readonly Regex commentRegex = new Regex(@"\s*#.*$");
+        static readonly Regex stagingRegex = new Regex(@"#\s+(\d{1,3})%$");
         public static ReleaseEntry ParseReleaseEntry(string entry)
         {
             Contract.Requires(entry != null);
+
+            float? stagingPercentage = null;
+            var m = stagingRegex.Match(entry);
+            if (m != null && m.Success) {
+                stagingPercentage = Single.Parse(m.Groups[1].Value) / 100.0f;
+            }
 
             entry = commentRegex.Replace(entry, "");
             if (String.IsNullOrWhiteSpace(entry)) {
                 return null;
             }
 
-            var m = entryRegex.Match(entry);
+            m = entryRegex.Match(entry);
             if (!m.Success) {
                 throw new Exception("Invalid release entry: " + entry);
             }
@@ -99,17 +115,29 @@ namespace Squirrel
 
             string filename = m.Groups[2].Value;
 
-            // Split the base URL and the filename if an URI is provided, 
+            // Split the base URL and the filename if an URI is provided,
             // throws if a path is provided
             string baseUrl = null;
+            string query = null;
 
             if(Utility.IsHttpUrl(filename)) {
-                var indexOfLastPathSeparator = filename.LastIndexOf("/") + 1;
+                var uri = new Uri(filename);
+                var path = uri.LocalPath;
+                var authority = uri.GetLeftPart(UriPartial.Authority);
 
-                baseUrl = filename.Substring(0, indexOfLastPathSeparator);
-                filename = filename.Substring(indexOfLastPathSeparator);
-            } 
-            
+                if (String.IsNullOrEmpty(path) || String.IsNullOrEmpty(authority)) {
+                    throw new Exception("Invalid URL");
+                }
+
+                var indexOfLastPathSeparator = path.LastIndexOf("/") + 1;
+                baseUrl = authority + path.Substring(0, indexOfLastPathSeparator);
+                filename = path.Substring(indexOfLastPathSeparator);
+
+                if (!String.IsNullOrEmpty(uri.Query)) {
+                    query = uri.Query;
+                }
+            }
+
             if (filename.IndexOfAny(Path.GetInvalidFileNameChars()) > -1) {
                 throw new Exception("Filename can either be an absolute HTTP[s] URL, *or* a file name");
             }
@@ -117,7 +145,21 @@ namespace Squirrel
             long size = Int64.Parse(m.Groups[3].Value);
             bool isDelta = filenameIsDeltaFile(filename);
 
-            return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl);
+            return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl, query, stagingPercentage);
+        }
+
+        public bool IsStagingMatch(Guid? userId)
+        {
+            // A "Staging match" is when a user falls into the affirmative
+            // bucket - i.e. if the staging is at 10%, this user is the one out
+            // of ten case.
+            if (!StagingPercentage.HasValue) return true;
+            if (!userId.HasValue) return false;
+
+            uint val = BitConverter.ToUInt32(userId.Value.ToByteArray(), 12);
+
+            double percentage = ((double)val / (double)UInt32.MaxValue);
+            return percentage < StagingPercentage.Value;
         }
 
         public static IEnumerable<ReleaseEntry> ParseReleaseFile(string fileContents)
@@ -136,6 +178,24 @@ namespace Squirrel
 
             return ret.Any(x => x == null) ? null : ret;
         }
+
+        public static IEnumerable<ReleaseEntry> ParseReleaseFileAndApplyStaging(string fileContents, Guid? userToken)
+        {
+            if (String.IsNullOrEmpty(fileContents)) {
+                return new ReleaseEntry[0];
+            }
+
+            fileContents = Utility.RemoveByteOrderMarkerIfPresent(fileContents);
+
+            var ret = fileContents.Split('\n')
+                .Where(x => !String.IsNullOrWhiteSpace(x))
+                .Select(ParseReleaseEntry)
+                .Where(x => x != null && x.IsStagingMatch(userToken))
+                .ToArray();
+
+            return ret.Any(x => x == null) ? null : ret;
+        }
+
 
         public static void WriteReleaseFile(IEnumerable<ReleaseEntry> releaseEntries, Stream stream)
         {
@@ -212,6 +272,11 @@ namespace Squirrel
             return entries;
         }
 
+        static string stagingPercentageAsString(float percentage)
+        {
+            return String.Format("{0:F0}%", percentage * 100.0);
+        }
+
         static bool filenameIsDeltaFile(string filename)
         {
             return filename.EndsWith("-delta.nupkg", StringComparison.InvariantCultureIgnoreCase);
@@ -223,7 +288,7 @@ namespace Squirrel
 
             return releaseEntries
                 .Where(x => x.IsDelta == false)
-                .Where(x => x.Version < package.ToVersion())
+                .Where(x => x.Version < package.ToSemanticVersion())
                 .OrderByDescending(x => x.Version)
                 .Select(x => new ReleasePackage(Path.Combine(targetDir, x.Filename), true))
                 .FirstOrDefault();

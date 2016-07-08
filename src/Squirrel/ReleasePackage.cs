@@ -13,6 +13,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using MarkdownSharp;
 using NuGet;
 using Splat;
+using ICSharpCode.SharpZipLib.Core;
 
 namespace Squirrel
 {
@@ -83,7 +84,7 @@ namespace Squirrel
             }
         }
 
-        public Version Version { get { return InputPackageFile.ToVersion(); } }
+        public SemanticVersion Version { get { return InputPackageFile.ToSemanticVersion(); } }
 
         public string CreateReleasePackage(string outputFile, string packagesRootDir = null, Func<string, string> releaseNotesProcessor = null, Action<string> contentsPostProcessHook = null)
         {
@@ -126,10 +127,9 @@ namespace Squirrel
 
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 var tempDir = new DirectoryInfo(tempPath);
-                var fz = new FastZip();
 
-                fz.ExtractZip(InputPackageFile, tempPath, null);
-                                
+                ExtractZipDecoded(InputPackageFile, tempPath);
+             
                 this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
 
@@ -149,10 +149,88 @@ namespace Squirrel
                     contentsPostProcessHook(tempPath);
                 }
 
-                fz.CreateZip(outputFile, tempPath, true, null);
-                                
+                createZipEncoded(outputFile, tempPath);
+
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;
+            }
+        }
+
+        // nupkg file %-encodes zip entry names. This method decodes entry names before writing to disk.
+        // We must do this, or PathTooLongException may be thrown for some unicode entry names.
+        public static void ExtractZipDecoded(string zipFilePath, string outFolder, string directoryFilter = null)
+        {
+            var zf = new ZipFile(zipFilePath);
+
+            foreach (ZipEntry zipEntry in zf) {
+                if (!zipEntry.IsFile) continue;
+
+                var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
+
+                var buffer = new byte[4096];
+                var zipStream = zf.GetInputStream(zipEntry);
+
+                var fullZipToPath = Path.Combine(outFolder, entryFileName);
+                var directoryName = Path.GetDirectoryName(fullZipToPath);
+                var directoryFilter_ = new NameFilter(directoryFilter);
+                if (directoryFilter_.IsMatch(directoryName)) {
+                    if (directoryName.Length > 0) {
+                        Directory.CreateDirectory(directoryName);
+                    }
+
+                    using (FileStream streamWriter = File.Create(fullZipToPath)) {
+                        StreamUtils.Copy(zipStream, streamWriter, buffer);
+                    }
+                }
+            }
+            zf.Close();
+        }
+
+        // Create zip file with entry names %-encoded, as nupkg file does.
+        void createZipEncoded(string zipFilePath, string folder)
+        {
+            folder = Path.GetFullPath(folder);
+            var offset = folder.Length + (folder.EndsWith("\\", StringComparison.OrdinalIgnoreCase) ? 1 : 0);
+
+            var fsOut = File.Create(zipFilePath);
+            var zipStream = new ZipOutputStream(fsOut);
+
+            zipStream.SetLevel(5);
+
+            compressFolderEncoded(folder, zipStream, offset);
+
+            zipStream.IsStreamOwner = true;
+            zipStream.Close();
+        }
+
+        void compressFolderEncoded(string path, ZipOutputStream zipStream, int folderOffset)
+        {
+            string[] files = Directory.GetFiles(path);
+
+            foreach (string filename in files) {
+                FileInfo fi = new FileInfo(filename);
+
+                string entryName = filename.Substring(folderOffset);
+                entryName = ZipEntry.CleanName(entryName);
+                entryName = Uri.EscapeUriString(entryName);
+
+                var newEntry = new ZipEntry(entryName);
+                newEntry.DateTime = fi.LastWriteTime;
+                newEntry.Size = fi.Length;
+                zipStream.PutNextEntry(newEntry);
+
+                var buffer = new byte[4096];
+                using (FileStream streamReader = File.OpenRead(filename)) {
+                    StreamUtils.Copy(streamReader, zipStream, buffer);
+                }
+
+                zipStream.CloseEntry();
+            }
+
+            string[] folders = Directory.GetDirectories(path);
+
+            foreach (string folder in folders) {
+                compressFolderEncoded(folder, zipStream, folderOffset);
             }
         }
 
@@ -274,6 +352,7 @@ namespace Squirrel
             doc.Load(path);
 
             ContentType.Merge(doc);
+            ContentType.Clean(doc);
 
             using (var sw = new StreamWriter(path, false, Encoding.UTF8)) {
                 doc.Save(sw);

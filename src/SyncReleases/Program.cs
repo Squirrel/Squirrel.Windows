@@ -12,6 +12,7 @@ using Mono.Options;
 using Octokit;
 using Splat;
 using Squirrel;
+using Squirrel.Json;
 
 namespace SyncReleases
 {

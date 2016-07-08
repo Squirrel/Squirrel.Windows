@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using Microsoft.Win32;
 using NuGet;
 using Splat;
+using Squirrel.Shell;
 
 namespace Squirrel
 {
@@ -88,6 +89,7 @@ namespace Squirrel
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
+            this.KillAllExecutablesBelongingToPackage();
             await applyReleases.FullUninstall();
         }
 
@@ -109,11 +111,18 @@ namespace Squirrel
             installHelpers.RemoveUninstallerRegistryEntry();
         }
 
-        public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly)
+        public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments = null, string icon = null)
         {
             var installHelpers = new ApplyReleasesImpl(rootAppDirectory);
-            installHelpers.CreateShortcutsForExecutable(exeName, locations, updateOnly);
+            installHelpers.CreateShortcutsForExecutable(exeName, locations, updateOnly, programArguments, icon);
         }
+
+        public Dictionary<ShortcutLocation, ShellLink> GetShortcutsForExecutable(string exeName, ShortcutLocation locations, string programArguments = null)
+        {
+            var installHelpers = new ApplyReleasesImpl(rootAppDirectory);
+            return installHelpers.GetShortcutsForExecutable(exeName, locations, programArguments);
+        }
+
 
         public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
         {
@@ -121,7 +130,7 @@ namespace Squirrel
             installHelpers.RemoveShortcutsForExecutable(exeName, locations);
         }
 
-        public Version CurrentlyInstalledVersion(string executable = null)
+        public SemanticVersion CurrentlyInstalledVersion(string executable = null)
         {
             executable = executable ??
                 Path.GetDirectoryName(typeof(UpdateManager).Assembly.Location);
@@ -134,7 +143,13 @@ namespace Squirrel
                 .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
 
             if (appDirName == null) return null;
-            return appDirName.ToVersion();
+            return appDirName.ToSemanticVersion();
+        }
+
+        public void KillAllExecutablesBelongingToPackage()
+        {
+            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            installHelpers.KillAllProcessesBelongingToPackage();
         }
 
         public string ApplicationName {
@@ -264,7 +279,7 @@ namespace Squirrel
                 return Path.GetFullPath(assembly.Location);
             }
 
-            assembly = Assembly.GetExecutingAssembly();
+            assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
 
             var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..\\Update.exe");
             var target = new FileInfo(updateDotExe);
