@@ -36,6 +36,7 @@ namespace Squirrel
 
         public Dictionary<ReleaseEntry, string> FetchReleaseNotes()
         {
+            this.Log().Info("Fetching release notes");
             return ReleasesToApply
                 .SelectMany(x => {
                     try {
@@ -43,7 +44,7 @@ namespace Squirrel
                         return EnumerableExtensions.Return(Tuple.Create(x, releaseNotes));
                     } catch (Exception ex) {
                         this.Log().WarnException("Couldn't get release notes for:" + x.Filename, ex);
-                        return Enumerable.Empty<Tuple<ReleaseEntry, string>>();
+                        return EnumerableExtensions.Return(Tuple.Create(x, String.Empty));
                     }
                 })
                 .ToDictionary(k => k.Item1, v => v.Item2);

@@ -399,6 +399,9 @@ namespace Squirrel.Update
             var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
 
             try {
+                this.Log().Info("targetSetupExe: {0}", targetSetupExe);
+                this.Log().Info("zipPath {0}", zipPath);
+                this.Log().Info("writeZipToSetup {0}", writeZipToSetup);
                 var result = Utility.InvokeProcessAsync(writeZipToSetup, String.Format("\"{0}\" \"{1}\"", targetSetupExe, zipPath), CancellationToken.None).Result;
                 if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
             } catch (Exception ex) {

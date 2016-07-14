@@ -32,6 +32,8 @@ namespace Squirrel
             public async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall, bool attemptingFullInstall, Action<int> progress = null)
             {
                 progress = progress ?? (_ => { });
+                
+                this.Log().Info("Starting to apply releases");
 
                 var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
                 progress(10);
@@ -45,7 +47,9 @@ namespace Squirrel
                     progress(100);
                     return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
                 }
-
+                
+                this.Log().Info("Installing package to application directory");
+                
                 var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release), 
                     "Failed to install package to app dir");
                 progress(30);
@@ -302,18 +306,62 @@ namespace Squirrel
                     var toMove = libDir.GetDirectories().OrderBy(x => x.Name);
 
                     toMove.ForEach(ld => {
+                        this.Log().Info("Move item " + ld.FullName + "to " + target.FullName);
+            
                         ld.GetDirectories()
-                            .ForEachAsync(subdir => subdir.MoveTo(subdir.FullName.Replace(ld.FullName, target.FullName)))
-                            .Wait();
+                           .ForEachAsync(subdir => {
+                               this.Log().Info("Move subdir " + subdir.FullName + " to " + subdir.FullName.Replace(ld.FullName, target.FullName));                            
+                               Boolean moved = false;
+                               Int16 trials = 0;
+                               do
+                               {
+                                   try
+                                   {
+                                       trials ++;
+                                       subdir.MoveTo(subdir.FullName.Replace(ld.FullName, target.FullName));
+                                       moved = true;
+                                   }
+                                   catch (System.IO.IOException e)
+                                   {
+                                       this.Log().Info("Source subdir could not be moved, trial {0}", trials);
+                                       System.Threading.Thread.Sleep(2000);
+                                   }
+                               } while (!moved && trials < 8);
+                               if (!moved) {
+                                   this.Log().Error("Could not move directory " + subdir.FullName);
+                                   throw new System.IO.IOException("Could not move folder to final destination");
+                               }
+                           })
+                           .Wait();
 
                         ld.GetFiles()
-                            .ForEachAsync(file => {
-                                var tgt = Path.Combine(target.FullName, file.Name);
-                                this.Log().Info("Moving file {0} to {1}", file.FullName, tgt);
-                                if (File.Exists(tgt)) Utility.DeleteFileHarder(tgt, true);
-                                file.MoveTo(tgt);
-                            })
-                            .Wait();
+                           .ForEachAsync(file => {
+                               var tgt = Path.Combine(target.FullName, file.Name);
+                               this.Log().Info("Moving file {0} to {1}", file.FullName, tgt);
+                               if (File.Exists(tgt)) Utility.DeleteFileHarder(tgt, true);
+                               Boolean moved = false;
+                               Int16 trials = 0;
+                               do
+                               {
+                                   try
+                                   {
+                                       trials ++;
+                                       file.MoveTo(tgt);
+                                       moved = true;
+                                   }
+                                   catch (System.IO.IOException e)
+                                   {
+                                       this.Log().Info("Source file could not be moved, trial {0}", trials);
+                                       System.Threading.Thread.Sleep(2000);
+                                   }
+                               } while (!moved && trials < 8);
+                               if (!moved) {
+                                   this.Log().Error("Could not move file " + file.FullName);
+                                   throw new System.IO.IOException("Could not move file to final destination");
+                               }
+                              
+                           })
+                           .Wait();
                     });
 
                     await Utility.DeleteDirectory(libDir.FullName);
