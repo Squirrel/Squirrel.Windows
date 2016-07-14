@@ -202,11 +202,11 @@ namespace Squirrel
 
                     var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
                     var fullZipToPath = Path.Combine(outFolder, entryFileName);
-                    fullZipToPath = re.Replace(fullZipToPath, "", 1);
 
                     var directoryName = Path.GetDirectoryName(fullZipToPath);
 
-                    if (directoryFilter.IsMatch(directoryName)) return;
+                    if (!directoryFilter.IsMatch(directoryName)) return;
+                    fullZipToPath = re.Replace(fullZipToPath, "", 1);
 
                     var buffer = new byte[64*1024];
 
