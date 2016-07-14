@@ -14,6 +14,7 @@ using MarkdownSharp;
 using NuGet;
 using Splat;
 using ICSharpCode.SharpZipLib.Core;
+using System.Threading.Tasks;
 
 namespace Squirrel
 {
@@ -158,32 +159,71 @@ namespace Squirrel
 
         // nupkg file %-encodes zip entry names. This method decodes entry names before writing to disk.
         // We must do this, or PathTooLongException may be thrown for some unicode entry names.
-        public static void ExtractZipDecoded(string zipFilePath, string outFolder, string directoryFilter = null)
+        public static void ExtractZipDecoded(string zipFilePath, string outFolder)
         {
             var zf = new ZipFile(zipFilePath);
 
-            foreach (ZipEntry zipEntry in zf) {
-                if (!zipEntry.IsFile) continue;
+            var buffer = new byte[64*1024];
 
-                var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
+            try {
+                foreach (ZipEntry zipEntry in zf) {
+                    if (!zipEntry.IsFile) continue;
 
-                var buffer = new byte[4096];
-                var zipStream = zf.GetInputStream(zipEntry);
+                    var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
 
-                var fullZipToPath = Path.Combine(outFolder, entryFileName);
-                var directoryName = Path.GetDirectoryName(fullZipToPath);
-                var directoryFilter_ = new NameFilter(directoryFilter);
-                if (directoryFilter_.IsMatch(directoryName)) {
+                    var fullZipToPath = Path.Combine(outFolder, entryFileName);
+                    var directoryName = Path.GetDirectoryName(fullZipToPath);
+
                     if (directoryName.Length > 0) {
                         Directory.CreateDirectory(directoryName);
                     }
+
+                    var zipStream = zf.GetInputStream(zipEntry);
 
                     using (FileStream streamWriter = File.Create(fullZipToPath)) {
                         StreamUtils.Copy(zipStream, streamWriter, buffer);
                     }
                 }
+            } finally {
+                zf.Close();
             }
-            zf.Close();
+        }
+
+        public static async Task ExtractZipForInstall(string zipFilePath, string outFolder)
+        {
+            var zf = new ZipFile(zipFilePath);
+            var directoryFilter = new NameFilter("lib");
+            var entries = zf.OfType<ZipEntry>().ToArray();
+            var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+            try {
+                await Utility.ForEachAsync(entries, (zipEntry) => {
+                    if (!zipEntry.IsFile) return;
+
+                    var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
+                    var fullZipToPath = Path.Combine(outFolder, entryFileName);
+                    fullZipToPath = re.Replace(fullZipToPath, "", 1);
+
+                    var directoryName = Path.GetDirectoryName(fullZipToPath);
+
+                    if (directoryFilter.IsMatch(directoryName)) return;
+
+                    var buffer = new byte[64*1024];
+                    var zipStream = zf.GetInputStream(zipEntry);
+
+                    if (directoryName.Length > 0) {
+                        Utility.Retry(() => Directory.CreateDirectory(directoryName), 2);
+                    }
+
+                    Utility.Retry(() => {
+                        using (FileStream streamWriter = File.Create(fullZipToPath)) {
+                            StreamUtils.Copy(zipStream, streamWriter, buffer);
+                        }
+                    }, 5);
+                }, 4);
+            } finally {
+                zf.Close();
+            }
         }
 
         // Create zip file with entry names %-encoded, as nupkg file does.
