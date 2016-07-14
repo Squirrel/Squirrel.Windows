@@ -209,13 +209,13 @@ namespace Squirrel
                     if (directoryFilter.IsMatch(directoryName)) return;
 
                     var buffer = new byte[64*1024];
-                    var zipStream = zf.GetInputStream(zipEntry);
 
                     if (directoryName.Length > 0) {
                         Utility.Retry(() => Directory.CreateDirectory(directoryName), 2);
                     }
 
                     Utility.Retry(() => {
+                        using (var zipStream = zf.GetInputStream(zipEntry))
                         using (FileStream streamWriter = File.Create(fullZipToPath)) {
                             StreamUtils.Copy(zipStream, streamWriter, buffer);
                         }
@@ -235,7 +235,7 @@ namespace Squirrel
             var fsOut = File.Create(zipFilePath);
             var zipStream = new ZipOutputStream(fsOut);
 
-            zipStream.SetLevel(5);
+            zipStream.SetLevel(9);
 
             compressFolderEncoded(folder, zipStream, offset);
 
@@ -247,8 +247,9 @@ namespace Squirrel
         {
             string[] files = Directory.GetFiles(path);
 
+            var buffer = new byte[64 * 1024];
             foreach (string filename in files) {
-                FileInfo fi = new FileInfo(filename);
+                var fi = new FileInfo(filename);
 
                 string entryName = filename.Substring(folderOffset);
                 entryName = ZipEntry.CleanName(entryName);
@@ -259,7 +260,6 @@ namespace Squirrel
                 newEntry.Size = fi.Length;
                 zipStream.PutNextEntry(newEntry);
 
-                var buffer = new byte[4096];
                 using (FileStream streamReader = File.OpenRead(filename)) {
                     StreamUtils.Copy(streamReader, zipStream, buffer);
                 }
