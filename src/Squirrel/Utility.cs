@@ -389,7 +389,7 @@ namespace Squirrel
                 return null;
             }
 
-            return localReleases.MaxBy(x => x.Version).SingleOrDefault(x => !x.IsDelta);
+            return localReleases.OrderByDescending(x => x.Version).FirstOrDefault(x => !x.IsDelta);
         }
 
         static TAcc scan<T, TAcc>(this IEnumerable<T> This, TAcc initialValue, Func<TAcc, T, TAcc> accFunc)
