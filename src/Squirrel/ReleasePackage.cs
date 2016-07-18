@@ -206,8 +206,8 @@ namespace Squirrel
                     var directoryName = Path.GetDirectoryName(fullZipToPath);
 
                     if (!directoryFilter.IsMatch(directoryName)) return;
-                    fullZipToPath = re.Replace(fullZipToPath, "");
-                    directoryName = re.Replace(directoryName, "");
+                    fullZipToPath = re.Replace(fullZipToPath, "", 1);
+                    directoryName = re.Replace(directoryName, "", 1);
 
                     var buffer = new byte[64*1024];
 
