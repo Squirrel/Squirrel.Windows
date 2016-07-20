@@ -168,7 +168,7 @@ namespace Squirrel
 
                 if (!localReleases.Any()) {
                     this.Log().Warn("First run or local directory is corrupt, starting from scratch");
-                    return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory);
+                    return UpdateInfo.Create(null, new[] {latestFullRelease}, packageDirectory);
                 }
 
                 if (localReleases.Max(x => x.Version) > remoteReleases.Max(x => x.Version)) {
