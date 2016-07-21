@@ -120,6 +120,7 @@ namespace Squirrel
         public static WebClient CreateWebClient()
         {
             // WHY DOESNT IT JUST DO THISSSSSSSS
+            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
             var ret = new WebClient();
             var wp = WebRequest.DefaultWebProxy;
             if (wp != null) {
@@ -388,7 +389,7 @@ namespace Squirrel
                 return null;
             }
 
-            return localReleases.MaxBy(x => x.Version).SingleOrDefault(x => !x.IsDelta);
+            return localReleases.OrderByDescending(x => x.Version).FirstOrDefault(x => !x.IsDelta);
         }
 
         static TAcc scan<T, TAcc>(this IEnumerable<T> This, TAcc initialValue, Func<TAcc, T, TAcc> accFunc)
