@@ -69,7 +69,7 @@ namespace SyncReleases
                     return 0;
                 } catch (Exception ex) {
                     githubException = ex;
-                    Console.Error.WriteLine("Attemping to sync URL as remote RELEASES folder");
+                    Console.Error.WriteLine("Attempting to sync URL as remote RELEASES folder");
                 }
 
                 try {
