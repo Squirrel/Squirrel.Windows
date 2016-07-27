@@ -25,7 +25,7 @@ namespace SyncReleases
                 .Take(1)
                 .Select(x => new {
                     LocalPath = Path.Combine(releasesDir.FullName, x.Filename),
-                    RemoteUrl = new Uri(Utility.EnsureTrailingSlash(targetUri), x.BaseUrl + x.Filename)
+                    RemoteUrl = new Uri(Utility.EnsureTrailingSlash(targetUri), x.BaseUrl + x.Filename + x.Query)
                  });
 
             foreach (var releaseToDownload in releasesToDownload) {
