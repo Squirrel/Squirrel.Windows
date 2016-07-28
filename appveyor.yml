@@ -1,0 +1,42 @@
+version: 1.0.{build}
+image: Visual Studio 2015
+configuration: Release
+before_build:
+- cmd: >-
+    git submodule update --init --recursive
+
+    nuget restore
+build:
+  project: Squirrel.sln
+  verbosity: minimal
+after_build:
+- cmd: 7z a artifacts.zip .\src\Setup\bin\Release\Setup.exe .\src\Update\bin\Release\Update.exe .\src\Update\bin\Release\Update-Mono.exe .\src\Update\bin\Release\Update.pdb .\src\Update\bin\Release\Update-Mono.pdb .\src\SyncReleases\bin\Release\SyncReleases.exe .\src\SyncReleases\bin\Release\SyncReleases.pdb .\src\WriteZipToSetup\bin\Release\WriteZipToSetup.exe .\src\WriteZipToSetup\bin\Release\WriteZipToSetup.pdb .\src\Update\bin\Release\Update.com .\src\Setup\bin\Release\Setup.pdb .\src\Update\bin\Release\signtool.exe .\src\Update\bin\Release\rcedit.exe .\vendor\wix\candle.exe .\vendor\wix\light.exe .\vendor\wix\WixNetFxExtension.dll .\vendor\wix\Microsoft.Deployment.WindowsInstaller.dll .\vendor\wix\Microsoft.Deployment.Resources.dll .\vendor\wix\light.exe.config .\vendor\wix\candle.exe.config .\vendor\wix\darice.cub .\vendor\wix\wconsole.dll .\vendor\wix\winterop.dll .\vendor\wix\wix.dll .\vendor\nuget\lib\NuGet.exe
+test: off
+artifacts:
+- path: artifacts.zip
+  name: Release Artifacts
+- path: src\Setup\bin\Release\Setup.exe
+- path: src\Update\bin\Release\Update.exe
+- path: src\Update\bin\Release\Update-Mono.exe
+- path: src\Update\bin\Release\Update.pdb
+- path: src\Update\bin\Release\Update-Mono.pdb
+- path: src\SyncReleases\bin\Release\SyncReleases.exe
+- path: src\SyncReleases\bin\Release\SyncReleases.pdb
+- path: src\WriteZipToSetup\bin\Release\WriteZipToSetup.exe
+- path: src\WriteZipToSetup\bin\Release\WriteZipToSetup.pdb
+- path: src\Update\bin\Release\Update.com
+- path: src\Setup\bin\Release\Setup.pdb
+- path: src\Update\bin\Release\signtool.exe
+- path: src\Update\bin\Release\rcedit.exe
+- path: vendor\wix\candle.exe
+- path: vendor\wix\light.exe
+- path: vendor\wix\WixNetFxExtension.dll
+- path: vendor\wix\Microsoft.Deployment.WindowsInstaller.dll
+- path: vendor\wix\Microsoft.Deployment.Resources.dll
+- path: vendor\wix\light.exe.config
+- path: vendor\wix\candle.exe.config
+- path: vendor\wix\darice.cub
+- path: vendor\wix\wconsole.dll
+- path: vendor\wix\winterop.dll
+- path: vendor\wix\wix.dll
+- path: vendor\nuget\lib\NuGet.exe
