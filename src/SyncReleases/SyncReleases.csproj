@@ -39,6 +39,10 @@
       <HintPath>..\..\packages\Octokit.0.10.0\lib\net45\Octokit.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="SharpCompress, Version=0.12.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\SharpCompress.0.12.3\lib\net45\SharpCompress.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Splat, Version=1.6.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Splat.1.6.2\lib\Net45\Splat.dll</HintPath>
       <Private>True</Private>
