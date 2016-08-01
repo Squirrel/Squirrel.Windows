@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using ICSharpCode.SharpZipLib.BZip2;
+using SharpCompress.Compressor;
+using SharpCompress.Compressor.BZip2;
 
 // Adapted from https://github.com/LogosBible/bsdiff.net/blob/master/src/bsdiff/BinaryPatchUtility.cs
 
@@ -111,7 +112,8 @@ namespace Squirrel.Bsdiff
             int dblen = 0;
             int eblen = 0;
 
-            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(new WrappingStream(output, Ownership.None)))
+            using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
+            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress))
             {
                 // compute the differences, writing ctrl as we go
                 int scan = 0;
@@ -228,7 +230,8 @@ namespace Squirrel.Bsdiff
             WriteInt64(controlEndPosition - startPosition - c_headerSize, header, 8);
 
             // write compressed diff data
-            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(new WrappingStream(output, Ownership.None)))
+            using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
+            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress))
             {
                 bz2Stream.Write(db, 0, dblen);
             }
@@ -238,7 +241,8 @@ namespace Squirrel.Bsdiff
             WriteInt64(diffEndPosition - controlEndPosition, header, 16);
 
             // write compressed extra data
-            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(new WrappingStream(output, Ownership.None)))
+            using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
+            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress))
             {
                 bz2Stream.Write(eb, 0, eblen);
             }
@@ -323,9 +327,9 @@ namespace Squirrel.Bsdiff
                 compressedExtraStream.Seek(c_headerSize + controlLength + diffLength, SeekOrigin.Current);
 
                 // decompress each part (to read it)
-                using (BZip2InputStream controlStream = new BZip2InputStream(compressedControlStream))
-                using (BZip2InputStream diffStream = new BZip2InputStream(compressedDiffStream))
-                using (BZip2InputStream extraStream = new BZip2InputStream(compressedExtraStream))
+                using (var controlStream = new BZip2Stream(compressedControlStream, CompressionMode.Decompress))
+                using (var diffStream = new BZip2Stream(compressedDiffStream, CompressionMode.Decompress))
+                using (var extraStream = new BZip2Stream(compressedExtraStream, CompressionMode.Decompress))
                 {
                     long[] control = new long[3];
                     byte[] buffer = new byte[8];
