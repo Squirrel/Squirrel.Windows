@@ -518,13 +518,21 @@ namespace Squirrel.Update
             var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName.Replace("%20", " ")));
             this.Log().Info("Want to launch '{0}'", targetExe);
 
-            // Check for path canonicalization attacks
-            if (!targetExe.FullName.StartsWith(latestAppDir, StringComparison.Ordinal)) {
-                throw new ArgumentException();
+            if (!targetExe.Exists)
+            {
+                this.Log().Warn("File {0} doesn't exist in current release", targetExe);
+                targetExe = new FileInfo(Path.Combine(latestAppDir, exeName));
+                this.Log().Info("Falling back to launch '{0}'", targetExe);
+
+                if (!targetExe.Exists)
+                {
+                    this.Log().Error("File {0} doesn't exist in current release", targetExe);
+                    throw new ArgumentException();
+                }
             }
 
-            if (!targetExe.Exists) {
-                this.Log().Error("File {0} doesn't exist in current release", targetExe);
+            // Check for path canonicalization attacks
+            if (!targetExe.FullName.StartsWith(latestAppDir, StringComparison.Ordinal)) {
                 throw new ArgumentException();
             }
 
