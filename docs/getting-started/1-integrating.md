@@ -54,6 +54,8 @@ The code above demonstrates the most basic update mechanism using the `UpdateApp
 
 **Tip:** In this example we simply put the code in the `Program.cs` file. For a production application, place the update code later in start-up process so as to avoid slowing down your program start. 
 
+Note: to debug the application locally you might want to copy Squirrel.exe (example location: \packages\squirrel.windows.1.4.2\tools) to a new folder like "ext" under MyApp solution folder.  Rename the copied file to Update.exe.  Then add the existing file in Visual Studio and set its Properties > Copy To Output Directory to 'Copy if newer'.
+
 ---
 | Previous: [Getting Started Guide](0-overview.md) | Next: [2. Packaging](2-packaging.md)|
 |:---|:---|
