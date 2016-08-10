@@ -182,7 +182,7 @@ namespace Squirrel
                         sl.Arguments += String.Format(" -a \"{0}\"", programArguments);
                     }
 
-                    sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
+                    sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", "")));
                     ret.Add(f, sl);
                 }
 
@@ -238,7 +238,7 @@ namespace Squirrel
                             sl.Arguments += String.Format(" -a \"{0}\"", programArguments);
                         }
 
-                        sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id, exeName.Replace(".exe", "")));
+                        sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", "")));
 
                         this.Log().Info("About to save shortcut: {0} (target {1}, workingDir {2}, args {3})", file, sl.Target, sl.WorkingDirectory, sl.Arguments);
                         if (ModeDetector.InUnitTestRunner() == false) sl.Save(file);

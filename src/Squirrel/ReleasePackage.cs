@@ -192,7 +192,6 @@ namespace Squirrel
         public static async Task ExtractZipForInstall(string zipFilePath, string outFolder)
         {
             var zf = new ZipFile(zipFilePath);
-            var directoryFilter = new NameFilter("lib");
             var entries = zf.OfType<ZipEntry>().ToArray();
             var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
@@ -201,13 +200,10 @@ namespace Squirrel
                     if (!zipEntry.IsFile) return;
 
                     var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
-                    var fullZipToPath = Path.Combine(outFolder, entryFileName);
+                    if (!re.Match(entryFileName).Success) return;
 
+                    var fullZipToPath = Path.Combine(outFolder, re.Replace(entryFileName, "", 1));
                     var directoryName = Path.GetDirectoryName(fullZipToPath);
-
-                    if (!directoryFilter.IsMatch(directoryName)) return;
-                    fullZipToPath = re.Replace(fullZipToPath, "", 1);
-                    directoryName = re.Replace(directoryName, "", 1);
 
                     var buffer = new byte[64*1024];
 
