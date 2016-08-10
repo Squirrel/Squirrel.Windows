@@ -12,8 +12,6 @@ using NuGet;
 using Splat;
 using System.Threading;
 using Squirrel.Shell;
-using ICSharpCode.SharpZipLib.Zip;
-using ICSharpCode.SharpZipLib.Core;
 using Microsoft.Win32;
 
 namespace Squirrel

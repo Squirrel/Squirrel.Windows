@@ -5,11 +5,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using ICSharpCode.SharpZipLib.Zip;
 using Splat;
 using DeltaCompressionDotNet.MsDelta;
 using System.ComponentModel;
 using Squirrel.Bsdiff;
+using SharpCompress.Archive;
+using SharpCompress.Archive.Zip;
+using SharpCompress.Writer;
+using SharpCompress.Common;
 
 namespace Squirrel
 {
@@ -63,9 +66,12 @@ namespace Squirrel
                 this.Log().Info("Extracting {0} and {1} into {2}", 
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
-                var fz = new FastZip();
-                fz.ExtractZip(basePackage.ReleasePackageFile, baseTempInfo.FullName, null);
-                fz.ExtractZip(newPackage.ReleasePackageFile, tempInfo.FullName, null);
+                using (var za = ZipArchive.Open(basePackage.ReleasePackageFile)) {
+                    za.WriteToDirectory(baseTempInfo.FullName);
+                }
+                using (var za = ZipArchive.Open(basePackage.ReleasePackageFile)) {
+                    za.WriteToDirectory(tempInfo.FullName);
+                }
 
                 // Collect a list of relative paths under 'lib' and map them
                 // to their full name. We'll use this later to determine in
@@ -82,7 +88,10 @@ namespace Squirrel
                 }
 
                 ReleasePackage.addDeltaFilesToContentTypes(tempInfo.FullName);
-                fz.CreateZip(outputFile, tempInfo.FullName, true, null);
+                using (var za = ZipArchive.Create()) {
+                    za.AddAllFromDirectory(tempInfo.FullName);
+                    za.SaveTo(outputFile, CompressionType.Deflate);
+                }
             }
 
             return new ReleasePackage(outputFile);
@@ -98,9 +107,12 @@ namespace Squirrel
 
             using (Utility.WithTempDirectory(out deltaPath, localAppDirectory))
             using (Utility.WithTempDirectory(out workingPath, localAppDirectory)) {
-                var fz = new FastZip();
-                fz.ExtractZip(deltaPackage.InputPackageFile, deltaPath, null);
-                fz.ExtractZip(basePackage.InputPackageFile, workingPath, null);
+                using (var za = ZipArchive.Open(deltaPackage.InputPackageFile)) {
+                    za.WriteToDirectory(deltaPath);
+                }
+                using (var za = ZipArchive.Open(basePackage.InputPackageFile)) {
+                    za.WriteToDirectory(workingPath);
+                }
 
                 var pathsVisited = new List<string>();
 
@@ -139,7 +151,10 @@ namespace Squirrel
                     });
 
                 this.Log().Info("Repacking into full package: {0}", outputFile);
-                fz.CreateZip(outputFile, workingPath, true, null);
+                using (var za = ZipArchive.Create()) {
+                    za.AddAllFromDirectory(workingPath);
+                    za.SaveTo(outputFile, CompressionType.None);
+                }
             }
 
             return new ReleasePackage(outputFile);

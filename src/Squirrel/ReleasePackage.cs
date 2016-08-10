@@ -9,11 +9,9 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using ICSharpCode.SharpZipLib.Zip;
 using MarkdownSharp;
 using NuGet;
 using Splat;
-using ICSharpCode.SharpZipLib.Core;
 using System.Threading.Tasks;
 
 namespace Squirrel
