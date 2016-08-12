@@ -707,7 +707,7 @@ namespace Squirrel
                     Directory.CreateDirectory(dir);
                 }
 
-                return Path.Combine(dir, title + ".lnk");
+                return Path.Combine(dir, String.Join("_", (title + ".lnk").Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.'));
             }
         }
     }
