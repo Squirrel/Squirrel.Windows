@@ -13,6 +13,11 @@ using MarkdownSharp;
 using NuGet;
 using Splat;
 using System.Threading.Tasks;
+using SharpCompress.Archive.Zip;
+using SharpCompress.Reader;
+using SharpCompress.Archive;
+using SharpCompress.Common;
+using SharpCompress.Compressor.Deflate;
 
 namespace Squirrel
 {
@@ -136,7 +141,7 @@ namespace Squirrel
                 var tempDir = new DirectoryInfo(tempPath);
 
                 ExtractZipDecoded(InputPackageFile, tempPath);
-             
+
                 this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
 
@@ -167,31 +172,21 @@ namespace Squirrel
         // We must do this, or PathTooLongException may be thrown for some unicode entry names.
         public static void ExtractZipDecoded(string zipFilePath, string outFolder)
         {
-            var zf = new ZipFile(zipFilePath);
+            using (var za = ZipArchive.Open(zipFilePath))
+            using (var reader = za.ExtractAllEntries()) {
+                while (reader.MoveToNextEntry()) {
+                    var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
+                    var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
 
-            var buffer = new byte[64*1024];
+                    var fullTargetDir = Path.Combine(outFolder, Path.GetDirectoryName(decoded));
+                    Directory.CreateDirectory(fullTargetDir);
 
-            try {
-                foreach (ZipEntry zipEntry in zf) {
-                    if (!zipEntry.IsFile) continue;
-
-                    var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
-
-                    var fullZipToPath = Path.Combine(outFolder, entryFileName);
-                    var directoryName = Path.GetDirectoryName(fullZipToPath);
-
-                    if (directoryName.Length > 0) {
-                        Directory.CreateDirectory(directoryName);
-                    }
-
-                    var zipStream = zf.GetInputStream(zipEntry);
-
-                    using (FileStream streamWriter = File.Create(fullZipToPath)) {
-                        StreamUtils.Copy(zipStream, streamWriter, buffer);
+                    if (reader.Entry.IsDirectory) {
+                        Directory.CreateDirectory(Path.Combine(outFolder, decoded));
+                    } else {
+                        reader.WriteEntryToFile(Path.Combine(outFolder, decoded));
                     }
                 }
-            } finally {
-                zf.Close();
             }
         }
 
@@ -224,10 +219,11 @@ namespace Squirrel
 
                     var directoryName = Path.GetDirectoryName(fullZipToPath);
 
-                    var buffer = new byte[64*1024];
+                    decoded = re.Replace(decoded, "");
 
-                    if (directoryName.Length > 0) {
-                        Utility.Retry(() => Directory.CreateDirectory(directoryName), 2);
+                    var fullTargetDir = Path.Combine(outFolder, Path.GetDirectoryName(decoded));
+                    if (!reader.Entry.IsDirectory) {
+                        Utility.Retry(() => Directory.CreateDirectory(fullTargetDir), 2);
                     }
 
                     try {
@@ -252,48 +248,11 @@ namespace Squirrel
         // Create zip file with entry names %-encoded, as nupkg file does.
         void createZipEncoded(string zipFilePath, string folder)
         {
-            folder = Path.GetFullPath(folder);
-            var offset = folder.Length + (folder.EndsWith("\\", StringComparison.OrdinalIgnoreCase) ? 1 : 0);
-
-            var fsOut = File.Create(zipFilePath);
-            var zipStream = new ZipOutputStream(fsOut);
-
-            zipStream.SetLevel(9);
-
-            compressFolderEncoded(folder, zipStream, offset);
-
-            zipStream.IsStreamOwner = true;
-            zipStream.Close();
-        }
-
-        void compressFolderEncoded(string path, ZipOutputStream zipStream, int folderOffset)
-        {
-            string[] files = Directory.GetFiles(path);
-
-            var buffer = new byte[64 * 1024];
-            foreach (string filename in files) {
-                var fi = new FileInfo(filename);
-
-                string entryName = filename.Substring(folderOffset);
-                entryName = ZipEntry.CleanName(entryName);
-                entryName = Uri.EscapeUriString(entryName);
-
-                var newEntry = new ZipEntry(entryName);
-                newEntry.DateTime = fi.LastWriteTime;
-                newEntry.Size = fi.Length;
-                zipStream.PutNextEntry(newEntry);
-
-                using (FileStream streamReader = File.OpenRead(filename)) {
-                    StreamUtils.Copy(streamReader, zipStream, buffer);
-                }
-
-                zipStream.CloseEntry();
-            }
-
-            string[] folders = Directory.GetDirectories(path);
-
-            foreach (string folder in folders) {
-                compressFolderEncoded(folder, zipStream, folderOffset);
+            using (var archive = ZipArchive.Create()) {
+                archive.AddAllFromDirectory(folder);
+                archive.SaveTo(
+                    zipFilePath,
+                    new CompressionInfo() { Type = CompressionType.Deflate, DeflateCompressionLevel = CompressionLevel.BestCompression });
             }
         }
 

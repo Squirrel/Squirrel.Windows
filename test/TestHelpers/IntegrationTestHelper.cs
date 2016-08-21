@@ -8,7 +8,9 @@ using Squirrel;
 using Splat;
 using Xunit;
 using System.Text;
-using ICSharpCode.SharpZipLib.Zip;
+using SharpCompress.Archive.Zip;
+using SharpCompress.Reader;
+using SharpCompress.Common;
 
 namespace Squirrel.Tests.TestHelpers
 {
@@ -131,8 +133,12 @@ namespace Squirrel.Tests.TestHelpers
             var zipPath = GetPath("fixtures", zipFile);
             Assert.True(File.Exists(zipPath));
 
-            var fz = new FastZip();
-            fz.ExtractZip(zipPath, path, null);
+            using (var za = ZipArchive.Open(zipFile))
+            using (var reader = za.ExtractAllEntries()) {
+                reader.WriteEntryToDirectory(
+                    path,
+                    ExtractOptions.Overwrite | ExtractOptions.ExtractFullPath | ExtractOptions.PreserveAttributes | ExtractOptions.PreserveFileTime);
+            }
 
             return ret;
         }
