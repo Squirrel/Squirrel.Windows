@@ -69,14 +69,16 @@ namespace Squirrel
                 this.Log().Info("Extracting {0} and {1} into {2}", 
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
+                var opts = ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime;
+
                 using (var za = ZipArchive.Open(basePackage.ReleasePackageFile))
                 using (var reader = za.ExtractAllEntries()) {
-                    reader.WriteAllToDirectory(baseTempInfo.FullName);
+                    reader.WriteAllToDirectory(baseTempInfo.FullName, opts);
                 }
 
                 using (var za = ZipArchive.Open(basePackage.ReleasePackageFile))
                 using (var reader = za.ExtractAllEntries()) {
-                    reader.WriteAllToDirectory(tempInfo.FullName);
+                    reader.WriteAllToDirectory(tempInfo.FullName, opts);
                 }
 
                 // Collect a list of relative paths under 'lib' and map them
@@ -113,13 +115,15 @@ namespace Squirrel
 
             using (Utility.WithTempDirectory(out deltaPath, localAppDirectory))
             using (Utility.WithTempDirectory(out workingPath, localAppDirectory)) {
+                var opts = ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime;
+
                 using (var za = ZipArchive.Open(deltaPackage.InputPackageFile))
                 using (var reader = za.ExtractAllEntries()) {
-                    reader.WriteAllToDirectory(deltaPath);
+                    reader.WriteAllToDirectory(deltaPath, opts);
                 }
                 using (var za = ZipArchive.Open(basePackage.InputPackageFile))
                 using (var reader = za.ExtractAllEntries()) {
-                    reader.WriteAllToDirectory(workingPath);
+                    reader.WriteAllToDirectory(workingPath, opts);
                 }
 
                 var pathsVisited = new List<string>();

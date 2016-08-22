@@ -133,11 +133,10 @@ namespace Squirrel.Tests.TestHelpers
             var zipPath = GetPath("fixtures", zipFile);
             Assert.True(File.Exists(zipPath));
 
+            var opts = ExtractOptions.Overwrite | ExtractOptions.ExtractFullPath | ExtractOptions.PreserveFileTime;
             using (var za = ZipArchive.Open(zipFile))
             using (var reader = za.ExtractAllEntries()) {
-                reader.WriteEntryToDirectory(
-                    path,
-                    ExtractOptions.Overwrite | ExtractOptions.ExtractFullPath | ExtractOptions.PreserveAttributes | ExtractOptions.PreserveFileTime);
+                reader.WriteEntryToDirectory(path, opts);
             }
 
             return ret;
