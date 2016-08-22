@@ -13,6 +13,7 @@ using SharpCompress.Archive;
 using SharpCompress.Archive.Zip;
 using SharpCompress.Writer;
 using SharpCompress.Common;
+using SharpCompress.Reader;
 
 namespace Squirrel
 {
@@ -66,11 +67,14 @@ namespace Squirrel
                 this.Log().Info("Extracting {0} and {1} into {2}", 
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
-                using (var za = ZipArchive.Open(basePackage.ReleasePackageFile)) {
-                    za.WriteToDirectory(baseTempInfo.FullName);
+                using (var za = ZipArchive.Open(basePackage.ReleasePackageFile))
+                using (var reader = za.ExtractAllEntries()) {
+                    reader.WriteAllToDirectory(baseTempInfo.FullName);
                 }
-                using (var za = ZipArchive.Open(basePackage.ReleasePackageFile)) {
-                    za.WriteToDirectory(tempInfo.FullName);
+
+                using (var za = ZipArchive.Open(basePackage.ReleasePackageFile))
+                using (var reader = za.ExtractAllEntries()) {
+                    reader.WriteAllToDirectory(tempInfo.FullName);
                 }
 
                 // Collect a list of relative paths under 'lib' and map them
@@ -107,11 +111,13 @@ namespace Squirrel
 
             using (Utility.WithTempDirectory(out deltaPath, localAppDirectory))
             using (Utility.WithTempDirectory(out workingPath, localAppDirectory)) {
-                using (var za = ZipArchive.Open(deltaPackage.InputPackageFile)) {
-                    za.WriteToDirectory(deltaPath);
+                using (var za = ZipArchive.Open(deltaPackage.InputPackageFile))
+                using (var reader = za.ExtractAllEntries()) {
+                    reader.WriteAllToDirectory(deltaPath);
                 }
-                using (var za = ZipArchive.Open(basePackage.InputPackageFile)) {
-                    za.WriteToDirectory(workingPath);
+                using (var za = ZipArchive.Open(basePackage.InputPackageFile))
+                using (var reader = za.ExtractAllEntries()) {
+                    reader.WriteAllToDirectory(workingPath);
                 }
 
                 var pathsVisited = new List<string>();
