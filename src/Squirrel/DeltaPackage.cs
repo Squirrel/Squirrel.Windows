@@ -14,6 +14,8 @@ using SharpCompress.Archive.Zip;
 using SharpCompress.Writer;
 using SharpCompress.Common;
 using SharpCompress.Reader;
+using SharpCompress.Writer;
+using SharpCompress.Compressor.Deflate;
 
 namespace Squirrel
 {
@@ -159,7 +161,7 @@ namespace Squirrel
                 this.Log().Info("Repacking into full package: {0}", outputFile);
                 using (var za = ZipArchive.Create()) {
                     za.AddAllFromDirectory(workingPath);
-                    za.SaveTo(outputFile, CompressionType.None);
+                    za.SaveTo(outputFile, new CompressionInfo() { DeflateCompressionLevel = CompressionLevel.BestSpeed, Type = CompressionType.Deflate });
                 }
             }
 
