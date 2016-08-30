@@ -173,7 +173,7 @@ namespace Squirrel
         }
 
         static bool exiting = false;
-        public static void RestartApp(string exeToStart = null, string arguments = null)
+        public static void RestartApp(string exeToStart = null, string arguments = null, Action shutdownAction = null)
         { 
             // NB: Here's how this method works:
             //
@@ -190,6 +190,7 @@ namespace Squirrel
             exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
+            shutdownAction = shutdownAction ?? (() => Environment.Exit(0));
 
             exiting = true;
 
@@ -199,7 +200,7 @@ namespace Squirrel
             // we can't use WaitForInputIdle because we probably don't have
             // whatever WaitForInputIdle considers a message loop.
             Thread.Sleep(500);
-            Environment.Exit(0);
+            shutdownAction();
         }
 
         public static string GetLocalAppDataDirectory(string assemblyLocation = null)
