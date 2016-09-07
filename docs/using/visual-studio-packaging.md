@@ -34,6 +34,9 @@ PM>  Install-Package NuGet.CommandLine
   ~~~
 * It suffers from a bug when sometimes NuGet packages are not loaded properly and throws nuget/squirrel is not recogized (9009) errors.  
  **Tip:** In this case you may simply need to restart Visual Studio so the Package Manager Console will have loaded all the package tools
+* If you get the following error you may need add the full path to squirrel.exe in the build target `Exec Command` call. `'squirrel' is not recognized as an internal or external command`
+
+**Source:** [Issue #630](https://github.com/Squirrel/Squirrel.Windows/issues/630)
 
 ---
 | Return: [Packaging Tools](packaging-tools.md) |
