@@ -55,6 +55,8 @@ This program is blocked by group policy. For more information, contact your syst
    Yes, you can rename the `Setup.exe` to what ever you wish (e.g., `MyAppSetup.exe`) ([see #611](https://github.com/Squirrel/Squirrel.Windows/issues/611))
 6. **Virus scanner is returning false positives on `MyApp.exe` or `Update.exe`. What can I do?**  
    [Application Signing](using/application-signing.md) will help. In addition, you can submit false positives to the various antivirus authors (e.g., [Symantec](https://submit.symantec.com/false_positive/), [Microsoft](https://www.microsoft.com/security/portal/Submission/Submit.aspx), [AVG](http://www.avg.com/submit-sample), [Comodo](https://www.comodo.com/home/internet-security/submit.php), [McAfee](https://support.mcafeesaas.com/MCAFEE/_cs/AnswerDetail.aspx?aid=65), [List of Submission Locations](http://www.techsupportalert.com/content/how-report-malware-or-false-positives-multiple-antivirus-vendors.htm), [see #218](https://github.com/Squirrel/Squirrel.Windows/issues/218#issuecomment-166406180)).
+7. **Why is my application icon mangled after installation?**  
+    Application icons specified in the [NuGet Package Metadata](using/nuget-package-metadata.md) must be of type icon (.ICO) rather than an image file (source: [issue #745](https://github.com/Squirrel/Squirrel.Windows/issues/745))
 
 ## Updating
 
