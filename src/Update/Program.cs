@@ -405,10 +405,23 @@ namespace Squirrel.Update
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
                 if (prev != null) {
                     var deltaBuilder = new DeltaPackageBuilder(null);
+                    this.Log().Info("Creating new Delta Package");
 
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
                         Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+
+                    this.Log().Info("Delta Package created successfully");
+
                     processed.Insert(0, dp.InputPackageFile);
+                } else
+                {
+                    this.Log().Info("Failed to find a previous release in previous release list");
+                    String releaseString = "[";
+                    foreach (ReleaseEntry release in previousReleases)
+                    {
+                        releaseString += release.Version + ", ";
+                    }
+                    this.Log().Info(releaseString + "]");
                 }
             }
 
