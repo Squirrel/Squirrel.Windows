@@ -12,7 +12,7 @@ Squirrel uses information from your app's EXE as well as the NuGet package Metad
 * **Version** - version specified in `Properties\Assembly.cs`. 
    * Name of the release package (e.g., MyApp-**1.0.0**-full.nupkg).
    * Version number in the Windows Uninstaller (see screenshot below).
-* **Icon Url** - url to an icon to be used for the application. Used for the shortcuts and Windows Uninstaller icons.
+* **Icon Url** - url to an icon to be used for the application. Used for the shortcuts and Windows Uninstaller icons. This must be an icon file (*.ICO) to work correctly. Note that the icon is fetched at installation time rather than packaging (source: [issue #745](https://github.com/Squirrel/Squirrel.Windows/issues/745))
 
 ![](images/uninstall-app.png)
 
