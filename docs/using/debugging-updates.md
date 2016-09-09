@@ -21,6 +21,8 @@ Executing MyApp from Visual Studio will now cause it to complete the update proc
 
 ![](images/debugging-update-dir.png)
 
+**Tip:** If you want to ensure that the Update.exe is always available in your output directory, you can add the Update.exe file to the Visual Studio project and set its Properties > Copy To Output Directory to 'Copy if newer'. 
+
 ## Catching Update Exceptions
 
 You can catch thrown exceptions and log the results. 
