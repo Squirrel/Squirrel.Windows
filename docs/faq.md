@@ -22,10 +22,10 @@ var isInstalled = File.Exists(updateDotExe);
 
 ## Packaging
 
-1. **How can I tell was is going wrong with the releasify?**  
+1. **How can I tell what is going wrong with the releasify?**  
    Check `packages\Squirrel.Windows.VERSION\tools\SquirrelSetup.log` for logging information when creating packages.
 2. **Do I really have to add all the Squirrel DLLs to my app ?**
-   Yes, you have to add them all to the NuGet package, however, [others](https://github.com/Squirrel/Squirrel.Windows/issues/531) have used [ILMerge](http://research.microsoft.com/en-us/people/mbarnett/ilmerge.aspx) to generate a single assembly.
+   Yes, you have to add them all to the NuGet package, however, [others](https://github.com/Squirrel/Squirrel.Windows/issues/531) have used [ILMerge](https://www.microsoft.com/en-us/research/people/mbarnett/#ilmerge) to generate a single assembly.
 
 ## Distributing
 
