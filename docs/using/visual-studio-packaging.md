@@ -54,7 +54,7 @@ MSBuild needs to be able to find `nuget.exe` and `squirrel.exe` which can be acc
 * Including paths to executables in your system PATH variable
 * Visual Studio package manager can automatically find tool executables from installed NuGet packages and include them into local environment path. To do this:
   * Install `NuGet.CommandLine` package in your solution to get nuget.exe: `PM>  Install-Package NuGet.CommandLine`
-  * Open Package Manager Console window to scan solution for executable tools. You have to open this window each time you restart VS. Sometimes VS forgets paths to tools after some time due to a bug - in that case you need to restart VS.
+  * Open Package Manager Console window to scan solution for executable tools. You have to open this window each time you restart VS. Sometimes VS forgets paths to tools after some time due to a bug - in that case you need to reopen your solutuon.
 
 If you get Error 9009: `'squirrel/nuget' is not recognized as an internal or external command` that means MSBuild can't find nuget.exe or squirrel.exe.
 
