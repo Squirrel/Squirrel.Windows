@@ -137,31 +137,37 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	wchar_t logFile[MAX_PATH];
 	std::vector<CString> to_delete;
 
-	if (!useFallbackDir) {
-		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
-	} else {
-		wchar_t username[512];
-		wchar_t uid[128];
-		wchar_t appDataDir[MAX_PATH];
-		ULONG unameSize = _countof(username);
-
-		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
-		GetUserName(username, &unameSize);
-		DWORD lastError = GetLastError();
-
-		_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
-
-		if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
-			wchar_t err[4096];
-			_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
-			DisplayErrorMessage(CString(err), NULL);
-
-			return -1;
-		}
+	wchar_t *envSquirrelTemp = _wgetenv(L"SQUIRREL_TEMP");
+	if (envSquirrelTemp) {
+		_swprintf_c(targetDir, _countof(targetDir), L"%s", envSquirrelTemp);
 	}
+	else {
+		if (!useFallbackDir) {
+			SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
+		} else {
+			wchar_t username[512];
+			wchar_t uid[128];
+			wchar_t appDataDir[MAX_PATH];
+			ULONG unameSize = _countof(username);
 
-	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
+			SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
+			GetUserName(username, &unameSize);
+			DWORD lastError = GetLastError();
 
+			_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
+
+			if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
+				wchar_t err[4096];
+				_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
+				DisplayErrorMessage(CString(err), NULL);
+
+				return -1;
+			}
+		}
+
+		wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
+	}
+	
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
 		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
