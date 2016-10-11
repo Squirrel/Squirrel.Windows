@@ -128,6 +128,30 @@ HRESULT CUpdateRunner::ShellExecuteFromExplorer(LPWSTR pszFile, LPWSTR pszParame
 		CComVariant(SW_SHOWDEFAULT));
 }
 
+bool CUpdateRunner::DirectoryExistsW(wchar_t* szPath)
+{
+	DWORD dwAttrib = GetFileAttributes(szPath);
+
+	return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+		(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+bool CUpdateRunner::DirectoryIsWritableW(wchar_t * szPath)
+{
+	try {
+		wchar_t szTempFileName[MAX_PATH];
+		UINT uRetVal = GetTempFileNameW(szPath, L"Squirrel", 0, szTempFileName);
+		if (uRetVal == 0) {
+			return false;
+		}
+		DeleteFile(szTempFileName);
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
+}
+
 int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir)
 {
 	PROCESS_INFORMATION pi = { 0 };
@@ -137,11 +161,20 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	wchar_t logFile[MAX_PATH];
 	std::vector<CString> to_delete;
 
+	bool envSquirrelTempIsOk = false;
 	wchar_t *envSquirrelTemp = _wgetenv(L"SQUIRREL_TEMP");
 	if (envSquirrelTemp) {
-		_swprintf_c(targetDir, _countof(targetDir), L"%s", envSquirrelTemp);
+		if (DirectoryExistsW(envSquirrelTemp)) {
+			if (DirectoryIsWritableW(envSquirrelTemp)) {
+				if (!PathIsUNCW(envSquirrelTemp)) {
+					_swprintf_c(targetDir, _countof(targetDir), L"%s", envSquirrelTemp);
+					bool envSquirrelTempIsOk = false;
+				}
+			}
+		}
 	}
-	else {
+
+	if(!envSquirrelTempIsOk) {
 		if (!useFallbackDir) {
 			SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
 		} else {

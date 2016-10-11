@@ -177,3 +177,7 @@ nunit-Squirrel.Tests.xml
 
 ## Pester Test Output
 tests/Test.xml
+
+## CPP db crap
+*.db
+*.opendb
