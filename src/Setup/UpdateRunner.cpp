@@ -168,7 +168,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 			if (DirectoryIsWritableW(envSquirrelTemp)) {
 				if (!PathIsUNCW(envSquirrelTemp)) {
 					_swprintf_c(targetDir, _countof(targetDir), L"%s", envSquirrelTemp);
-					bool envSquirrelTempIsOk = true;
+					envSquirrelTempIsOk = true;
 				}
 			}
 		}
