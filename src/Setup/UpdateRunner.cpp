@@ -138,7 +138,6 @@ bool CUpdateRunner::DirectoryExistsW(wchar_t* szPath)
 
 bool CUpdateRunner::DirectoryIsWritableW(wchar_t * szPath)
 {
-	try {
 		wchar_t szTempFileName[MAX_PATH];
 		UINT uRetVal = GetTempFileNameW(szPath, L"Squirrel", 0, szTempFileName);
 		if (uRetVal == 0) {
@@ -146,10 +145,6 @@ bool CUpdateRunner::DirectoryIsWritableW(wchar_t * szPath)
 		}
 		DeleteFile(szTempFileName);
 		return true;
-	}
-	catch (...) {
-		return false;
-	}
 }
 
 int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir)
