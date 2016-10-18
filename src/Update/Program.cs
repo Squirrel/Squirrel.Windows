@@ -88,6 +88,7 @@ namespace Squirrel.Update
                 string bootstrapperExe = default(string);
                 string backgroundGif = default(string);
                 string signingParameters = default(string);
+                string signTool = default(string);
                 string baseUrl = default(string);
                 string processStart = default(string);
                 string processStartArgs = default(string);
@@ -122,7 +123,8 @@ namespace Squirrel.Update
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
                     { "i=|icon", "Path to an ICO file that will be used for icon shortcuts", v => icon = v},
                     { "setupIcon=", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
-                    { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
+                    { "signTool=", "Path to code signing utility (defaults to SignTool.exe)", v => signTool = v},
+                    { "n=|signWithParams=", "Sign the installer via SignTool.exe or other with the parameters given", v => signingParameters = v},
                     { "s|silent", "Silent install", _ => silentInstall = true},
                     { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
                     { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
@@ -178,7 +180,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, signTool);
                     break;
                 }
             }
@@ -337,7 +339,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string signTool = null)
         {
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
@@ -389,7 +391,7 @@ namespace Squirrel.Update
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
-                        .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
+                        .ForEachAsync(x => signPEFile(x.FullName, signingOpts, signTool))
                         .Wait();
                 });
 
@@ -420,7 +422,7 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts, signTool).Result;
 
             var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
 
@@ -437,14 +439,14 @@ namespace Squirrel.Update
                 setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
             if (signingOpts != null) {
-                signPEFile(targetSetupExe, signingOpts).Wait();
+                signPEFile(targetSetupExe, signingOpts, signTool).Wait();
             }
 
             if (generateMsi) {
                 createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
 
                 if (signingOpts != null) {
-                    signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
+                    signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts, signTool).Wait();
                 }
             }
         }
@@ -557,7 +559,7 @@ namespace Squirrel.Update
             }
         }
 
-        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts)
+        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts, string signTool)
         {
             string tempPath;
 
@@ -589,7 +591,7 @@ namespace Squirrel.Update
                         .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
                         .Select(x => x.FullName);
 
-                    await files.ForEachAsync(x => signPEFile(x, signingOpts));
+                    await files.ForEachAsync(x => signPEFile(x, signingOpts, signTool));
                 }
 
                 this.ErrorIfThrows(() =>
@@ -600,21 +602,43 @@ namespace Squirrel.Update
             }
         }
 
-        static async Task signPEFile(string exePath, string signingOpts)
+        static async Task signPEFile(string exePath, string signingOpts, string signTool)
         {
-            // Try to find SignTool.exe
-            var exe = @".\signtool.exe";
-            if (!File.Exists(exe)) {
-                exe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                    "signtool.exe");
+            // Use specified sign tool, if any. This assumes the `--signTool` parameter is
+            // either an absolute file path that exists, or a command in $PATH
+            var exe = signTool;
 
-                // Run down PATH and hope for the best
-                if (!File.Exists(exe)) exe = "signtool.exe";
+            if (exe == null) {
+                // Fall back to SignTool.exe - attempt to find it in cwd, next to executing assembly
+                exe = @".\signtool.exe";
+                if (!File.Exists(exe)) {
+                    exe = Path.Combine(
+                        Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                        "signtool.exe");
+
+                    // Run down PATH and hope for the best
+                    if (!File.Exists(exe)) exe = "signtool.exe";
+                }
             }
 
+            String tmpExe = null;
+
+            if (signTool == "osslsigncode") {
+                // osslsigncode needs input != output, and to have them 
+                tmpExe = exePath + ".unsigned";
+                File.Copy(exePath, tmpExe);
+                signingOpts = signingOpts + " " + tmpExe;
+            }
+
+            // SignTool.exe requires `sign` parameter (it can also verify, etc.)
+            // signcode (mono) ignores `sign` parameter
+            // osslsigncode ignores `sign` parameter
             Tuple<int, string> processResult = await Utility.InvokeProcessAsync(exe,
                 String.Format("sign {0} \"{1}\"", signingOpts, exePath), CancellationToken.None);
+
+            if (signTool == "osslsigncode") {
+                File.Delete(tmpExe);
+            }
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
