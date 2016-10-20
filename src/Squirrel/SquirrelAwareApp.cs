@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NuGet;
 using Splat;
 
 namespace Squirrel
@@ -38,14 +39,14 @@ namespace Squirrel
         /// <param name="arguments">Use in a unit-test runner to mock the 
         /// arguments. In your app, leave this as null.</param>
         public static void HandleEvents(
-            Action<Version> onInitialInstall = null,
-            Action<Version> onAppUpdate = null,
-            Action<Version> onAppObsoleted = null,
-            Action<Version> onAppUninstall = null,
+            Action<SemanticVersion> onInitialInstall = null,
+            Action<SemanticVersion> onAppUpdate = null,
+            Action<SemanticVersion> onAppObsoleted = null,
+            Action<SemanticVersion> onAppUninstall = null,
             Action onFirstRun = null,
             string[] arguments = null)
         {
-            Action<Version> defaultBlock = (v => { });
+            Action<SemanticVersion> defaultBlock = (v => { });
             var args = arguments ?? Environment.GetCommandLineArgs().Skip(1).ToArray();
             if (args.Length == 0) return;
 
@@ -64,7 +65,7 @@ namespace Squirrel
             if (args.Length != 2) return;
 
             if (!lookup.ContainsKey(args[0])) return;
-            var version = new Version(args[1]);
+            var version = new SemanticVersion(args[1]);
 
             try {
                 lookup[args[0]](version);
