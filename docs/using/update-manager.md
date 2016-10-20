@@ -49,7 +49,7 @@ public interface ReleaseEntry
 
 ## See Also
 * [Update Process](update-process.md) - overview of the steps in the update process.
-* [GitHub Update Manager](update-manager-github.md) - process of using `GitHubUpdateManager`.
+* [GitHub Update Manager](github.md) - process of using `GitHubUpdateManager`.
 
 ---
 | Return: [Table of Contents](../readme.md) |

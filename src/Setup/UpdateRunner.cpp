@@ -128,40 +128,71 @@ HRESULT CUpdateRunner::ShellExecuteFromExplorer(LPWSTR pszFile, LPWSTR pszParame
 		CComVariant(SW_SHOWDEFAULT));
 }
 
+bool CUpdateRunner::DirectoryExists(wchar_t* szPath)
+{
+	DWORD dwAttrib = GetFileAttributes(szPath);
+
+	return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+		(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+bool CUpdateRunner::DirectoryIsWritable(wchar_t * szPath)
+{
+		wchar_t szTempFileName[MAX_PATH];
+		UINT uRetVal = GetTempFileNameW(szPath, L"Squirrel", 0, szTempFileName);
+		if (uRetVal == 0) {
+			return false;
+		}
+		DeleteFile(szTempFileName);
+		return true;
+}
+
 int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir)
 {
 	PROCESS_INFORMATION pi = { 0 };
 	STARTUPINFO si = { 0 };
 	CResource zipResource;
-	wchar_t targetDir[MAX_PATH];
+	wchar_t targetDir[MAX_PATH] = { 0 };
 	wchar_t logFile[MAX_PATH];
+
 	std::vector<CString> to_delete;
 
-	if (!useFallbackDir) {
-		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
-	} else {
-		wchar_t username[512];
-		wchar_t uid[128];
-		wchar_t appDataDir[MAX_PATH];
-		ULONG unameSize = _countof(username);
-
-		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
-		GetUserName(username, &unameSize);
-		DWORD lastError = GetLastError();
-
-		_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
-
-		if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
-			wchar_t err[4096];
-			_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
-			DisplayErrorMessage(CString(err), NULL);
-
-			return -1;
-		}
+	wchar_t* envSquirrelTemp = _wgetenv(L"SQUIRREL_TEMP");
+	if (envSquirrelTemp &&
+		DirectoryExists(envSquirrelTemp) &&
+		DirectoryIsWritable(envSquirrelTemp) &&
+		!PathIsUNCW(envSquirrelTemp)) {
+		_swprintf_c(targetDir, _countof(targetDir), L"%s", envSquirrelTemp);
+		goto gotADir;
 	}
 
-	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
+	if (useFallbackDir) {
+		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
+		goto gotADir;
+	}
 
+	wchar_t username[512];
+	wchar_t uid[128];
+	wchar_t appDataDir[MAX_PATH];
+	ULONG unameSize = _countof(username);
+
+	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
+	GetUserName(username, &unameSize);
+
+	_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
+
+	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
+		wchar_t err[4096];
+		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
+		DisplayErrorMessage(CString(err), NULL);
+
+		return -1;
+	}
+
+gotADir:
+
+	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
+	
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
 		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
