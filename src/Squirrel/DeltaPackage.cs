@@ -9,13 +9,12 @@ using Splat;
 using DeltaCompressionDotNet.MsDelta;
 using System.ComponentModel;
 using Squirrel.Bsdiff;
-using SharpCompress.Archive;
-using SharpCompress.Archive.Zip;
-using SharpCompress.Writer;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Writers;
 using SharpCompress.Common;
-using SharpCompress.Reader;
-using SharpCompress.Writer;
-using SharpCompress.Compressor.Deflate;
+using SharpCompress.Readers;
+using SharpCompress.Compressors.Deflate;
 
 namespace Squirrel
 {
@@ -69,7 +68,7 @@ namespace Squirrel
                 this.Log().Info("Extracting {0} and {1} into {2}", 
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
-                var opts = ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime;
+                var opts = new ExtractionOptions() { ExtractFullPath = true, Overwrite = true, PreserveFileTime = true };
 
                 using (var za = ZipArchive.Open(basePackage.ReleasePackageFile))
                 using (var reader = za.ExtractAllEntries()) {
@@ -115,7 +114,7 @@ namespace Squirrel
 
             using (Utility.WithTempDirectory(out deltaPath, localAppDirectory))
             using (Utility.WithTempDirectory(out workingPath, localAppDirectory)) {
-                var opts = ExtractOptions.ExtractFullPath | ExtractOptions.Overwrite | ExtractOptions.PreserveFileTime;
+                var opts = new ExtractionOptions() { ExtractFullPath = true, Overwrite = true, PreserveFileTime = true };
 
                 using (var za = ZipArchive.Open(deltaPackage.InputPackageFile))
                 using (var reader = za.ExtractAllEntries()) {
@@ -163,9 +162,11 @@ namespace Squirrel
                     });
 
                 this.Log().Info("Repacking into full package: {0}", outputFile);
-                using (var za = ZipArchive.Create()) {
+                using (var za = ZipArchive.Create())
+                using (var tgt = File.OpenWrite(outputFile)) {
+                    za.DeflateCompressionLevel = CompressionLevel.BestSpeed;
                     za.AddAllFromDirectory(workingPath);
-                    za.SaveTo(outputFile, new CompressionInfo() { DeflateCompressionLevel = CompressionLevel.BestSpeed, Type = CompressionType.Deflate });
+                    za.SaveTo(File.OpenWrite(outputFile));
                 }
             }
 

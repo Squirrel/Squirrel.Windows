@@ -13,11 +13,11 @@ using MarkdownSharp;
 using NuGet;
 using Splat;
 using System.Threading.Tasks;
-using SharpCompress.Archive.Zip;
-using SharpCompress.Reader;
-using SharpCompress.Archive;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Readers;
+using SharpCompress.Archives;
 using SharpCompress.Common;
-using SharpCompress.Compressor.Deflate;
+using SharpCompress.Compressors.Deflate;
 
 namespace Squirrel
 {
@@ -67,8 +67,6 @@ namespace Squirrel
 
     public class ReleasePackage : IEnableLogger, IReleasePackage
     {
-        IEnumerable<IPackage> localPackageCache;
-
         public ReleasePackage(string inputPackageFile, bool isReleasePackage = false)
         {
             InputPackageFile = inputPackageFile;
@@ -253,7 +251,9 @@ namespace Squirrel
         // Create zip file with entry names %-encoded, as nupkg file does.
         void createZipEncoded(string zipFilePath, string folder)
         {
-            using (var archive = ZipArchive.Create()) {
+            using (var archive = ZipArchive.Create())
+            using (var tgt = File.OpenWrite(zipFilePath)) {
+                archive.DeflateCompressionLevel = CompressionLevel.BestCompression;
                 archive.AddAllFromDirectory(folder);
                 archive.SaveTo(
                     zipFilePath,
