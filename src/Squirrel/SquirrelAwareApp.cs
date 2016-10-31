@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Splat;
+using NuGet;
 
 namespace Squirrel
 {
@@ -55,6 +56,50 @@ namespace Squirrel
             });
 
             HandleEventsImpl(onFirstRun, lookup, selector, args);            
+        }
+
+        /// <summary>
+        /// Call this method as early as possible in app startup. This method
+        /// will dispatch to your methods to set up your app. Depending on the
+        /// parameter, your app will exit after this method is called, which 
+        /// is required by Squirrel. UpdateManager has methods to help you to
+        /// do this, such as CreateShortcutForThisExe.
+        /// </summary>
+        /// <param name="onInitialInstall">Called when your app is initially
+        /// installed. Set up app shortcuts here as well as file associations.
+        /// </param>
+        /// <param name="onAppUpdate">Called when your app is updated to a new
+        /// version.</param>
+        /// <param name="onAppObsoleted">Called when your app is no longer the
+        /// latest version (i.e. they have installed a new version and your app
+        /// is now the old version)</param>
+        /// <param name="onAppUninstall">Called when your app is uninstalled 
+        /// via Programs and Features. Remove all of the things that you created
+        /// in onInitialInstall.</param>
+        /// <param name="onFirstRun">Called the first time an app is run after
+        /// being installed. Your application will **not** exit after this is
+        /// dispatched, you should use this as a hint (i.e. show a 'Welcome' 
+        /// screen, etc etc.</param>
+        /// <param name="arguments">Use in a unit-test runner to mock the 
+        /// arguments. In your app, leave this as null.</param>
+        public static void HandleEvents(
+            Action<SemanticVersion> onInitialInstall = null,
+            Action<SemanticVersion> onAppUpdate = null,
+            Action<SemanticVersion> onAppObsoleted = null,
+            Action<SemanticVersion> onAppUninstall = null,
+            Action onFirstRun = null,
+            string[] arguments = null)
+        {
+            var args = arguments ?? Environment.GetCommandLineArgs().Skip(1).ToArray();
+
+            var lookup = BuildLookup(onInitialInstall, onAppUpdate, onAppObsoleted, onAppUninstall);
+
+            Func<string, SemanticVersion> selector = new Func<string, SemanticVersion>((arg) =>
+            {
+                return new SemanticVersion(arg);
+            });
+
+            HandleEventsImpl(onFirstRun, lookup, selector, arguments);
         }
 
         /// <summary>
