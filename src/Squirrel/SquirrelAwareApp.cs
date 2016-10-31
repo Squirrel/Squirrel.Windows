@@ -131,11 +131,11 @@ namespace Squirrel
         {
             Action<T> defaultBlock = (v => { });
             var lookup = new[] {
-                                    new { Key = "--squirrel-install", Value = onInitialInstall ?? defaultBlock },
-                                    new { Key = "--squirrel-updated", Value = onAppUpdate ?? defaultBlock },
-                                    new { Key = "--squirrel-obsolete", Value = onAppObsoleted ?? defaultBlock },
-                                    new { Key = "--squirrel-uninstall", Value = onAppUninstall ?? defaultBlock },
-                                }.ToDictionary(k => k.Key, v => v.Value);
+                new { Key = "--squirrel-install", Value = onInitialInstall ?? defaultBlock },
+                new { Key = "--squirrel-updated", Value = onAppUpdate ?? defaultBlock },
+                new { Key = "--squirrel-obsolete", Value = onAppObsoleted ?? defaultBlock },
+                new { Key = "--squirrel-uninstall", Value = onAppUninstall ?? defaultBlock },
+            }.ToDictionary(k => k.Key, v => v.Value);
 
             return lookup;
         }
