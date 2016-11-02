@@ -151,7 +151,6 @@ namespace Squirrel
 
                 var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
                 var thisRelease = Utility.FindCurrentVersion(releases);
-                var updateExe = Path.Combine(rootAppDirectory, "update.exe");
 
                 var zf = new ZipPackage(Path.Combine(
                     Utility.PackageDirectoryForAppDir(rootAppDirectory),
@@ -168,14 +167,13 @@ namespace Squirrel
 
                     this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
 
-                    ShellLink sl;
-                    sl = new ShellLink {
-                        Target = updateExe,
-                        IconPath = exePath,
+                    var target = Path.Combine(rootAppDirectory, exeName);
+                    var sl = new ShellLink {
+                        Target = target,
+                        IconPath = target,
                         IconIndex = 0,
                         WorkingDirectory = Path.GetDirectoryName(exePath),
                         Description = zf.Description,
-                        Arguments = "--processStart \"" + exeName + "\"",
                     };
 
                     if (!String.IsNullOrWhiteSpace(programArguments)) {
@@ -195,7 +193,6 @@ namespace Squirrel
 
                 var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
                 var thisRelease = Utility.FindCurrentVersion(releases);
-                var updateExe = Path.Combine(rootAppDirectory, "update.exe");
 
                 var zf = new ZipPackage(Path.Combine(
                     Utility.PackageDirectoryForAppDir(rootAppDirectory),
@@ -225,13 +222,13 @@ namespace Squirrel
                     this.ErrorIfThrows(() => Utility.Retry(() => {
                         File.Delete(file);
 
+                        var target = Path.Combine(rootAppDirectory, exeName);
                         sl = new ShellLink {
-                            Target = updateExe,
-                            IconPath = icon ?? exePath,
+                            Target = target,
+                            IconPath = icon ?? target,
                             IconIndex = 0,
                             WorkingDirectory = Path.GetDirectoryName(exePath),
                             Description = zf.Description,
-                            Arguments = "--processStart \"" + exeName + "\"",
                         };
 
                         if (!String.IsNullOrWhiteSpace(programArguments)) {
