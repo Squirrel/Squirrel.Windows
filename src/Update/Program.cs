@@ -385,6 +385,11 @@ namespace Squirrel.Update
 
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+                    new DirectoryInfo(pkgPath).GetAllFilesRecursively()
+                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .ForEachAsync(x => createExecutableStubForExe(x.FullName))
+                        .Wait();
+
                     if (signingOpts == null) return;
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
@@ -625,6 +630,22 @@ namespace Squirrel.Update
             } else {
                 Console.WriteLine(processResult.Item2);
             }
+       }
+        async Task createExecutableStubForExe(string fullName)
+        {
+            // Try to find StubExecutable.exe
+            var exe = @".\StubExecutable.exe";
+            if (!File.Exists(exe)) {
+                exe = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    "StubExecutable.exe");
+            }
+
+            var target = Path.Combine(
+                Path.GetDirectoryName(fullName),
+                Path.GetFileNameWithoutExtension(fullName) + "_ExecutionStub.exe");
+
+            await Utility.CopyToAsync(exe, target);
         }
 
         static async Task setPEVersionInfoAndIcon(string exePath, IPackage package, string iconPath = null)
