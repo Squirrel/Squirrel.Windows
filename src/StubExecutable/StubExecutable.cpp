@@ -107,6 +107,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		return -1;
 	}
 
+	AllowSetForegroundWindow(pi.dwProcessId);
 	WaitForSingleObject(pi.hProcess, INFINITE);
 
 	DWORD dwExit = 0;
