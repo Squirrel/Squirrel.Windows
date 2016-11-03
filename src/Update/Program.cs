@@ -395,6 +395,7 @@ namespace Squirrel.Update
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
                         .Wait();
                 });
