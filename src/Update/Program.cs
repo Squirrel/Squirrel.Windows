@@ -634,19 +634,18 @@ namespace Squirrel.Update
        }
         async Task createExecutableStubForExe(string fullName)
         {
-            // Try to find StubExecutable.exe
-            var exe = @".\StubExecutable.exe";
-            if (!File.Exists(exe)) {
-                exe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                    "StubExecutable.exe");
-            }
+            var exe = findExecutable(@"StubExecutable.exe");
 
             var target = Path.Combine(
                 Path.GetDirectoryName(fullName),
                 Path.GetFileNameWithoutExtension(fullName) + "_ExecutionStub.exe");
 
             await Utility.CopyToAsync(exe, target);
+
+            await Utility.InvokeProcessAsync(
+                findExecutable("WriteZipToSetup.exe"), 
+                String.Format("--copy-stub-resources \"{0}\" \"{1}\"", fullName, target),
+                CancellationToken.None);
         }
 
         static async Task setPEVersionInfoAndIcon(string exePath, IPackage package, string iconPath = null)
