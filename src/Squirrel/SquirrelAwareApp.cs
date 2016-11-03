@@ -99,7 +99,7 @@ namespace Squirrel
                 return new SemanticVersion(arg);
             });
 
-            HandleEventsImpl(onFirstRun, lookup, selector, arguments);
+            HandleEventsImpl(onFirstRun, lookup, selector, args);
         }
 
         /// <summary>
