@@ -165,8 +165,11 @@ namespace Squirrel
                     if (!locations.HasFlag(f)) continue;
 
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
+                    var appUserModelId = String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
+                    var toastActivatorCLSDID = Utility.CreateGuidFromHash(appUserModelId).ToString();
 
                     this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
+                    this.Log().Info("appUserModelId: {0} | toastActivatorCLSID: {1}", appUserModelId, toastActivatorCLSDID);
 
                     ShellLink sl;
                     sl = new ShellLink {
@@ -182,7 +185,9 @@ namespace Squirrel
                         sl.Arguments += String.Format(" -a \"{0}\"", programArguments);
                     }
 
-                    sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", "")));
+                    sl.SetAppUserModelId(appUserModelId);
+                    sl.SetToastActivatorCLSID(toastActivatorCLSDID);
+
                     ret.Add(f, sl);
                 }
 
@@ -238,9 +243,13 @@ namespace Squirrel
                             sl.Arguments += String.Format(" -a \"{0}\"", programArguments);
                         }
 
-                        sl.SetAppUserModelId(String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", "")));
+                        var appUserModelId = String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
+                        var toastActivatorCLSID = Utility.CreateGuidFromHash(appUserModelId).ToString();
 
-                        this.Log().Info("About to save shortcut: {0} (target {1}, workingDir {2}, args {3})", file, sl.Target, sl.WorkingDirectory, sl.Arguments);
+                        sl.SetAppUserModelId(appUserModelId);
+                        sl.SetToastActivatorCLSID(toastActivatorCLSID);
+
+                        this.Log().Info("About to save shortcut: {0} (target {1}, workingDir {2}, args {3}, toastActivatorCSLID {4})", file, sl.Target, sl.WorkingDirectory, sl.Arguments, toastActivatorCLSID);
                         if (ModeDetector.InUnitTestRunner() == false) sl.Save(file);
                     }, 4), "Can't write shortcut: " + file);
                 }
