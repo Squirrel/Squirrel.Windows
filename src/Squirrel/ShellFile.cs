@@ -85,6 +85,15 @@ namespace Squirrel.Shell
                     };
                 }
             }
+
+            public static PROPERTYKEY PKEY_AppUserModel_ToastActivatorCLSID {
+                get {
+                    return new PROPERTYKEY() {
+                        fmtid = Guid.ParseExact("{9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3}", "B"),
+                        pid = new UIntPtr(26),
+                    };
+                }
+            }
         }
 
         [ComImport]
@@ -861,11 +870,25 @@ namespace Squirrel.Shell
             }
         }
 
+        /// <summary>
+        /// Sets the appUserModelId
+        /// </summary>
         public void SetAppUserModelId(string appId)
         {
             var propStore = (IPropertyStore)linkW;
             var pkey = PROPERTYKEY.PKEY_AppUserModel_ID;
             var str = PropVariant.FromString (appId);
+            propStore.SetValue(ref pkey, ref str);
+        }
+
+        /// <summary>
+        /// Sets the ToastActivatorCLSID
+        /// </summary>
+        public void SetToastActivatorCLSID(string clsid)
+        {
+            var propStore = (IPropertyStore)linkW;
+            var pkey = PROPERTYKEY.PKEY_AppUserModel_ToastActivatorCLSID;
+            var str = PropVariant.FromString (clsid);
             propStore.SetValue(ref pkey, ref str);
         }
 
