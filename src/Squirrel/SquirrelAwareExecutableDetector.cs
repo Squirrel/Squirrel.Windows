@@ -38,8 +38,8 @@ namespace Squirrel
             try {
                 var assembly = AssemblyDefinition.ReadAssembly(executable);
                 if (!assembly.HasCustomAttributes) {
-					return GetAssemblySquirrelAwareVersionUsingSystemReflections(executable);					
-				}
+			return GetAssemblySquirrelAwareVersionUsingSystemReflections(executable);					
+		}
 
                 var attrs = assembly.CustomAttributes;
                 var attribute = attrs.FirstOrDefault(x => {
@@ -60,35 +60,7 @@ namespace Squirrel
             catch (FileLoadException) { return null; }
             catch (BadImageFormatException) { return null; }
         }
-		
-		static int? GetAssemblySquirrelAwareVersionUsingSystemReflections(string executable)
-		{
-			try {
-				var assembly = Assembly.LoadFile(executable);
-				if (assembly.CustomAttributes.Count() <= 0) return null;
-
-				var attrs = assembly.CustomAttributes;
-				var attribute = attrs.FirstOrDefault(x =>
-				{
-				   if (x.AttributeType.FullName != typeof(AssemblyMetadataAttribute).FullName) return false;
-				   if (x.ConstructorArguments.Count != 2) return false;
-				   return x.ConstructorArguments[0].Value.ToString() == "SquirrelAwareVersion";
-				});
-
-				if (attribute == null) return null;
-
-				int result;
-				if (!Int32.TryParse(attribute.ConstructorArguments[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out result))
-				{
-				   return null;
-				}
-
-				return result;
-			}
-			catch (FileLoadException) { return null; }
-			catch (BadImageFormatException) { return null; }
-		}
-
+	
         static int? GetVersionBlockSquirrelAwareValue(string executable)
         {
             int size = NativeMethods.GetFileVersionInfoSize(executable, IntPtr.Zero);
@@ -119,5 +91,33 @@ namespace Squirrel
             return ret;
 #endif
         }
+	    
+		static int? GetAssemblySquirrelAwareVersionUsingSystemReflections(string executable)
+		{
+			try {
+				var assembly = Assembly.LoadFile(executable);
+				if (assembly.CustomAttributes.Count() <= 0) return null;
+
+				var attrs = assembly.CustomAttributes;
+				var attribute = attrs.FirstOrDefault(x =>
+				{
+				   if (x.AttributeType.FullName != typeof(AssemblyMetadataAttribute).FullName) return false;
+				   if (x.ConstructorArguments.Count != 2) return false;
+				   return x.ConstructorArguments[0].Value.ToString() == "SquirrelAwareVersion";
+				});
+
+				if (attribute == null) return null;
+
+				int result;
+				if (!Int32.TryParse(attribute.ConstructorArguments[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out result))
+				{
+				   return null;
+				}
+
+				return result;
+			}
+			catch (FileLoadException) { return null; }
+			catch (BadImageFormatException) { return null; }
+		}
     }
 }
