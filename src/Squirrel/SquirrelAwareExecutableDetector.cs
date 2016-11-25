@@ -94,6 +94,7 @@ namespace Squirrel
 	    
 		static int? GetAssemblySquirrelAwareVersionUsingSystemReflections(string executable)
 		{
+			
 			try {
 				var assembly = Assembly.LoadFile(executable);
 				if (assembly.CustomAttributes.Count() <= 0) return null;
