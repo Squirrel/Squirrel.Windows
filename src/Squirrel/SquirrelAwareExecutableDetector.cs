@@ -38,8 +38,8 @@ namespace Squirrel
             try {
                 var assembly = AssemblyDefinition.ReadAssembly(executable);
                 if (!assembly.HasCustomAttributes) {
-					return GetAssemblySquirrelAwareVersionUsingSystemReflections(executable);					
-				}
+		    return GetAssemblySquirrelAwareVersionUsingSystemReflections(executable);					
+		}
 
                 var attrs = assembly.CustomAttributes;
                 var attribute = attrs.FirstOrDefault(x => {
