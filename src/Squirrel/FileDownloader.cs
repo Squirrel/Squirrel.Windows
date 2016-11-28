@@ -13,16 +13,16 @@ namespace Squirrel
 
     public class FileDownloader : IFileDownloader, IEnableLogger
     {
-        private readonly WebClient _providedClient;
+        private readonly Func<WebClient> _webClientFactory;
 
-        public FileDownloader(WebClient providedClient = null)
+        public FileDownloader(Func<WebClient> webClientFactory = null)
         {
-            _providedClient = providedClient;
+            _webClientFactory = webClientFactory ?? Utility.CreateWebClient;
         }
 
         public async Task DownloadFile(string url, string targetFile, Action<int> progress)
         {
-            using (var wc = _providedClient ?? Utility.CreateWebClient()) {
+            using (var wc = _webClientFactory()) {
                 var failedUrl = default(string);
 
                 var lastSignalled = DateTime.MinValue;
@@ -55,7 +55,7 @@ namespace Squirrel
 
         public async Task<byte[]> DownloadUrl(string url)
         {
-            using (var wc = _providedClient ?? Utility.CreateWebClient()) {
+            using (var wc = _webClientFactory()) {
             var failedUrl = default(string);
 
         retry:
