@@ -166,7 +166,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 		goto gotADir;
 	}
 
-	if (useFallbackDir) {
+	if (!useFallbackDir) {
 		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
 		goto gotADir;
 	}
