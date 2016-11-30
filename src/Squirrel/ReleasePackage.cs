@@ -205,12 +205,15 @@ namespace Squirrel
                     var fullZipToPath = Path.Combine(outFolder, re.Replace(entryFileName, "", 1));
 
                     var failureIsOkay = false;
-                    if (fullZipToPath.Contains("_ExecutionStub.exe")) {
+                    if (entryFileName.Contains("_ExecutionStub.exe")) {
                         // NB: On upgrade, many of these stubs will be in-use, nbd tho.
                         failureIsOkay = true;
+
                         fullZipToPath = Path.Combine(
                             Directory.GetParent(Path.GetDirectoryName(fullZipToPath)).FullName,
                             Path.GetFileName(fullZipToPath).Replace("_ExecutionStub.exe", ".exe"));
+
+                        LogHost.Default.Info("Rigging execution stub for {0} to {1}", entryFileName, fullZipToPath);
                     }
 
                     var directoryName = Path.GetDirectoryName(fullZipToPath);
@@ -229,7 +232,10 @@ namespace Squirrel
                             }
                         }, 5);
                     } catch (Exception e) {
-                        if (!failureIsOkay) throw e;
+                        if (!failureIsOkay) {
+                            LogHost.Default.WarnException("Can't write execution stub, probably in use", e);
+                            throw e;
+                        }
                     }
                 }, 4);
             } finally {
