@@ -15,12 +15,17 @@ namespace Squirrel
     {
         private readonly Func<WebClient> _webClientFactory;
 
-        public FileDownloader(Func<WebClient> webClientFactory = null)
+        public FileDownloader(Func<WebClient> webClientFactory)
         {
-            _webClientFactory = webClientFactory ?? Utility.CreateWebClient;
+            _webClientFactory = () => (webClientFactory ?? Utility.CreateWebClient)() ?? Utility.CreateWebClient();
         }
 
-        public async Task DownloadFile(string url, string targetFile, Action<int> progress)
+		public FileDownloader(WebClient providedClient = null)
+			: this(() => providedClient ?? Utility.CreateWebClient())
+		{
+		}
+
+		public async Task DownloadFile(string url, string targetFile, Action<int> progress)
         {
             using (var wc = _webClientFactory()) {
                 var failedUrl = default(string);
