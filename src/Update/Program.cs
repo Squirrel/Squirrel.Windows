@@ -385,10 +385,17 @@ namespace Squirrel.Update
 
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+                    new DirectoryInfo(pkgPath).GetAllFilesRecursively()
+                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .Where(x => !x.Name.ToLowerInvariant().Contains("squirrel.exe"))
+                        .ForEachAsync(x => createExecutableStubForExe(x.FullName))
+                        .Wait();
+
                     if (signingOpts == null) return;
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
                         .Wait();
                 });
@@ -625,6 +632,21 @@ namespace Squirrel.Update
             } else {
                 Console.WriteLine(processResult.Item2);
             }
+       }
+        async Task createExecutableStubForExe(string fullName)
+        {
+            var exe = findExecutable(@"StubExecutable.exe");
+
+            var target = Path.Combine(
+                Path.GetDirectoryName(fullName),
+                Path.GetFileNameWithoutExtension(fullName) + "_ExecutionStub.exe");
+
+            await Utility.CopyToAsync(exe, target);
+
+            await Utility.InvokeProcessAsync(
+                findExecutable("WriteZipToSetup.exe"), 
+                String.Format("--copy-stub-resources \"{0}\" \"{1}\"", fullName, target),
+                CancellationToken.None);
         }
 
         static async Task setPEVersionInfoAndIcon(string exePath, IPackage package, string iconPath = null)

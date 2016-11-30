@@ -465,6 +465,37 @@ namespace Squirrel
             }
         }
 
+        // http://stackoverflow.com/questions/3111669/how-can-i-determine-the-subsystem-used-by-a-given-net-assembly
+        public static bool ExecutableUsesWin32Subsystem(string peImage)
+        {
+            using (var s = new FileStream(peImage, FileMode.Open, FileAccess.Read)) {
+                var rawPeSignatureOffset = new byte[4];
+                s.Seek(0x3c, SeekOrigin.Begin);
+                s.Read(rawPeSignatureOffset, 0, 4);
+
+                int peSignatureOffset = rawPeSignatureOffset[0];
+                peSignatureOffset |= rawPeSignatureOffset[1] << 8;
+                peSignatureOffset |= rawPeSignatureOffset[2] << 16;
+                peSignatureOffset |= rawPeSignatureOffset[3] << 24;
+
+                var coffHeader = new byte[24];
+                s.Seek(peSignatureOffset, SeekOrigin.Begin);
+                s.Read(coffHeader, 0, 24);
+
+                byte[] signature = { (byte)'P', (byte)'E', (byte)'\0', (byte)'\0' };
+                for (int index = 0; index < 4; index++) {
+                    if (coffHeader[index] != signature[index]) throw new Exception("File is not a PE image");
+                }
+
+                var subsystemBytes = new byte[2];
+                s.Seek(68, SeekOrigin.Current);
+                s.Read(subsystemBytes, 0, 2);
+
+                int subSystem = subsystemBytes[0] | subsystemBytes[1] << 8;
+                return subSystem == 2; /*IMAGE_SUBSYSTEM_WINDOWS_GUI*/
+            }
+        }
+
         public static void LogIfThrows(this IFullLogger This, LogLevel level, string message, Action block)
         {
             try {

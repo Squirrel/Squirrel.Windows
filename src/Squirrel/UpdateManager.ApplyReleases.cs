@@ -151,7 +151,6 @@ namespace Squirrel
 
                 var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
                 var thisRelease = Utility.FindCurrentVersion(releases);
-                var updateExe = Path.Combine(rootAppDirectory, "update.exe");
 
                 var zf = new ZipPackage(Path.Combine(
                     Utility.PackageDirectoryForAppDir(rootAppDirectory),
@@ -171,14 +170,13 @@ namespace Squirrel
                     this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
                     this.Log().Info("appUserModelId: {0} | toastActivatorCLSID: {1}", appUserModelId, toastActivatorCLSDID);
 
-                    ShellLink sl;
-                    sl = new ShellLink {
-                        Target = updateExe,
-                        IconPath = exePath,
+                    var target = Path.Combine(rootAppDirectory, exeName);
+                    var sl = new ShellLink {
+                        Target = target,
+                        IconPath = target,
                         IconIndex = 0,
                         WorkingDirectory = Path.GetDirectoryName(exePath),
                         Description = zf.Description,
-                        Arguments = "--processStart \"" + exeName + "\"",
                     };
 
                     if (!String.IsNullOrWhiteSpace(programArguments)) {
@@ -200,7 +198,6 @@ namespace Squirrel
 
                 var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
                 var thisRelease = Utility.FindCurrentVersion(releases);
-                var updateExe = Path.Combine(rootAppDirectory, "update.exe");
 
                 var zf = new ZipPackage(Path.Combine(
                     Utility.PackageDirectoryForAppDir(rootAppDirectory),
@@ -230,13 +227,13 @@ namespace Squirrel
                     this.ErrorIfThrows(() => Utility.Retry(() => {
                         File.Delete(file);
 
+                        var target = Path.Combine(rootAppDirectory, exeName);
                         sl = new ShellLink {
-                            Target = updateExe,
-                            IconPath = icon ?? exePath,
+                            Target = target,
+                            IconPath = icon ?? target,
                             IconIndex = 0,
                             WorkingDirectory = Path.GetDirectoryName(exePath),
                             Description = zf.Description,
-                            Arguments = "--processStart \"" + exeName + "\"",
                         };
 
                         if (!String.IsNullOrWhiteSpace(programArguments)) {
@@ -477,41 +474,21 @@ namespace Squirrel
                 var targetIsUpdateDotExe = target.EndsWith("update.exe", StringComparison.OrdinalIgnoreCase);
 
                 this.Log().Info("Old shortcut target: '{0}'", target);
+
                 if (!targetIsUpdateDotExe) {
-                    target = Path.Combine(newAppPath, Path.GetFileName(shortcut.Target));
+                    target = Path.Combine(rootAppDirectory, Path.GetFileName(shortcut.Target));
+                } else {
+                    target = Path.Combine(rootAppDirectory, Path.GetFileName(shortcut.IconPath));
                 }
+
                 this.Log().Info("New shortcut target: '{0}'", target);
 
                 shortcut.WorkingDirectory = newAppPath;
                 shortcut.Target = target;
 
-                // NB: If the executable was in a previous version but not in this 
-                // one, we should disappear this pin.
-                if (!File.Exists(target)) {
-                    shortcut.Dispose();
-                    this.ErrorIfThrows(() => Utility.DeleteFileHarder(target), "Failed to delete outdated pinned shortcut to: " + target);
-                    return;
-                }
-
                 this.Log().Info("Old iconPath is: '{0}'", shortcut.IconPath);
-                if (!File.Exists(shortcut.IconPath) || shortcut.IconPath.IndexOf("app-", StringComparison.OrdinalIgnoreCase) > 1) {
-                    var iconPath = Path.Combine(newAppPath, Path.GetFileName(shortcut.IconPath));
-
-                    if (!File.Exists(iconPath) && targetIsUpdateDotExe) {
-                        var executable = shortcut.Arguments.Replace("--processStart ", "");
-                        iconPath = Path.Combine(newAppPath, executable);
-                    }
-
-                    this.Log().Info("Setting iconPath to: '{0}'", iconPath);
-                    shortcut.IconPath = iconPath;
-
-                    if (!File.Exists(iconPath)) {
-                        this.Log().Warn("Tried to use {0} for icon path but didn't exist, falling back to EXE", iconPath);
-
-                        shortcut.IconPath = target;
-                        shortcut.IconIndex = 0;
-                    }
-                }
+                shortcut.IconPath = target;
+                shortcut.IconIndex = 0;
 
                 this.ErrorIfThrows(() => Utility.Retry(() => shortcut.Save(), 2), "Couldn't write shortcut " + shortcut.ShortCutFile);
                 this.Log().Info("Finished shortcut successfully");
