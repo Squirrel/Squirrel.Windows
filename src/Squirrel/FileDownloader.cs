@@ -20,12 +20,12 @@ namespace Squirrel
             _webClientFactory = () => (webClientFactory ?? Utility.CreateWebClient)() ?? Utility.CreateWebClient();
         }
 
-		public FileDownloader(WebClient providedClient = null)
-			: this(() => providedClient ?? Utility.CreateWebClient())
-		{
-		}
+        public FileDownloader(WebClient providedClient = null)
+             : this(() => providedClient ?? Utility.CreateWebClient())
+        {
+        }
 
-		public async Task DownloadFile(string url, string targetFile, Action<int> progress)
+        public async Task DownloadFile(string url, string targetFile, Action<int> progress)
         {
             using (var wc = _webClientFactory()) {
                 var failedUrl = default(string);
