@@ -87,6 +87,7 @@ namespace Squirrel.Update
                 string packagesDir = default(string);
                 string bootstrapperExe = default(string);
                 string backgroundGif = default(string);
+                int backgroundGifDelay = 4000;
                 string signingParameters = default(string);
                 string baseUrl = default(string);
                 string processStart = default(string);
@@ -120,6 +121,7 @@ namespace Squirrel.Update
                     { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
+                    { "d=|loadingGifDelay=", "Delay in Milliseconds before showing Loading Gif. Default= 4000", v => backgroundGifDelay = Int32.Parse(v)},
                     { "i=|icon", "Path to an ICO file that will be used for icon shortcuts", v => icon = v},
                     { "setupIcon=", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
                     { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
@@ -146,10 +148,11 @@ namespace Squirrel.Update
                 case UpdateAction.Install:
                     var progressSource = new ProgressSource();
                     if (!silentInstall) { 
-                        AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token, progressSource);
+                        AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(backgroundGifDelay), animatedGifWindowToken.Token, progressSource);
                     }
 
                     Install(silentInstall, progressSource, Path.GetFullPath(target)).Wait();
+
                     animatedGifWindowToken.Cancel();
                     break;
                 case UpdateAction.Uninstall:
