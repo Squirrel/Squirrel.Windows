@@ -7,12 +7,21 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
-using Mono.Cecil;
 
 namespace Squirrel
 {
     static class SquirrelAwareExecutableDetector
     {
+        static SquirrelAwareExecutableDetector()
+        {
+            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += new ResolveEventHandler(ReflectionOnlyAssemblyResolve);
+        }
+
+        static Assembly ReflectionOnlyAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            return Assembly.ReflectionOnlyLoad(args.Name);
+        }
+
         public static List<string> GetAllSquirrelAwareApps(string directory, int minimumVersion = 1)
         {
             var di = new DirectoryInfo(directory);
@@ -36,25 +45,28 @@ namespace Squirrel
         static int? GetAssemblySquirrelAwareVersion(string executable)
         {
             try {
-                var assembly = AssemblyDefinition.ReadAssembly(executable);
-                if (!assembly.HasCustomAttributes) return null;
+                Assembly assembly = Assembly.ReflectionOnlyLoadFrom(executable);
 
-                var attrs = assembly.CustomAttributes;
-                var attribute = attrs.FirstOrDefault(x => {
-                    if (x.AttributeType.FullName != typeof(AssemblyMetadataAttribute).FullName) return false;
-                    if (x.ConstructorArguments.Count != 2) return false;
-                    return x.ConstructorArguments[0].Value.ToString() == "SquirrelAwareVersion";
-                });
-
-                if (attribute == null) return null;
-
-                int result;
-                if (!Int32.TryParse(attribute.ConstructorArguments[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out result)) {
+                //assembly.GetCustomAttributes() does not work on ReflectionOnlyLoaded assembly :(
+                var attributeDataList = assembly.GetCustomAttributesData();
+                if (attributeDataList == null || attributeDataList.Count == 0)
                     return null;
-                }
 
-                return result;
-            } 
+                foreach (var attributeData in attributeDataList.Where(ad => ad.AttributeType == typeof(AssemblyMetadataAttribute))){
+                    var constructorArguments = attributeData.ConstructorArguments;
+                    if (constructorArguments[0].Value as string == "SquirrelAwareVersion"){
+                        int result;
+                        if (!Int32.TryParse(constructorArguments[1].Value as string, NumberStyles.Integer, CultureInfo.CurrentCulture, out result))
+                        {
+                            return null;
+                        }
+
+                        return result;
+                    }
+
+                }
+                return null;
+            }
             catch (FileLoadException) { return null; }
             catch (BadImageFormatException) { return null; }
         }
