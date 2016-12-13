@@ -94,6 +94,5 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 out:
 	_Module->Term();
-	::CoUninitialize();
 	return exitCode;
 }
