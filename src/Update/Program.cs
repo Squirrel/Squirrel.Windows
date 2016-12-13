@@ -405,10 +405,23 @@ namespace Squirrel.Update
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
                 if (prev != null) {
                     var deltaBuilder = new DeltaPackageBuilder(null);
+                    this.Log().Info("Creating new Delta Package");
 
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
                         Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+
+                    this.Log().Info("Delta Package created successfully");
+
                     processed.Insert(0, dp.InputPackageFile);
+                } else
+                {
+                    this.Log().Info("Failed to find a previous release in previous release list");
+                    String releaseString = "[";
+                    foreach (ReleaseEntry release in previousReleases)
+                    {
+                        releaseString += release.Version + ", ";
+                    }
+                    this.Log().Info(releaseString + "]");
                 }
             }
 
@@ -518,13 +531,21 @@ namespace Squirrel.Update
             var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName.Replace("%20", " ")));
             this.Log().Info("Want to launch '{0}'", targetExe);
 
-            // Check for path canonicalization attacks
-            if (!targetExe.FullName.StartsWith(latestAppDir, StringComparison.Ordinal)) {
-                throw new ArgumentException();
+            if (!targetExe.Exists)
+            {
+                this.Log().Warn("File {0} doesn't exist in current release", targetExe);
+                targetExe = new FileInfo(Path.Combine(latestAppDir, exeName));
+                this.Log().Info("Falling back to launch '{0}'", targetExe);
+
+                if (!targetExe.Exists)
+                {
+                    this.Log().Error("File {0} doesn't exist in current release", targetExe);
+                    throw new ArgumentException();
+                }
             }
 
-            if (!targetExe.Exists) {
-                this.Log().Error("File {0} doesn't exist in current release", targetExe);
+            // Check for path canonicalization attacks
+            if (!targetExe.FullName.StartsWith(latestAppDir, StringComparison.Ordinal)) {
                 throw new ArgumentException();
             }
 
