@@ -475,6 +475,13 @@ namespace Squirrel
 
                 this.Log().Info("Old shortcut target: '{0}'", target);
 
+                // NB: In 1.5.0 we accidentally fixed the target of pinned shortcuts but left the arguments,
+                // so if we find a shortcut with --processStart in the args, we're gonna stomp it even though
+                // what we _should_ do is stomp it only if the target is Update.exe
+                if (shortcut.Arguments.Contains("--processStart")) {
+                    shortcut.Arguments = "";
+                }
+
                 if (!targetIsUpdateDotExe) {
                     target = Path.Combine(rootAppDirectory, Path.GetFileName(shortcut.Target));
                 } else {
