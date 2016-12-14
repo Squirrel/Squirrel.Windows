@@ -13,8 +13,8 @@ Squirrel makes signing easy, as it signs all of your application's executables *
 An example invocation including both of these features would be something like:
 
 ~~~powershell
-PM> Squirrel --releasify MyApp.1.0.0.nupkg -n "/a /f CodeCert.pfx /p MySecretCertPassword"
-~~~ 
+PM> Squirrel --releasify MyApp.1.0.0.nupkg -n "/a /f CodeCert.pfx /p MySecretCertPassword /fd sha256 /tr http://timestamp.digicert.com /td sha256"
+~~~
 
 
 
@@ -25,6 +25,3 @@ PM> Squirrel --releasify MyApp.1.0.0.nupkg -n "/a /f CodeCert.pfx /p MySecretCer
 ---
 | Return: [Table of Contents](../readme.md) |
 |----|
-
-
-

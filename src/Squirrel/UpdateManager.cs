@@ -201,6 +201,32 @@ namespace Squirrel
             Thread.Sleep(500);
             Environment.Exit(0);
         }
+        
+        public static async Task<Process> RestartAppWhenExited(string exeToStart = null, string arguments = null)
+        { 
+            // NB: Here's how this method works:
+            //
+            // 1. We're going to pass the *name* of our EXE and the params to 
+            //    Update.exe
+            // 2. Update.exe is going to grab our PID (via getting its parent), 
+            //    then wait for us to exit.
+            // 3. Return control and new Process back to caller and allow them to Exit as desired.
+            // 4. After our process exits, Update.exe unblocks, then we launch the app again, possibly 
+            //    launching a different version than we started with (this is why
+            //    we take the app's *name* rather than a full path)
+
+            exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            var argsArg = arguments != null ?
+                String.Format("-a \"{0}\"", arguments) : "";
+
+            exiting = true;
+
+            var updateProcess = Process.Start(getUpdateExe(), String.Format("--processStartAndWait {0} {1}", exeToStart, argsArg));
+
+            await Task.Delay(500);
+            
+            return updateProcess;
+        }
 
         public static string GetLocalAppDataDirectory(string assemblyLocation = null)
         {
