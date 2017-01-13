@@ -98,12 +98,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	STARTUPINFO si = { 0 };
 	PROCESS_INFORMATION pi = { 0 };
+	
+	std::wstring parameters = L"\"" + appName + L"\" " + lpCmdLine;
 
 	si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = nCmdShow;
 
-	if (!CreateProcess(fullPath.c_str(), lpCmdLine, NULL, NULL, true, 0, NULL, NULL, &si, &pi)) {
+	if (!CreateProcess(fullPath.c_str(), const_cast<LPWSTR>(parameters.c_str()), NULL, NULL, true, 0, NULL, NULL, &si, &pi)) {
 		return -1;
 	}
 
