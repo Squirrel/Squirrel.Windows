@@ -198,6 +198,7 @@ namespace Squirrel.Update
         {
             sourceDirectory = sourceDirectory ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
+            var everGreenPath = Path.Combine(sourceDirectory, "EVERGREEN");
 
             this.Log().Info("Starting install, writing to {0}", sourceDirectory);
 
@@ -216,16 +217,19 @@ namespace Squirrel.Update
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName)) {
                 this.Log().Info("About to install to: " + mgr.RootAppDirectory);
                 if (Directory.Exists(mgr.RootAppDirectory)) {
-                    this.Log().Warn("Install path {0} already exists, burning it to the ground", mgr.RootAppDirectory);
 
                     mgr.KillAllExecutablesBelongingToPackage();
                     await Task.Delay(500);
 
-                    await this.ErrorIfThrows(() => Utility.DeleteDirectory(mgr.RootAppDirectory),
+                    if (!File.Exists(everGreenPath)){
+                        this.Log().Warn("Install path {0} already exists, burning it to the ground", mgr.RootAppDirectory);
+
+                        await this.ErrorIfThrows(() => Utility.DeleteDirectory(mgr.RootAppDirectory),
                         "Failed to remove existing directory on full install, is the app still running???");
 
-                    this.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.RootAppDirectory), 3),
-                        "Couldn't recreate app directory, perhaps Antivirus is blocking it");
+                        this.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.RootAppDirectory), 3),
+                            "Couldn't recreate app directory, perhaps Antivirus is blocking it");
+                    }
                 }
 
                 Directory.CreateDirectory(mgr.RootAppDirectory);
