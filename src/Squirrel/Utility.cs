@@ -500,7 +500,7 @@ namespace Squirrel
         public static bool FileIsLikelyPEImage(string name)
         {
             var ext = Path.GetExtension(name);
-            return peExtensions.Any(x => name.Equals(ext, StringComparison.OrdinalIgnoreCase));
+            return peExtensions.Any(x => ext.Equals(x, StringComparison.OrdinalIgnoreCase));
         }
 
         public static void LogIfThrows(this IFullLogger This, LogLevel level, string message, Action block)

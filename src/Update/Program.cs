@@ -388,6 +388,7 @@ namespace Squirrel.Update
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
                         .Where(x => !x.Name.ToLowerInvariant().Contains("squirrel.exe"))
+                        .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ForEachAsync(x => createExecutableStubForExe(x.FullName))
                         .Wait();
 
@@ -395,7 +396,6 @@ namespace Squirrel.Update
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
-                        .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
                         .Wait();
                 });
