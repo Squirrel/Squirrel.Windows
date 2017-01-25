@@ -639,9 +639,14 @@ namespace Squirrel.Update
         bool isPEFileSigned(string path)
         {
 #if MONO
-            return true;
+            return Path.GetExtension(path).Equals(".exe", StringComparison.OrdinalIgnoreCase);
 #else
-            return AuthenticodeTools.IsTrusted(path);
+            try {
+                return AuthenticodeTools.IsTrusted(path);
+            } catch (Exception ex) {
+                this.Log().ErrorException("Failed to determine signing status for " + path, ex);
+                return false;
+            }
 #endif
         }
 

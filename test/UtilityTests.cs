@@ -142,8 +142,6 @@ namespace Squirrel.Tests.Core
             Assert.Equal(result, Utility.FileIsLikelyPEImage(input));
         }
 
-
-
         [Fact]
         public void WeCanFetchAllProcesses()
         {
