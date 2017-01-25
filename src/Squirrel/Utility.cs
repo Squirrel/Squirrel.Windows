@@ -211,12 +211,14 @@ namespace Squirrel
             });
 
             string textResult = await pi.StandardOutput.ReadToEndAsync();
-            if (String.IsNullOrWhiteSpace(textResult)) {
-                textResult = await pi.StandardError.ReadToEndAsync();
+            if (String.IsNullOrWhiteSpace(textResult) || pi.ExitCode != 0) {
+                textResult = (textResult ?? "") + "\n" + await pi.StandardError.ReadToEndAsync();
+
                 if (String.IsNullOrWhiteSpace(textResult)) {
                     textResult = String.Empty;
                 }
             }
+
             return Tuple.Create(pi.ExitCode, textResult.Trim());
         }
 
