@@ -397,7 +397,12 @@ namespace Squirrel.Update
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
                         .ForEachAsync(async x => {
-                            if (await isPEFileSigned(x.FullName)) return;
+                            if (isPEFileSigned(x.FullName)) {
+                                this.Log().Info("{0} is already signed, skipping", x.FullName);
+                                return;
+                            }
+
+                            this.Log().Info("About to sign {0}", x.FullName);
                             await signPEFile(x.FullName, signingOpts);
                         })
                         .Wait();
