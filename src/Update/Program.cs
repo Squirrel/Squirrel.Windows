@@ -396,7 +396,10 @@ namespace Squirrel.Update
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
-                        .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
+                        .ForEachAsync(async x => {
+                            if (await isPEFileSigned(x.FullName)) return;
+                            await signPEFile(x.FullName, signingOpts);
+                        })
                         .Wait();
                 });
 
@@ -633,7 +636,24 @@ namespace Squirrel.Update
                 Console.WriteLine(processResult.Item2);
             }
         }
+        static async Task<bool> isPEFileSigned(string path)
+        {
+            // Try to find SignTool.exe
+            var exe = @".\signtool.exe";
+            if (!File.Exists(exe)) {
+                exe = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    "signtool.exe");
 
+                // Run down PATH and hope for the best
+                if (!File.Exists(exe)) exe = "signtool.exe";
+            }
+
+            var processResult = await Utility.InvokeProcessAsync(exe, String.Format("verify \"{0}\"", path), CancellationToken.None);
+
+            if (processResult.Item1 != 0) return false;
+            return processResult.Item2.IndexOf("Successfully verified", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
 
         async Task createExecutableStubForExe(string fullName)
         {
