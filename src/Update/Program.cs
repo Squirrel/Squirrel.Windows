@@ -394,7 +394,7 @@ namespace Squirrel.Update
                     if (signingOpts == null) return;
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
-                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .Where(x => Utility.FileIsLikelyPEImage(x.Name))
                         .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
                         .Wait();

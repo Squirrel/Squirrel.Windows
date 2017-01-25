@@ -496,6 +496,13 @@ namespace Squirrel
             }
         }
 
+        readonly static string[] peExtensions = new[] { ".exe", ".dll", ".node" };
+        public static bool FileIsLikelyPEImage(string name)
+        {
+            var ext = Path.GetExtension(name);
+            return peExtensions.Any(x => name.Equals(ext, StringComparison.OrdinalIgnoreCase));
+        }
+
         public static void LogIfThrows(this IFullLogger This, LogLevel level, string message, Action block)
         {
             try {
