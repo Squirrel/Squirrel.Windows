@@ -131,6 +131,17 @@ namespace Squirrel.Tests.Core
             }
         }
 
+        [Theory]
+        [InlineData("foo.dll", true)]
+        [InlineData("foo.DlL", true)]
+        [InlineData("C:\\Foo\\Bar\\foo.Exe", true)]
+        [InlineData("Test.png", false)]
+        [InlineData(".rels", false)]
+        public void FileIsLikelyPEImageTest(string input, bool result)
+        {
+            Assert.Equal(result, Utility.FileIsLikelyPEImage(input));
+        }
+
         [Fact]
         public void WeCanFetchAllProcesses()
         {

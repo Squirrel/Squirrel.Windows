@@ -17,6 +17,15 @@ namespace Squirrel.Tests.Core
     public class CreateReleasePackageTests : IEnableLogger
     {
         [Fact]
+        public void SemanticVersionDoesWhatIWant()
+        {
+            var sv = new SemanticVersion("1.2.3.4");
+            var dontcare = default(SemanticVersion);
+
+            Assert.False(SemanticVersion.TryParseStrict(sv.ToString(), out dontcare));
+        }
+
+        [Fact]
         public void ReleasePackageIntegrationTest()
         {
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
