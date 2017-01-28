@@ -21,8 +21,8 @@ bool CFxHelper::CanInstallDotNet4_5()
 
 NetVersion CFxHelper::GetRequiredDotNetVersion()
 {
-	CString resourceFlag;
-	resourceFlag.LoadString(IDS_FXVERSION);
+	wchar_t* test = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_FX_VERSION_FLAG, L"FLAGS"));
+	CString resourceFlag(test);
 	if (resourceFlag.Compare(L"net451") == 0) return NetVersion::net451;
 	if (resourceFlag.Compare(L"net452") == 0) return NetVersion::net452;
 	if (resourceFlag.Compare(L"net46") == 0) return NetVersion::net46;
