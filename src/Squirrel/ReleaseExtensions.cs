@@ -20,7 +20,6 @@ namespace Squirrel
 
         public static SemanticVersion ToSemanticVersion(this string fileName)
         {
-            Console.WriteLine(fileName);
             var name = _suffixRegex.Replace(fileName, "");
             var version = _versionRegex.Match(name).Value.Substring(1);
             return new SemanticVersion(version);
