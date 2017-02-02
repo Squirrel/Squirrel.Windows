@@ -111,7 +111,7 @@ This will generate a NuGet package from .nuspec file setting version from Assemb
  // the next time this code is regenerated.
  //   
  using System.Reflection;
- [assembly: AssemblyCopyright("Copyright © AIC Solutions Ltd <#= year #>")]
+ [assembly: AssemblyCopyright("Copyright © Your Company <#= year #>")]
  [assembly: AssemblyMetadata("SquirrelAwareVersion", "1")]
  [assembly: AssemblyVersion("<#= major #>.<#= minor #>.<#= build #>")]
  [assembly: AssemblyFileVersion("<#= major #>.<#= minor #>.<#= build #>")]
