@@ -7,20 +7,125 @@ Squirrel packaging can be easily integrated directly into your build process usi
 
 ## Define Build Target
 
-The first step is to define a build target in your `.csproj` file.
+###The first step is to define a build target in your `.csproj` file.
 
 ```xml
-<Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release'">  <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">    <Output TaskParameter="Assemblies" ItemName="myAssemblyInfo"/>  </GetAssemblyIdentity>  <Exec Command="nuget pack MyApp.nuspec -Version %(myAssemblyInfo.Version) -Properties Configuration=Release -OutputDirectory $(OutDir) -BasePath $(OutDir)" />  <Exec Command="squirrel --releasify $(OutDir)MyApp.%(myAssemblyInfo.Version).nupkg" /></Target>
-```
+<!--GET SEMANTIC VERSION FOR SQUIRREL.WINDOWS-->
+  <UsingTask
+  TaskName="GetSemanticVersion"
+  TaskFactory="CodeTaskFactory"
+  AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
+    <ParameterGroup>
+      <AssemblyPath ParameterType="System.String" Required="true" />
+      <SemanticVersion ParameterType="System.String" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.Diagnostics" />
+      <Code Type="Fragment" Language="cs">
+        <![CDATA[
+        Version v = Version.Parse(FileVersionInfo.GetVersionInfo(this.AssemblyPath).ProductVersion);
+        this.SemanticVersion = v.Major.ToString() + "." + v.Minor.ToString() + "." + v.Build.ToString();    
+      ]]>
+      </Code>
+    </Task>
+  </UsingTask>
+  <Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release'">
+    <!--SQUIRREL.WINDOWS CREATE RELEASE WITH EVERY BUILD-->
+    <GetSemanticVersion AssemblyPath="$(OutDir)$(AssemblyName).exe">
+      <Output TaskParameter="SemanticVersion" PropertyName="SemanticVersionNumber" />
+    </GetSemanticVersion>
+    <Exec Command="nuget pack $(AssemblyName).nuspec -Version $(SemanticVersionNumber) -Properties Configuration=Release -OutputDirectory $(OutDir) -BasePath $(OutDir)" />
+    <!--REQUIRES TOOLS DIRECTORY TO BE INCLUDED IN PROJECT FROM CURRENT SQUIRREL.WINDOWS NUGET PACKAGE - SET CONTENTS TO COPY TO OUTPUT-->
+    <Exec Command="tools\squirrel --releasify $(OutDir)$(AssemblyName).$(SemanticVersionNumber).nupkg" />
+  </Target>```
 
 This will generate a NuGet package from .nuspec file setting version from AssemblyInfo.cs and place it in OutDir (by default bin\Release). Then it will generate release files from it.
 
+**You must copy the Tools Directory from the `Squirrel.Windows` Directory in the Packages folder of your solution, Sett the entire contents to 'Copy To Output' this will enable the --releasify functionality to do its magic.**
+
+<p />
+
 ## Example .nuspec file for MyApp
 
-Here is an example `MyApp.nuspec` file for the above build target example.
+###Here is an example `MyApp.nuspec` file for the above build target example.
+
+**NOTE 'MyApp' must be replaced with the name of your output Assembly i.e. `MyApp.exe`**
 
 ```xml
-<?xml version="1.0" encoding="utf-8"?><package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">  <metadata>    <id>MyApp</id>    <!-- version will be replaced by MSBuild -->    <version>0.0.0.0</version>    <title>title</title>    <authors>authors</authors>    <description>description</description>    <requireLicenseAcceptance>false</requireLicenseAcceptance>    <copyright>Copyright 2016</copyright>    <dependencies />  </metadata>  <files>    <file src="*.*" target="lib\net45\" exclude="*.pdb;*.nupkg;*.vshost.*"/>  </files></package>
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>$id$</id>
+    <version>0.0.0</version><!-- version will be replaced by MSBuild -->
+    <title>$title$</title>    
+    <authors>$author$</authors>
+    <description>$description$</description>
+    <copyright>Copyright © $author$ 2017</copyright>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <dependencies />
+  </metadata>
+  <files>
+    <file src="*.*" target="lib\net45\" exclude="*.pdb;*.nupkg;*.vshost.*"/>
+  </files>
+</package>
+```
+
+##Automated Semantic Version Numbers
+
+###Add the following text into `AssemblyVersion.tt` and save this will produce `AssemblyVersion.cs` with your current build, this can be incremented manually by saving and allowing the Text Template Transform Tool do its magic or automatically
+
+```xml
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ import namespace="System.IO" #>
+<#@ output extension=".cs" #>
+<#
+	 int major = 0; 
+	 int minor = 0; 
+	 int build = 0; 
+
+	 string year = DateTime.Now.Year.ToString();
+	 try
+	 {
+		 using(var f = File.OpenText(Host.ResolvePath("AssemblyVersion.cs")))
+		 {
+			 string maj = f.ReadLine().Replace("//","");
+			 string min = f.ReadLine().Replace("//","");
+			 string b = f.ReadLine().Replace("//","");
+  
+			 major = int.Parse(maj); 
+			 minor = int.Parse(min); 
+			 build = int.Parse(b) + 1; 
+		 }
+	 }
+	 catch
+	 {
+		 major = 1; 
+		 minor = 0; 
+		 build = 0; 
+	 }
+ #>
+ // Semantic Version - <#= major #>.<#= minor #>.<#= build #>
+ // 
+ // This code was generated by a tool. Any changes made manually will be lost
+ // the next time this code is regenerated.
+ // 
+  
+ using System.Reflection;
+ [assembly: AssemblyCopyright("Copyright © AIC Solutions Ltd <#= year #>")]
+ [assembly: AssemblyMetadata("SquirrelAwareVersion", "1")]
+ [assembly: AssemblyVersion("<#= major #>.<#= minor #>.<#= build #>")]
+ [assembly: AssemblyFileVersion("<#= major #>.<#= minor #>.<#= build #>")]
+
+```
+
+###Add this code to your Pre-build event to enable automatic version increments upon each release build
+
+```
+      if $(ConfigurationName) == Debug goto :exit
+      set textTemplatingPath="%CommonProgramFiles(x86)%\Microsoft Shared\TextTemplating\$(VisualStudioVersion)\texttransform.exe"
+      if %textTemplatingPath%=="\Microsoft Shared\TextTemplating\$(VisualStudioVersion)\texttransform.exe" set textTemplatingPath="%CommonProgramFiles%\Microsoft Shared\TextTemplating\$(VisualStudioVersion)\texttransform.exe"
+      %textTemplatingPath% "$(ProjectDir)AssemblyVersion.tt"
+      :exit
 ```
 
 ## Additional Notes
@@ -32,7 +137,7 @@ Please be aware of the following when using this solution:
   ~~~pm
 PM>  Install-Package NuGet.CommandLine
   ~~~
-* It suffers from a bug when sometimes NuGet packages are not loaded properly and throws nuget/squirrel is not recogized (9009) errors.  
+* It suffers from a bug when sometimes NuGet packages are not loaded properly and throws nuget/squirrel is not recognized (9009) errors.  
  **Tip:** In this case you may simply need to restart Visual Studio so the Package Manager Console will have loaded all the package tools
 * If you get the following error you may need add the full path to squirrel.exe in the build target `Exec Command` call. `'squirrel' is not recognized as an internal or external command`
 
