@@ -103,7 +103,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = nCmdShow;
 
-	if (!CreateProcess(fullPath.c_str(), lpCmdLine, NULL, NULL, true, 0, NULL, NULL, &si, &pi)) {
+	std::wstring cmdLine(L"\"");
+	cmdLine += fullPath;
+	cmdLine += L"\" ";
+	cmdLine += lpCmdLine;
+
+	wchar_t* buf = wcsdup(cmdLine.c_str());
+	if (!CreateProcess(NULL, buf, NULL, NULL, true, 0, NULL, NULL, &si, &pi)) {
 		return -1;
 	}
 

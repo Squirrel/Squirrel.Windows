@@ -1,21 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Mono.Options;
 using Splat;
-using Squirrel;
 using Squirrel.Json;
-using System.Drawing;
-using System.Windows;
 using NuGet;
 using System.Text.RegularExpressions;
 
@@ -388,15 +383,23 @@ namespace Squirrel.Update
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
                         .Where(x => !x.Name.ToLowerInvariant().Contains("squirrel.exe"))
+                        .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ForEachAsync(x => createExecutableStubForExe(x.FullName))
                         .Wait();
 
                     if (signingOpts == null) return;
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
-                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
-                        .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
-                        .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
+                        .Where(x => Utility.FileIsLikelyPEImage(x.Name))
+                        .ForEachAsync(async x => {
+                            if (isPEFileSigned(x.FullName)) {
+                                this.Log().Info("{0} is already signed, skipping", x.FullName);
+                                return;
+                            }
+
+                            this.Log().Info("About to sign {0}", x.FullName);
+                            await signPEFile(x.FullName, signingOpts);
+                        })
                         .Wait();
                 });
 
@@ -620,19 +623,33 @@ namespace Squirrel.Update
                 if (!File.Exists(exe)) exe = "signtool.exe";
             }
 
-            Tuple<int, string> processResult = await Utility.InvokeProcessAsync(exe,
+            var processResult = await Utility.InvokeProcessAsync(exe,
                 String.Format("sign {0} \"{1}\"", signingOpts, exePath), CancellationToken.None);
 
-            if (processResult.Item1 != 0)
-            {
+            if (processResult.Item1 != 0) {
                 var optsWithPasswordHidden = new Regex(@"/p\s+\w+").Replace(signingOpts, "/p ********");
                 var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}'",
                     exe, optsWithPasswordHidden, exePath);
+
                 throw new Exception(msg);
             } else {
                 Console.WriteLine(processResult.Item2);
             }
-       }
+        }
+        bool isPEFileSigned(string path)
+        {
+#if MONO
+            return Path.GetExtension(path).Equals(".exe", StringComparison.OrdinalIgnoreCase);
+#else
+            try {
+                return AuthenticodeTools.IsTrusted(path);
+            } catch (Exception ex) {
+                this.Log().ErrorException("Failed to determine signing status for " + path, ex);
+                return false;
+            }
+#endif
+        }
+
         async Task createExecutableStubForExe(string fullName)
         {
             var exe = findExecutable(@"StubExecutable.exe");
@@ -872,3 +889,4 @@ namespace Squirrel.Update
         }
     }
 }
+

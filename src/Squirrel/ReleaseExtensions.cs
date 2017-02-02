@@ -11,7 +11,7 @@ namespace Squirrel
     public static class VersionExtensions
     {
         static readonly Regex _suffixRegex = new Regex(@"(-full|-delta)?\.nupkg$", RegexOptions.Compiled);
-        static readonly Regex _versionRegex = new Regex(@"\d+(\.\d+){0,3}(-[a-z][0-9a-z-]*)?$", RegexOptions.Compiled);
+        static readonly Regex _versionRegex = new Regex(@"\d+(\.\d+){0,3}(-[A-Za-z][0-9A-Za-z-]*)?$", RegexOptions.Compiled);
 
         public static SemanticVersion ToSemanticVersion(this IReleasePackage package)
         {

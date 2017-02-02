@@ -211,12 +211,14 @@ namespace Squirrel
             });
 
             string textResult = await pi.StandardOutput.ReadToEndAsync();
-            if (String.IsNullOrWhiteSpace(textResult)) {
-                textResult = await pi.StandardError.ReadToEndAsync();
+            if (String.IsNullOrWhiteSpace(textResult) || pi.ExitCode != 0) {
+                textResult = (textResult ?? "") + "\n" + await pi.StandardError.ReadToEndAsync();
+
                 if (String.IsNullOrWhiteSpace(textResult)) {
                     textResult = String.Empty;
                 }
             }
+
             return Tuple.Create(pi.ExitCode, textResult.Trim());
         }
 
@@ -494,6 +496,13 @@ namespace Squirrel
                 int subSystem = subsystemBytes[0] | subsystemBytes[1] << 8;
                 return subSystem == 2; /*IMAGE_SUBSYSTEM_WINDOWS_GUI*/
             }
+        }
+
+        readonly static string[] peExtensions = new[] { ".exe", ".dll", ".node" };
+        public static bool FileIsLikelyPEImage(string name)
+        {
+            var ext = Path.GetExtension(name);
+            return peExtensions.Any(x => ext.Equals(x, StringComparison.OrdinalIgnoreCase));
         }
 
         public static void LogIfThrows(this IFullLogger This, LogLevel level, string message, Action block)
