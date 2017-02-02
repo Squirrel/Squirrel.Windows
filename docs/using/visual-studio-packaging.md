@@ -23,8 +23,7 @@ Squirrel packaging can be easily integrated directly into your build process usi
       <Using Namespace="System.Diagnostics" />
       <Code Type="Fragment" Language="cs">
         <![CDATA[
-        Version v = Version.Parse(FileVersionInfo.GetVersionInfo(this.AssemblyPath).ProductVersion);
-        this.SemanticVersion = v.Major.ToString() + "." + v.Minor.ToString() + "." + v.Build.ToString();    
+         this.SemanticVersion = Version.Parse(FileVersionInfo.GetVersionInfo(this.AssemblyPath).ProductVersion).ToString(3);
       ]]>
       </Code>
     </Task>
