@@ -203,6 +203,19 @@ namespace Squirrel
                     if (!re.Match(entryFileName).Success) return;
 
                     var fullZipToPath = Path.Combine(outFolder, re.Replace(entryFileName, "", 1));
+
+                    var failureIsOkay = false;
+                    if (entryFileName.Contains("_ExecutionStub.exe")) {
+                        // NB: On upgrade, many of these stubs will be in-use, nbd tho.
+                        failureIsOkay = true;
+
+                        fullZipToPath = Path.Combine(
+                            Directory.GetParent(Path.GetDirectoryName(fullZipToPath)).FullName,
+                            Path.GetFileName(fullZipToPath).Replace("_ExecutionStub.exe", ".exe"));
+
+                        LogHost.Default.Info("Rigging execution stub for {0} to {1}", entryFileName, fullZipToPath);
+                    }
+
                     var directoryName = Path.GetDirectoryName(fullZipToPath);
 
                     var buffer = new byte[64*1024];
@@ -211,12 +224,19 @@ namespace Squirrel
                         Utility.Retry(() => Directory.CreateDirectory(directoryName), 2);
                     }
 
-                    Utility.Retry(() => {
-                        using (var zipStream = zf.GetInputStream(zipEntry))
-                        using (FileStream streamWriter = File.Create(fullZipToPath)) {
-                            StreamUtils.Copy(zipStream, streamWriter, buffer);
+                    try {
+                        Utility.Retry(() => {
+                            using (var zipStream = zf.GetInputStream(zipEntry))
+                            using (FileStream streamWriter = File.Create(fullZipToPath)) {
+                                StreamUtils.Copy(zipStream, streamWriter, buffer);
+                            }
+                        }, 5);
+                    } catch (Exception e) {
+                        if (!failureIsOkay) {
+                            LogHost.Default.WarnException("Can't write execution stub, probably in use", e);
+                            throw e;
                         }
-                    }, 5);
+                    }
                 }, 4);
             } finally {
                 zf.Close();

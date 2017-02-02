@@ -385,10 +385,17 @@ namespace Squirrel.Update
 
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+                    new DirectoryInfo(pkgPath).GetAllFilesRecursively()
+                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .Where(x => !x.Name.ToLowerInvariant().Contains("squirrel.exe"))
+                        .ForEachAsync(x => createExecutableStubForExe(x.FullName))
+                        .Wait();
+
                     if (signingOpts == null) return;
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ForEachAsync(x => signPEFile(x.FullName, signingOpts))
                         .Wait();
                 });
@@ -616,14 +623,30 @@ namespace Squirrel.Update
             Tuple<int, string> processResult = await Utility.InvokeProcessAsync(exe,
                 String.Format("sign {0} \"{1}\"", signingOpts, exePath), CancellationToken.None);
 
-            if (processResult.Item1 != 0) {
-                var msg = String.Format(
-                    "Failed to sign, command invoked was: '{0} sign {1} {2}'", 
-                    exe, signingOpts, exePath);
+            if (processResult.Item1 != 0)
+            {
+                var optsWithPasswordHidden = new Regex(@"/p\s+\w+").Replace(signingOpts, "/p ********");
+                var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}'",
+                    exe, optsWithPasswordHidden, exePath);
                 throw new Exception(msg);
             } else {
                 Console.WriteLine(processResult.Item2);
             }
+       }
+        async Task createExecutableStubForExe(string fullName)
+        {
+            var exe = findExecutable(@"StubExecutable.exe");
+
+            var target = Path.Combine(
+                Path.GetDirectoryName(fullName),
+                Path.GetFileNameWithoutExtension(fullName) + "_ExecutionStub.exe");
+
+            await Utility.CopyToAsync(exe, target);
+
+            await Utility.InvokeProcessAsync(
+                findExecutable("WriteZipToSetup.exe"), 
+                String.Format("--copy-stub-resources \"{0}\" \"{1}\"", fullName, target),
+                CancellationToken.None);
         }
 
         static async Task setPEVersionInfoAndIcon(string exePath, IPackage package, string iconPath = null)
