@@ -494,7 +494,7 @@ namespace Squirrel
                 s.Read(subsystemBytes, 0, 2);
 
                 int subSystem = subsystemBytes[0] | subsystemBytes[1] << 8;
-                return subSystem == 2; /*IMAGE_SUBSYSTEM_WINDOWS_GUI*/
+                return subSystem == 2 || subSystem == 3; /*IMAGE_SUBSYSTEM_WINDOWS_GUI || IMAGE_SUBSYSTEM_WINDOWS_CUI*/
             }
         }
 
