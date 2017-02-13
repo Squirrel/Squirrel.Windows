@@ -31,10 +31,9 @@ namespace Squirrel.Update
             try {
                 return pg.main(args);
             } catch (Exception ex) {
-                ensureConsole();
-                Console.Error.WriteLine(ex);
                 // NB: Normally this is a terrible idea but we want to make
                 // sure Setup.exe above us gets the nonzero error code
+                Console.Error.WriteLine(ex);
                 return -1;
             }
         }
@@ -335,6 +334,8 @@ namespace Squirrel.Update
 
         public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true)
         {
+            ensureConsole();
+
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
                     throw new Exception(string.Format("Invalid --baseUrl '{0}'. A base URL must start with http or https and be a valid URI.", baseUrl));
