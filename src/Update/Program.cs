@@ -334,6 +334,8 @@ namespace Squirrel.Update
 
         public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true)
         {
+            ensureConsole();
+
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
                     throw new Exception(string.Format("Invalid --baseUrl '{0}'. A base URL must start with http or https and be a valid URI.", baseUrl));
