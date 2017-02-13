@@ -31,9 +31,10 @@ namespace Squirrel.Update
             try {
                 return pg.main(args);
             } catch (Exception ex) {
+                ensureConsole();
+                Console.Error.WriteLine(ex);
                 // NB: Normally this is a terrible idea but we want to make
                 // sure Setup.exe above us gets the nonzero error code
-                Console.Error.WriteLine(ex);
                 return -1;
             }
         }
