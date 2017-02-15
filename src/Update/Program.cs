@@ -542,7 +542,6 @@ namespace Squirrel.Update
                 var currentExe = RunFromCurrent(exeName, appDir);
                 if (currentExe != null)
                 {
-                    this.Log().Info("No current directory, falling back to latest app folder");
                     targetExe = currentExe;
                 }
                 this.Log().Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");

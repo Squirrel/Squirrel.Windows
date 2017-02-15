@@ -383,6 +383,12 @@ namespace Squirrel
             async Task invokePostInstall(SemanticVersion currentVersion, bool isInitialInstall, bool firstRunOnly, bool silentInstall)
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
+                if (isInitialInstall)
+                {
+                    var currentDir = CopyToCurrent(targetDir.Parent.FullName);
+                    if (currentDir != null)
+                        targetDir = currentDir;
+                }
                 var args = isInitialInstall ?
                     String.Format("--squirrel-install {0}", currentVersion) :
                     String.Format("--squirrel-updated {0}", currentVersion);
@@ -426,6 +432,34 @@ namespace Squirrel
                 squirrelApps
                     .Select(exe => new ProcessStartInfo(exe, firstRunParam) { WorkingDirectory = Path.GetDirectoryName(exe) })
                     .ForEach(info => Process.Start(info));
+            }
+
+            public DirectoryInfo CopyToCurrent(string rootDir)
+            {
+                var currentTempDir = Path.Combine(rootDir, "currentTemp");
+                var currentDir = Path.Combine(rootDir, "current");
+
+                if (Directory.Exists(currentTempDir))
+                {
+                    try
+                    {
+                        this.Log().Info("Moving current temp directory to current");
+                        if (Directory.Exists(currentDir))
+                        {
+                            Directory.Delete(currentDir, true);
+                        }
+                        Directory.Move(currentTempDir, currentDir);
+                    }
+                    catch (Exception e)
+                    {
+                        this.Log().InfoException("Failed to move current directory", e);
+                    }
+                }
+                if (!Directory.Exists(currentDir))
+                {
+                    return null;
+                }
+                return new DirectoryInfo(currentDir);
             }
 
             void fixPinnedExecutables(SemanticVersion newCurrentVersion, bool removeAll = false)
