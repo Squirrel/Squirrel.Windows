@@ -285,6 +285,7 @@ namespace Squirrel
             {
                 return Task.Run(async () => {
                     var target = getDirectoryForRelease(release.Version);
+                    var currentTemp = new DirectoryInfo(Path.Combine(rootAppDirectory, "currentTemp"));
 
                     // NB: This might happen if we got killed partially through applying the release
                     if (target.Exists) {
@@ -294,10 +295,22 @@ namespace Squirrel
 
                     target.Create();
 
+
+                    if (currentTemp.Exists)
+                    {
+                        this.Log().Warn("Found currentTemp folder, killing it: " + currentTemp.FullName);
+                        await Utility.DeleteDirectory(currentTemp.FullName);
+                    }
+
+                    currentTemp.Create();
+                
                     this.Log().Info("Writing files to app directory: {0}", target.FullName);
                     await ReleasePackage.ExtractZipForInstall(
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
                         target.FullName);
+                    await ReleasePackage.ExtractZipForInstall(
+                        Path.Combine(updateInfo.PackageDirectory, release.Filename),
+                        currentTemp.FullName);
 
                     return target.FullName;
                 });

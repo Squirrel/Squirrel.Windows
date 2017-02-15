@@ -517,28 +517,80 @@ namespace Squirrel.Update
                 })
                 .FirstOrDefault(x => Directory.Exists(x));
 
-            // Check for the EXE name they want
+            //Check for the EXE name they want
+
             var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName.Replace("%20", " ")));
             this.Log().Info("Want to launch '{0}'", targetExe);
 
             // Check for path canonicalization attacks
-            if (!targetExe.FullName.StartsWith(latestAppDir, StringComparison.Ordinal)) {
+            if (!targetExe.FullName.StartsWith(latestAppDir, StringComparison.Ordinal))
+            {
                 throw new ArgumentException();
             }
 
-            if (!targetExe.Exists) {
+            if (!targetExe.Exists)
+            {
                 this.Log().Error("File {0} doesn't exist in current release", targetExe);
                 throw new ArgumentException();
             }
 
+            this.Log().Info("Waiting for parent to exit");
             if (shouldWait) waitForParentToExit();
+            this.Log().Info("parent has exited");
 
             try {
+                var currentExe = RunFromCurrent(exeName, appDir);
+                if (currentExe != null)
+                {
+                    this.Log().Info("No current directory, falling back to latest app folder");
+                    targetExe = currentExe;
+                }
                 this.Log().Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");
                 Process.Start(new ProcessStartInfo(targetExe.FullName, arguments ?? "") { WorkingDirectory = Path.GetDirectoryName(targetExe.FullName) });
             } catch (Exception ex) {
                 this.Log().ErrorException("Failed to start process", ex);
             }
+        }
+
+        public FileInfo RunFromCurrent(string exeName, string appDir)
+        {
+            var currentTempDir = Path.Combine(appDir, "currentTemp");
+            var currentDir = Path.Combine(appDir, "current");
+
+            if(Directory.Exists(currentTempDir))
+            {
+                try
+                {
+                    this.Log().Info("Moving current temp directory to current");
+                    if (Directory.Exists(currentDir))
+                    {
+                        Directory.Delete(currentDir, true);
+                    }
+                    Directory.Move(currentTempDir, currentDir);
+                } catch(Exception e)
+                {
+                    this.Log().InfoException("Failed to move current directory", e);
+                }
+            }
+            if(!Directory.Exists(currentDir))
+            {
+                return null;
+            }
+            FileInfo targetExe = new FileInfo(Path.Combine(currentDir,  exeName.Replace("%20", " ")));
+            this.Log().Info("Want to launch '{0}'", targetExe);
+
+            // Check for path canonicalization attacks
+            if (!targetExe.FullName.StartsWith(appDir, StringComparison.Ordinal))
+            {
+                throw new ArgumentException();
+            }
+
+            if (!targetExe.Exists)
+            {
+                this.Log().Error("File {0} doesn't exist in current release", targetExe);
+                throw new ArgumentException();
+            }
+            return targetExe;
         }
 
         public void ShowHelp()
