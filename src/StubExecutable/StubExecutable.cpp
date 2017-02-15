@@ -44,6 +44,17 @@ std::wstring FindLatestAppDir()
 {
 	std::wstring ourDir;
 	ourDir.assign(FindRootAppDir());
+	
+	//If current exists, just use that
+	std::wstring currDir;
+	currDir.assign(FindRootAppDir());
+	currDir += L"\\current";
+
+	WIN32_FIND_DATA currInfo = { 0 };
+	HANDLE currFile = FindFirstFile(currDir.c_str(), &currInfo);
+	if (currFile != INVALID_HANDLE_VALUE) {
+		return currDir.c_str();
+	}
 
 	ourDir += L"\\app-*";
 
