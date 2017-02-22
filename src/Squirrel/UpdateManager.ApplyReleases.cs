@@ -446,9 +446,14 @@ namespace Squirrel
                         this.Log().Info("Moving current temp directory to current");
                         if (Directory.Exists(currentDir))
                         {
-                            Directory.Delete(currentDir, true);
+                            Utility.EmptyDirectory(currentDir);
+                            Utility.CopyDirectory(new DirectoryInfo(currentTempDir), new DirectoryInfo(currentDir));
+                            Task task = Task.Run(() => Utility.DeleteDirectory(currentTempDir));
                         }
-                        Directory.Move(currentTempDir, currentDir);
+                        else
+                        {
+                            Directory.Move(currentTempDir, currentDir);
+                        }
                     }
                     catch (Exception e)
                     {

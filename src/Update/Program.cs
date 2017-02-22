@@ -563,9 +563,13 @@ namespace Squirrel.Update
                     this.Log().Info("Moving current temp directory to current");
                     if (Directory.Exists(currentDir))
                     {
-                        Directory.Delete(currentDir, true);
+                        Utility.EmptyDirectory(currentDir);
+                        Utility.CopyDirectory(new DirectoryInfo(currentTempDir), new DirectoryInfo(currentDir));
+                        Task task = Task.Run(() => Utility.DeleteDirectory(currentTempDir));
+                    } else
+                    {
+                        Directory.Move(currentTempDir, currentDir);
                     }
-                    Directory.Move(currentTempDir, currentDir);
                 } catch(Exception e)
                 {
                     this.Log().InfoException("Failed to move current directory", e);
@@ -581,13 +585,13 @@ namespace Squirrel.Update
             // Check for path canonicalization attacks
             if (!targetExe.FullName.StartsWith(appDir, StringComparison.Ordinal))
             {
-                throw new ArgumentException();
+                return null;
             }
 
             if (!targetExe.Exists)
             {
                 this.Log().Error("File {0} doesn't exist in current release", targetExe);
-                throw new ArgumentException();
+                return null;
             }
             return targetExe;
         }
