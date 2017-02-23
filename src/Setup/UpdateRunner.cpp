@@ -172,7 +172,6 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	}
 
 	wchar_t username[512];
-	wchar_t uid[128];
 	wchar_t appDataDir[MAX_PATH];
 	ULONG unameSize = _countof(username);
 
