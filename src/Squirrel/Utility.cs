@@ -462,7 +462,7 @@ namespace Squirrel
         {
             try {
                 await Utility.DeleteDirectory(dir);
-            } catch (Exception ex) {
+            } catch {
                 var message = String.Format("Uninstall failed to delete dir '{0}'", dir);
             }
         }
