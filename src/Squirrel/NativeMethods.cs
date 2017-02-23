@@ -35,7 +35,7 @@ namespace Squirrel
         [DllImport("version.dll", SetLastError = true)]
         [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool GetFileVersionInfo(
             string lpszFileName, 
-            IntPtr dwHandleIgnored,
+            int dwHandleIgnored,
             int dwLen, 
             [MarshalAs(UnmanagedType.LPArray)] byte[] lpData);
 
