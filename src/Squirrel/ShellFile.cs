@@ -1021,7 +1021,7 @@ namespace Squirrel.Shell
         }
 
         [DllImport("shell32")]
-        static extern int SHGetFileInfo(
+        static extern IntPtr SHGetFileInfo(
             string pszPath,
             int dwFileAttributes,
             ref SHFILEINFO psfi,
@@ -1138,9 +1138,9 @@ namespace Squirrel.Shell
             SHFILEINFO shfi = new SHFILEINFO();
             uint shfiSize = (uint)Marshal.SizeOf(shfi.GetType());
 
-            int ret = SHGetFileInfo(
+            IntPtr ret = SHGetFileInfo(
                 fileName, 0, ref shfi, shfiSize, (uint)(flags));
-            if (ret != 0)
+            if (ret != IntPtr.Zero)
             {
                 if (shfi.hIcon != IntPtr.Zero)
                 {
