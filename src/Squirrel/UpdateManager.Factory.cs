@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.HttpUtility;
 using Squirrel.Json;
 
 namespace Squirrel
@@ -46,8 +47,15 @@ namespace Squirrel
                 .Append(repoUri.AbsolutePath)
                 .Append("/releases");
 
-            if (!string.IsNullOrWhiteSpace(accessToken))
+            if (!string.IsNullOrWhiteSpace(accessToken)) {
                 releasesApiBuilder.Append("?access_token=").Append(accessToken);
+            } else {
+                accessToken = ParseQueryString(repoUri.Query).Get("access_token");
+
+                if (!string.IsNullOrWhiteSpace(accessToken)) {
+                    releasesApiBuilder.Append("?access_token=").Append(accessToken);
+                }
+            }
             
             Uri baseAddress;
 
