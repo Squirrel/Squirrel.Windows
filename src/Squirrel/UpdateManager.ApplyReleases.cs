@@ -33,6 +33,7 @@ namespace Squirrel
             {
                 progress = progress ?? (_ => { });
 
+                progress(0);
                 var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
                 progress(10);
 
