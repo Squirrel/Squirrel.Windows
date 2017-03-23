@@ -14,7 +14,7 @@ Squirrel uses NuGet packages to create installation and update packages, which m
 Windows apps should be as fast and as easy to install and update as apps like Google Chrome. From an app developer's side, it should be really straightforward to create an installer for my app, and publish updates to it, without having to jump through insane hoops. 
 
 * **Integrating** an app to use Squirrel should be extremely easy, provide a client API, and be developer friendly.
-* **Packaging** is really easy, can be automated, and supports delta update packages.
+* **Packaging** is really easy and extremely fast, can be automated, and supports delta update packages.
 * **Distributing** should be straightforward, use simple HTTP updates, and provide multiple "channels" (a-la Chrome Dev/Beta/Release).
 * **Installing** is Wizard-Free™, with no UAC dialogs, does not require reboot, and is .NET Framework friendly.
 * **Updating** is in the background, doesn't interrupt the user, and does not require a reboot.
