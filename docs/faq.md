@@ -36,17 +36,16 @@ var isInstalled = File.Exists(updateDotExe);
 
 1. **The Initial Install via `Setup.exe` is failing. How do I learn what is going wrong?**  
    Check `%LocalAppData%\SquirrelTemp\SquirrelSetup.log` for logs related to the initial install.
-   **Installer application doesn't do anything. The animation flashes but the application never starts.**  
+1. **Installer application doesn't do anything. The animation flashes but the application never starts.**  
    The app is likely crashing on the first run (see [Debugging Installs](using/debugging-installs.md) for details).
 1. **The Installer seems to be blocked in Enterprise environments. How can I confirm this?**  
    Squirrel may be prevented from installing if Group Policy disallows the running of executables from `%LocalAppData%`. In this case, the "show log" button on the "installation failed" dialog will fail because `Update.exe` can not run to create a log file.  
-   The `Setup.exe` for your application should still copy files to `%LocalAppData%\SquirrelTemp` as a pre-installation step. To verify that Group Policy is restricting you, execute `Update.exe` from the command line:  
+   The `Setup.exe` for your application should still copy files to `%LocalAppData%\SquirrelTemp` as a pre-installation step. To verify that Group Policy is restricting you, execute `Update.exe` from the command line as follows:  
    ```
    C:\>%LocalAppData\MyApp\Update.exe
    This program is blocked by group policy. For more information, contact your system administrator.    
    ```
-   The best course of action is to request that executables for Squirrel and your application be whitelisted by your corporate overlords.  
-  
+   The best course of action is to request that executables for Squirrel and your application be whitelisted by your corporate overlords. 
 1. **No Shortcuts are Created for my Application**   
    Verify that the NuGet Package Metadata `id` property doesn't have a [space or \[dot\]](https://github.com/Squirrel/Squirrel.Windows/issues/530) in it.
 1. **Can I use a different name for the `Setup.exe` install application?**  
