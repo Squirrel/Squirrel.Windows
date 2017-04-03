@@ -14,11 +14,11 @@ Frequently Asked Questions for Squirrel.Windows, organized by area below.
 1. **How can I determine if my app is a Squirrel app? I provide a squirrel and non-squirrel install version and want to know which is running.**  
    You can check for the `Update.exe` in the parent directory to determine if the app is using Squirrel ([see #574](https://github.com/Squirrel/Squirrel.Windows/issues/574#issuecomment-176043311)).
    
-   ```
+```
 var assembly = Assembly.GetEntryAssembly();   
 var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), '..', 'Update.exe');
 var isInstalled = File.Exists(updateDotExe);
-   ```
+```
 
 ## Packaging
 
@@ -43,10 +43,10 @@ Yes you can, see [Microsoft IIS](using/microsoft-iis.md) for details.
   
   The `Setup.exe` for your application should still copy files to `%LocalAppData%\SquirrelTemp` as a pre-installation step. To verify that Group Policy is restricting you, execute `Update.exe` from the command line:
 
-  ```
+```
 C:\>%LocalAppData\MyApp\Update.exe
 This program is blocked by group policy. For more information, contact your system administrator.
-  ```
+```
 
   The best course of action is to request that executables for Squirrel and your application be whitelisted by your corporate overlords.
 4. **No Shortcuts are Created for my Application**
