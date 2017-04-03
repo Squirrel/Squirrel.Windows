@@ -1021,7 +1021,7 @@ namespace Squirrel.Shell
         }
 
         [DllImport("shell32")]
-        static extern int SHGetFileInfo(
+        static extern IntPtr SHGetFileInfo(
             string pszPath,
             int dwFileAttributes,
             ref SHFILEINFO psfi,
@@ -1047,7 +1047,7 @@ namespace Squirrel.Shell
             int dwLanguageId,
             string lpBuffer,
             uint nSize,
-            int argumentsLong);
+            IntPtr argumentsLong);
 
         [DllImport("kernel32")]
         static extern int GetLastError();
@@ -1138,9 +1138,9 @@ namespace Squirrel.Shell
             SHFILEINFO shfi = new SHFILEINFO();
             uint shfiSize = (uint)Marshal.SizeOf(shfi.GetType());
 
-            int ret = SHGetFileInfo(
+            IntPtr ret = SHGetFileInfo(
                 fileName, 0, ref shfi, shfiSize, (uint)(flags));
-            if (ret != 0)
+            if (ret != IntPtr.Zero)
             {
                 if (shfi.hIcon != IntPtr.Zero)
                 {
@@ -1158,7 +1158,7 @@ namespace Squirrel.Shell
                 string txtS = new string('\0', 256);
                 int len = FormatMessage(
                     FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                    IntPtr.Zero, err, 0, txtS, 256, 0);
+                    IntPtr.Zero, err, 0, txtS, 256, IntPtr.Zero);
                 Console.WriteLine("Len {0} text {1}", len, txtS);
 
                 // throw exception

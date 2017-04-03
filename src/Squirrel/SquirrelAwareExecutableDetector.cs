@@ -67,7 +67,7 @@ namespace Squirrel
             if (size <= 0 || size > 4096) return null;
 
             var buf = new byte[size];
-            if (!NativeMethods.GetFileVersionInfo(executable, IntPtr.Zero, size, buf)) return null;
+            if (!NativeMethods.GetFileVersionInfo(executable, 0, size, buf)) return null;
 
             IntPtr result; int resultSize;
             if (!NativeMethods.VerQueryValue(buf, "\\StringFileInfo\\040904B0\\SquirrelAwareVersion", out result, out resultSize)) {

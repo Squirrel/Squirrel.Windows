@@ -12,6 +12,11 @@ namespace SyncReleases
 {
     internal class SyncImplementations
     {
+        static SyncImplementations()
+        {
+            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+        }
+
         public static async Task SyncRemoteReleases(Uri targetUri, DirectoryInfo releasesDir)
         {
             var releasesUri = Utility.AppendPathToUri(targetUri, "RELEASES");
