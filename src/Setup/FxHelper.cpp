@@ -21,8 +21,8 @@ bool CFxHelper::CanInstallDotNet4_5()
 
 NetVersion CFxHelper::GetRequiredDotNetVersion()
 {
-	wchar_t* test = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_FX_VERSION_FLAG, L"FLAGS"));
-	CString resourceFlag(test);
+	wchar_t* versionFlag = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_FX_VERSION_FLAG, L"FLAGS"));
+	CString resourceFlag(versionFlag);
 	if (resourceFlag.Compare(L"net451") == 0) return NetVersion::net451;
 	if (resourceFlag.Compare(L"net452") == 0) return NetVersion::net452;
 	if (resourceFlag.Compare(L"net46") == 0) return NetVersion::net46;
@@ -160,8 +160,7 @@ HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet)
 	if (dwTempPathResult == 0) {
 		hr = AtlHresultFromLastError();
 		goto out;
-	}
-	else if (dwTempPathResult > _MAX_PATH) {
+	} else if (dwTempPathResult > _MAX_PATH) {
 		hr = DISP_E_BUFFERTOOSMALL;
 		goto out;
 	}
@@ -184,8 +183,7 @@ HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet)
 			hr = E_FAIL;
 			goto out;
 		}
-	}
-	else {
+	} else {
 		if (wcscpy_s(pLastDot, _countof(szFinalTempFileName) - (pLastDot - szFinalTempFileName), L".exe") != 0) {
 			hr = E_FAIL;
 			goto out;

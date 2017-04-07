@@ -65,8 +65,7 @@ int wmain(int argc, wchar_t* argv[])
 	bool setFramework = false;
 	if (argc == 5 && wcscmp(argv[3], L"--set-required-framework") == 0) {
 		setFramework = true;
-	}
-	else if (argc != 3) {
+	} else if (argc != 3) {
 		goto fail;
 	}
 

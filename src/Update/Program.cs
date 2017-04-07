@@ -89,7 +89,7 @@ namespace Squirrel.Update
                 string setupIcon = default(string);
                 string icon = default(string);
                 string shortcutArgs = default(string);
-                string frameworkVersion = default(string);
+                string frameworkVersion = "net45";
                 bool shouldWait = false;
                 bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
 
@@ -436,13 +436,8 @@ namespace Squirrel.Update
 
             var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
 
-            try
-            {
-                var arguments = String.Format("\"{0}\" \"{1}\"", targetSetupExe, zipPath);
-                if (!String.IsNullOrEmpty(frameworkVersion))
-                {
-                    arguments += String.Format(" \"--set-required-framework\" \"{0}\"", frameworkVersion);
-                }
+            try {
+                var arguments = String.Format("\"{0}\" \"{1}\" \"--set-required-framework\" \"{2}\"", targetSetupExe, zipPath, frameworkVersion);
                 var result = Utility.InvokeProcessAsync(writeZipToSetup, arguments, CancellationToken.None).Result;
                 if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
             } catch (Exception ex) {
