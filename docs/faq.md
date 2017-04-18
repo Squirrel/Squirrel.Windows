@@ -14,11 +14,11 @@ Frequently Asked Questions for Squirrel.Windows, organized by area below.
 1. **How can I determine if my app is a Squirrel app? I provide a squirrel and non-squirrel install version and want to know which is running.**  
    You can check for the `Update.exe` in the parent directory to determine if the app is using Squirrel ([see #574](https://github.com/Squirrel/Squirrel.Windows/issues/574#issuecomment-176043311)).
    
-   ```
+```
 var assembly = Assembly.GetEntryAssembly();   
 var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), '..', 'Update.exe');
 var isInstalled = File.Exists(updateDotExe);
-   ```
+```
 
 ## Packaging
 
