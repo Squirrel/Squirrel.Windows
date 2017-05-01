@@ -7,7 +7,7 @@ An overview of the various projects in the Squirrel.Windows Visual Studio soluti
 
 
 | Project / Assembly Name | Libraries (NuGet) | Libraries (NuGet) | Releases Directory (releasify output) | MyApp (install location) |
-| -------------------------------- | --------- | ----- | ------------------ | ------------- | ----------- |
+|--------------------------------|---------|-----|------------------|-------------| 
 | **Core** NuGet.Squirrel.dll | NuGet.Squirrel.dll | | | |
 | **Squirrel** Squirrel.dll | Squirrel.dll | | | |
 | **SyncRelease** SyncRelease.exe |           | SyncRelease.exe | | |
