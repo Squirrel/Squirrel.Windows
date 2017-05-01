@@ -61,11 +61,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		goto out;
 	}
 
-	if (!CFxHelper::IsDotNet45OrHigherInstalled()) {
-		hr = CFxHelper::InstallDotNetFramework(isQuiet);
+	NetVersion requiredVersion = CFxHelper::GetRequiredDotNetVersion();
+
+	if (!CFxHelper::IsDotNetInstalled(requiredVersion)) {
+		hr = CFxHelper::InstallDotNetFramework(requiredVersion, isQuiet);
 		if (FAILED(hr)) {
 			exitCode = hr; // #yolo
-			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing .NET 4.5 or higher manually"), NULL);
+			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing the latest version manually"), NULL);
 			goto out;
 		}
 	
