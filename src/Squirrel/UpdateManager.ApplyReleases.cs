@@ -47,7 +47,7 @@ namespace Squirrel
                     return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
                 }
 
-                var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release), 
+                var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release),
                     "Failed to install package to app dir");
                 progress(30);
 
@@ -110,7 +110,7 @@ namespace Squirrel
 
                         if (squirrelAwareApps.Count > 0) {
                             await squirrelAwareApps.ForEachAsync(async exe => {
-                                using (var cts = new CancellationTokenSource()) { 
+                                using (var cts = new CancellationTokenSource()) {
                                     cts.CancelAfter(10 * 1000);
 
                                     try {
@@ -135,8 +135,8 @@ namespace Squirrel
                 await this.ErrorIfThrows(() => Utility.DeleteDirectoryOrJustGiveUp(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
 
-                // NB: We drop this file here so that --checkInstall will ignore 
-                // this folder - if we don't do this, users who "accidentally" run as 
+                // NB: We drop this file here so that --checkInstall will ignore
+                // this folder - if we don't do this, users who "accidentally" run as
                 // administrator will find the app reinstalling itself on every
                 // reboot
                 if (!Directory.Exists(rootAppDirectory)) {
@@ -352,7 +352,7 @@ namespace Squirrel
                     return;
                 }
 
-                // If we're running in the context of Update.exe, we can't 
+                // If we're running in the context of Update.exe, we can't
                 // update ourselves. Instead, ask the new Update.exe to do it
                 // once we exit
                 var us = Assembly.GetEntryAssembly();
@@ -381,7 +381,7 @@ namespace Squirrel
 
                 // For each app, run the install command in-order and wait
                 if (!firstRunOnly) await squirrelApps.ForEachAsync(async exe => {
-                    using (var cts = new CancellationTokenSource()) { 
+                    using (var cts = new CancellationTokenSource()) {
                         cts.CancelAfter(15 * 1000);
 
                         try {
@@ -392,7 +392,7 @@ namespace Squirrel
                     }
                 }, 1 /* at a time */);
 
-                // If this is the first run, we run the apps with first-run and 
+                // If this is the first run, we run the apps with first-run and
                 // *don't* wait for them, since they're probably the main EXE
                 if (squirrelApps.Count == 0) {
                     this.Log().Warn("No apps are marked as Squirrel-aware! Going to run them all");
@@ -555,7 +555,7 @@ namespace Squirrel
                     this.Log().Info("cleanDeadVersions: exclude folder {0}", currentVersionFolder);
                 }
 
-                // NB: If we try to access a directory that has already been 
+                // NB: If we try to access a directory that has already been
                 // scheduled for deletion by MoveFileEx it throws what seems like
                 // NT's only error code, ERROR_ACCESS_DENIED. Squelch errors that
                 // come from here.
@@ -572,7 +572,7 @@ namespace Squirrel
                         if (squirrelApps.Count > 0) {
                             // For each app, run the install command in-order and wait
                             await squirrelApps.ForEachAsync(async exe => {
-                                using (var cts = new CancellationTokenSource()) { 
+                                using (var cts = new CancellationTokenSource()) {
                                     cts.CancelAfter(10 * 1000);
 
                                     try {
@@ -594,10 +594,10 @@ namespace Squirrel
                 // Finally, clean up the app-X.Y.Z directories
                 await toCleanup.ForEachAsync(async x => {
                     try {
-                        await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
+                        await Utility.DeleteDirectoryOrJustGiveUp(x.FullName, true);
 
                         if (Directory.Exists(x.FullName)) {
-                            // NB: If we cannot clean up a directory, we need to make 
+                            // NB: If we cannot clean up a directory, we need to make
                             // sure that anyone finding it later won't attempt to run
                             // Squirrel events on it. We'll mark it with a .dead file
                             markAppFolderAsDead(x.FullName);
