@@ -77,5 +77,8 @@
     <None Include="update.zip">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="flags1.bin">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

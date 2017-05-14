@@ -14,11 +14,11 @@ Frequently Asked Questions for Squirrel.Windows, organized by area below.
 1. **How can I determine if my app is a Squirrel app? I provide a squirrel and non-squirrel install version and want to know which is running.**  
    You can check for the `Update.exe` in the parent directory to determine if the app is using Squirrel ([see #574](https://github.com/Squirrel/Squirrel.Windows/issues/574#issuecomment-176043311)).
    
-   ```
+```
 var assembly = Assembly.GetEntryAssembly();   
 var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), '..', 'Update.exe');
 var isInstalled = File.Exists(updateDotExe);
-   ```
+```
 
 ## Packaging
 
@@ -30,33 +30,30 @@ var isInstalled = File.Exists(updateDotExe);
 ## Distributing
 
 1. **Can I distribute update files on IIS?**  
-Yes you can, see [Microsoft IIS](using/microsoft-iis.md) for details.
+   Yes you can, see [Microsoft IIS](using/microsoft-iis.md) for details.
 
-## Installing
+## Installing   
 
 1. **The Initial Install via `Setup.exe` is failing. How do I learn what is going wrong?**  
    Check `%LocalAppData%\SquirrelTemp\SquirrelSetup.log` for logs related to the initial install.
 1. **Installer application doesn't do anything. The animation flashes but the application never starts.**  
    The app is likely crashing on the first run (see [Debugging Installs](using/debugging-installs.md) for details).
-2. **The Installer seems to be blocked in Enterprise environments. How can confirm this?**  
-  Squirrel may be prevented from installing if Group Policy disallows the running of executables from `%LocalAppData%`. In this case, the "show log" button on the "installation failed" dialog will fail because `Update.exe` can not run to create a log file.  
-  
-  The `Setup.exe` for your application should still copy files to `%LocalAppData%\SquirrelTemp` as a pre-installation step. To verify that Group Policy is restricting you, execute `Update.exe` from the command line:
-
-  ```
-C:\>%LocalAppData\MyApp\Update.exe
-This program is blocked by group policy. For more information, contact your system administrator.
-  ```
-
-  The best course of action is to request that executables for Squirrel and your application be whitelisted by your corporate overlords.
-4. **No Shortcuts are Created for my Application**
+1. **The Installer seems to be blocked in Enterprise environments. How can I confirm this?**  
+   Squirrel may be prevented from installing if Group Policy disallows the running of executables from `%LocalAppData%`. In this case, the "show log" button on the "installation failed" dialog will fail because `Update.exe` can not run to create a log file.  
+   The `Setup.exe` for your application should still copy files to `%LocalAppData%\SquirrelTemp` as a pre-installation step. To verify that Group Policy is restricting you, execute `Update.exe` from the command line as follows:  
+   ```
+   C:\>%LocalAppData\MyApp\Update.exe
+   This program is blocked by group policy. For more information, contact your system administrator.    
+   ```
+   The best course of action is to request that executables for Squirrel and your application be whitelisted by your corporate overlords. 
+1. **No Shortcuts are Created for my Application**   
    Verify that the NuGet Package Metadata `id` property doesn't have a [space or \[dot\]](https://github.com/Squirrel/Squirrel.Windows/issues/530) in it.
-5. **Can I use a different name for the `Setup.exe` install application?**  
+1. **Can I use a different name for the `Setup.exe` install application?**  
    Yes, you can rename the `Setup.exe` to what ever you wish (e.g., `MyAppSetup.exe`) ([see #611](https://github.com/Squirrel/Squirrel.Windows/issues/611))
-6. **Virus scanner is returning false positives on `MyApp.exe` or `Update.exe`. What can I do?**  
+1. **Virus scanner is returning false positives on `MyApp.exe` or `Update.exe`. What can I do?**   
    [Application Signing](using/application-signing.md) will help. In addition, you can submit false positives to the various antivirus authors (e.g., [Symantec](https://submit.symantec.com/false_positive/), [Microsoft](https://www.microsoft.com/security/portal/Submission/Submit.aspx), [AVG](http://www.avg.com/submit-sample), [Comodo](https://www.comodo.com/home/internet-security/submit.php), [McAfee](https://support.mcafeesaas.com/MCAFEE/_cs/AnswerDetail.aspx?aid=65), [List of Submission Locations](http://www.techsupportalert.com/content/how-report-malware-or-false-positives-multiple-antivirus-vendors.htm), [see #218](https://github.com/Squirrel/Squirrel.Windows/issues/218#issuecomment-166406180)).
-7. **Why is my application icon mangled after installation?**  
-    Application icons specified in the [NuGet Package Metadata](using/nuget-package-metadata.md) must be of type icon (.ICO) rather than an image file (source: [issue #745](https://github.com/Squirrel/Squirrel.Windows/issues/745))
+1. **Why is my application icon mangled after installation?**  
+   Application icons specified in the [NuGet Package Metadata](using/nuget-package-metadata.md) must be of type icon (.ICO) rather than an image file (source: [issue #745](https://github.com/Squirrel/Squirrel.Windows/issues/745))
 
 ## Updating
 

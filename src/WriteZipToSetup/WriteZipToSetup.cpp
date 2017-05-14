@@ -62,8 +62,10 @@ int wmain(int argc, wchar_t* argv[])
 		if (argc != 4) goto fail;
 		return CopyResourcesToStubExecutable(argv[2], argv[3]);
 	}
-
-	if (argc != 3) {
+	bool setFramework = false;
+	if (argc == 5 && wcscmp(argv[3], L"--set-required-framework") == 0) {
+		setFramework = true;
+	} else if (argc != 3) {
 		goto fail;
 	}
 
@@ -105,6 +107,13 @@ int wmain(int argc, wchar_t* argv[])
 	if (!UpdateResource(hRes, L"DATA", (LPCWSTR)131, 0x0409, pBuf, fileInfo.nFileSizeLow)) {
 		printf("Failed to update resource\n");
 		goto fail;
+	}
+
+	if (setFramework) {
+		if (!UpdateResource(hRes, L"FLAGS", (LPCWSTR)132, 0x0409, argv[4], (wcslen(argv[4])+1) * sizeof(wchar_t))) {
+			printf("Failed to update resouce\n");
+			goto fail;
+		}
 	}
 
 	printf("Finished!\n");

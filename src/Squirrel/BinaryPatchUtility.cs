@@ -111,8 +111,7 @@ namespace Squirrel.Bsdiff
             int dblen = 0;
             int eblen = 0;
 
-            using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(wrappingStream))
+            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(new WrappingStream(output, Ownership.None)))
             {
                 // compute the differences, writing ctrl as we go
                 int scan = 0;
@@ -229,8 +228,7 @@ namespace Squirrel.Bsdiff
             WriteInt64(controlEndPosition - startPosition - c_headerSize, header, 8);
 
             // write compressed diff data
-            using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(wrappingStream))
+            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(new WrappingStream(output, Ownership.None)))
             {
                 bz2Stream.Write(db, 0, dblen);
             }
@@ -240,8 +238,7 @@ namespace Squirrel.Bsdiff
             WriteInt64(diffEndPosition - controlEndPosition, header, 16);
 
             // write compressed extra data
-            using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(wrappingStream))
+            using (BZip2OutputStream bz2Stream = new BZip2OutputStream(new WrappingStream(output, Ownership.None)))
             {
                 bz2Stream.Write(eb, 0, eblen);
             }

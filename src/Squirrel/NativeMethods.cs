@@ -33,70 +33,70 @@ namespace Squirrel
 
 
         [DllImport("version.dll", SetLastError = true)]
-        [return:MarshalAs(UnmanagedType.Bool)] public static extern bool GetFileVersionInfo(
+        [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool GetFileVersionInfo(
             string lpszFileName, 
-            IntPtr dwHandleIgnored,
+            int dwHandleIgnored,
             int dwLen, 
             [MarshalAs(UnmanagedType.LPArray)] byte[] lpData);
 
         [DllImport("version.dll", SetLastError = true)]
-        public static extern int GetFileVersionInfoSize(
+        internal static extern int GetFileVersionInfoSize(
             string lpszFileName,
             IntPtr dwHandleIgnored);
 
         [DllImport("version.dll")]
-        [return:MarshalAs(UnmanagedType.Bool)] public static extern bool VerQueryValue(
+        [return:MarshalAs(UnmanagedType.Bool)] internal static extern bool VerQueryValue(
             byte[] pBlock, 
             string pSubBlock, 
             out IntPtr pValue, 
             out int len);
 
         [DllImport("psapi.dll", SetLastError=true)]
-        public static extern bool EnumProcesses(
+        internal static extern bool EnumProcesses(
             IntPtr pProcessIds, // pointer to allocated DWORD array
             int cb,
             out int pBytesReturned);
 
         [DllImport("kernel32.dll", SetLastError=true)]
-        public static extern bool QueryFullProcessImageName(
+        internal static extern bool QueryFullProcessImageName(
             IntPtr hProcess, 
             [In] int justPassZeroHere,
             [Out] StringBuilder lpImageFileName, 
             [In] [MarshalAs(UnmanagedType.U4)] ref int nSize);
 
         [DllImport("kernel32.dll", SetLastError=true)]
-        public static extern IntPtr OpenProcess(
+        internal static extern IntPtr OpenProcess(
             ProcessAccess processAccess,
             bool bInheritHandle,
             int processId);
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        public static extern bool CloseHandle(IntPtr hHandle);
+        internal static extern bool CloseHandle(IntPtr hHandle);
 
         [DllImport("NTDLL.DLL", SetLastError=true)]
-        public static extern int NtQueryInformationProcess(IntPtr hProcess, PROCESSINFOCLASS pic, ref PROCESS_BASIC_INFORMATION pbi, int cb, out int pSize);
+        internal static extern int NtQueryInformationProcess(IntPtr hProcess, PROCESSINFOCLASS pic, ref PROCESS_BASIC_INFORMATION pbi, int cb, out int pSize);
 
         [DllImport("kernel32.dll", SetLastError=true)]
-        public static extern UInt32 WaitForSingleObject(IntPtr hHandle, UInt32 dwMilliseconds);
+        internal static extern UInt32 WaitForSingleObject(IntPtr hHandle, UInt32 dwMilliseconds);
 
         [DllImport("kernel32.dll", EntryPoint = "GetStdHandle")]
-        public static extern IntPtr GetStdHandle(StandardHandles nStdHandle);
+        internal static extern IntPtr GetStdHandle(StandardHandles nStdHandle);
 
         [DllImport("kernel32.dll", EntryPoint = "AllocConsole")]
-        [return: MarshalAs(UnmanagedType.Bool)] 
-        public static extern bool AllocConsole();
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool AllocConsole();
  
         [DllImport("kernel32.dll")]
-        public static extern bool AttachConsole(int pid);
+        internal static extern bool AttachConsole(int pid);
 
         [DllImport("Kernel32.dll", SetLastError=true)]
-        public static extern IntPtr BeginUpdateResource(string pFileName, bool bDeleteExistingResources);
+        internal static extern IntPtr BeginUpdateResource(string pFileName, bool bDeleteExistingResources);
 
         [DllImport("Kernel32.dll", SetLastError=true)]
-        public static extern bool UpdateResource(IntPtr handle, string pType, IntPtr pName, short language, [MarshalAs(UnmanagedType.LPArray)] byte[] pData, int dwSize);
+        internal static extern bool UpdateResource(IntPtr handle, string pType, IntPtr pName, short language, [MarshalAs(UnmanagedType.LPArray)] byte[] pData, int dwSize);
 
         [DllImport("Kernel32.dll", SetLastError=true)]
-        public static extern bool EndUpdateResource(IntPtr handle, bool discard);
+        internal static extern bool EndUpdateResource(IntPtr handle, bool discard);
     }
 
     [Flags]
