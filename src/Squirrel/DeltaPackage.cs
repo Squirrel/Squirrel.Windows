@@ -166,7 +166,7 @@ namespace Squirrel
                 using (var tgt = File.OpenWrite(outputFile)) {
                     za.DeflateCompressionLevel = CompressionLevel.BestSpeed;
                     za.AddAllFromDirectory(workingPath);
-                    za.SaveTo(File.OpenWrite(outputFile));
+                    za.SaveTo(tgt);
                 }
             }
 

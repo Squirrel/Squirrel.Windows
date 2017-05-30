@@ -18,6 +18,7 @@ using SharpCompress.Readers;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Compressors.Deflate;
+using SharpCompress.Writers;
 
 namespace Squirrel
 {
@@ -188,64 +189,49 @@ namespace Squirrel
             }
         }
 
-        public static async Task ExtractZipForInstall(string zipFilePath, string outFolder)
+        public static Task ExtractZipForInstall(string zipFilePath, string outFolder)
         {
-            var zf = new ZipFile(zipFilePath);
-            var entries = zf.OfType<ZipEntry>().ToArray();
             var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-            try {
-                await Utility.ForEachAsync(entries, (zipEntry) => {
-                    if (!zipEntry.IsFile) return;
+            return Task.Run(() => {
+                using (var za = ZipArchive.Open(zipFilePath))
+                using (var reader = za.ExtractAllEntries()) {
+                    while (reader.MoveToNextEntry()) {
+                        var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
+                        var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
+                        if (!re.IsMatch(decoded)) continue;
 
-                    var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
-                    if (!re.Match(entryFileName).Success) return;
+                        var fullTargetFile = Path.Combine(outFolder, decoded);
+                        var fullTargetDir = Path.GetDirectoryName(fullTargetFile);
+                        Directory.CreateDirectory(fullTargetDir);
 
-                    var fullZipToPath = Path.Combine(outFolder, re.Replace(entryFileName, "", 1));
+                        var failureIsOkay = false;
+                        if (!reader.Entry.IsDirectory && decoded.Contains("_ExecutionStub.exe")) {
+                            // NB: On upgrade, many of these stubs will be in-use, nbd tho.
+                            failureIsOkay = true;
 
-                    var failureIsOkay = false;
-                    if (entryFileName.Contains("_ExecutionStub.exe")) {
-                        // NB: On upgrade, many of these stubs will be in-use, nbd tho.
-                        failureIsOkay = true;
+                            fullTargetFile = Path.Combine(
+                                fullTargetDir,
+                                Path.GetFileName(decoded).Replace("_ExecutionStub.exe", ".exe"));
 
-                        fullZipToPath = Path.Combine(
-                            Directory.GetParent(Path.GetDirectoryName(fullZipToPath)).FullName,
-                            Path.GetFileName(fullZipToPath).Replace("_ExecutionStub.exe", ".exe"));
+                            LogHost.Default.Info("Rigging execution stub for {0} to {1}", decoded, fullTargetFile);
+                        }
 
-                        LogHost.Default.Info("Rigging execution stub for {0} to {1}", entryFileName, fullZipToPath);
-                    }
-
-                    var directoryName = Path.GetDirectoryName(fullZipToPath);
-
-                    decoded = re.Replace(decoded, "");
-                    if (String.IsNullOrWhiteSpace(decoded)) {
-                        // NB: We'll have an entry for `lib/net45` which we have paved
-                        // with our regex
-                        continue;
-                    }
-
-                    var fullTargetDir = Path.Combine(outFolder, Path.GetDirectoryName(decoded));
-                    if (!reader.Entry.IsDirectory) {
-                        Utility.Retry(() => Directory.CreateDirectory(fullTargetDir), 2);
-                    }
-
-                    try {
-                        Utility.Retry(() => {
-                            using (var zipStream = zf.GetInputStream(zipEntry))
-                            using (FileStream streamWriter = File.Create(fullZipToPath)) {
-                                StreamUtils.Copy(zipStream, streamWriter, buffer);
-                            }
-                        }, 5);
-                    } catch (Exception e) {
-                        if (!failureIsOkay) {
+                        try {
+                            Utility.Retry(() => {
+                                if (reader.Entry.IsDirectory) {
+                                    Directory.CreateDirectory(Path.Combine(outFolder, decoded));
+                                } else {
+                                    reader.WriteEntryToFile(Path.Combine(outFolder, decoded));
+                                }
+                            }, 5);
+                        } catch (Exception e) {
+                            if (!failureIsOkay) throw;
                             LogHost.Default.WarnException("Can't write execution stub, probably in use", e);
-                            throw e;
                         }
                     }
-                }, 4);
-            } finally {
-                zf.Close();
-            }
+                }
+            });
         }
 
         // Create zip file with entry names %-encoded, as nupkg file does.
@@ -256,8 +242,8 @@ namespace Squirrel
                 archive.DeflateCompressionLevel = CompressionLevel.BestCompression;
                 archive.AddAllFromDirectory(folder);
                 archive.SaveTo(
-                    zipFilePath,
-                    new CompressionInfo() { Type = CompressionType.Deflate, DeflateCompressionLevel = CompressionLevel.BestCompression });
+                    tgt,
+                    new WriterOptions(CompressionType.Deflate));
             }
         }
 
