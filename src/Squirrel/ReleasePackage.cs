@@ -19,6 +19,7 @@ using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Compressors.Deflate;
 using SharpCompress.Writers;
+using System.Threading;
 
 namespace Squirrel
 {
@@ -160,9 +161,7 @@ namespace Squirrel
 
                 addDeltaFilesToContentTypes(tempDir.FullName);
 
-                if (contentsPostProcessHook != null) {
-                    contentsPostProcessHook(tempPath);
-                }
+                contentsPostProcessHook?.Invoke(tempPath);
 
                 createZipEncoded(outputFile, tempPath);
 
@@ -171,14 +170,20 @@ namespace Squirrel
             }
         }
 
-        // nupkg file %-encodes zip entry names. This method decodes entry names before writing to disk.
-        // We must do this, or PathTooLongException may be thrown for some unicode entry names.
         public static void ExtractZipDecoded(string zipFilePath, string outFolder)
         {
+            var sevenZip = Path.Combine(
+                Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
+                "7z.exe");
+
+            Utility.InvokeProcessAsync(sevenZip, String.Format("x \"{0}\" -tzip -mmt on -o\"{1}\" *", zipFilePath, outFolder), CancellationToken.None)
+                .Wait();
+
+            /*
             using (var za = ZipArchive.Open(zipFilePath))
             using (var reader = za.ExtractAllEntries()) {
                 while (reader.MoveToNextEntry()) {
-                    var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
+                    var parts = reader.Entry.Key.Split('\\', '/');
                     var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
 
                     var fullTargetDir = Path.Combine(outFolder, Path.GetDirectoryName(decoded));
@@ -191,6 +196,7 @@ namespace Squirrel
                     }
                 }
             }
+            */
         }
 
         public static Task ExtractZipForInstall(string zipFilePath, string outFolder)
@@ -201,7 +207,7 @@ namespace Squirrel
                 using (var za = ZipArchive.Open(zipFilePath))
                 using (var reader = za.ExtractAllEntries()) {
                     while (reader.MoveToNextEntry()) {
-                        var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
+                        var parts = reader.Entry.Key.Split('\\', '/');
                         var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
 
                         if (!re.IsMatch(decoded)) continue;
@@ -243,6 +249,14 @@ namespace Squirrel
         // Create zip file with entry names %-encoded, as nupkg file does.
         void createZipEncoded(string zipFilePath, string folder)
         {
+            var sevenZip = Path.Combine(
+                Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
+                "7z.exe");
+
+            Utility.InvokeProcessAsync(sevenZip, String.Format("a \"{0}\" -tzip -mmt on *", zipFilePath), CancellationToken.None, folder)
+                .Wait();
+
+            /*
             using (var archive = ZipArchive.Create())
             using (var tgt = File.OpenWrite(zipFilePath)) {
                 archive.DeflateCompressionLevel = CompressionLevel.BestCompression;
@@ -251,6 +265,7 @@ namespace Squirrel
                     tgt,
                     new WriterOptions(CompressionType.Deflate));
             }
+            */
         }
 
         void extractDependentPackages(IEnumerable<IPackage> dependencies, DirectoryInfo tempPath, FrameworkName framework)
