@@ -135,7 +135,8 @@ namespace Squirrel
             var dependencies = findAllDependentPackages(
                 package,
                 new LocalPackageRepository(packagesRootDir),
-                frameworkName: targetFramework);
+                frameworkName: targetFramework)
+                .ToArray();
 
             string tempPath = null;
 
