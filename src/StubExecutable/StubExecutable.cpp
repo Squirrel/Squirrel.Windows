@@ -40,10 +40,23 @@ wchar_t* FindOwnExecutableName()
 	return ret;
 }
 
-std::wstring FindLatestAppDir() 
+std::wstring FindLatestAppDir(std::wstring appName) 
 {
 	std::wstring ourDir;
 	ourDir.assign(FindRootAppDir());
+	
+	//If current exists, just use that
+	std::wstring currDir, currFile;
+	currDir.assign(FindRootAppDir());
+	currDir += L"\\current";
+	currFile = currDir + L"\\" + appName;;
+
+	WIN32_FIND_DATA currInfo = { 0 };
+	HANDLE currFileHandle = FindFirstFile(currFile.c_str(), &currInfo);
+	if (currFileHandle != INVALID_HANDLE_VALUE) {
+		FindClose(currFileHandle);
+		return currDir.c_str();
+	}
 
 	ourDir += L"\\app-*";
 
@@ -93,7 +106,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	std::wstring appName;
 	appName.assign(FindOwnExecutableName());
 
-	std::wstring fullPath = FindLatestAppDir();
+	std::wstring fullPath = FindLatestAppDir(appName);
 	fullPath += L"\\" + appName;
 
 	STARTUPINFO si = { 0 };
