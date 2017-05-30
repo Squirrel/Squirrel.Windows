@@ -9,12 +9,16 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using ICSharpCode.SharpZipLib.Zip;
 using MarkdownSharp;
 using NuGet;
 using Splat;
-using ICSharpCode.SharpZipLib.Core;
 using System.Threading.Tasks;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Readers;
+using SharpCompress.Archives;
+using SharpCompress.Common;
+using SharpCompress.Compressors.Deflate;
+using SharpCompress.Writers;
 
 namespace Squirrel
 {
@@ -64,8 +68,6 @@ namespace Squirrel
 
     public class ReleasePackage : IEnableLogger, IReleasePackage
     {
-        IEnumerable<IPackage> localPackageCache;
-
         public ReleasePackage(string inputPackageFile, bool isReleasePackage = false)
         {
             InputPackageFile = inputPackageFile;
@@ -99,7 +101,10 @@ namespace Squirrel
             var package = new ZipPackage(InputPackageFile);
 
             var dontcare = default(SemanticVersion);
-            if (!SemanticVersion.TryParseStrict(package.Version.ToString(), out dontcare)) {
+
+            // NB: Our test fixtures use packages that aren't SemVer compliant, 
+            // we don't really care that they aren't valid
+            if (!ModeDetector.InUnitTestRunner() && !SemanticVersion.TryParseStrict(package.Version.ToString(), out dontcare)) {
                 throw new Exception(
                     String.Format(
                         "Your package version is currently {0}, which is *not* SemVer-compatible, change this to be a SemVer version number",
@@ -130,7 +135,8 @@ namespace Squirrel
             var dependencies = findAllDependentPackages(
                 package,
                 new LocalPackageRepository(packagesRootDir),
-                frameworkName: targetFramework);
+                frameworkName: targetFramework)
+                .ToArray();
 
             string tempPath = null;
 
@@ -138,7 +144,7 @@ namespace Squirrel
                 var tempDir = new DirectoryInfo(tempPath);
 
                 ExtractZipDecoded(InputPackageFile, tempPath);
-             
+
                 this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
 
@@ -169,133 +175,81 @@ namespace Squirrel
         // We must do this, or PathTooLongException may be thrown for some unicode entry names.
         public static void ExtractZipDecoded(string zipFilePath, string outFolder)
         {
-            var zf = new ZipFile(zipFilePath);
+            using (var za = ZipArchive.Open(zipFilePath))
+            using (var reader = za.ExtractAllEntries()) {
+                while (reader.MoveToNextEntry()) {
+                    var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
+                    var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
 
-            var buffer = new byte[64*1024];
+                    var fullTargetDir = Path.Combine(outFolder, Path.GetDirectoryName(decoded));
+                    Directory.CreateDirectory(fullTargetDir);
 
-            try {
-                foreach (ZipEntry zipEntry in zf) {
-                    if (!zipEntry.IsFile) continue;
-
-                    var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
-
-                    var fullZipToPath = Path.Combine(outFolder, entryFileName);
-                    var directoryName = Path.GetDirectoryName(fullZipToPath);
-
-                    if (directoryName.Length > 0) {
-                        Directory.CreateDirectory(directoryName);
-                    }
-
-                    var zipStream = zf.GetInputStream(zipEntry);
-
-                    using (FileStream streamWriter = File.Create(fullZipToPath)) {
-                        StreamUtils.Copy(zipStream, streamWriter, buffer);
+                    if (reader.Entry.IsDirectory) {
+                        Directory.CreateDirectory(Path.Combine(outFolder, decoded));
+                    } else {
+                        reader.WriteEntryToFile(Path.Combine(outFolder, decoded));
                     }
                 }
-            } finally {
-                zf.Close();
             }
         }
 
-        public static async Task ExtractZipForInstall(string zipFilePath, string outFolder)
+        public static Task ExtractZipForInstall(string zipFilePath, string outFolder)
         {
-            var zf = new ZipFile(zipFilePath);
-            var entries = zf.OfType<ZipEntry>().ToArray();
             var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
-            try {
-                await Utility.ForEachAsync(entries, (zipEntry) => {
-                    if (!zipEntry.IsFile) return;
+            return Task.Run(() => {
+                using (var za = ZipArchive.Open(zipFilePath))
+                using (var reader = za.ExtractAllEntries()) {
+                    while (reader.MoveToNextEntry()) {
+                        var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
+                        var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
 
-                    var entryFileName = Uri.UnescapeDataString(zipEntry.Name);
-                    if (!re.Match(entryFileName).Success) return;
+                        if (!re.IsMatch(decoded)) continue;
+                        decoded = re.Replace(decoded, "", 1);
 
-                    var fullZipToPath = Path.Combine(outFolder, re.Replace(entryFileName, "", 1));
+                        var fullTargetFile = Path.Combine(outFolder, decoded);
+                        var fullTargetDir = Path.GetDirectoryName(fullTargetFile);
+                        Directory.CreateDirectory(fullTargetDir);
 
-                    var failureIsOkay = false;
-                    if (entryFileName.Contains("_ExecutionStub.exe")) {
-                        // NB: On upgrade, many of these stubs will be in-use, nbd tho.
-                        failureIsOkay = true;
+                        var failureIsOkay = false;
+                        if (!reader.Entry.IsDirectory && decoded.Contains("_ExecutionStub.exe")) {
+                            // NB: On upgrade, many of these stubs will be in-use, nbd tho.
+                            failureIsOkay = true;
 
-                        fullZipToPath = Path.Combine(
-                            Directory.GetParent(Path.GetDirectoryName(fullZipToPath)).FullName,
-                            Path.GetFileName(fullZipToPath).Replace("_ExecutionStub.exe", ".exe"));
+                            fullTargetFile = Path.Combine(
+                                fullTargetDir,
+                                Path.GetFileName(decoded).Replace("_ExecutionStub.exe", ".exe"));
 
-                        LogHost.Default.Info("Rigging execution stub for {0} to {1}", entryFileName, fullZipToPath);
-                    }
+                            LogHost.Default.Info("Rigging execution stub for {0} to {1}", decoded, fullTargetFile);
+                        }
 
-                    var directoryName = Path.GetDirectoryName(fullZipToPath);
-
-                    var buffer = new byte[64*1024];
-
-                    if (directoryName.Length > 0) {
-                        Utility.Retry(() => Directory.CreateDirectory(directoryName), 2);
-                    }
-
-                    try {
-                        Utility.Retry(() => {
-                            using (var zipStream = zf.GetInputStream(zipEntry))
-                            using (FileStream streamWriter = File.Create(fullZipToPath)) {
-                                StreamUtils.Copy(zipStream, streamWriter, buffer);
-                            }
-                        }, 5);
-                    } catch (Exception e) {
-                        if (!failureIsOkay) {
+                        try {
+                            Utility.Retry(() => {
+                                if (reader.Entry.IsDirectory) {
+                                    Directory.CreateDirectory(Path.Combine(outFolder, decoded));
+                                } else {
+                                    reader.WriteEntryToFile(Path.Combine(outFolder, decoded));
+                                }
+                            }, 5);
+                        } catch (Exception e) {
+                            if (!failureIsOkay) throw;
                             LogHost.Default.WarnException("Can't write execution stub, probably in use", e);
-                            throw e;
                         }
                     }
-                }, 4);
-            } finally {
-                zf.Close();
-            }
+                }
+            });
         }
 
         // Create zip file with entry names %-encoded, as nupkg file does.
         void createZipEncoded(string zipFilePath, string folder)
         {
-            folder = Path.GetFullPath(folder);
-            var offset = folder.Length + (folder.EndsWith("\\", StringComparison.OrdinalIgnoreCase) ? 1 : 0);
-
-            var fsOut = File.Create(zipFilePath);
-            var zipStream = new ZipOutputStream(fsOut);
-
-            zipStream.SetLevel(9);
-
-            compressFolderEncoded(folder, zipStream, offset);
-
-            zipStream.IsStreamOwner = true;
-            zipStream.Close();
-        }
-
-        void compressFolderEncoded(string path, ZipOutputStream zipStream, int folderOffset)
-        {
-            string[] files = Directory.GetFiles(path);
-
-            var buffer = new byte[64 * 1024];
-            foreach (string filename in files) {
-                var fi = new FileInfo(filename);
-
-                string entryName = filename.Substring(folderOffset);
-                entryName = ZipEntry.CleanName(entryName);
-                entryName = Uri.EscapeUriString(entryName);
-
-                var newEntry = new ZipEntry(entryName);
-                newEntry.DateTime = fi.LastWriteTime;
-                newEntry.Size = fi.Length;
-                zipStream.PutNextEntry(newEntry);
-
-                using (FileStream streamReader = File.OpenRead(filename)) {
-                    StreamUtils.Copy(streamReader, zipStream, buffer);
-                }
-
-                zipStream.CloseEntry();
-            }
-
-            string[] folders = Directory.GetDirectories(path);
-
-            foreach (string folder in folders) {
-                compressFolderEncoded(folder, zipStream, folderOffset);
+            using (var archive = ZipArchive.Create())
+            using (var tgt = File.OpenWrite(zipFilePath)) {
+                archive.DeflateCompressionLevel = CompressionLevel.BestCompression;
+                archive.AddAllFromDirectory(folder);
+                archive.SaveTo(
+                    tgt,
+                    new WriterOptions(CompressionType.Deflate));
             }
         }
 

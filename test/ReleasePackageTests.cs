@@ -244,7 +244,7 @@ namespace Squirrel.Tests.Core
         public void ContentFilesAreIncludedInCreatedPackage()
         {
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "ProjectWithContent.1.0.0.0-beta.nupkg");
-            var outputPackage = Path.GetTempFileName() + ".nupkg";
+            var outputPackage = Path.GetTempFileName() + ".zip";
             var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
 
             var fixture = new ReleasePackage(inputPackage);
