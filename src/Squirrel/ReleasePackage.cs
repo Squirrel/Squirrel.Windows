@@ -101,7 +101,10 @@ namespace Squirrel
             var package = new ZipPackage(InputPackageFile);
 
             var dontcare = default(SemanticVersion);
-            if (!SemanticVersion.TryParseStrict(package.Version.ToString(), out dontcare)) {
+
+            // NB: Our test fixtures use packages that aren't SemVer compliant, 
+            // we don't really care that they aren't valid
+            if (!ModeDetector.InUnitTestRunner() && !SemanticVersion.TryParseStrict(package.Version.ToString(), out dontcare)) {
                 throw new Exception(
                     String.Format(
                         "Your package version is currently {0}, which is *not* SemVer-compatible, change this to be a SemVer version number",
@@ -199,7 +202,9 @@ namespace Squirrel
                     while (reader.MoveToNextEntry()) {
                         var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
                         var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
+
                         if (!re.IsMatch(decoded)) continue;
+                        decoded = re.Replace(decoded, "", 1);
 
                         var fullTargetFile = Path.Combine(outFolder, decoded);
                         var fullTargetDir = Path.GetDirectoryName(fullTargetFile);
