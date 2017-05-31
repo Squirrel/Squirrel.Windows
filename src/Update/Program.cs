@@ -436,7 +436,7 @@ namespace Squirrel.Update
             File.Copy(bootstrapperExe, targetSetupExe, true);
             var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
 
-            var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
+            var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
             try {
                 var arguments = String.Format("\"{0}\" \"{1}\" \"--set-required-framework\" \"{2}\"", targetSetupExe, zipPath, frameworkVersion);
@@ -657,7 +657,7 @@ namespace Squirrel.Update
 
         async Task createExecutableStubForExe(string fullName)
         {
-            var exe = findExecutable(@"StubExecutable.exe");
+            var exe = Utility.FindHelperExecutable(@"StubExecutable.exe");
 
             var target = Path.Combine(
                 Path.GetDirectoryName(fullName),
@@ -666,7 +666,7 @@ namespace Squirrel.Update
             await Utility.CopyToAsync(exe, target);
 
             await Utility.InvokeProcessAsync(
-                findExecutable("WriteZipToSetup.exe"), 
+                Utility.FindHelperExecutable("WriteZipToSetup.exe"), 
                 String.Format("--copy-stub-resources \"{0}\" \"{1}\"", fullName, target),
                 CancellationToken.None);
         }
@@ -689,7 +689,7 @@ namespace Squirrel.Update
             }
 
             // Try to find rcedit.exe
-            string exe = findExecutable("rcedit.exe");
+            string exe = Utility.FindHelperExecutable("rcedit.exe");
 
             var processResult = await Utility.InvokeProcessAsync(exe, args.ToString(), CancellationToken.None);
 
@@ -702,21 +702,6 @@ namespace Squirrel.Update
             } else {
                 Console.WriteLine(processResult.Item2);
             }
-        }
-
-        static string findExecutable(string toFind)
-        {
-            var exe = @".\" + toFind;
-            if (!File.Exists(exe)) {
-                exe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                    toFind);
-
-                // Run down PATH and hope for the best
-                if (!File.Exists(exe)) exe = toFind;
-            }
-
-            return exe;
         }
 
         static async Task createMsiPackage(string setupExe, IPackage package)

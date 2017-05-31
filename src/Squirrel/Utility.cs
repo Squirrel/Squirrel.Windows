@@ -355,6 +355,37 @@ namespace Squirrel
             }
         }
 
+        public static string FindHelperExecutable(string toFind)
+        {
+            var exe = @".\" + toFind;
+            if (!File.Exists(exe)) {
+                exe = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    toFind);
+
+                if (File.Exists(exe)) return exe;
+
+                // Run down PATH and hope for the best
+                if (!File.Exists(exe)) exe = toFind;
+            }
+
+            return exe;
+        }
+
+        public static async Task ExtractZipToDirectory(string zipFilePath, string outFolder)
+        {
+            var sevenZip = Utility.FindHelperExecutable("7z.exe");
+            var result = default(Tuple<int, string>);
+
+            try {
+                result = await Utility.InvokeProcessAsync(sevenZip, String.Format("x \"{0}\" -tzip -mmt on -o\"{1}\" *", zipFilePath, outFolder), CancellationToken.None);
+                if (result.Item1 != 0) throw new Exception(result.Item2);
+            } catch (Exception ex) {
+                Log().Error($"Failed to extract file {zipFilePath} to {outFolder}\n{ex.Message}");
+                throw;
+            }
+        }
+
         public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
         {
             return Path.Combine(rootAppDirectory, "app-" + entry.Version.ToString());

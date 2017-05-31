@@ -144,7 +144,7 @@ namespace Squirrel
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 var tempDir = new DirectoryInfo(tempPath);
 
-                ExtractZipDecoded(InputPackageFile, tempPath);
+                Utility.ExtractZipToDirectory(InputPackageFile, tempPath).Wait();
 
                 this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
@@ -168,35 +168,6 @@ namespace Squirrel
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;
             }
-        }
-
-        public static void ExtractZipDecoded(string zipFilePath, string outFolder)
-        {
-            var sevenZip = Path.Combine(
-                Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
-                "7z.exe");
-
-            Utility.InvokeProcessAsync(sevenZip, String.Format("x \"{0}\" -tzip -mmt on -o\"{1}\" *", zipFilePath, outFolder), CancellationToken.None)
-                .Wait();
-
-            /*
-            using (var za = ZipArchive.Open(zipFilePath))
-            using (var reader = za.ExtractAllEntries()) {
-                while (reader.MoveToNextEntry()) {
-                    var parts = reader.Entry.Key.Split('\\', '/');
-                    var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
-
-                    var fullTargetDir = Path.Combine(outFolder, Path.GetDirectoryName(decoded));
-                    Directory.CreateDirectory(fullTargetDir);
-
-                    if (reader.Entry.IsDirectory) {
-                        Directory.CreateDirectory(Path.Combine(outFolder, decoded));
-                    } else {
-                        reader.WriteEntryToFile(Path.Combine(outFolder, decoded));
-                    }
-                }
-            }
-            */
         }
 
         public static Task ExtractZipForInstall(string zipFilePath, string outFolder)
