@@ -34,5 +34,6 @@
     <file src="Update\signtool.exe" target="tools\signtool.exe" />
     <file src="Update\rcedit.exe" target="tools\rcedit.exe" />
     <file src="..\vendor\wix\*" target="tools" />
+    <file src="..\vendor\7zip\*" target="tools" />
   </files>
 </package>
