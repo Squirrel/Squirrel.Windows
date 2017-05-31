@@ -68,17 +68,11 @@ namespace Squirrel
                 this.Log().Info("Extracting {0} and {1} into {2}", 
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
+                Utility.ExtractZipToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName).Wait();
                 var opts = new ExtractionOptions() { ExtractFullPath = true, Overwrite = true, PreserveFileTime = true };
 
-                using (var za = ZipArchive.Open(basePackage.ReleasePackageFile))
-                using (var reader = za.ExtractAllEntries()) {
-                    reader.WriteAllToDirectory(baseTempInfo.FullName, opts);
-                }
-
-                using (var za = ZipArchive.Open(basePackage.ReleasePackageFile))
-                using (var reader = za.ExtractAllEntries()) {
-                    reader.WriteAllToDirectory(tempInfo.FullName, opts);
-                }
+                Utility.ExtractZipToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName).Wait();
+                Utility.ExtractZipToDirectory(newPackage.ReleasePackageFile, tempInfo.FullName).Wait();
 
                 // Collect a list of relative paths under 'lib' and map them
                 // to their full name. We'll use this later to determine in
@@ -95,10 +89,7 @@ namespace Squirrel
                 }
 
                 ReleasePackage.addDeltaFilesToContentTypes(tempInfo.FullName);
-                using (var za = ZipArchive.Create()) {
-                    za.AddAllFromDirectory(tempInfo.FullName);
-                    za.SaveTo(outputFile, CompressionType.Deflate);
-                }
+                Utility.CreateZipFromDirectory(outputFile, tempInfo.FullName).Wait();
             }
 
             return new ReleasePackage(outputFile);

@@ -163,7 +163,7 @@ namespace Squirrel
 
                 contentsPostProcessHook?.Invoke(tempPath);
 
-                createZipEncoded(outputFile, tempPath);
+                Utility.CreateZipFromDirectory(outputFile, tempPath).Wait();
 
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;
@@ -215,28 +215,6 @@ namespace Squirrel
                     }
                 }
             });
-        }
-
-        // Create zip file with entry names %-encoded, as nupkg file does.
-        void createZipEncoded(string zipFilePath, string folder)
-        {
-            var sevenZip = Path.Combine(
-                Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location),
-                "7z.exe");
-
-            Utility.InvokeProcessAsync(sevenZip, String.Format("a \"{0}\" -tzip -mmt on *", zipFilePath), CancellationToken.None, folder)
-                .Wait();
-
-            /*
-            using (var archive = ZipArchive.Create())
-            using (var tgt = File.OpenWrite(zipFilePath)) {
-                archive.DeflateCompressionLevel = CompressionLevel.BestCompression;
-                archive.AddAllFromDirectory(folder);
-                archive.SaveTo(
-                    tgt,
-                    new WriterOptions(CompressionType.Deflate));
-            }
-            */
         }
 
         void extractDependentPackages(IEnumerable<IPackage> dependencies, DirectoryInfo tempPath, FrameworkName framework)
