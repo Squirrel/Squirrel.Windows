@@ -355,26 +355,35 @@ namespace Squirrel
             }
         }
 
-        public static string FindHelperExecutable(string toFind)
+        public static string FindHelperExecutable(string toFind, IEnumerable<string> additionalDirs = null)
         {
+            additionalDirs = additionalDirs ?? Enumerable.Empty<string>();
+            var dirs = (new[] { Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
+                .Concat(additionalDirs ?? Enumerable.Empty<string>());
+
             var exe = @".\" + toFind;
-            if (!File.Exists(exe)) {
-                exe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                    toFind);
+            return dirs
+                .Select(x => Path.Combine(x, toFind))
+                .FirstOrDefault(x => File.Exists(x)) ?? exe;
+        }
 
-                if (File.Exists(exe)) return exe;
-
-                // Run down PATH and hope for the best
-                if (!File.Exists(exe)) exe = toFind;
+        static string find7Zip()
+        {
+            if (ModeDetector.InUnitTestRunner()) {
+                var vendorDir = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase.Replace("file:///", "")),
+                    "..", "..", "..",
+                    "vendor", "7zip"
+                );
+                return FindHelperExecutable("7z.exe", new[] { vendorDir });
+            } else {
+                return FindHelperExecutable("7z.exe");
             }
-
-            return exe;
         }
 
         public static async Task ExtractZipToDirectory(string zipFilePath, string outFolder)
         {
-            var sevenZip = Utility.FindHelperExecutable("7z.exe");
+            var sevenZip = find7Zip();
             var result = default(Tuple<int, string>);
 
             try {
@@ -388,7 +397,7 @@ namespace Squirrel
 
         public static async Task CreateZipFromDirectory(string zipFilePath, string inFolder)
         {
-            var sevenZip = Utility.FindHelperExecutable("7z.exe");
+            var sevenZip = find7Zip();
             var result = default(Tuple<int, string>);
 
             try {
