@@ -608,7 +608,7 @@ namespace Squirrel.Update
                 }
 
                 this.ErrorIfThrows(() =>
-                    Utility.CreateZipFromDirectory(tempPath, target).Wait(),
+                    ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
                     "Failed to create Zip file from directory: " + tempPath);
 
                 return target;
