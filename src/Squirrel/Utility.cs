@@ -387,7 +387,7 @@ namespace Squirrel
             var result = default(Tuple<int, string>);
 
             try {
-                result = await Utility.InvokeProcessAsync(sevenZip, String.Format("x \"{0}\" -tzip -mmt on -o\"{1}\" *", zipFilePath, outFolder), CancellationToken.None);
+                result = await Utility.InvokeProcessAsync(sevenZip, String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder), CancellationToken.None);
                 if (result.Item1 != 0) throw new Exception(result.Item2);
             } catch (Exception ex) {
                 Log().Error($"Failed to extract file {zipFilePath} to {outFolder}\n{ex.Message}");
@@ -401,7 +401,7 @@ namespace Squirrel
             var result = default(Tuple<int, string>);
 
             try {
-                result = await Utility.InvokeProcessAsync(sevenZip, String.Format("a \"{0}\" -tzip -mmt on *", zipFilePath), CancellationToken.None, inFolder);
+                result = await Utility.InvokeProcessAsync(sevenZip, String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath), CancellationToken.None, inFolder);
                 if (result.Item1 != 0) throw new Exception(result.Item2);
             } catch (Exception ex) {
                 Log().Error($"Failed to extract file {zipFilePath} to {inFolder}\n{ex.Message}");
