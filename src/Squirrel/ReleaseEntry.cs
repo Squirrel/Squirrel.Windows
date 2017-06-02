@@ -66,10 +66,11 @@ namespace Squirrel
         static readonly Regex packageNameRegex = new Regex(@"^([\w-]+)-\d+\..+\.nupkg$");
         [IgnoreDataMember]
         public string PackageName {
-            get
-            {
+            get {
                 var match = packageNameRegex.Match(Filename);
-                return match.Success ? match.Groups[1].Value : Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' }));
+                return match.Success ? 
+                    match.Groups[1].Value : 
+                    Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' }));
             }
         }
 
