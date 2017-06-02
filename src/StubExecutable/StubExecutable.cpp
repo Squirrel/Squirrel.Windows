@@ -93,8 +93,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	std::wstring appName;
 	appName.assign(FindOwnExecutableName());
 
-	std::wstring fullPath = FindLatestAppDir();
-	fullPath += L"\\" + appName;
+	std::wstring workingDir(FindLatestAppDir());
+	std::wstring fullPath(workingDir + L"\\" + appName);
 
 	STARTUPINFO si = { 0 };
 	PROCESS_INFORMATION pi = { 0 };
@@ -108,8 +108,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	cmdLine += L"\" ";
 	cmdLine += lpCmdLine;
 
-	wchar_t* buf = wcsdup(cmdLine.c_str());
-	if (!CreateProcess(NULL, buf, NULL, NULL, true, 0, NULL, NULL, &si, &pi)) {
+	wchar_t* lpCommandLine = wcsdup(cmdLine.c_str());
+	wchar_t* lpCurrentDirectory = wcsdup(workingDir.c_str());
+	if (!CreateProcess(NULL, lpCommandLine, NULL, NULL, true, 0, NULL, lpCurrentDirectory, &si, &pi)) {
 		return -1;
 	}
 
