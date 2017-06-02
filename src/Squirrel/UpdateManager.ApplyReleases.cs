@@ -589,10 +589,16 @@ namespace Squirrel
                     .Where(x => x.Name.ToLowerInvariant().Contains("app-"))
                     .Where(x => x.Name != currentVersionFolder && x.Name != originalVersionFolder);
 
+                // Get the current process list in an attempt to not burn 
+                // directories which have running processes
+                var runningProcesses = UnsafeUtility.EnumerateProcesses(); 
+
                 // Finally, clean up the app-X.Y.Z directories
                 await toCleanup.ForEachAsync(async x => {
                     try {
-                        await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
+                        if (runningProcesses.All(p => !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
+                            await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
+                        }
 
                         if (Directory.Exists(x.FullName)) {
                             // NB: If we cannot clean up a directory, we need to make 
