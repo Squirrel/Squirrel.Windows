@@ -92,6 +92,7 @@ namespace Squirrel.Update
                 string frameworkVersion = "net45";
                 bool shouldWait = false;
                 bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
+                bool noDelta = false;
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -124,6 +125,7 @@ namespace Squirrel.Update
                     { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                     { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
                     { "no-msi", "Don't generate an MSI package", v => noMsi = true},
+                    { "no-deltas", "Don't generate delta packages to save time", v => noDelta = true},
                     { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
                 };
 
@@ -175,7 +177,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion, !noDelta);
                     break;
                 }
             }
@@ -334,7 +336,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true)
         {
             ensureConsole();
 
@@ -410,7 +412,7 @@ namespace Squirrel.Update
                 processed.Add(rp.ReleasePackageFile);
 
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
-                if (prev != null) {
+                if (prev != null && generateDeltas) {
                     var deltaBuilder = new DeltaPackageBuilder(null);
 
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
@@ -436,7 +438,7 @@ namespace Squirrel.Update
             File.Copy(bootstrapperExe, targetSetupExe, true);
             var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
 
-            var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
+            var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
             try {
                 var arguments = String.Format("\"{0}\" \"{1}\" \"--set-required-framework\" \"{2}\"", targetSetupExe, zipPath, frameworkVersion);
@@ -657,7 +659,7 @@ namespace Squirrel.Update
 
         async Task createExecutableStubForExe(string fullName)
         {
-            var exe = findExecutable(@"StubExecutable.exe");
+            var exe = Utility.FindHelperExecutable(@"StubExecutable.exe");
 
             var target = Path.Combine(
                 Path.GetDirectoryName(fullName),
@@ -666,7 +668,7 @@ namespace Squirrel.Update
             await Utility.CopyToAsync(exe, target);
 
             await Utility.InvokeProcessAsync(
-                findExecutable("WriteZipToSetup.exe"), 
+                Utility.FindHelperExecutable("WriteZipToSetup.exe"), 
                 String.Format("--copy-stub-resources \"{0}\" \"{1}\"", fullName, target),
                 CancellationToken.None);
         }
@@ -689,7 +691,7 @@ namespace Squirrel.Update
             }
 
             // Try to find rcedit.exe
-            string exe = findExecutable("rcedit.exe");
+            string exe = Utility.FindHelperExecutable("rcedit.exe");
 
             var processResult = await Utility.InvokeProcessAsync(exe, args.ToString(), CancellationToken.None);
 
@@ -702,21 +704,6 @@ namespace Squirrel.Update
             } else {
                 Console.WriteLine(processResult.Item2);
             }
-        }
-
-        static string findExecutable(string toFind)
-        {
-            var exe = @".\" + toFind;
-            if (!File.Exists(exe)) {
-                exe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                    toFind);
-
-                // Run down PATH and hope for the best
-                if (!File.Exists(exe)) exe = toFind;
-            }
-
-            return exe;
         }
 
         static async Task createMsiPackage(string setupExe, IPackage package)

@@ -355,6 +355,74 @@ namespace Squirrel
             }
         }
 
+        public static string FindHelperExecutable(string toFind, IEnumerable<string> additionalDirs = null)
+        {
+            additionalDirs = additionalDirs ?? Enumerable.Empty<string>();
+            var dirs = (new[] { Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
+                .Concat(additionalDirs ?? Enumerable.Empty<string>());
+
+            var exe = @".\" + toFind;
+            return dirs
+                .Select(x => Path.Combine(x, toFind))
+                .FirstOrDefault(x => File.Exists(x)) ?? exe;
+        }
+
+        static string find7Zip()
+        {
+            if (ModeDetector.InUnitTestRunner()) {
+                var vendorDir = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase.Replace("file:///", "")),
+                    "..", "..", "..",
+                    "vendor", "7zip"
+                );
+                return FindHelperExecutable("7z.exe", new[] { vendorDir });
+            } else {
+                return FindHelperExecutable("7z.exe");
+            }
+        }
+
+        public static async Task ExtractZipToDirectory(string zipFilePath, string outFolder)
+        {
+            var sevenZip = find7Zip();
+            var result = default(Tuple<int, string>);
+
+            try {
+                var cmd = sevenZip;
+                var args = String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder);
+                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
+                    cmd = "wine";
+                    args = sevenZip + " " + args;
+                }
+
+                result = await Utility.InvokeProcessAsync(cmd, args, CancellationToken.None);
+                if (result.Item1 != 0) throw new Exception(result.Item2);
+            } catch (Exception ex) {
+                Log().Error($"Failed to extract file {zipFilePath} to {outFolder}\n{ex.Message}");
+                throw;
+            }
+        }
+
+        public static async Task CreateZipFromDirectory(string zipFilePath, string inFolder)
+        {
+            var sevenZip = find7Zip();
+            var result = default(Tuple<int, string>);
+
+            try {
+                var cmd = sevenZip;
+                var args = String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath);
+                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
+                    cmd = "wine";
+                    args = sevenZip + " " + args;
+                }
+
+                result = await Utility.InvokeProcessAsync(cmd, args, CancellationToken.None, inFolder);
+                if (result.Item1 != 0) throw new Exception(result.Item2);
+            } catch (Exception ex) {
+                Log().Error($"Failed to extract file {zipFilePath} to {inFolder}\n{ex.Message}");
+                throw;
+            }
+        }
+
         public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
         {
             return Path.Combine(rootAppDirectory, "app-" + entry.Version.ToString());
