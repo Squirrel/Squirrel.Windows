@@ -779,18 +779,18 @@ namespace Squirrel
     {
         public static List<Tuple<string, int>> EnumerateProcesses()
         {
-            int length = 0;
+            int bytesReturned = 0;
             var pids = new int[2048];
 
             fixed(int* p = pids) {
-                if (!NativeMethods.EnumProcesses((IntPtr)p, sizeof(int) * pids.Length, out length)) {
+                if (!NativeMethods.EnumProcesses((IntPtr)p, sizeof(int) * pids.Length, out bytesReturned)) {
                     throw new Win32Exception("Failed to enumerate processes");
                 }
 
-                if (length < 1) throw new Exception("Failed to enumerate processes");
+                if (bytesReturned < 1) throw new Exception("Failed to enumerate processes");
             }
 
-            return Enumerable.Range(0, length)
+            return Enumerable.Range(0, bytesReturned / sizeof(int))
                 .Where(i => pids[i] > 0)
                 .Select(i => {
                     try {
