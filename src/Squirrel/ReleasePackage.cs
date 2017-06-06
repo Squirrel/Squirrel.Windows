@@ -223,9 +223,9 @@ namespace Squirrel
                         try {
                             Utility.Retry(() => {
                                 if (reader.Entry.IsDirectory) {
-                                    Directory.CreateDirectory(Path.Combine(outFolder, decoded));
+                                    Directory.CreateDirectory(fullTargetFile);
                                 } else {
-                                    reader.WriteEntryToFile(Path.Combine(outFolder, decoded));
+                                    reader.WriteEntryToFile(fullTargetFile);
                                 }
                             }, 5);
                         } catch (Exception e) {
