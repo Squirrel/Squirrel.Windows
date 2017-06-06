@@ -38,7 +38,7 @@ namespace Squirrel
                 // Download the icon and PNG => ICO it. If this doesn't work, who cares
                 var pkgPath = Path.Combine(rootAppDirectory, "packages", latest.Filename);
                 var zp = new ZipPackage(pkgPath);
-                    
+
                 var targetPng = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
                 var targetIco = Path.Combine(rootAppDirectory, "app.ico");
 
@@ -52,7 +52,7 @@ namespace Squirrel
 
                 if (zp.IconUrl != null && !File.Exists(targetIco)) {
                     try {
-                        using (var wc = Utility.CreateWebClient()) { 
+                        using (var wc = Utility.CreateWebClient()) {
                             await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
                             using (var fs = new FileStream(targetIco, FileMode.Create)) {
                                 if (zp.IconUrl.AbsolutePath.EndsWith("ico")) {
@@ -73,7 +73,13 @@ namespace Squirrel
                     } finally {
                         File.Delete(targetPng);
                     }
+                } else {
+                    var exe = Directory.GetFiles(Path.Combine(rootAppDirectory, "app-" + latest.Version), "*.exe")
+                        .FirstOrDefault();
+                    if (!String.IsNullOrEmpty(exe))
+                        key.SetValue("DisplayIcon", Path.GetFullPath(exe) + ",0", RegistryValueKind.String);
                 }
+
 
                 var stringsToWrite = new[] {
                     new { Key = "DisplayName", Value = zp.Title ?? zp.Description ?? zp.Summary },
