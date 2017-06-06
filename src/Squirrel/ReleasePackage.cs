@@ -15,11 +15,6 @@ using Splat;
 using System.Threading.Tasks;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Readers;
-using SharpCompress.Archives;
-using SharpCompress.Common;
-using SharpCompress.Compressors.Deflate;
-using SharpCompress.Writers;
-using System.Threading;
 
 namespace Squirrel
 {
@@ -144,7 +139,7 @@ namespace Squirrel
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 var tempDir = new DirectoryInfo(tempPath);
 
-                Utility.ExtractZipToDirectory(InputPackageFile, tempPath).Wait();
+                extractZipWithEscaping(InputPackageFile, tempPath).Wait();
 
                 this.Log().Info("Extracting dependent packages: [{0}]", String.Join(",", dependencies.Select(x => x.Id)));
                 extractDependentPackages(dependencies, tempDir, targetFramework);
@@ -168,6 +163,31 @@ namespace Squirrel
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;
             }
+        }
+
+        static Task extractZipWithEscaping(string zipFilePath, string outFolder)
+        {
+            return Task.Run(() => {
+                using (var za = ZipArchive.Open(zipFilePath))
+                using (var reader = za.ExtractAllEntries()) {
+                    while (reader.MoveToNextEntry()) {
+                        var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
+                        var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
+
+                        var fullTargetFile = Path.Combine(outFolder, decoded);
+                        var fullTargetDir = Path.GetDirectoryName(fullTargetFile);
+                        Directory.CreateDirectory(fullTargetDir);
+
+                        Utility.Retry(() => {
+                            if (reader.Entry.IsDirectory) {
+                                Directory.CreateDirectory(Path.Combine(outFolder, decoded));
+                            } else {
+                                reader.WriteEntryToFile(Path.Combine(outFolder, decoded));
+                            }
+                        }, 5);
+                    }
+                }
+            });
         }
 
         public static Task ExtractZipForInstall(string zipFilePath, string outFolder)
