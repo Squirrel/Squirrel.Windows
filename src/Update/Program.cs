@@ -681,7 +681,7 @@ namespace Squirrel.Update
                 { "CompanyName", company },
                 { "LegalCopyright", package.Copyright ?? "Copyright © " + DateTime.Now.Year.ToString() + " " + company },
                 { "FileDescription", package.Summary ?? package.Description ?? "Installer for " + package.Id },
-                { "ProductName", package.Description ?? package.Summary ?? package.Id },
+                { "ProductName", package.Title ?? package.Id },
             };
 
             var args = verStrings.Aggregate(new StringBuilder("\"" + realExePath + "\""), (acc, x) => { acc.AppendFormat(" --set-version-string \"{0}\" \"{1}\"", x.Key, x.Value); return acc; });
