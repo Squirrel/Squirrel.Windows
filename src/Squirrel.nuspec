@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <version>1.7.1</version>
+    <version>1.7.2</version>
     <authors>GitHub</authors>
     <owners>Paul Betts</owners>
     <licenseUrl>https://github.com/squirrel/Squirrel.Windows/blob/master/COPYING</licenseUrl>
@@ -18,7 +18,7 @@
     <title>Squirrel for Windows</title>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An installation and update framework for Windows applications</description>
-    <copyright>Copyright GitHub© 2014</copyright>
+    <copyright>Copyright GitHub© 2017</copyright>
   </metadata>
   <files>
     <file src="Squirrel\bin\Release\Squirrel.*" target="lib\Net45" />
