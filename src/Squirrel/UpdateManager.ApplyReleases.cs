@@ -296,7 +296,8 @@ namespace Squirrel
                     this.Log().Info("Writing files to app directory: {0}", target.FullName);
                     await ReleasePackage.ExtractZipForInstall(
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
-                        target.FullName);
+                        target.FullName,
+                        rootAppDirectory);
 
                     return target.FullName;
                 });

@@ -190,7 +190,7 @@ namespace Squirrel
             });
         }
 
-        public static Task ExtractZipForInstall(string zipFilePath, string outFolder)
+        public static Task ExtractZipForInstall(string zipFilePath, string outFolder, string rootPackageFolder)
         {
             var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
@@ -214,7 +214,7 @@ namespace Squirrel
                             failureIsOkay = true;
 
                             fullTargetFile = Path.Combine(
-                                fullTargetDir,
+                                rootPackageFolder,
                                 Path.GetFileName(decoded).Replace("_ExecutionStub.exe", ".exe"));
 
                             LogHost.Default.Info("Rigging execution stub for {0} to {1}", decoded, fullTargetFile);
