@@ -406,7 +406,7 @@ namespace Squirrel.Update
 
                             this.Log().Info("About to sign {0}", x.FullName);
                             await signPEFile(x.FullName, signingOpts);
-                        })
+                        }, 1)
                         .Wait();
                 });
 
