@@ -573,6 +573,16 @@ namespace Squirrel
             return peExtensions.Any(x => ext.Equals(x, StringComparison.OrdinalIgnoreCase));
         }
 
+        public static bool IsFileTopLevelInPackage(string fullName, string pkgPath)
+        {
+            var fn = fullName.ToLowerInvariant();
+            var pkg = pkgPath.ToLowerInvariant();
+            var relativePath = fn.Replace(pkg, "");
+
+            // NB: We want to match things like `/lib/net45/foo.exe` but not `/lib/net45/bar/foo.exe`
+            return relativePath.Split(Path.DirectorySeparatorChar).Length == 4;
+        }
+
         public static void LogIfThrows(this IFullLogger This, LogLevel level, string message, Action block)
         {
             try {
