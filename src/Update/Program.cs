@@ -75,6 +75,7 @@ namespace Squirrel.Update
                 }
 
                 bool silentInstall = false;
+                bool hideChildWindow = false;
                 var updateAction = default(UpdateAction);
 
                 string target = default(string);
@@ -125,6 +126,7 @@ namespace Squirrel.Update
                     { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                     { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
                     { "no-msi", "Don't generate an MSI package", v => noMsi = true},
+                    { "no-window", "Hide the window when starting child process", v => hideChildWindow = true},
                     { "no-delta", "Don't generate delta packages to save time", v => noDelta = true},
                     { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
                 };
@@ -173,7 +175,7 @@ namespace Squirrel.Update
                     Deshortcut(target, shortcutArgs);
                     break;
                 case UpdateAction.ProcessStart:
-                    ProcessStart(processStart, processStartArgs, shouldWait);
+                    ProcessStart(processStart, processStartArgs, shouldWait, hideChildWindow);
                     break;
 #endif
                 case UpdateAction.Releasify:
@@ -499,7 +501,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void ProcessStart(string exeName, string arguments, bool shouldWait)
+        public void ProcessStart(string exeName, string arguments, bool shouldWait, bool hideChildWindow)
         {
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
@@ -543,7 +545,23 @@ namespace Squirrel.Update
 
             try {
                 this.Log().Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");
-                Process.Start(new ProcessStartInfo(targetExe.FullName, arguments ?? "") { WorkingDirectory = Path.GetDirectoryName(targetExe.FullName) });
+
+                var startInfo = new ProcessStartInfo (targetExe.FullName, arguments ?? "")
+                {
+                    WorkingDirectory = Path.GetDirectoryName (targetExe.FullName)
+                };
+
+                if (hideChildWindow)
+                {
+                    startInfo.CreateNoWindow = true;
+                    startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    startInfo.UseShellExecute = false;
+                    startInfo.RedirectStandardOutput = true;
+                    startInfo.RedirectStandardInput = true;
+                    startInfo.RedirectStandardError = true;
+                }
+    
+                Process.Start(startInfo);
             } catch (Exception ex) {
                 this.Log().ErrorException("Failed to start process", ex);
             }
