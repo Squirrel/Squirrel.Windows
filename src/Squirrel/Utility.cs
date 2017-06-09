@@ -355,6 +355,74 @@ namespace Squirrel
             }
         }
 
+        public static string FindHelperExecutable(string toFind, IEnumerable<string> additionalDirs = null)
+        {
+            additionalDirs = additionalDirs ?? Enumerable.Empty<string>();
+            var dirs = (new[] { Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
+                .Concat(additionalDirs ?? Enumerable.Empty<string>());
+
+            var exe = @".\" + toFind;
+            return dirs
+                .Select(x => Path.Combine(x, toFind))
+                .FirstOrDefault(x => File.Exists(x)) ?? exe;
+        }
+
+        static string find7Zip()
+        {
+            if (ModeDetector.InUnitTestRunner()) {
+                var vendorDir = Path.Combine(
+                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase.Replace("file:///", "")),
+                    "..", "..", "..",
+                    "vendor", "7zip"
+                );
+                return FindHelperExecutable("7z.exe", new[] { vendorDir });
+            } else {
+                return FindHelperExecutable("7z.exe");
+            }
+        }
+
+        public static async Task ExtractZipToDirectory(string zipFilePath, string outFolder)
+        {
+            var sevenZip = find7Zip();
+            var result = default(Tuple<int, string>);
+
+            try {
+                var cmd = sevenZip;
+                var args = String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder);
+                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
+                    cmd = "wine";
+                    args = sevenZip + " " + args;
+                }
+
+                result = await Utility.InvokeProcessAsync(cmd, args, CancellationToken.None);
+                if (result.Item1 != 0) throw new Exception(result.Item2);
+            } catch (Exception ex) {
+                Log().Error($"Failed to extract file {zipFilePath} to {outFolder}\n{ex.Message}");
+                throw;
+            }
+        }
+
+        public static async Task CreateZipFromDirectory(string zipFilePath, string inFolder)
+        {
+            var sevenZip = find7Zip();
+            var result = default(Tuple<int, string>);
+
+            try {
+                var cmd = sevenZip;
+                var args = String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath);
+                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
+                    cmd = "wine";
+                    args = sevenZip + " " + args;
+                }
+
+                result = await Utility.InvokeProcessAsync(cmd, args, CancellationToken.None, inFolder);
+                if (result.Item1 != 0) throw new Exception(result.Item2);
+            } catch (Exception ex) {
+                Log().Error($"Failed to extract file {zipFilePath} to {inFolder}\n{ex.Message}");
+                throw;
+            }
+        }
+
         public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
         {
             return Path.Combine(rootAppDirectory, "app-" + entry.Version.ToString());
@@ -503,6 +571,16 @@ namespace Squirrel
         {
             var ext = Path.GetExtension(name);
             return peExtensions.Any(x => ext.Equals(x, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static bool IsFileTopLevelInPackage(string fullName, string pkgPath)
+        {
+            var fn = fullName.ToLowerInvariant();
+            var pkg = pkgPath.ToLowerInvariant();
+            var relativePath = fn.Replace(pkg, "");
+
+            // NB: We want to match things like `/lib/net45/foo.exe` but not `/lib/net45/bar/foo.exe`
+            return relativePath.Split(Path.DirectorySeparatorChar).Length == 4;
         }
 
         public static void LogIfThrows(this IFullLogger This, LogLevel level, string message, Action block)
@@ -711,18 +789,18 @@ namespace Squirrel
     {
         public static List<Tuple<string, int>> EnumerateProcesses()
         {
-            int length = 0;
+            int bytesReturned = 0;
             var pids = new int[2048];
 
             fixed(int* p = pids) {
-                if (!NativeMethods.EnumProcesses((IntPtr)p, sizeof(int) * pids.Length, out length)) {
+                if (!NativeMethods.EnumProcesses((IntPtr)p, sizeof(int) * pids.Length, out bytesReturned)) {
                     throw new Win32Exception("Failed to enumerate processes");
                 }
 
-                if (length < 1) throw new Exception("Failed to enumerate processes");
+                if (bytesReturned < 1) throw new Exception("Failed to enumerate processes");
             }
 
-            return Enumerable.Range(0, length)
+            return Enumerable.Range(0, bytesReturned / sizeof(int))
                 .Where(i => pids[i] > 0)
                 .Select(i => {
                     try {
