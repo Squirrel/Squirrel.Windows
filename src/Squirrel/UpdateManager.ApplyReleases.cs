@@ -597,7 +597,7 @@ namespace Squirrel
                 // Finally, clean up the app-X.Y.Z directories
                 await toCleanup.ForEachAsync(async x => {
                     try {
-                        if (runningProcesses.All(p => !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
+                        if (runningProcesses.All(p => p.Item1 == null || !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
                             await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
                         }
 
