@@ -212,34 +212,6 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         }
 
         /// <summary>
-        /// Sets the application user model id for an individual window
-        /// </summary>
-        /// <param name="appId">The app id to set</param>
-        /// <param name="windowHandle">Window handle for the window that needs a specific application id</param>
-        /// <remarks>AppId specifies a unique Application User Model ID (AppID) for the application or individual 
-        /// top-level window whose taskbar button will hold the custom JumpList built through the methods <see cref="Microsoft.WindowsAPICodePack.Taskbar.JumpList"/> class.
-        /// By setting an appId for a specific window, the window will not be grouped with it's parent window/application. Instead it will have it's own taskbar button.</remarks>
-        public void SetApplicationIdForSpecificWindow(IntPtr windowHandle, string appId)
-        {
-            // Left as instance method, to follow singleton pattern.
-            TaskbarNativeMethods.SetWindowAppId(windowHandle, appId);
-        }
-
-        /// <summary>
-        /// Sets the application user model id for a given window
-        /// </summary>
-        /// <param name="appId">The app id to set</param>
-        /// <param name="window">Window that needs a specific application id</param>
-        /// <remarks>AppId specifies a unique Application User Model ID (AppID) for the application or individual 
-        /// top-level window whose taskbar button will hold the custom JumpList built through the methods <see cref="Microsoft.WindowsAPICodePack.Taskbar.JumpList"/> class.
-        /// By setting an appId for a specific window, the window will not be grouped with it's parent window/application. Instead it will have it's own taskbar button.</remarks>
-        public void SetApplicationIdForSpecificWindow(System.Windows.Window window, string appId)
-        {
-            // Left as instance method, to follow singleton pattern.
-            TaskbarNativeMethods.SetWindowAppId((new WindowInteropHelper(window)).Handle, appId);
-        }
-
-        /// <summary>
         /// Sets the current process' explicit application user model id.
         /// </summary>
         /// <param name="appId">The application id.</param>

@@ -128,59 +128,6 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         [DllImport("user32.dll", EntryPoint = "RegisterWindowMessage", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern uint RegisterWindowMessage([MarshalAs(UnmanagedType.LPWStr)] string lpString);
-
-        [DllImport("shell32.dll")]
-        public static extern int SHGetPropertyStoreForWindow(
-            IntPtr hwnd,
-            ref Guid iid /*IID_IPropertyStore*/,
-            [Out(), MarshalAs(UnmanagedType.Interface)]out IPropertyStore propertyStore);
-
-        /// <summary>
-        /// Sets the window's application id by its window handle.
-        /// </summary>
-        /// <param name="hwnd">The window handle.</param>
-        /// <param name="appId">The application id.</param>
-        internal static void SetWindowAppId(IntPtr hwnd, string appId)
-        {
-            SetWindowProperty(hwnd, SystemProperties.System.AppUserModel.ID, appId);
-        }
-
-        internal static void SetWindowProperty(IntPtr hwnd, PropertyKey propkey, string value)
-        {
-            // Get the IPropertyStore for the given window handle
-            IPropertyStore propStore = GetWindowPropertyStore(hwnd);
-
-            // Set the value
-            using (PropVariant pv = new PropVariant(value))
-            {
-                HResult result = propStore.SetValue(ref propkey, pv);
-                if (!CoreErrorHelper.Succeeded(result))
-                {
-                    throw new ShellException(result);
-                }
-            }
-
-
-            // Dispose the IPropertyStore and PropVariant
-            Marshal.ReleaseComObject(propStore);
-        }
-
-        internal static IPropertyStore GetWindowPropertyStore(IntPtr hwnd)
-        {
-            IPropertyStore propStore;
-            Guid guid = new Guid(ShellIIDGuid.IPropertyStore);
-            int rc = SHGetPropertyStoreForWindow(
-                hwnd,
-                ref guid,
-                out propStore);
-            if (rc != 0)
-            {
-                throw Marshal.GetExceptionForHR(rc);
-            }
-            return propStore;
-        }
-
-        #endregion
     }
 
     /// <summary>
