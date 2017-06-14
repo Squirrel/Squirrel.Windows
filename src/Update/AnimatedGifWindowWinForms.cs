@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.WindowsAPICodePack.Taskbar;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -64,8 +65,15 @@ namespace Squirrel.Update
                 token.Register(() => wnd.Invoke(new Action(() => wnd.Close())));
 
                 var t = new System.Windows.Forms.Timer();
+                var taskbar = TaskbarManager.Instance;
                 t.Tick += (o, e) => {
                     wnd.WindowState = FormWindowState.Normal;
+                    taskbar.SetProgressState(TaskbarProgressBarState.Normal, wnd.Handle);
+
+                    progressSource.Progress += (_o, val) => {
+                        wnd.Invoke(new Action(() => taskbar.SetProgressValue(val, 100, wnd.Handle)));
+                    };
+
                     t.Stop();
                 };
 

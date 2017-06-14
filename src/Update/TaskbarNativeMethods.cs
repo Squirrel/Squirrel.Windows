@@ -100,13 +100,8 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
 
         internal const int WmCommand = 0x0111;
 
-        // Register Window Message used by Shell to notify that the corresponding taskbar button has been added to the taskbar.
-        internal static readonly uint WmTaskbarButtonCreated = RegisterWindowMessage("TaskbarButtonCreated");
-
         internal const uint WmDwmSendIconThumbnail = 0x0323;
         internal const uint WmDwmSendIconicLivePreviewBitmap = 0x0326;
-
-        #region Methods
 
         [DllImport("shell32.dll")]
         internal static extern void SetCurrentProcessExplicitAppUserModelID(
@@ -125,9 +120,6 @@ namespace Microsoft.WindowsAPICodePack.Taskbar
         {
             SHAddToRecentDocs(ShellAddToRecentDocs.PathW, path);
         }
-
-        [DllImport("user32.dll", EntryPoint = "RegisterWindowMessage", SetLastError = true, CharSet = CharSet.Unicode)]
-        internal static extern uint RegisterWindowMessage([MarshalAs(UnmanagedType.LPWStr)] string lpString);
     }
 
     /// <summary>
