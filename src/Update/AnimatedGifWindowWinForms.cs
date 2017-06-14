@@ -12,11 +12,11 @@ using System.Windows.Forms;
 
 namespace Squirrel.Update
 {
-    public class AnimatedGifWindowWinForms : Form
+    public class AnimatedGifWindow : Form
     {
         PictureBox pictureBox;
 
-        AnimatedGifWindowWinForms()
+        AnimatedGifWindow()
         {
             var source = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
@@ -45,6 +45,7 @@ namespace Squirrel.Update
             this.FormBorderStyle = FormBorderStyle.None;
             this.Width = 1;
             this.Height = 1;
+            this.TopMost = true;
         }
 
         public static void ShowWindow(TimeSpan initialDelay, CancellationToken token, ProgressSource progressSource)
@@ -59,7 +60,7 @@ namespace Squirrel.Update
                     return;
                 }
 
-                var wnd = new AnimatedGifWindowWinForms();
+                var wnd = new AnimatedGifWindow();
                 wnd.Show();
 
                 token.Register(() => wnd.Invoke(new Action(() => wnd.Close())));
@@ -79,6 +80,11 @@ namespace Squirrel.Update
 
                 t.Interval = 400;
                 t.Start();
+
+                Task.Delay(TimeSpan.FromSeconds(5.0), token).ContinueWith(task => {
+                    if (task.IsCanceled) return;
+                    wnd.Invoke(new Action(() => wnd.TopMost = false));
+                });
 
                 Application.Run(wnd);
             });
