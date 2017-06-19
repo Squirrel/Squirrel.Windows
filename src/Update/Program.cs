@@ -44,25 +44,29 @@ namespace Squirrel.Update
             // open will actually crash the uninstaller
             bool isUninstalling = args.Any(x => x.Contains("uninstall"));
 
-            // Uncomment to test Gifs
-            //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
-            //Thread.Sleep(10 * 60 * 1000);
-
             using (var logger = new SetupLogLogger(isUninstalling) {Level = LogLevel.Info}) {
                 Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
+
                 try {
                     return executeCommandLine(args);
                 } catch (Exception ex) {
                     logger.Write("Unhandled exception: " + ex, LogLevel.Fatal);
                     throw;
                 }
-                // Ideally we would deregister the logger from the Locator before it was disposed - this is a hazard as it is at the moment
             }
         }
 
         int executeCommandLine(string[] args)
         {
             var animatedGifWindowToken = new CancellationTokenSource();
+
+            // Uncomment to test Gifs
+            /*
+            var ps = new ProgressSource();
+            int i = 0; var t = new Timer(_ => ps.Raise(i += 10), null, 0, 1000);
+            AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token, ps);
+            Thread.Sleep(10 * 60 * 1000);
+            */
 
             using (Disposable.Create(() => animatedGifWindowToken.Cancel())) {
 
