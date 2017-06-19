@@ -30,7 +30,12 @@ namespace Squirrel.Update
             }
 
             this.WindowState = FormWindowState.Minimized;
-            Action size = () => { pictureBox.Width = this.Width; pictureBox.Height = this.Height; pictureBox.Left = 0; pictureBox.Top = 0; };
+            Action size = () => {
+                pictureBox.Width = this.Width; pictureBox.Height = this.Height;
+                pictureBox.Left = 0; pictureBox.Top = 0;
+                this.CenterToScreen();
+            };
+
             pictureBox.LoadCompleted += (o, e) => {
                 if (pictureBox.Image == null) return;
                 pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
@@ -72,6 +77,7 @@ namespace Squirrel.Update
                     taskbar.SetProgressState(TaskbarProgressBarState.Normal, wnd.Handle);
 
                     progressSource.Progress += (_o, val) => {
+                        if (wnd.IsDisposed) return;
                         wnd.Invoke(new Action(() => taskbar.SetProgressValue(val, 100, wnd.Handle)));
                     };
 
@@ -83,6 +89,7 @@ namespace Squirrel.Update
 
                 Task.Delay(TimeSpan.FromSeconds(5.0), token).ContinueWith(task => {
                     if (task.IsCanceled) return;
+                    if (wnd.IsDisposed) return;
                     wnd.Invoke(new Action(() => wnd.TopMost = false));
                 });
 
