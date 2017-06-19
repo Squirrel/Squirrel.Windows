@@ -10,7 +10,17 @@ Squirrel packaging can be easily integrated directly into your build process usi
 The first step is to define a build target in your `.csproj` file.
 
 ```xml
-<Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release'">  <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">    <Output TaskParameter="Assemblies" ItemName="myAssemblyInfo"/>  </GetAssemblyIdentity>  <Exec Command="nuget pack MyApp.nuspec -Version %(myAssemblyInfo.Version) -Properties Configuration=Release -OutputDirectory $(OutDir) -BasePath $(OutDir)" />  <Exec Command="squirrel --releasify $(OutDir)MyApp.%(myAssemblyInfo.Version).nupkg" /></Target>
+<ItemGroup>
+  <SquirrelPackage Include="$(SolutionDir)\packages\squirrel.windows.*\tools\Squirrel.exe" />
+</ItemGroup>
+  
+<Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release'">
+  <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+    <Output TaskParameter="Assemblies" ItemName="myAssemblyInfo"/>
+  </GetAssemblyIdentity>
+  <Exec Command="nuget pack MyApp.nuspec -Version %(myAssemblyInfo.Version) -Properties Configuration=Release -OutputDirectory $(OutDir) -BasePath $(OutDir)" />
+  <Exec Command="@(SquirrelPackage->'%(fullpath)') --releasify $(OutDir)MyApp.%(myAssemblyInfo.Version).nupkg" />
+</Target>
 ```
 
 This will generate a NuGet package from .nuspec file setting version from AssemblyInfo.cs and place it in OutDir (by default bin\Release). Then it will generate release files from it.
@@ -20,7 +30,23 @@ This will generate a NuGet package from .nuspec file setting version from Assemb
 Here is an example `MyApp.nuspec` file for the above build target example.
 
 ```xml
-<?xml version="1.0" encoding="utf-8"?><package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">  <metadata>    <id>MyApp</id>    <!-- version will be replaced by MSBuild -->    <version>0.0.0.0</version>    <title>title</title>    <authors>authors</authors>    <description>description</description>    <requireLicenseAcceptance>false</requireLicenseAcceptance>    <copyright>Copyright 2016</copyright>    <dependencies />  </metadata>  <files>    <file src="*.*" target="lib\net45\" exclude="*.pdb;*.nupkg;*.vshost.*"/>  </files></package>
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>MyApp</id>
+    <!-- version will be replaced by MSBuild -->
+    <version>0.0.0.0</version>
+    <title>title</title>
+    <authors>authors</authors>
+    <description>description</description>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <copyright>Copyright 2016</copyright>
+    <dependencies />
+  </metadata>
+  <files>
+    <file src="*.*" target="lib\net45\" exclude="*.pdb;*.nupkg;*.vshost.*"/>
+  </files>
+</package>
 ```
 
 ## Additional Notes
