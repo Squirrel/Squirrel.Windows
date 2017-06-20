@@ -58,7 +58,7 @@ int CopyResourcesToStubExecutable(wchar_t* src, wchar_t* dest)
 
 int wmain(int argc, wchar_t* argv[])
 {
-	if (argc > 1 && wcscmp(argv[1], L"--copy-stub-resources") == 0) {
+	/*if (argc > 1 && wcscmp(argv[1], L"--copy-stub-resources") == 0) {
 		if (argc != 4) goto fail;
 		return CopyResourcesToStubExecutable(argv[2], argv[3]);
 	}
@@ -67,12 +67,62 @@ int wmain(int argc, wchar_t* argv[])
 		setFramework = true;
 	} else if (argc != 3) {
 		goto fail;
+	}*/
+
+	wchar_t* stubResourcesSource = NULL;
+	wchar_t* stubResourcesDest = NULL;
+	for (int i = 0; i < argc; i++) {
+		if (wcscmp(argv[i], L"--copy-stub-resources") == 0) {
+			if (argc < i + 2) goto fail;
+			stubResourcesSource = argv[i + 1];
+			stubResourcesDest = argv[i + 2];
+			return CopyResourcesToStubExecutable(stubResourcesSource, stubResourcesDest);
+		}
 	}
 
-	wprintf(L"Setup: %s, Zip: %s\n", argv[1], argv[2]);
+	wchar_t* targetSetupExe = NULL;
+	for (int i = 0; i < argc; i++) {
+		if (wcscmp(argv[i], L"--ts") == 0) {
+			if (argc < i + 1) goto fail;
+			targetSetupExe = argv[i + 1];
+			break;
+		}
+	}
+
+	wchar_t* zipPath = NULL;
+	for (int i = 0; i < argc; i++) {
+		if (wcscmp(argv[i], L"--zp") == 0) {
+			if (argc < i + 1) goto fail;
+			zipPath = argv[i + 1];
+			break;
+		}
+	}
+
+	if (zipPath == NULL || targetSetupExe == NULL) goto fail;
+
+
+	wchar_t* targetFramework = NULL;
+	for (int i = 0; i < argc; i++) {
+		if (wcscmp(argv[i], L"--set-required-framework") == 0) {
+			if (argc < i + 1) goto fail;
+			targetFramework = argv[i + 1];
+			break;
+		}
+	}
+
+	wchar_t* forcedDestinationDir = NULL;
+	for (int i = 0; i < argc; i++) {
+		if (wcscmp(argv[i], L"--force-dest-dir") == 0) {
+			if (argc < i + 1) goto fail;
+			forcedDestinationDir = argv[i + 1];
+			break;
+		}
+	}
+
+	wprintf(L"Setup: %s, Zip: %s\n", targetSetupExe, zipPath);
 
 	// Read the entire zip file into memory, yolo
-	HANDLE hFile = CreateFile(argv[2], GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	HANDLE hFile = CreateFile(zipPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
 		printf("Can't open Zip file\n");
 		return -1;
@@ -98,7 +148,7 @@ int wmain(int argc, wchar_t* argv[])
 	} while (dwBytesRead > 0);
 
 	printf("Updating Resource!\n");
-	HANDLE hRes = BeginUpdateResource(argv[1], false);
+	HANDLE hRes = BeginUpdateResource(targetSetupExe, false);
 	if (!hRes) {
 		printf("Couldn't open setup.exe for writing\n");
 		goto fail;
@@ -109,8 +159,15 @@ int wmain(int argc, wchar_t* argv[])
 		goto fail;
 	}
 
-	if (setFramework) {
-		if (!UpdateResource(hRes, L"FLAGS", (LPCWSTR)132, 0x0409, argv[4], (wcslen(argv[4])+1) * sizeof(wchar_t))) {
+	if (targetFramework != NULL) {
+		if (!UpdateResource(hRes, L"FLAGS", (LPCWSTR)132, 0x0409, targetFramework, (wcslen(targetFramework) + 1) * sizeof(wchar_t))) {
+			printf("Failed to update resouce\n");
+			goto fail;
+		}
+	}
+
+	if (forcedDestinationDir != NULL) {
+		if (!UpdateResource(hRes, L"FLAGS", (LPCWSTR)136, 0x0409, forcedDestinationDir, (wcslen(forcedDestinationDir) + 1) * sizeof(wchar_t))) {
 			printf("Failed to update resouce\n");
 			goto fail;
 		}
@@ -126,6 +183,6 @@ int wmain(int argc, wchar_t* argv[])
 	return 0;
 
 fail:
-	printf("Usage: WriteZipToSetup [Setup.exe template] [Zip File]\n");
+	printf("Usage: WriteZipToSetup --ts [Setup.exe template] --zp [Zip File]\n");
 	return -1;
 }

@@ -166,6 +166,14 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 		goto gotADir;
 	}
 
+	if (lpForcedDir &&
+		DirectoryExists(lpForcedDir) &&
+		DirectoryIsWritable(lpForcedDir) &&
+		!PathIsUNCW(lpForcedDir)) {
+		_swprintf_c(targetDir, _countof(targetDir), L"%s", lpForcedDir);
+		goto gotADir;
+	}
+
 	if (!useFallbackDir) {
 		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
 		goto gotADir;
