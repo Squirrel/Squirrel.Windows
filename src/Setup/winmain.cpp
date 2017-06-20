@@ -17,6 +17,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_ LPWSTR lpCmdLine,
                       _In_ int nCmdShow)
 {
+	wchar_t* forcedInstallDir = NULL;
 	// Attempt to mitigate http://textslashplain.com/2015/12/18/dll-hijacking-just-wont-die
 	HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
 	ATLASSERT(hKernel32 != NULL);
@@ -61,6 +62,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		goto out;
 	}
 
+	forcedInstallDir = CFxHelper::GetInstallationDir();
 	NetVersion requiredVersion = CFxHelper::GetRequiredDotNetVersion();
 
 	if (!CFxHelper::IsDotNetInstalled(requiredVersion)) {
@@ -91,7 +93,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		goto out;
 	}
 
-	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine, false);
+	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine, false, forcedInstallDir);
 
 out:
 	_Module->Term();
