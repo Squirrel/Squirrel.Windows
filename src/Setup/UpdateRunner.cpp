@@ -147,7 +147,7 @@ bool CUpdateRunner::DirectoryIsWritable(wchar_t * szPath)
 		return true;
 }
 
-int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir)
+int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir, wchar_t* lpForcedDir)
 {
 	PROCESS_INFORMATION pi = { 0 };
 	STARTUPINFO si = { 0 };
@@ -163,6 +163,14 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 		DirectoryIsWritable(envSquirrelTemp) &&
 		!PathIsUNCW(envSquirrelTemp)) {
 		_swprintf_c(targetDir, _countof(targetDir), L"%s", envSquirrelTemp);
+		goto gotADir;
+	}
+
+	if (lpForcedDir &&
+		DirectoryExists(lpForcedDir) &&
+		DirectoryIsWritable(lpForcedDir) &&
+		!PathIsUNCW(lpForcedDir)) {
+		_swprintf_c(targetDir, _countof(targetDir), L"%s", lpForcedDir);
 		goto gotADir;
 	}
 
@@ -290,7 +298,7 @@ gotADir:
 failedExtract:
 	if (!useFallbackDir) {
 		// Take another pass at it, using C:\ProgramData instead
-		return ExtractUpdaterAndRun(lpCommandLine, true);
+		return ExtractUpdaterAndRun(lpCommandLine, true, NULL);
 	}
 
 	DisplayErrorMessage(CString(L"Failed to extract installer"), NULL);

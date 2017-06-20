@@ -23,6 +23,8 @@ Options:
                                installation
   -n, --signWithParams=VALUE Sign the installer via SignTool.exe with the
                                parameters given
+  -d, --setupDir=VALUE       Optional installation directory. Must have read,
+                               write and execute permissions for all users.
 ```
 
 ## See Also

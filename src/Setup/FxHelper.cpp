@@ -20,6 +20,13 @@ bool CFxHelper::CanInstallDotNet4_5()
 	return IsWindowsVistaOrGreater();
 }
 
+
+wchar_t* CFxHelper::GetInstallationDir()
+{
+	wchar_t* installDir = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_INSTALL_DIR, L"FLAGS"));
+	return installDir;
+}
+
 NetVersion CFxHelper::GetRequiredDotNetVersion()
 {
 	wchar_t* versionFlag = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_FX_VERSION_FLAG, L"FLAGS"));

@@ -93,6 +93,7 @@ namespace Squirrel.Update
                 string setupIcon = default(string);
                 string icon = default(string);
                 string shortcutArgs = default(string);
+                string setupDir = default(string);
                 string frameworkVersion = "net45";
                 bool shouldWait = false;
                 bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
@@ -118,6 +119,7 @@ namespace Squirrel.Update
                     "Options:",
                     { "h|?|help", "Display Help and exit", _ => {} },
                     { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
+                    { "d=|setupDir=", "Optional installation directory. Must have read, write and execute permissions for all users", v => setupDir = v},
                     { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                     { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                     { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
@@ -181,7 +183,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion, !noDelta);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion, !noDelta, setupDir);
                     break;
                 }
             }
@@ -340,7 +342,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true, string setupDir = null)
         {
             ensureConsole();
 
@@ -446,7 +448,12 @@ namespace Squirrel.Update
             var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
             try {
-                var arguments = String.Format("\"{0}\" \"{1}\" \"--set-required-framework\" \"{2}\"", targetSetupExe, zipPath, frameworkVersion);
+                var arguments = String.Format("--ts \"{0}\" --zp \"{1}\" \"--set-required-framework\" \"{2}\"", targetSetupExe, zipPath, frameworkVersion);
+
+                if (!string.IsNullOrWhiteSpace(setupDir))
+                {
+                    arguments += string.Format(" --force-dest-dir \"{0}\"", setupDir);
+                }
                 var result = Utility.InvokeProcessAsync(writeZipToSetup, arguments, CancellationToken.None).Result;
                 if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
             } catch (Exception ex) {

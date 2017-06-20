@@ -6,6 +6,7 @@ class CFxHelper
 {
 public:
 	static NetVersion GetRequiredDotNetVersion();
+	static wchar_t* GetInstallationDir();
 	static bool CanInstallDotNet4_5();
 	static bool IsDotNetInstalled(NetVersion requiredVersion);
 	static HRESULT InstallDotNetFramework(NetVersion version, bool isQuiet);
