@@ -65,8 +65,12 @@ namespace Squirrel.Update
                     return;
                 }
 
-                var wnd = new AnimatedGifWindow();
+                Form wnd = new AnimatedGifWindow();
                 wnd.Show();
+                if (!wnd.IsHandleCreated) //failsafe. in case the app launches *BEFORE it tries to create new window handle. which will cause the exit ..
+                {
+                    return;
+                }
 
                 token.Register(() => wnd.Invoke(new Action(() => wnd.Close())));
 
@@ -93,7 +97,10 @@ namespace Squirrel.Update
                     wnd.Invoke(new Action(() => wnd.TopMost = false));
                 });
 
-                Application.Run(wnd);
+                if (wnd.IsHandleCreated) //failsafe. in case the app launches *AFTER handle has already been created.
+                { //##TODO should implement a test with large and small (Kb vs Gig) nuget packages to see different timing results.
+                    Application.Run(wnd);
+                }
             });
 
             thread.SetApartmentState(ApartmentState.STA);
