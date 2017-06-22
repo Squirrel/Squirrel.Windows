@@ -96,6 +96,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	std::wstring workingDir(FindLatestAppDir());
 	std::wstring fullPath(workingDir + L"\\" + appName);
 
+	// If a Splash.png file named after the appName exists, create an event for the
+	// app to signal us with, load the image file, and display the splash image.
+	::CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+	HANDLE hCloseSplashEvent = ShowSplashAndCreateCloseEventIfImageFound(hInstance, fullPath);
+
 	STARTUPINFO si = { 0 };
 	PROCESS_INFORMATION pi = { 0 };
 
@@ -111,10 +116,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	wchar_t* lpCommandLine = wcsdup(cmdLine.c_str());
 	wchar_t* lpCurrentDirectory = wcsdup(workingDir.c_str());
 	if (!CreateProcess(NULL, lpCommandLine, NULL, NULL, true, 0, NULL, lpCurrentDirectory, &si, &pi)) {
+		::CoUninitialize();
 		return -1;
 	}
 
 	AllowSetForegroundWindow(pi.dwProcessId);
-	WaitForInputIdle(pi.hProcess, 5 * 1000);
+	if (hCloseSplashEvent != NULL)
+	{
+		// Display the splash screen for as long as it's needed.  We quit as
+		// soon as the the child process signals with the event we created, or
+		// when 60 seconds have elapsed.  (We've had C#/.Net programs take as
+		// long as 27 seconds to display anything!)
+		PumpMsgWaitingForEvent(pi.hProcess, hCloseSplashEvent, 60 * 1000);
+	}
+	else
+	{
+		WaitForInputIdle(pi.hProcess, 5 * 1000);
+	}
+	::CoUninitialize();
 	return 0;
 }
