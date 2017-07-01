@@ -115,7 +115,7 @@ namespace Squirrel
                         if (String.IsNullOrWhiteSpace(x.Item1)) return false;
 
                         // Files that aren't in our root app directory are untouched
-                        if (!x.Item1.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) return false;
+                        if (x.Item1.IndexOf(rootAppDirectory,StringComparison.InvariantCultureIgnoreCase) !=0) return false;
 
                         // Never kill our own EXE
                         if (ourExePath != null && x.Item1.Equals(ourExePath, StringComparison.OrdinalIgnoreCase)) return false;
