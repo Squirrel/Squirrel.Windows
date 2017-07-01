@@ -63,9 +63,15 @@ namespace Squirrel
         [IgnoreDataMember]
         public SemanticVersion Version { get { return Filename.ToSemanticVersion(); } }
 
+        static readonly Regex packageNameRegex = new Regex(@"^([\w-]+)-\d+\..+\.nupkg$");
         [IgnoreDataMember]
         public string PackageName {
-            get { return Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' })); }
+            get {
+                var match = packageNameRegex.Match(Filename);
+                return match.Success ? 
+                    match.Groups[1].Value : 
+                    Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' }));
+            }
         }
 
         public string GetReleaseNotes(string packageDirectory)

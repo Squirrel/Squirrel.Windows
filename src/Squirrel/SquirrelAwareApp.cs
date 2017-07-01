@@ -64,7 +64,6 @@ namespace Squirrel
             if (args.Length != 2) return;
 
             if (!lookup.ContainsKey(args[0])) return;
-
             var version = args[1].ToSemanticVersion().Version;
 
             try {

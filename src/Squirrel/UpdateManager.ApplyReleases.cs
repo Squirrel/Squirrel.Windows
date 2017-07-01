@@ -12,8 +12,6 @@ using NuGet;
 using Splat;
 using System.Threading;
 using Squirrel.Shell;
-using ICSharpCode.SharpZipLib.Zip;
-using ICSharpCode.SharpZipLib.Core;
 using Microsoft.Win32;
 
 namespace Squirrel
@@ -33,6 +31,7 @@ namespace Squirrel
             {
                 progress = progress ?? (_ => { });
 
+                progress(0);
                 var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
                 progress(10);
 
@@ -297,7 +296,8 @@ namespace Squirrel
                     this.Log().Info("Writing files to app directory: {0}", target.FullName);
                     await ReleasePackage.ExtractZipForInstall(
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
-                        target.FullName);
+                        target.FullName,
+                        rootAppDirectory);
 
                     return target.FullName;
                 });
@@ -590,10 +590,16 @@ namespace Squirrel
                     .Where(x => x.Name.ToLowerInvariant().Contains("app-"))
                     .Where(x => x.Name != currentVersionFolder && x.Name != originalVersionFolder);
 
+                // Get the current process list in an attempt to not burn 
+                // directories which have running processes
+                var runningProcesses = UnsafeUtility.EnumerateProcesses(); 
+
                 // Finally, clean up the app-X.Y.Z directories
                 await toCleanup.ForEachAsync(async x => {
                     try {
-                        await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
+                        if (runningProcesses.All(p => p.Item1 == null || !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
+                            await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
+                        }
 
                         if (Directory.Exists(x.FullName)) {
                             // NB: If we cannot clean up a directory, we need to make 

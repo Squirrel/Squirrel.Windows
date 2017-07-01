@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <version>1.5.2</version>
+    <version>1.7.6</version>
     <authors>GitHub</authors>
     <owners>Paul Betts</owners>
     <licenseUrl>https://github.com/squirrel/Squirrel.Windows/blob/master/COPYING</licenseUrl>
@@ -9,16 +9,17 @@
     <iconUrl>https://raw.githubusercontent.com/Squirrel/Squirrel.Windows/master/docs/artwork/Squirrel-Logo-Square.png</iconUrl>
 
     <dependencies>
-      <dependency id="DeltaCompressionDotNet" version="[1.0,2.0)" />
+      <dependency id="DeltaCompressionDotNet" version="[1.1,2.0)" />
       <dependency id="Splat" version="1.6.2" />
       <dependency id="Mono.Cecil" version="0.9.6.1" />
+      <dependency id="SharpCompress" version="0.16.1" />
     </dependencies>
 
     <id>squirrel.windows</id>
     <title>Squirrel for Windows</title>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An installation and update framework for Windows applications</description>
-    <copyright>Copyright GitHub© 2014</copyright>
+    <copyright>Copyright GitHub© 2017</copyright>
   </metadata>
   <files>
     <file src="Squirrel\bin\Release\Squirrel.*" target="lib\Net45" />
@@ -34,5 +35,6 @@
     <file src="Update\signtool.exe" target="tools\signtool.exe" />
     <file src="Update\rcedit.exe" target="tools\rcedit.exe" />
     <file src="..\vendor\wix\*" target="tools" />
+    <file src="..\vendor\7zip\*" target="tools" />
   </files>
 </package>
