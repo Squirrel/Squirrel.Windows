@@ -147,7 +147,7 @@ bool CUpdateRunner::DirectoryIsWritable(wchar_t * szPath)
 		return true;
 }
 
-int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir)
+int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir,bool programFiles)
 {
 	PROCESS_INFORMATION pi = { 0 };
 	STARTUPINFO si = { 0 };
@@ -167,7 +167,15 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	}
 
 	if (!useFallbackDir) {
-		SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
+		if (!programFiles)
+		{
+			SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, targetDir);
+		}
+		else
+		{
+			SHGetFolderPath(NULL, CSIDL_PROGRAM_FILES, NULL, SHGFP_TYPE_CURRENT, targetDir);
+		}
+		
 		goto gotADir;
 	}
 
@@ -176,10 +184,20 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	wchar_t appDataDir[MAX_PATH];
 	ULONG unameSize = _countof(username);
 
-	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
-	GetUserName(username, &unameSize);
+	if (!programFiles)
+	{
+		SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
+		GetUserName(username, &unameSize);
 
-	_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
+		_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
+	}
+	else
+	{
+		SHGetFolderPath(NULL, CSIDL_PROGRAM_FILES, NULL, SHGFP_TYPE_CURRENT, appDataDir);
+		_swprintf_c(targetDir, _countof(targetDir), L"%s", appDataDir);
+	}
+	
+	
 
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
@@ -291,7 +309,7 @@ gotADir:
 failedExtract:
 	if (!useFallbackDir) {
 		// Take another pass at it, using C:\ProgramData instead
-		return ExtractUpdaterAndRun(lpCommandLine, true);
+		return ExtractUpdaterAndRun(lpCommandLine, true, programFiles);
 	}
 
 	DisplayErrorMessage(CString(L"Failed to extract installer"), NULL);
