@@ -15,7 +15,7 @@ The first step is to define a build target in your `.csproj` file.
     <Output TaskParameter="Assemblies" ItemName="myAssemblyInfo"/>
   </GetAssemblyIdentity>
   <Exec Command="nuget pack MyApp.nuspec -Version %(myAssemblyInfo.Version) -Properties Configuration=Release -OutputDirectory $(OutDir) -BasePath $(OutDir)" />
-  <Exec Command="squirrel --releasify $(OutDir)MyApp.%(myAssemblyInfo.Version).nupkg" />
+  <Exec Command="squirrel --releasify $(OutDir)MyApp.$([System.Version]::Parse(%(myAssemblyInfo.Version)).ToString(3)).nupkg" />
 </Target>
 ```
 
