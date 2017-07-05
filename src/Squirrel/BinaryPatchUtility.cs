@@ -68,7 +68,7 @@ namespace Squirrel.Bsdiff
             t.Start();
             t.Join();
 
-            if (ex != null) throw ex;
+            if (ex != null) throw new Exception("Error creating binary patch", ex);
         }
 
         static void CreateInternal(byte[] oldData, byte[] newData, Stream output)
@@ -229,21 +229,18 @@ namespace Squirrel.Bsdiff
             long controlEndPosition = output.Position;
             WriteInt64(controlEndPosition - startPosition - c_headerSize, header, 8);
 
-            // write compressed diff data
+            
             using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
             using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress))
             {
+                // write compressed diff data
                 bz2Stream.Write(db, 0, dblen);
-            }
 
-            // compute size of compressed diff data
-            long diffEndPosition = output.Position;
-            WriteInt64(diffEndPosition - controlEndPosition, header, 16);
+                // compute size of compressed diff data
+                long diffEndPosition = output.Position;
+                WriteInt64(diffEndPosition - controlEndPosition, header, 16);
 
-            // write compressed extra data
-            using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress))
-            {
+                // write compressed extra data
                 bz2Stream.Write(eb, 0, eblen);
             }
 
