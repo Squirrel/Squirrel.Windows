@@ -207,22 +207,23 @@ namespace Squirrel
                     this.Log().Warn("We couldn't create a delta for {0}, attempting to create bsdiff", targetFile.Name);
                 }
             }
-
-            var of = default(FileStream);
+            
             try {
-                of = File.Create(targetFile.FullName + ".bsdiff");
-                BinaryPatchUtility.Create(oldData, newData, of);
+                using (FileStream of = File.Create(targetFile.FullName + ".bsdiff"))
+                {
+                    BinaryPatchUtility.Create(oldData, newData, of);
 
-                // NB: Create a dummy corrupt .diff file so that older 
-                // versions which don't understand bsdiff will fail out
-                // until they get upgraded, instead of seeing the missing
-                // file and just removing it.
-                File.WriteAllText(targetFile.FullName + ".diff", "1");
+                    // NB: Create a dummy corrupt .diff file so that older 
+                    // versions which don't understand bsdiff will fail out
+                    // until they get upgraded, instead of seeing the missing
+                    // file and just removing it.
+                    File.WriteAllText(targetFile.FullName + ".diff", "1");
+                }
             } catch (Exception ex) {
                 this.Log().WarnException(String.Format("We really couldn't create a delta for {0}", targetFile.Name), ex);
+                File.Delete(targetFile.FullName + ".bsdiff");
+                File.Delete(targetFile.FullName + ".diff");
                 return;
-            } finally {
-                if (of != null) of.Dispose();
             }
 
         exit:
