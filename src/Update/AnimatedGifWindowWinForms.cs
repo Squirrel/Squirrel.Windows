@@ -66,7 +66,13 @@ namespace Squirrel.Update
                 }
 
                 var wnd = new AnimatedGifWindow();
-                wnd.Show();
+                if (token.IsCancellationRequested) return;
+
+                try {
+                    wnd.Show();
+                } catch (Exception) {
+                    return;
+                }
 
                 token.Register(() => wnd.Invoke(new Action(() => wnd.Close())));
 
@@ -93,7 +99,17 @@ namespace Squirrel.Update
                     wnd.Invoke(new Action(() => wnd.TopMost = false));
                 });
 
-                Application.Run(wnd);
+                if (token.IsCancellationRequested) return;
+
+#if !DEBUG
+                try {
+#endif
+                    Application.Run(wnd);
+#if !DEBUG
+                } catch (Exception) {
+                    return;
+                }
+#endif
             });
 
             thread.SetApartmentState(ApartmentState.STA);
