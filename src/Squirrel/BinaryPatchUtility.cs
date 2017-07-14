@@ -316,17 +316,14 @@ namespace Squirrel.Bsdiff
             // prepare to read three parts of the patch in parallel
             using (Stream compressedControlStream = openPatchStream())
             using (Stream compressedDiffStream = openPatchStream())
-            using (Stream compressedExtraStream = openPatchStream())
             {
                 // seek to the start of each part
                 compressedControlStream.Seek(c_headerSize, SeekOrigin.Current);
                 compressedDiffStream.Seek(c_headerSize + controlLength, SeekOrigin.Current);
-                compressedExtraStream.Seek(c_headerSize + controlLength + diffLength, SeekOrigin.Current);
 
                 // decompress each part (to read it)
                 using (var controlStream = new BZip2Stream(compressedControlStream, CompressionMode.Decompress))
                 using (var diffStream = new BZip2Stream(compressedDiffStream, CompressionMode.Decompress))
-                using (var extraStream = new BZip2Stream(compressedExtraStream, CompressionMode.Decompress))
                 {
                     long[] control = new long[3];
                     byte[] buffer = new byte[8];
@@ -382,7 +379,7 @@ namespace Squirrel.Bsdiff
                         {
                             int actualBytesToCopy = Math.Min(bytesToCopy, c_bufferSize);
 
-                            extraStream.ReadExactly(newData, 0, actualBytesToCopy);
+                            diffStream.ReadExactly(newData, 0, actualBytesToCopy);
                             output.Write(newData, 0, actualBytesToCopy);
 
                             newPosition += actualBytesToCopy;
