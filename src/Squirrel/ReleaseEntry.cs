@@ -53,9 +53,9 @@ namespace Squirrel
         public string EntryAsString {
             get {
                 if (StagingPercentage != null) {
-                    return String.Format("{0} {1}{2} {3} # {4}", SHA1, BaseUrl, Filename, Filesize, stagingPercentageAsString(StagingPercentage.Value));
+                    return String.Format("{0} {1}{2} {3} # {4}", SHA1, BaseUrl, Uri.EscapeDataString(Filename), Filesize, stagingPercentageAsString(StagingPercentage.Value));
                 } else {
-                    return String.Format("{0} {1}{2} {3}", SHA1, BaseUrl, Filename, Filesize);
+                    return String.Format("{0} {1}{2} {3}", SHA1, BaseUrl, Uri.EscapeDataString(Filename), Filesize);
                 }
             }
         }
@@ -119,7 +119,7 @@ namespace Squirrel
                 throw new Exception("Invalid release entry: " + entry);
             }
 
-            string filename = m.Groups[2].Value;
+            string filename = Uri.UnescapeDataString(m.Groups[2].Value);
 
             // Split the base URL and the filename if an URI is provided,
             // throws if a path is provided
