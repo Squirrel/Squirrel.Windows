@@ -25,6 +25,7 @@ BEGIN
     END
 END
 ```
+Note: The block address must be equal to "040904b0".
 
 ### Application Startup Commands
 
