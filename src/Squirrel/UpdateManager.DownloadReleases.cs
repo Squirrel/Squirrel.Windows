@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Splat;
+using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Squirrel
 {
@@ -13,10 +15,12 @@ namespace Squirrel
         internal class DownloadReleasesImpl : IEnableLogger
         {
             readonly string rootAppDirectory;
+            readonly X509Certificate originalCertificate;
 
             public DownloadReleasesImpl(string rootAppDirectory)
             {
                 this.rootAppDirectory = rootAppDirectory;
+                this.originalCertificate = GetCurrentExeCertificate();
             }
 
             public async Task DownloadReleases(string updateUrlOrPath, IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null, IFileDownloader urlDownloader = null)
@@ -60,6 +64,13 @@ namespace Squirrel
             {
                 return x.BaseUrl != null && 
                     Uri.IsWellFormedUriString(x.BaseUrl, UriKind.Absolute);
+            }
+
+            public async Task VerifyReleases(IEnumerable<ReleaseEntry> releasesToDownload, bool verifySignature)
+            {
+                await checksumAllPackages(releasesToDownload);
+                if(verifySignature)
+                    await verifySignatureAllPackages(releasesToDownload);
             }
 
             Task downloadRelease(string updateBaseUrl, ReleaseEntry releaseEntry, IFileDownloader urlDownloader, string targetFile, Action<int> progress)
@@ -107,6 +118,58 @@ namespace Squirrel
                         targetPackage.Delete();
                         throw new Exception("Checksum doesn't match: " + targetPackage.FullName);
                     }
+                }
+            }
+
+            Task verifySignatureAllPackages(IEnumerable<ReleaseEntry> releasesDownloaded)
+            {
+                return releasesDownloaded.ForEachAsync(x => verifySignature(x));
+            }
+
+            void verifySignature(ReleaseEntry downloadedRelease)
+            {
+                var filePath = Path.Combine(rootAppDirectory, "packages", downloadedRelease.Filename);
+                var targetPackage = new FileInfo(filePath);
+                
+                if(originalCertificate == null)
+                {
+                    this.Log().Info("Current exe doesn't have signature, skip verification for update package");
+                    return;
+                }
+                if (!targetPackage.Exists)
+                {
+                    this.Log().Error("File {0} should exist but doesn't", targetPackage.FullName);
+                    throw new Exception("Verifysignature file doesn't exist: " + targetPackage.FullName);
+                }
+                    
+                try
+                {
+                    var updatePackageCertificate = X509Certificate.CreateFromSignedFile(filePath);
+                    if (updatePackageCertificate.Subject != originalCertificate.Subject)
+                    {
+                        targetPackage.Delete();
+                        throw new Exception(String.Format("Certificate subjects do not match, current:{0}, update: {1} ",
+                            originalCertificate.Subject, updatePackageCertificate.Subject));
+                    }
+                }
+                catch (Exception e)
+                {
+                    targetPackage.Delete();
+                    throw e;
+                }
+            }
+
+            X509Certificate GetCurrentExeCertificate()
+            {
+                var filePath = Assembly.GetExecutingAssembly().Location;
+                try
+                {
+                    return X509Certificate.CreateFromSignedFile(filePath);
+                }
+                catch (Exception e)
+                {
+                    this.Log().Error("Current exe doesn't have signature, will not enforce verification for update", e);
+                    return null;
                 }
             }
         }
