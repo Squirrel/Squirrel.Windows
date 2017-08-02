@@ -211,6 +211,60 @@ namespace Squirrel.Update
         {
             File.WriteAllText(path, data);
         }
+
+        public static List<string> ReadCatalogFile(string fileName)
+        {
+            //Get cryptographic service provider (CSP) to be passed to CryptCATOpen
+            List<string> data = new List<string>();
+            IntPtr cryptProv = IntPtr.Zero;
+            bool status = CatalogFunctions.CryptAcquireContext(out cryptProv, IntPtr.Zero, IntPtr.Zero, CatalogFunctions.PROV_RSA_FULL, 0);
+            if (status == false)
+            {
+                var err = Marshal.GetLastWin32Error();
+                if (err == CatalogFunctions.NTE_BAD_KEYSET)
+                {
+                    // No default container was found. Attempt to create it.
+                    status = CatalogFunctions.CryptAcquireContext(out cryptProv, IntPtr.Zero, IntPtr.Zero, CatalogFunctions.PROV_RSA_FULL, CatalogFunctions.CRYPT_NEWKEYSET);
+                    if (status == false)
+                    {
+                        err = Marshal.GetLastWin32Error();
+                        throw new Exception("Error in CryptAcquireContext: " + err);
+                    }
+                }
+                else
+                {
+                    throw new Exception("Error in CryptAcquireContext: " + err);
+                }
+            }
+
+            //Open the catalog file for reading
+            IntPtr hCatalog = CatalogFunctions.CryptCATOpen(fileName, 0, cryptProv, CatalogFunctions.CRYPTCAT_VERSION_1, 0x00000001);
+
+            if (hCatalog == CatalogFunctions.INVALID_HANDLE_VALUE)
+            {
+                //Unable to open cat file, release the acquired 
+                CatalogFunctions.CryptReleaseContext(cryptProv, 0);
+                throw new Exception("Unable to read catalog file");
+            }
+
+            //Read the catalog members
+            IntPtr pMemberPtr = CatalogFunctions.CryptCATEnumerateMember(hCatalog, IntPtr.Zero);
+            while (pMemberPtr != IntPtr.Zero)
+            {
+                CRYPTCATMEMBER cdf = (CRYPTCATMEMBER)Marshal.PtrToStructure(pMemberPtr, typeof(CRYPTCATMEMBER));
+                //Use the data in cdf
+                data.Add(cdf.pwszReferenceTag);
+                pMemberPtr = CatalogFunctions.CryptCATEnumerateMember(hCatalog, pMemberPtr);
+            }
+
+            //Close the catalog file
+            CatalogFunctions.CryptCATClose(hCatalog);
+
+            //Release CSP 
+            CatalogFunctions.CryptReleaseContext(cryptProv, 0);
+
+            return data;
+        }
     }
 }
 

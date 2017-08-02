@@ -6,6 +6,8 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Splat;
+using System.Security.Cryptography.X509Certificates;
+using Squirrel.Update;
 
 namespace Squirrel
 {
@@ -24,6 +26,7 @@ namespace Squirrel
                 string localReleaseFile,
                 string updateUrlOrPath,
                 bool ignoreDeltaUpdates = false,
+                bool verifySignature = false,
                 Action<int> progress = null,
                 IFileDownloader urlDownloader = null)
             {
@@ -44,6 +47,8 @@ namespace Squirrel
                 if (shouldInitialize) await initializeClientAppDirectory();
 
                 string releaseFile;
+                byte[] releaseDataBytes = null;
+                byte[] releaseFileSignature = null;
 
                 var latestLocalRelease = localReleases.Count() > 0 ?
                     localReleases.MaxBy(x => x.Version).First() :
@@ -73,8 +78,14 @@ namespace Squirrel
                             });
                         }
 
-                        var data = await urlDownloader.DownloadUrl(uri.ToString());
-                        releaseFile = Encoding.UTF8.GetString(data);
+                        releaseDataBytes = await urlDownloader.DownloadUrl(uri.ToString());
+                        releaseFile = Encoding.UTF8.GetString(releaseDataBytes);
+                        if(verifySignature)
+                        {
+                            this.Log().Info("####Downloading signature file");
+                            var signatureFileUri = String.Concat(uri.ToString(), ".cat");
+                            releaseFileSignature = await urlDownloader.DownloadUrl(signatureFileUri);
+                        }
                     } catch (WebException ex) {
                         this.Log().InfoException("Download resulted in WebException (returning blank release list)", ex);
 
@@ -96,6 +107,7 @@ namespace Squirrel
                     }
 
                     var fi = new FileInfo(Path.Combine(updateUrlOrPath, "RELEASES"));
+                    var fiSignature = new FileInfo(Path.Combine(updateUrlOrPath, "RELEASES.cat"));
                     if (!fi.Exists) {
                         var message = String.Format(
                             "The file {0} does not exist, something is probably broken with your application",
@@ -113,10 +125,28 @@ namespace Squirrel
                             packages.Select(x => ReleaseEntry.GenerateFromFile(x.FullName)), fi.FullName);
                     }
 
+                    releaseDataBytes = File.ReadAllBytes(fi.FullName);
                     releaseFile = File.ReadAllText(fi.FullName, Encoding.UTF8);
+                    if(verifySignature)
+                    {
+                        this.Log().Info("####Downloading signature file");
+                        if (!fiSignature.Exists)
+                        {
+                            var message = String.Format(
+                                "The file {0} does not exist, something is probably broken with your application",
+                                fi.FullName);
+                            throw new Exception(message);
+
+                        }
+                        releaseFileSignature = File.ReadAllBytes(fiSignature.FullName);
+                    }
                     progress(33);
                 }
 
+                if (verifySignature && !verifyReleaseFile(releaseDataBytes, releaseFileSignature))
+                {
+                    throw new Exception("RELEASE file verification failed");
+                }
                 var ret = default(UpdateInfo);
                 var remoteReleases = ReleaseEntry.ParseReleaseFileAndApplyStaging(releaseFile, stagingId);
                 progress(66);
@@ -129,6 +159,61 @@ namespace Squirrel
 
                 progress(100);
                 return ret;
+            }
+
+            bool verifyReleaseFile(byte[] releaseData, byte[] signatureData)
+            {
+                if ((releaseData == null) || (signatureData == null))
+                    return false;
+                var catalogFilePath = Path.Combine(Utility.GetTempDirectory(rootAppDirectory).FullName, "RELEASES.cat");
+                File.WriteAllBytes(catalogFilePath, signatureData);
+                if(isSignatureValid(catalogFilePath) && isChecksumValid(releaseData, catalogFilePath))
+                {
+                    return true;
+                }
+                return false;
+            }
+
+            public bool isChecksumValid(byte[] releaseBytes, string catalogFilePath)
+            {
+                try
+                {
+                    List<string> checksums = CatalogTools.ReadCatalogFile(catalogFilePath);
+                    if (checksums.Count == 0)
+                    {
+                        throw new Exception("Catalog file doesn't have RELEASE thumbprint");
+                    }
+                    string releaseChecksum = checksums[0];
+                    var stream = new MemoryStream(releaseBytes);
+                    string calculatedChecksum = Utility.CalculateStreamSHA1(stream);
+                    if (releaseChecksum != calculatedChecksum)
+                    {
+                        throw new Exception("RELEASES file has invalid checksum");
+                    }
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Failed to verify RELEASE checksum", e);
+                }
+                return true;
+            }
+
+            public bool isSignatureValid(string filePath)
+            {
+                try
+                {
+                    //Check for valid signature
+                    var cert = new X509Certificate2(X509Certificate.CreateFromSignedFile(filePath));
+                    if (!cert.Verify())
+                    {
+                        throw new Exception("Failed to verify catalog file signature");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception("Catalog file has invalid signature", ex);
+                }
+                return true;
             }
 
             async Task initializeClientAppDirectory()
