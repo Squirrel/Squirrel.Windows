@@ -428,6 +428,23 @@ namespace Squirrel.Update
 
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
+#if MONO
+
+#else
+            //write cdf file
+            try
+            {
+                var cdfFilePath = Path.Combine(di.FullName, "RELEASES.cdf");
+                var catFilePath = Path.Combine(di.FullName, "RELEASES.cat");
+                var cdfData = Properties.Resources.RELEASES_CDF.Replace("$OUT_FILE", catFilePath).Replace("$FILE1", releaseFilePath);
+                CatalogTools.WriteCatalogDefinitionFile(cdfFilePath, cdfData);
+                CatalogTools.CreateCatalogFile(cdfFilePath);
+                Utility.DeleteFileHarder(cdfFilePath, true);
+            } catch(Exception e)
+            {
+                this.Log().Info("Failed to create catalog file" + e.Message);
+            }
+#endif
             var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 

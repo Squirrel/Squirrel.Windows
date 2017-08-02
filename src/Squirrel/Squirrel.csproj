@@ -75,6 +75,7 @@
       <Link>Properties\SolutionAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="BinaryPatchUtility.cs" />
+    <Compile Include="CatalogTools.cs" />
     <Compile Include="ContentType.cs" />
     <Compile Include="DeltaPackage.cs" />
     <Compile Include="EnumerableExtensions.cs" />
