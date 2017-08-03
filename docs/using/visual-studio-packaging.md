@@ -10,20 +10,31 @@ Squirrel packaging can be easily integrated directly into your build process usi
 The first step is to define a build target in your `.csproj` file.
 
 ```xml
+<ItemGroup>
+  <NuGetCommandLine Include="..\packages\NuGet.CommandLine.*\tools\nuget.exe">
+    <InProject>False</InProject>
+  </NuGetCommandLine>
+  <Squirrel Include="..\packages\Squirrel.Windows.*\tools\squirrel.exe">
+    <InProject>False</InProject>
+  </Squirrel>
+</ItemGroup>
 <Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release'">
+  <!-- Add some nice errors for the next person that comes along -->
+  <Error Condition="!Exists(@(NuGetCommandLine->'%(FullPath)'))" Text="You are trying to use the NuGet.CommandLine package, but it is not installed. Please install NuGet.CommandLine from the Package Manager." />
+  <Error Condition="!Exists(@(Squirrel->'%(FullPath)'))" Text="You are trying to use the Squirrel.Windows package, but it is not installed. Please install Squirrel.Windows from the Package Manager." />
   <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
-    <Output TaskParameter="Assemblies" ItemName="myAssemblyInfo"/>
+    <Output TaskParameter="Assemblies" ItemName="assemblyInfo" />
   </GetAssemblyIdentity>
-  <Exec Command="nuget pack MyApp.nuspec -Version %(myAssemblyInfo.Version) -Properties Configuration=Release -OutputDirectory $(OutDir) -BasePath $(OutDir)" />
-  <Exec Command="squirrel --releasify $(OutDir)MyApp.$([System.Version]::Parse(%(myAssemblyInfo.Version)).ToString(3)).nupkg" />
+  <Exec Command="&quot;@(NuGetCommandLine->'%(FullPath)')&quot; pack $(TargetName).nuspec -Version $([System.Version]::Parse(%(assemblyInfo.Version)).ToString(3)) -OutputDirectory $(OutDir) -BasePath $(OutDir)" />
+  <Exec Command="&quot;@(Squirrel->'%(FullPath)')&quot; --releasify $(OutDir)$(TargetName).$([System.Version]::Parse(%(assemblyInfo.Version)).ToString(3)).nupkg --releaseDir=../Releases" />
 </Target>
 ```
 
 This will generate a NuGet package from .nuspec file setting version from AssemblyInfo.cs and place it in OutDir (by default bin\Release). Then it will generate release files from it.
 
-## Example .nuspec file for MyApp
+## Example .nuspec file
 
-Here is an example `MyApp.nuspec` file for the above build target example.
+Here is an example `MyApp.nuspec` file for the above build target example. Don't forget to change id tag and file name to match your project name.
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -32,11 +43,8 @@ Here is an example `MyApp.nuspec` file for the above build target example.
     <id>MyApp</id>
     <!-- version will be replaced by MSBuild -->
     <version>0.0.0.0</version>
-    <title>title</title>
-    <authors>authors</authors>
     <description>description</description>
-    <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <copyright>Copyright 2016</copyright>
+    <authors>authors</authors>
     <dependencies />
   </metadata>
   <files>
@@ -47,17 +55,13 @@ Here is an example `MyApp.nuspec` file for the above build target example.
 
 ## Additional Notes
 
-Please be aware of the following when using this solution:
-
-* Solution needs to have nuget.exe available which can be accomplished by installing `NuGet.CommandLine` package in your solution.  
+The example above searches for squirrel.exe and nuget.exe in your nuget `packages` directory. To make nuget.exe available please install `NuGet.CommandLine` package.
 
 ```pm
 PM>  Install-Package NuGet.CommandLine
 ```
 
-* It suffers from a bug when sometimes NuGet packages are not loaded properly and throws nuget/squirrel is not recogized (9009) errors.  
- **Tip:** In this case you may simply need to restart Visual Studio so the Package Manager Console will have loaded all the package tools
-* If you get the following error you may need add the full path to squirrel.exe in the build target `Exec Command` call. `'squirrel' is not recognized as an internal or external command`
+Note: this will not work if your solution uses new `PackageReference` directive instead of `packages.config` file for NuGet dependencies because it will be unable to find nuget.exe and squirrel.exe. In that case change path to executables accordingly.
 
 **Source:** [Issue #630](https://github.com/Squirrel/Squirrel.Windows/issues/630)
 
