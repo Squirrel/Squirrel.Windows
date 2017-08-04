@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Splat;
 using System.Security.Cryptography.X509Certificates;
 using Squirrel.Update;
+using System.Reflection;
 
 namespace Squirrel
 {
@@ -16,10 +17,25 @@ namespace Squirrel
         internal class CheckForUpdateImpl : IEnableLogger
         {
             readonly string rootAppDirectory;
-
+            X509Certificate2 currentCert; 
             public CheckForUpdateImpl(string rootAppDirectory)
             {
                 this.rootAppDirectory = rootAppDirectory;
+                currentCert = GetCurrentCertificate();
+            }
+            X509Certificate2 GetCurrentCertificate()
+            {
+                var filePath = Assembly.GetExecutingAssembly().Location;
+                try
+                {
+                    var cert = X509Certificate.CreateFromSignedFile(filePath);
+                    return new X509Certificate2(cert);
+                }
+                catch (Exception e)
+                {
+                    this.Log().Error("Current exe doesn't have signature, will not enforce verification for update", e);
+                    return null;
+                }
             }
 
             public async Task<UpdateInfo> CheckForUpdate(
@@ -31,6 +47,12 @@ namespace Squirrel
                 IFileDownloader urlDownloader = null)
             {
                 progress = progress ?? (_ => { });
+                //Skip signature validation if current exe is not signed
+                if (currentCert == null)
+                {
+                    this.Log().Info("Skipping signature verification for RELEASES file because current app is not signed");
+                    verifySignature = false;
+                }
 
                 var localReleases = Enumerable.Empty<ReleaseEntry>();
                 var stagingId = getOrCreateStagedUserId();
