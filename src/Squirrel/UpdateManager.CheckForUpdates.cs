@@ -230,6 +230,14 @@ namespace Squirrel
                     {
                         throw new Exception("Failed to verify catalog file signature");
                     }
+                    //Check that the update comes from the same source as current app
+                    if(currentCert != null && currentCert.Subject!=cert.Subject)
+                    {
+                        throw new Exception(String.Format("Catalog file comes from an unknown source: Current:{0}, New:{1}",
+                            currentCert.Subject,
+                            cert.Subject)
+                        );
+                    }
                 }
                 catch (Exception ex)
                 {
