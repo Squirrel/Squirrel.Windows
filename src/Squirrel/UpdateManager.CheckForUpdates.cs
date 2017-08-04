@@ -105,8 +105,8 @@ namespace Squirrel
                         if(verifySignature)
                         {
                             this.Log().Info("####Downloading signature file");
-                            var signatureFileUri = String.Concat(uri.ToString(), ".cat");
-                            releaseFileSignature = await urlDownloader.DownloadUrl(signatureFileUri);
+                            var signatureFileUri = Utility.AppendPathToUri(new Uri(updateUrlOrPath), "RELEASES.cat");
+                            releaseFileSignature = await urlDownloader.DownloadUrl(signatureFileUri.ToString());
                         }
                     } catch (WebException ex) {
                         this.Log().InfoException("Download resulted in WebException (returning blank release list)", ex);
