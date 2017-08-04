@@ -17,8 +17,7 @@ namespace Squirrel
         {
             var di = new DirectoryInfo(directory);
 
-            return di.EnumerateFiles()
-                .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            return di.EnumerateFiles("*.exe", SearchOption.AllDirectories)
                 .Select(x => x.FullName)
                 .Where(x => (GetPESquirrelAwareVersion(x) ?? -1) >= minimumVersion)
                 .ToList();
