@@ -467,6 +467,9 @@ namespace Squirrel.Update
 
             if (signingOpts != null) {
                 signPEFile(targetSetupExe, signingOpts).Wait();
+                var catalogFilePath = Path.Combine(di.FullName, "RELEASES.cat");
+                if (File.Exists(catalogFilePath))
+                    signPEFile(catalogFilePath, signingOpts).Wait();
             }
 
             if (generateMsi) {
