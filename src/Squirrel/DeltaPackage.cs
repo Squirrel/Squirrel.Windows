@@ -164,6 +164,94 @@ namespace Squirrel
             return new ReleasePackage(outputFile);
         }
 
+        public ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, IEnumerable<ReleasePackage> deltaPackages, string outputFile)
+        {
+            Contract.Requires(deltaPackages != null);
+            Contract.Requires(!String.IsNullOrEmpty(outputFile) && !File.Exists(outputFile));
+
+            string workingPath;
+            string deltaPath;
+            var opts = new ExtractionOptions()
+            {
+                ExtractFullPath = true,
+                Overwrite = true,
+                PreserveFileTime = true
+            };
+
+            using (Utility.WithTempDirectory(out workingPath, localAppDirectory))
+            {
+                using (var za = ZipArchive.Open(basePackage.InputPackageFile))
+                using (var reader = za.ExtractAllEntries())
+                {
+                    reader.WriteAllToDirectory(workingPath, opts);
+                }
+
+                foreach (var deltaPackage in deltaPackages)
+                {
+                    using (Utility.WithTempDirectory(out deltaPath, localAppDirectory))
+                    {
+                        using (var za = ZipArchive.Open(deltaPackage.InputPackageFile))
+                        using (var reader = za.ExtractAllEntries())
+                        {
+                            reader.WriteAllToDirectory(deltaPath, opts);
+                        }
+
+                        var pathsVisited = new List<string>();
+
+                        var deltaPathRelativePaths = new DirectoryInfo(deltaPath).GetAllFilesRecursively()
+                            .Select(x => x.FullName.Replace(deltaPath + Path.DirectorySeparatorChar, ""))
+                            .ToArray();
+
+                        // Apply all of the .diff files
+                        deltaPathRelativePaths
+                            .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                            .Where(x => !x.EndsWith(".shasum", StringComparison.InvariantCultureIgnoreCase))
+                            .Where(x => !x.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase) ||
+                                        !deltaPathRelativePaths.Contains(x.Replace(".diff", ".bsdiff")))
+                            .ForEach(file =>
+                            {
+                                pathsVisited.Add(Regex.Replace(file, @"\.(bs)?diff$", "").ToLowerInvariant());
+                                applyDiffToFile(deltaPath, file, workingPath);
+                            });
+
+                        // Delete all of the files that were in the old package but
+                        // not in the new one.
+                        new DirectoryInfo(workingPath).GetAllFilesRecursively()
+                            .Select(x => x.FullName.Replace(workingPath + Path.DirectorySeparatorChar, "")
+                                .ToLowerInvariant())
+                            .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase) &&
+                                        !pathsVisited.Contains(x))
+                            .ForEach(x =>
+                            {
+                                this.Log().Info("{0} was in old package but not in new one, deleting", x);
+                                File.Delete(Path.Combine(workingPath, x));
+                            });
+
+                        // Update all the files that aren't in 'lib' with the delta
+                        // package's versions (i.e. the nuspec file, etc etc).
+                        deltaPathRelativePaths
+                            .Where(x => !x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                            .ForEach(x =>
+                            {
+                                this.Log().Info("Updating metadata file: {0}", x);
+                                File.Copy(Path.Combine(deltaPath, x), Path.Combine(workingPath, x), true);
+                            });
+                    }
+
+                }
+                this.Log().Info("Repacking into full package: {0}", outputFile);
+                using (var za = ZipArchive.Create())
+                using (var tgt = File.OpenWrite(outputFile))
+                {
+                    za.DeflateCompressionLevel = CompressionLevel.BestSpeed;
+                    za.AddAllFromDirectory(workingPath);
+                    za.SaveTo(tgt);
+                }
+            }
+
+            return new ReleasePackage(outputFile);
+        }
+
         void createDeltaForSingleFile(FileInfo targetFile, DirectoryInfo workingDirectory, Dictionary<string, string> baseFileListing)
         {
             // NB: There are three cases here that we'll handle:
