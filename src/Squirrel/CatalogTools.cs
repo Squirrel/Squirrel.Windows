@@ -220,14 +220,14 @@ namespace Squirrel.Update
             bool status = CatalogFunctions.CryptAcquireContext(out cryptProv, IntPtr.Zero, IntPtr.Zero, CatalogFunctions.PROV_RSA_FULL, 0);
             if (status == false)
             {
-                var err = Marshal.GetLastWin32Error();
+                uint err = (uint)Marshal.GetLastWin32Error();
                 if (err == CatalogFunctions.NTE_BAD_KEYSET)
                 {
                     // No default container was found. Attempt to create it.
                     status = CatalogFunctions.CryptAcquireContext(out cryptProv, IntPtr.Zero, IntPtr.Zero, CatalogFunctions.PROV_RSA_FULL, CatalogFunctions.CRYPT_NEWKEYSET);
                     if (status == false)
                     {
-                        err = Marshal.GetLastWin32Error();
+                        err = (uint)Marshal.GetLastWin32Error();
                         throw new Exception("Error in CryptAcquireContext: " + err);
                     }
                 }
