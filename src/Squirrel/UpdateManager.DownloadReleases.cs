@@ -76,7 +76,7 @@ namespace Squirrel
                 return urlDownloader.DownloadFile(sourceFileUrl, targetFile, progress);
             }
 
-            Task checksumAllPackages(IEnumerable<ReleaseEntry> releasesDownloaded)
+            public Task checksumAllPackages(IEnumerable<ReleaseEntry> releasesDownloaded)
             {
                 return releasesDownloaded.ForEachAsync(x => checksumPackage(x));
             }

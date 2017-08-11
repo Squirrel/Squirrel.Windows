@@ -65,6 +65,14 @@ namespace Squirrel
             await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
         }
 
+        public async Task VerifyReleases(IEnumerable<ReleaseEntry> releasesDownloaded)
+        {
+            var downloadReleases = new DownloadReleasesImpl(rootAppDirectory);
+            await acquireUpdateLock();
+
+            await downloadReleases.checksumAllPackages(releasesDownloaded);
+        }
+
         public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);

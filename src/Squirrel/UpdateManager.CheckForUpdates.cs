@@ -156,7 +156,7 @@ namespace Squirrel
                         {
                             var message = String.Format(
                                 "The file {0} does not exist, something is probably broken with your application",
-                                fi.FullName);
+                                fiSignature.FullName);
                             throw new Exception(message);
 
                         }
