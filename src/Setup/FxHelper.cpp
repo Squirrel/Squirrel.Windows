@@ -14,10 +14,11 @@ static const int fx47ReleaseVersion = 460798; // Minimum version for .NET 4.7
 
 // According to https://msdn.microsoft.com/en-us/library/8z6watww%28v=vs.110%29.aspx,
 // to install .NET 4.5 we must be Vista SP2+, Windows 7 SP1+, or later.
-// However Paul thinks this is just for customer support, anything >= Vista will generally work.
 bool CFxHelper::CanInstallDotNet4_5()
 {
-	return IsWindowsVistaOrGreater();
+	bool vistaSP2ToBeforeWin7 = (IsWindowsVistaSP2OrGreater() && !IsWindows7OrGreater());
+	bool win7SP1OrGreater = IsWindows7SP1OrGreater();
+	return (vistaSP2ToBeforeWin7 || win7SP1OrGreater);
 }
 
 NetVersion CFxHelper::GetRequiredDotNetVersion()
