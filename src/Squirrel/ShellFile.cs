@@ -867,6 +867,7 @@ namespace Squirrel.Shell
             var pkey = PROPERTYKEY.PKEY_AppUserModel_ID;
             var str = PropVariant.FromString (appId);
             propStore.SetValue(ref pkey, ref str);
+			propStore.Commit();
         }
 
         /// <summary>
