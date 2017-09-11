@@ -40,6 +40,16 @@ namespace Squirrel
                                 progress((int)Math.Round(current += component));
                             }
                         });
+                        // With a lot of small updates, and since notifications are only sent every half second
+                        // for each one, we can easily miss half or more of the progress on each download.
+                        // To make sure we eventually get to 100% of the whole process, we need to update
+                        // progress (and especially the total in current) to indicate that this one is complete.
+                        lock (progress)
+                        {
+                            current -= component;
+                            component = toIncrement;
+                            progress((int)Math.Round(current += component));
+                        }
                     });
                 } else {
                     // From Disk
