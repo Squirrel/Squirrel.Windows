@@ -32,17 +32,13 @@ namespace Squirrel
         {
             byte[] output = { };
 
-            if (content == null)
-            {
+            if (content == null) {
                 goto done;
             }
 
-            Func<byte[], byte[], bool> matches = (bom, src) =>
-            {
-                if (src.Length < bom.Length)
-                {
-                    return false;
-                }
+            Func<byte[], byte[], bool> matches = (bom, src) => {
+                if (src.Length < bom.Length) return false;
+
                 return !bom.Where((chr, index) => src[index] != chr).Any();
             };
 
@@ -52,36 +48,25 @@ namespace Squirrel
             var utf16Le = new byte[] { 0xFF, 0xFE };
             var utf8 = new byte[] { 0xEF, 0xBB, 0xBF };
 
-            if (matches(utf32Be, content))
-            {
+            if (matches(utf32Be, content)) {
                 output = new byte[content.Length - utf32Be.Length];
-            }
-            else if (matches(utf32Le, content))
-            {
+            } else if (matches(utf32Le, content)) {
                 output = new byte[content.Length - utf32Le.Length];
-            }
-            else if (matches(utf16Be, content))
-            {
+            } else if (matches(utf16Be, content)) {
                 output = new byte[content.Length - utf16Be.Length];
-            }
-            else if (matches(utf16Le, content))
-            {
+            } else if (matches(utf16Le, content)) {
                 output = new byte[content.Length - utf16Le.Length];
-            }
-            else if (matches(utf8, content))
-            {
+            } else if (matches(utf8, content)) {
                 output = new byte[content.Length - utf8.Length];
-            }
-            else
-            {
+            } else {
                 output = content;
             }
 
         done:
-            if (output.Length > 0)
-            {
+            if (output.Length > 0) {
                 Buffer.BlockCopy(content, content.Length - output.Length, output, 0, output.Length);
             }
+
             return Encoding.UTF8.GetString(output);
         }
 
@@ -121,6 +106,7 @@ namespace Squirrel
         {
             // WHY DOESNT IT JUST DO THISSSSSSSS
             System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+
             var ret = new WebClient();
             var wp = WebRequest.DefaultWebProxy;
             if (wp != null) {
