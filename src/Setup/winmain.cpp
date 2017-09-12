@@ -46,7 +46,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 	bool weAreUACElevated = CUpdateRunner::AreWeUACElevated() == S_OK;
-	bool skipNetModalDialog = (cmdLine.Find(L"--skipNetModalDialog") >= 0);
+	bool skipNetModalDialog = (cmdLine.Find(L"--doNotAskInstallDotNet") >= 0);
 	bool attemptingToRerun = (cmdLine.Find(L"--rerunningWithoutUAC") >= 0);
 
 	if (weAreUACElevated && attemptingToRerun) {
