@@ -8,7 +8,7 @@ public:
 	static NetVersion GetRequiredDotNetVersion();
 	static bool CanInstallDotNet4_5();
 	static bool IsDotNetInstalled(NetVersion requiredVersion);
-	static HRESULT InstallDotNetFramework(NetVersion version, bool isQuiet);
+	static HRESULT InstallDotNetFramework(NetVersion version, bool isQuiet,bool skipNetModalDialog);
 private:
 	static HRESULT HandleRebootRequirement(bool isQuiet);
 	static bool WriteRunOnceEntry();
