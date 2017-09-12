@@ -5,12 +5,6 @@
 // http://msdn.microsoft.com/en-us/library/hh925568(v=vs.110).aspx#net_b
 static const wchar_t* ndpPath = L"SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full";
 static const int fx45ReleaseVersion = 378389;
-static const int fx451ReleaseVersion = 378675; //Minimum version for .NET 4.5.1
-static const int fx452ReleaseVersion = 379893;
-static const int fx46ReleaseVersion = 393295; //Windows 10 version, other systems are higher
-static const int fx461ReleaseVersion = 394254; // Minimum version for .NET 4.6.1
-static const int fx462ReleaseVersion = 394802; // Minimum version for .NET 4.6.2
-static const int fx47ReleaseVersion = 460798; // Minimum version for .NET 4.7
 
 // According to https://msdn.microsoft.com/en-us/library/8z6watww%28v=vs.110%29.aspx,
 // to install .NET 4.5 we must be Vista SP2+, Windows 7 SP1+, or later.
@@ -20,22 +14,7 @@ bool CFxHelper::CanInstallDotNet4_5()
 	return IsWindowsVistaOrGreater();
 }
 
-NetVersion CFxHelper::GetRequiredDotNetVersion()
-{
-	wchar_t* versionFlag = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_FX_VERSION_FLAG, L"FLAGS"));
-	CString resourceFlag(versionFlag);
-	if (resourceFlag.Compare(L"net451") == 0) return NetVersion::net451;
-	if (resourceFlag.Compare(L"net452") == 0) return NetVersion::net452;
-	if (resourceFlag.Compare(L"net46") == 0) return NetVersion::net46;
-	if (resourceFlag.Compare(L"net461") == 0) return NetVersion::net461;
-	if (resourceFlag.Compare(L"net462") == 0) return NetVersion::net462;
-	if (resourceFlag.Compare(L"net47") == 0) return NetVersion::net47;
-
-	//Default to standard net45
-	return NetVersion::net45;
-}
-
-bool CFxHelper::IsDotNetInstalled(NetVersion required)
+bool CFxHelper::IsDotNet45OrHigherInstalled()
 {
 	ATL::CRegKey key;
 
@@ -45,32 +24,11 @@ bool CFxHelper::IsDotNetInstalled(NetVersion required)
 
 	DWORD dwReleaseInfo = 0;
 	if (key.QueryDWORDValue(L"Release", dwReleaseInfo) != ERROR_SUCCESS ||
-		dwReleaseInfo < GetDotNetVersionReleaseNumber(required)) {
+			dwReleaseInfo < fx45ReleaseVersion) {
 		return false;
 	}
 
 	return true;
-}
-
-int CFxHelper::GetDotNetVersionReleaseNumber(NetVersion version)
-{
-	switch (version) {
-	case NetVersion::net451:
-		return fx451ReleaseVersion;
-	case NetVersion::net452:
-		return fx452ReleaseVersion;
-	case NetVersion::net46:
-		return fx46ReleaseVersion;
-	case NetVersion::net461:
-		return fx461ReleaseVersion;
-	case NetVersion::net462:
-		return fx462ReleaseVersion;
-	case NetVersion::net47:
-		return fx47ReleaseVersion;
-	case NetVersion::net45:
-	default:
-		return fx45ReleaseVersion;
-	}
 }
 
 class ATL_NO_VTABLE CDownloadProgressCallback :
@@ -85,7 +43,7 @@ public:
 	DECLARE_NOT_AGGREGATABLE(CDownloadProgressCallback)
 
 	BEGIN_COM_MAP(CDownloadProgressCallback)
-		COM_INTERFACE_ENTRY(IBindStatusCallback)
+	COM_INTERFACE_ENTRY(IBindStatusCallback)
 	END_COM_MAP()
 
 	DECLARE_PROTECT_FINAL_CONSTRUCT()
@@ -126,37 +84,40 @@ private:
 	CComPtr<IProgressDialog> m_spProgressDialog;
 };
 
-HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet)
+HRESULT CFxHelper::InstallDotNetFramework(bool isQuiet)
 {
+	/*isQuiet = true;
 	if (!isQuiet) {
 		CTaskDialog dlg;
-		TASKDIALOG_BUTTON buttons[] = {
+		TASKDIALOG_BUTTON buttons [] = {
 			{ 1, L"Install", },
 			{ 2, L"Cancel", },
 		};
 
-
 		dlg.SetButtons(buttons, 2);
-		dlg.SetMainInstructionText(GetInstallerMainInstructionForVersion(version));
-		dlg.SetContentText(GetInstallerContentForVersion(version));
+		dlg.SetMainInstructionText(L"Install .NET 4.5");
+		dlg.SetContentText(L"This application requires the .NET Framework 4.5. Click the Install button to get started.");
 		dlg.SetMainIcon(TD_INFORMATION_ICON);
 
-		dlg.SetExpandedInformationText(GetInstallerExpandedInfoForVersion(version));
+		dlg.SetExpandedInformationText(
+				L"This application requires .NET Framework 4.5 or above. Clicking "
+				L"the Install button will download the latest version of this operating "
+				L"system component from Microsoft and install it on your PC.");
 
 		int nButton;
 		if (FAILED(dlg.DoModal(::GetActiveWindow(), &nButton)) || nButton != 1) {
 			return S_FALSE;
 		}
-	}
+	}*/
 
 	HRESULT hr = E_FAIL;
 	WCHAR szFinalTempFileName[_MAX_PATH] = L"";
 	CComPtr<IBindStatusCallback> bscb;
 	CComPtr<IProgressDialog> pd;
-	SHELLEXECUTEINFO execInfo = { sizeof(execInfo), };
+	SHELLEXECUTEINFO execInfo = {sizeof(execInfo),};
 
 	CString url;
-	url.LoadString(GetInstallerUrlForVersion(version));
+	url.LoadString(IDS_FXDOWNLOADURL);
 
 	WCHAR szTempPath[_MAX_PATH];
 	DWORD dwTempPathResult = GetTempPath(_MAX_PATH, szTempPath);
@@ -229,8 +190,7 @@ HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet)
 
 	if (isQuiet) {
 		execInfo.lpParameters = L"/q /norestart";
-	}
-	else {
+	} else {
 		execInfo.lpParameters = L"/passive /norestart /showrmui";
 	}
 
@@ -253,8 +213,7 @@ HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet)
 		// See https://msdn.microsoft.com/en-us/library/ee942965%28v=vs.110%29.aspx
 		hr = HandleRebootRequirement(isQuiet);
 		// Exit as a failure, so that setup doesn't carry on now
-	}
-	else {
+	} else {
 		hr = exitCode != 0 ? E_FAIL : S_OK;
 	}
 
@@ -271,54 +230,6 @@ out:
 	return hr;
 }
 
-UINT CFxHelper::GetInstallerMainInstructionForVersion(NetVersion version)
-{
-	if (version >= NetVersion::net47) {
-		return IDS_FXINSTRUCTION47;
-	}
-
-	if (version >= NetVersion::net46) {
-		return IDS_FXINSTRUCTION46;
-	}
-	return IDS_FXINSTRUCTION;
-}
-
-UINT CFxHelper::GetInstallerContentForVersion(NetVersion version)
-{
-	if (version >= NetVersion::net47) {
-		return IDS_FXCONTENT47;
-	}
-
-	if (version >= NetVersion::net46) {
-		return IDS_FXCONTENT46;
-	}
-	return IDS_FXCONTENT;
-}
-
-UINT CFxHelper::GetInstallerExpandedInfoForVersion(NetVersion version)
-{
-	if (version >= NetVersion::net47) {
-		return IDS_FXEXPANDEDINFO47;
-	}
-
-	if (version >= NetVersion::net46) {
-		return IDS_FXEXPANDEDINFO46;
-	}
-	return IDS_FXEXPANDEDINFO;
-}
-
-UINT CFxHelper::GetInstallerUrlForVersion(NetVersion version)
-{
-	if (version >= NetVersion::net47) {
-		return IDS_FXDOWNLOADURL47;
-	}
-
-	if (version >= NetVersion::net46) {
-		return IDS_FXDOWNLOADURL46;
-	}
-	return IDS_FXDOWNLOADURL;
-}
-
 // Deal with the aftermath of the framework installer telling us that we need to reboot
 HRESULT CFxHelper::HandleRebootRequirement(bool isQuiet)
 {
@@ -326,8 +237,8 @@ HRESULT CFxHelper::HandleRebootRequirement(bool isQuiet)
 		// Don't silently reboot - just error-out
 		fprintf_s(stderr, "A reboot is required following .NET installation - reboot then run installer again.\n");
 		return E_FAIL;
-	}
-
+	} 
+	
 	CTaskDialog dlg;
 	TASKDIALOG_BUTTON buttons[] = {
 		{ 1, L"Restart Now", },
@@ -336,7 +247,7 @@ HRESULT CFxHelper::HandleRebootRequirement(bool isQuiet)
 
 	dlg.SetButtons(buttons, 2);
 	dlg.SetMainInstructionText(L"Restart System");
-	dlg.SetContentText(L"To finish installing the .NET Framework, the system now needs to restart.  The installation will finish after you restart and log-in again.");
+	dlg.SetContentText(L"To finish installing the .NET Framework 4.5, the system now needs to restart.  The installation will finish after you restart and log-in again.");
 	dlg.SetMainIcon(TD_INFORMATION_ICON);
 
 	dlg.SetExpandedInformationText(L"If you click 'Cancel', you'll need to re-run this setup program yourself, after restarting your system.");
@@ -381,6 +292,39 @@ bool CFxHelper::WriteRunOnceEntry()
 
 	return true;
 }
+
+bool CFxHelper::WriteMeetingIdIntoRegistry()
+{
+	try
+	{
+
+		ATL::CRegKey key;
+
+		if (key.Open(HKEY_CURRENT_USER, L"SOFTWARE\\Classes\\veevaengage", KEY_WRITE) != ERROR_SUCCESS) {
+			if (key.Create(HKEY_CURRENT_USER, L"SOFTWARE\\Classes\\veevaengage") != ERROR_SUCCESS)
+			{
+				return false;
+			}
+		}
+
+		CString meetingId;
+		meetingId.LoadString(IDS_MEETINGID);
+
+		if (key.SetStringValue(L"FirstRunMeetingId", meetingId) != ERROR_SUCCESS) {
+			return false;
+		}
+
+	}
+	catch (int e)
+	{
+		
+		return false;
+	}
+
+	return true;
+}
+
+
 
 bool CFxHelper::RebootSystem()
 {

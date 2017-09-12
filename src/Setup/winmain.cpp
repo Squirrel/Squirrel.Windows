@@ -37,6 +37,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		wcscat(lpCmdLine, L" --silent");
 	}
 
+	CFxHelper::WriteMeetingIdIntoRegistry();
+
 	HRESULT hr = ::CoInitialize(NULL);
 	ATLASSERT(SUCCEEDED(hr));
 
@@ -61,13 +63,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		goto out;
 	}
 
-	NetVersion requiredVersion = CFxHelper::GetRequiredDotNetVersion();
 
-	if (!CFxHelper::IsDotNetInstalled(requiredVersion)) {
-		hr = CFxHelper::InstallDotNetFramework(requiredVersion, isQuiet);
+	if (!CFxHelper::IsDotNet45OrHigherInstalled()) {
+		hr = CFxHelper::InstallDotNetFramework(isQuiet);
 		if (FAILED(hr)) {
 			exitCode = hr; // #yolo
-			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing the latest version manually"), NULL);
+			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing .NET 4.5 or higher manually"), NULL);
 			goto out;
 		}
 	
@@ -90,6 +91,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		exitCode = 0;
 		goto out;
 	}
+
+
+
 
 	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine, false);
 
