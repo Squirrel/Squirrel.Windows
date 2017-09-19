@@ -160,7 +160,7 @@ namespace Squirrel
                 await This.ErrorIfThrows(() => 
                     This.CreateUninstallerRegistryEntry(),
                     "Failed to set up uninstaller");
-            } catch (Exception ex) {
+            } catch {
                 if (ignoreDeltaUpdates == false) {
                     ignoreDeltaUpdates = true;
                     goto retry;

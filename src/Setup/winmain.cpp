@@ -8,7 +8,7 @@
 #include "MachineInstaller.h"
 #include <cstdio>
 
-CAppModule _Module;
+CAppModule* _Module;
 
 typedef BOOL(WINAPI *SetDefaultDllDirectoriesFunction)(DWORD DirectoryFlags);
 
@@ -30,8 +30,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	if (cmdLine.Find(L"--checkInstall") >= 0) {
 		// If we're already installed, exit as fast as possible
 		if (!MachineInstaller::ShouldSilentInstall()) {
-			exitCode = 0;
-			goto out;
+			return 0;
 		}
 
 		// Make sure update.exe gets silent
@@ -42,7 +41,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	ATLASSERT(SUCCEEDED(hr));
 
 	AtlInitCommonControls(ICC_COOL_CLASSES | ICC_BAR_CLASSES);
-	hr = _Module.Init(NULL, hInstance);
+	_Module = new CAppModule();
+	hr = _Module->Init(NULL, hInstance);
 
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 	bool weAreUACElevated = CUpdateRunner::AreWeUACElevated() == S_OK;
@@ -61,11 +61,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		goto out;
 	}
 
-	if (!CFxHelper::IsDotNet45OrHigherInstalled()) {
-		hr = CFxHelper::InstallDotNetFramework(isQuiet);
+	NetVersion requiredVersion = CFxHelper::GetRequiredDotNetVersion();
+
+	if (!CFxHelper::IsDotNetInstalled(requiredVersion)) {
+		hr = CFxHelper::InstallDotNetFramework(requiredVersion, isQuiet);
 		if (FAILED(hr)) {
 			exitCode = hr; // #yolo
-			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing .NET 4.5 or higher manually"), NULL);
+			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing the latest version manually"), NULL);
 			goto out;
 		}
 	
@@ -92,7 +94,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine, false);
 
 out:
-	_Module.Term();
-	::CoUninitialize();
+	_Module->Term();
 	return exitCode;
 }

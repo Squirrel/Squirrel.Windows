@@ -54,6 +54,8 @@ The code above demonstrates the most basic update mechanism using the `UpdateApp
 
 **Tip:** In this example we simply put the code in the `Program.cs` file. For a production application, place the update code later in start-up process so as to avoid slowing down your program start. 
 
+**Tip:** If you attempt to debug the application via Visual Studio, you will get an exception of `Update.exe not found, not a Squirrel-installed app?`. You can resolve this by placing a copy of the Update.exe in your bin directory (see [Debugging Updates: Update.exe not found?](../using/debugging-updates.md) section for details).
+
 ---
 | Previous: [Getting Started Guide](0-overview.md) | Next: [2. Packaging](2-packaging.md)|
 |:---|:---|

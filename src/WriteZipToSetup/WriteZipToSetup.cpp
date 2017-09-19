@@ -3,10 +3,69 @@
 
 #include "stdafx.h"
 
+using namespace std;
+
+BOOL CALLBACK EnumResLangProc(HMODULE hModule, LPCTSTR lpszType, LPCTSTR lpszName, WORD wIDLanguage, LONG_PTR lParam)
+{
+	HANDLE hUpdate = (HANDLE)lParam;
+	HRSRC hFindItAgain = FindResourceEx(hModule, lpszType, lpszName, wIDLanguage);
+
+	HGLOBAL hGlobal = LoadResource(hModule, hFindItAgain);
+	if (!hGlobal) return true;
+
+	UpdateResource(hUpdate, lpszType, lpszName, wIDLanguage, LockResource(hGlobal), SizeofResource(hModule, hFindItAgain));
+	return true;
+}
+
+BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCTSTR lpszType, LPTSTR lpszName, LONG_PTR lParam)
+{
+	HANDLE hUpdate = (HANDLE)lParam;
+
+	EnumResourceLanguages(hModule, lpszType, lpszName, EnumResLangProc, (LONG_PTR)hUpdate);
+	return true;
+}
+
+BOOL CALLBACK EnumResTypeProc(HMODULE hMod, LPTSTR lpszType, LONG_PTR lParam) 
+{
+	std::vector<wchar_t*>* typeList = (std::vector<wchar_t*>*)lParam;
+	if (IS_INTRESOURCE(lpszType)) {
+		typeList->push_back(lpszType);
+	} else {
+		typeList->push_back(_wcsdup(lpszType));
+	}
+
+	return true;
+}
+
+int CopyResourcesToStubExecutable(wchar_t* src, wchar_t* dest) 
+{
+	HMODULE hSrc = LoadLibraryEx(src, NULL, LOAD_LIBRARY_AS_DATAFILE);
+	if (!hSrc) return GetLastError();
+
+	HANDLE hUpdate = BeginUpdateResource(dest, true);
+	if (!hUpdate) return GetLastError();
+
+	std::vector<wchar_t*> typeList;
+	EnumResourceTypes(hSrc, EnumResTypeProc, (LONG_PTR)&typeList);
+
+	for (auto& type : typeList) {
+		EnumResourceNames(hSrc, type, EnumResNameProc, (LONG_PTR)hUpdate);
+	}
+
+	EndUpdateResource(hUpdate, false);
+	return 0;
+}
 
 int wmain(int argc, wchar_t* argv[])
 {
-	if (argc != 3) {
+	if (argc > 1 && wcscmp(argv[1], L"--copy-stub-resources") == 0) {
+		if (argc != 4) goto fail;
+		return CopyResourcesToStubExecutable(argv[2], argv[3]);
+	}
+	bool setFramework = false;
+	if (argc == 5 && wcscmp(argv[3], L"--set-required-framework") == 0) {
+		setFramework = true;
+	} else if (argc != 3) {
 		goto fail;
 	}
 
@@ -48,6 +107,13 @@ int wmain(int argc, wchar_t* argv[])
 	if (!UpdateResource(hRes, L"DATA", (LPCWSTR)131, 0x0409, pBuf, fileInfo.nFileSizeLow)) {
 		printf("Failed to update resource\n");
 		goto fail;
+	}
+
+	if (setFramework) {
+		if (!UpdateResource(hRes, L"FLAGS", (LPCWSTR)132, 0x0409, argv[4], (wcslen(argv[4])+1) * sizeof(wchar_t))) {
+			printf("Failed to update resouce\n");
+			goto fail;
+		}
 	}
 
 	printf("Finished!\n");
