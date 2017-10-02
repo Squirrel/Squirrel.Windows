@@ -172,7 +172,7 @@ namespace Squirrel
                 }
 
                 if (localReleases.Max(x => x.Version) > remoteReleases.Max(x => x.Version)) {
-                    this.Log().Warn("hwhat, local version is greater than remote version");
+                    this.Log().Warn("Local version is greater than remote version");
                     return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory);
                 }
 
@@ -205,7 +205,7 @@ namespace Squirrel
                     this.Log().Info("Generated new staging user ID: {0}", ret.ToString());
                     return ret;
                 } catch (Exception ex) {
-                    this.Log().WarnException("Couldn't write out staging user ID, this user probably shouldn't get beta anything", ex);
+                    this.Log().WarnException("Couldn't write out staging user ID, do not apply beta updates", ex);
                     return null;
                 }
             }

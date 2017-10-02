@@ -74,7 +74,7 @@ namespace Squirrel
             try {
                 iconStreamData = (byte[])Registry.GetValue("HKEY_CURRENT_USER\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\TrayNotify", "IconStreams", new byte[] { 00 });
             } catch (Exception ex) {
-                Console.WriteLine("Couldn't load IconStreams key, bailing: " + ex.ToString());
+                Console.WriteLine("Couldn't load IconStreams key, stopping: " + ex.ToString());
                 return;
             }
 
@@ -91,7 +91,7 @@ namespace Squirrel
                 for (int i=0; i < header.count; i++) {
                     var offset = Marshal.SizeOf(typeof(IconStreamsHeader)) + (i * Marshal.SizeOf(typeof(IconStreamsItem)));
                     if (offset > iconStreamData.Length) {
-                        this.Log().Error("Corrupted IconStreams regkey, bailing");
+                        this.Log().Error("Corrupted IconStreams regkey, stopping");
                         return;
                     }
 

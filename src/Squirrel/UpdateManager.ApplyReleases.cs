@@ -216,7 +216,7 @@ namespace Squirrel
                     // want it there and explicitly deleted it, so we shouldn't
                     // annoy them by recreating it.
                     if (!fileExists && updateOnly) {
-                        this.Log().Warn("Wanted to update shortcut {0} but it appears user deleted it", file);
+                        this.Log().Warn("Skipping update to shortcut {0} since it appears that the user deleted it", file);
                         continue;
                     }
 
@@ -287,7 +287,7 @@ namespace Squirrel
 
                     // NB: This might happen if we got killed partially through applying the release
                     if (target.Exists) {
-                        this.Log().Warn("Found partially applied release folder, killing it: " + target.FullName);
+                        this.Log().Warn("Found partially applied release folder, removing: " + target.FullName);
                         await Utility.DeleteDirectory(target.FullName);
                     }
 
@@ -394,7 +394,7 @@ namespace Squirrel
                 // If this is the first run, we run the apps with first-run and 
                 // *don't* wait for them, since they're probably the main EXE
                 if (squirrelApps.Count == 0) {
-                    this.Log().Warn("No apps are marked as Squirrel-aware! Going to run them all");
+                    this.Log().Warn("No apps are marked as Squirrel-aware, attempting to run all");
 
                     squirrelApps = targetDir.EnumerateFiles()
                         .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))

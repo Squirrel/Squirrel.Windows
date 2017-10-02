@@ -211,7 +211,7 @@ namespace Squirrel.Update
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName)) {
                 this.Log().Info("About to install to: " + mgr.RootAppDirectory);
                 if (Directory.Exists(mgr.RootAppDirectory)) {
-                    this.Log().Warn("Install path {0} already exists, burning it to the ground", mgr.RootAppDirectory);
+                    this.Log().Warn("Install path {0} already exists, removing", mgr.RootAppDirectory);
 
                     mgr.KillAllExecutablesBelongingToPackage();
                     await Task.Delay(500);
