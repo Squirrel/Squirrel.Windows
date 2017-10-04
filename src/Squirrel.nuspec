@@ -15,7 +15,7 @@
       <dependency id="SharpCompress" version="0.17.1" />
     </dependencies>
 
-    <id>squirrel.windows</id>
+    <id>techsmith.squirrel.windows</id>
     <title>Squirrel for Windows</title>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An installation and update framework for Windows applications</description>
