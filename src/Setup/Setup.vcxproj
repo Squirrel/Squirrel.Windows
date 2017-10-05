@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="FxHelper.h" />
+    <ClInclude Include="LicenseDialog.h" />
     <ClInclude Include="MachineInstaller.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Setup.h" />
@@ -156,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FxHelper.cpp" />
+    <ClCompile Include="LicenseDialog.cpp" />
     <ClCompile Include="MachineInstaller.cpp" />
     <ClCompile Include="unzip.cpp" />
     <ClCompile Include="UpdateRunner.cpp" />
@@ -175,6 +177,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="flags1.bin" />
+    <None Include="license.bin" />
     <None Include="update.zip" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
