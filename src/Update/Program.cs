@@ -13,6 +13,7 @@ using Splat;
 using Squirrel.Json;
 using NuGet;
 using System.Text.RegularExpressions;
+using System.Windows;
 
 namespace Squirrel.Update
 {
@@ -94,6 +95,7 @@ namespace Squirrel.Update
                 string icon = default(string);
                 string shortcutArgs = default(string);
                 string frameworkVersion = "net45";
+                string licenseDir = default(string);
                 bool shouldWait = false;
                 bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
                 bool noDelta = false;
@@ -131,6 +133,7 @@ namespace Squirrel.Update
                     { "no-msi", "Don't generate an MSI package", v => noMsi = true},
                     { "no-delta", "Don't generate delta packages to save time", v => noDelta = true},
                     { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
+                    { "licenseDir=", "Path to the license-language.rtf files to use", v => licenseDir = v},
                 };
 
                 opts.Parse(args);
@@ -181,7 +184,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion, !noDelta);
+                    Releasify(target, releaseDir, packagesDir, licenseDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion, !noDelta);
                     break;
                 }
             }
@@ -340,7 +343,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string licenseDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true)
         {
             ensureConsole();
 
@@ -447,6 +450,10 @@ namespace Squirrel.Update
 
             try {
                 var arguments = String.Format("\"{0}\" \"{1}\" \"--set-required-framework\" \"{2}\"", targetSetupExe, zipPath, frameworkVersion);
+            if ( licenseDir != null )
+            {
+                   arguments += $" --license-dir \"{licenseDir}\"";
+            }
                 var result = Utility.InvokeProcessAsync(writeZipToSetup, arguments, CancellationToken.None).Result;
                 if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
             } catch (Exception ex) {
