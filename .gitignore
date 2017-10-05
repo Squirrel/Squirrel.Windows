@@ -66,6 +66,9 @@ local.properties
 .builds
 **/*.dotCover
 **/packages/
+*.VC.db
+*.db-shm
+*.db-wal
 
 packages
 
