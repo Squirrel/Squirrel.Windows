@@ -7,6 +7,7 @@
 #include "UpdateRunner.h"
 #include "MachineInstaller.h"
 #include <cstdio>
+#include "LicenseDialog.h"
 
 CAppModule* _Module;
 
@@ -36,7 +37,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Make sure update.exe gets silent
 		wcscat(lpCmdLine, L" --silent");
 	}
-
+   
+   LicenseDialog license;
 	HRESULT hr = ::CoInitialize(NULL);
 	ATLASSERT(SUCCEEDED(hr));
 
@@ -60,6 +62,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		exitCode = E_FAIL;
 		goto out;
 	}
+
+   if ( license.ShouldShowLicense() )
+   {
+      if ( !license.AcceptLicense() )
+      {
+         exitCode = E_FAIL;
+         goto out;
+      }
+   }
 
 	NetVersion requiredVersion = CFxHelper::GetRequiredDotNetVersion();
 

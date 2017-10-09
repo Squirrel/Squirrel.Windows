@@ -39,6 +39,9 @@
     <ClInclude Include="MachineInstaller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LicenseDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -59,6 +62,9 @@
     <ClCompile Include="MachineInstaller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LicenseDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Setup.rc">
@@ -75,6 +81,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="update.zip">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="license.bin">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="flags1.bin">
