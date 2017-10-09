@@ -102,15 +102,18 @@ LRESULT LicenseDialog::OnDecline( WORD wNotifyCode, WORD wID, HWND hWndCtl, BOOL
    CheckDlgButton( IDC_DECLINE, FALSE );
 
    CTaskDialog dlg;
-
+   CString strUseTerms;
+   strUseTerms.LoadString( IDS_LICENSE_BACK_TO_USE_TERMS );
+   CString strCancelSetup;
+   strCancelSetup.LoadString( IDS_LICENSE_CANCEL_SETUP );
    TASKDIALOG_BUTTON buttons[] = {
-      { BTN_BACK_TO_USE_TERMS, L"Back to use terms", },
-      { BTN_CANCEL_SETUP, L"Cancel setup", },
+      { BTN_BACK_TO_USE_TERMS, strUseTerms, },
+      { BTN_CANCEL_SETUP, strCancelSetup, },
    };
 
    dlg.SetButtons( buttons, 2 );
-   dlg.SetWindowTitle( L"License Agreement" );
-   dlg.SetContentText( L"Declining the use terms means that you cannot install or use the software.  If you would like to return to the use terms, click \"Back to use terms\" below.  If not, click \"Cancel setup\".");
+   dlg.SetWindowTitle( IDS_LICENSE_TITLE );
+   dlg.SetContentText( IDS_LICENSE_DECLINE_TEXT );
    dlg.SetMainIcon( TD_INFORMATION_ICON );
 
    int nButton;
