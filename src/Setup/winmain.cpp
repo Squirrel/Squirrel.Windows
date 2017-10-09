@@ -7,6 +7,7 @@
 #include "UpdateRunner.h"
 #include "MachineInstaller.h"
 #include <cstdio>
+#include "LicenseDialog.h"
 
 CAppModule* _Module;
 
@@ -36,7 +37,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		// Make sure update.exe gets silent
 		wcscat(lpCmdLine, L" --silent");
 	}
-
+   
+   LicenseDialog license;
 	HRESULT hr = ::CoInitialize(NULL);
 	ATLASSERT(SUCCEEDED(hr));
 
@@ -49,17 +51,32 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	bool attemptingToRerun = (cmdLine.Find(L"--rerunningWithoutUAC") >= 0);
 
 	if (weAreUACElevated && attemptingToRerun) {
-		CUpdateRunner::DisplayErrorMessage(CString(L"Please re-run this installer as a normal user instead of \"Run as Administrator\"."), NULL);
+      CString strElevation;
+      strElevation.LoadString( IDS_ELEVATION_ERROR );
+		CUpdateRunner::DisplayErrorMessage( strElevation, NULL);
 		exitCode = E_FAIL;
 		goto out;
 	}
 
 	if (!CFxHelper::CanInstallDotNet4_5()) {
 		// Explain this as nicely as possible and give up.
-		MessageBox(0L, L"This program cannot run on Windows XP or before; it requires a later version of Windows.", L"Incompatible Operating System", 0);
+      CString strIncompatibleVersion;
+      strIncompatibleVersion.LoadString( IDS_INCOMPATIBLE_VERSION_ERROR );
+      CString strIncompatibleVersionTitle;
+      strIncompatibleVersionTitle.LoadString( IDS_INCOMPATIBLE_VERSION_ERROR_TITLE );
+		MessageBox(0L, strIncompatibleVersion, strIncompatibleVersionTitle, 0);
 		exitCode = E_FAIL;
 		goto out;
 	}
+
+   if ( license.ShouldShowLicense() )
+   {
+      if ( !license.AcceptLicense() )
+      {
+         exitCode = E_FAIL;
+         goto out;
+      }
+   }
 
 	NetVersion requiredVersion = CFxHelper::GetRequiredDotNetVersion();
 
@@ -67,7 +84,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		hr = CFxHelper::InstallDotNetFramework(requiredVersion, isQuiet);
 		if (FAILED(hr)) {
 			exitCode = hr; // #yolo
-			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing the latest version manually"), NULL);
+         CString strDotNetFrameworkError;
+         strDotNetFrameworkError.LoadString( IDS_DOTNETFRAMEWORK_FAILED_ERROR );
+			CUpdateRunner::DisplayErrorMessage( strDotNetFrameworkError, NULL);
 			goto out;
 		}
 	

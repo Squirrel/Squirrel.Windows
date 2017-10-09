@@ -4,6 +4,11 @@
 #include "stdafx.h"
 
 using namespace std;
+#include <regex>
+#include <sstream>
+#include <fstream>
+
+#define IDR_LICENSE_RTF 138
 
 BOOL CALLBACK EnumResLangProc(HMODULE hModule, LPCTSTR lpszType, LPCTSTR lpszName, WORD wIDLanguage, LONG_PTR lParam)
 {
@@ -56,18 +61,76 @@ int CopyResourcesToStubExecutable(wchar_t* src, wchar_t* dest)
 	return 0;
 }
 
+// Copy license-locale-name.rtf (i.e. license-en-US.rtf, license-de-DE.rtf) into Setup.exe resources
+bool UpdateLicenseResources( HANDLE hRes, const std::wstring& licenseDirectory )
+{
+   WIN32_FIND_DATA findData;
+   wstring licenseWildcard = licenseDirectory + L"\\license*.rtf";
+   HANDLE hFind = ::FindFirstFile( licenseWildcard.c_str(), &findData );
+   bool foundFile = ( hFind != INVALID_HANDLE_VALUE );
+   bool success = true;
+   std::wregex langRegex( L"license-(.*).rtf" );
+   while ( foundFile && success )
+   {
+      std::wstring filename = findData.cFileName;
+      std::wstring localeName;
+      std::wsmatch match;
+
+      if ( std::regex_search( filename, match, langRegex ) )
+      {
+         localeName = match.str( 1 );
+         LCID lcid = LocaleNameToLCID( localeName.c_str(), 0 );
+
+         std::ifstream is;
+         std::wstring filepath = licenseDirectory + L"\\" + filename;
+         is.open( filepath.c_str(), ios::binary );
+         auto stringstream = std::ostringstream();
+         stringstream << is.rdbuf();
+         auto buffer = stringstream.str(); 
+         if ( !UpdateResource( hRes, L"LICENSE", MAKEINTRESOURCE( IDR_LICENSE_RTF ), (WORD)lcid, (LPVOID)buffer.c_str(), buffer.length() ) )
+         {
+            success = false;
+         }
+      }
+
+
+      foundFile = ::FindNextFile( hFind, &findData ) != 0;
+   }
+
+   if ( hFind != INVALID_HANDLE_VALUE )
+   {
+      ::FindClose( hFind );
+   }
+   return success;
+}
+
 int wmain(int argc, wchar_t* argv[])
 {
+   wstring licenseDir = L"";
+
 	if (argc > 1 && wcscmp(argv[1], L"--copy-stub-resources") == 0) {
 		if (argc != 4) goto fail;
 		return CopyResourcesToStubExecutable(argv[2], argv[3]);
 	}
+   if ( argc < 3 )
+   {
+      goto fail;
+   }
 	bool setFramework = false;
-	if (argc == 5 && wcscmp(argv[3], L"--set-required-framework") == 0) {
-		setFramework = true;
-	} else if (argc != 3) {
-		goto fail;
-	}
+   wchar_t* dotnetFramework;
+
+   for ( int i = 0; i < argc; i++ )
+   {
+      if ( wcscmp( argv[i], L"--set-required-framework" ) == 0 && (i + 1 ) < argc )
+      {
+         setFramework = true;
+         dotnetFramework = argv[i + 1];
+      }
+      else if ( wcscmp( argv[i], L"--license-dir" ) == 0 && ( i + 1 ) < argc )
+      {
+         licenseDir = argv[i + 1];
+      }
+   }
 
 	wprintf(L"Setup: %s, Zip: %s\n", argv[1], argv[2]);
 
@@ -96,7 +159,7 @@ int wmain(int argc, wchar_t* argv[])
 
 		pCurrent += dwBytesRead;
 	} while (dwBytesRead > 0);
-
+   
 	printf("Updating Resource!\n");
 	HANDLE hRes = BeginUpdateResource(argv[1], false);
 	if (!hRes) {
@@ -104,13 +167,22 @@ int wmain(int argc, wchar_t* argv[])
 		goto fail;
 	}
 
+   if ( !licenseDir.empty() )
+   {
+      if ( !UpdateLicenseResources( hRes, licenseDir ) )
+      {
+         printf( "Failed to update license resources\n" );
+         goto fail;
+      }
+   }
+
 	if (!UpdateResource(hRes, L"DATA", (LPCWSTR)131, 0x0409, pBuf, fileInfo.nFileSizeLow)) {
 		printf("Failed to update resource\n");
 		goto fail;
 	}
 
 	if (setFramework) {
-		if (!UpdateResource(hRes, L"FLAGS", (LPCWSTR)132, 0x0409, argv[4], (wcslen(argv[4])+1) * sizeof(wchar_t))) {
+		if (!UpdateResource(hRes, L"FLAGS", (LPCWSTR)132, 0x0409, dotnetFramework, (wcslen( dotnetFramework )+1) * sizeof(wchar_t))) {
 			printf("Failed to update resouce\n");
 			goto fail;
 		}

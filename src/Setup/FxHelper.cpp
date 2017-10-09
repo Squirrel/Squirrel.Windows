@@ -14,10 +14,11 @@ static const int fx47ReleaseVersion = 460798; // Minimum version for .NET 4.7
 
 // According to https://msdn.microsoft.com/en-us/library/8z6watww%28v=vs.110%29.aspx,
 // to install .NET 4.5 we must be Vista SP2+, Windows 7 SP1+, or later.
-// However Paul thinks this is just for customer support, anything >= Vista will generally work.
 bool CFxHelper::CanInstallDotNet4_5()
 {
-	return IsWindowsVistaOrGreater();
+	bool vistaSP2ToBeforeWin7 = (IsWindowsVistaSP2OrGreater() && !IsWindows7OrGreater());
+	bool win7SP1OrGreater = IsWindows7SP1OrGreater();
+	return (vistaSP2ToBeforeWin7 || win7SP1OrGreater);
 }
 
 NetVersion CFxHelper::GetRequiredDotNetVersion()
@@ -130,9 +131,13 @@ HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet)
 {
 	if (!isQuiet) {
 		CTaskDialog dlg;
+      CString btnInstall;
+      btnInstall.LoadString( IDS_DOTNET_BUTTON_INSTALL );
+      CString btnCancel;
+      btnCancel.LoadString( IDS_DOTNET_BUTTON_CANCEL );
 		TASKDIALOG_BUTTON buttons[] = {
-			{ 1, L"Install", },
-			{ 2, L"Cancel", },
+			{ 1, btnInstall, },
+			{ 2, btnCancel, },
 		};
 
 
@@ -203,8 +208,12 @@ HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet)
 		pd.CoCreateInstance(CLSID_ProgressDialog);
 
 		if (pd != nullptr) {
-			pd->SetTitle(L"Downloading");
-			pd->SetLine(1, L"Downloading the .NET Framework installer", FALSE, nullptr);
+         CString strTitle;
+         strTitle.LoadString( IDS_DOTNET_DOWNLOAD_TITLE );
+         CString strLine;
+         strLine.LoadString( IDS_DOTNET_DOWNLOAD_TEXT );
+			pd->SetTitle( strTitle );
+			pd->SetLine(1, strLine, FALSE, nullptr);
 			pd->StartProgressDialog(nullptr, nullptr, 0, nullptr);
 
 			CComObject<CDownloadProgressCallback>* bscbObj = nullptr;
@@ -329,17 +338,21 @@ HRESULT CFxHelper::HandleRebootRequirement(bool isQuiet)
 	}
 
 	CTaskDialog dlg;
+   CString btnRestartNow;
+   btnRestartNow.LoadString( IDS_DOTNET_BUTTON_RESTARTNOW );
+   CString btnCancel;
+   btnCancel.LoadString( IDS_DOTNET_BUTTON_CANCEL );
 	TASKDIALOG_BUTTON buttons[] = {
-		{ 1, L"Restart Now", },
-		{ 2, L"Cancel", },
+		{ 1, btnRestartNow, },
+		{ 2, btnCancel, },
 	};
 
 	dlg.SetButtons(buttons, 2);
-	dlg.SetMainInstructionText(L"Restart System");
-	dlg.SetContentText(L"To finish installing the .NET Framework, the system now needs to restart.  The installation will finish after you restart and log-in again.");
+	dlg.SetMainInstructionText( IDS_DOTNET_RESTART_MAIN );
+	dlg.SetContentText( IDS_DOTNET_RESTART_CONTENT );
 	dlg.SetMainIcon(TD_INFORMATION_ICON);
 
-	dlg.SetExpandedInformationText(L"If you click 'Cancel', you'll need to re-run this setup program yourself, after restarting your system.");
+	dlg.SetExpandedInformationText( IDS_DOTNET_RESTART_EXTENDED );
 
 	int nButton;
 	if (FAILED(dlg.DoModal(::GetActiveWindow(), &nButton)) || nButton != 1) {

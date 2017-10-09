@@ -7,9 +7,13 @@
 void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 {
 	CTaskDialog dlg;
+   CString btnOpenSetupLog;
+   CString btnClose;
+   btnOpenSetupLog.LoadString( IDS_UPDATERUNNER_BUTTON_OPENSETUPLOG );
+   btnClose.LoadString( IDS_UPDATERUNNER_BUTTON_CLOSE );
 	TASKDIALOG_BUTTON buttons[] = {
-		{ 1, L"Open Setup Log", },
-		{ 2, L"Close", },
+		{ 1, btnOpenSetupLog, },
+		{ 2, btnClose, },
 	};
 
 	// TODO: Something about contacting support?
@@ -19,7 +23,7 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 		dlg.SetButtons(buttons, 2, 1);
 	}
 
-	dlg.SetMainInstructionText(L"Installation has failed");
+	dlg.SetMainInstructionText( IDS_UPDATERUNNER_INSTALLFAILED );
 	dlg.SetContentText(errorMessage);
 	dlg.SetMainIcon(TD_ERROR_ICON);
 
@@ -182,7 +186,9 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
-		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
+      CString strAccessDenied;
+      strAccessDenied.LoadString( IDS_UPDATERUNNER_ACCESSDENIED );
+		_swprintf_c(err, _countof(err), strAccessDenied, targetDir);
 		DisplayErrorMessage(CString(err), NULL);
 
 		return -1;
@@ -194,7 +200,9 @@ gotADir:
 	
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
-		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
+      CString strAccessDenied;
+      strAccessDenied.LoadString( IDS_UPDATERUNNER_ACCESSDENIED );
+      _swprintf_c( err, _countof( err ), strAccessDenied, targetDir );
 
 		if (useFallbackDir) {
 			DisplayErrorMessage(CString(err), NULL);
@@ -274,9 +282,9 @@ gotADir:
 	}
 
 	if (dwExitCode != 0) {
-		DisplayErrorMessage(CString(
-			L"There was an error while installing the application. " 
-			L"Check the setup log for more information and contact the author."), logFile);
+      CString strError;
+      strError.LoadString( IDS_UPDATERUNNER_ERROR );
+		DisplayErrorMessage( strError, logFile);
 	}
 
 	for (unsigned int i = 0; i < to_delete.size(); i++) {
@@ -292,7 +300,8 @@ failedExtract:
 		// Take another pass at it, using C:\ProgramData instead
 		return ExtractUpdaterAndRun(lpCommandLine, true);
 	}
-
-	DisplayErrorMessage(CString(L"Failed to extract installer"), NULL);
+   CString strFailedToExtract;
+   strFailedToExtract.LoadString( IDS_UPDATERUNNER_FAILEDTOEXTRACT );
+	DisplayErrorMessage( strFailedToExtract, NULL);
 	return (int) dwExitCode;
 }
