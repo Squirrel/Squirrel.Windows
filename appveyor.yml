@@ -1,4 +1,5 @@
-﻿configuration: Release
+﻿image: Visual Studio 2017
+configuration: Release
 
 install:
   - git submodule update --init --recursive
