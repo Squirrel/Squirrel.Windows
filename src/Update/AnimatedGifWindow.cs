@@ -1,17 +1,4 @@
-﻿#if !MONO
-using System;
-using System.IO;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shell;
-using WpfAnimatedGif;
-
+﻿
 namespace Squirrel.Update
 {
     public class AnimatedGifWindow : Window
@@ -30,13 +17,13 @@ namespace Squirrel.Update
                 src.BeginInit();
                 src.StreamSource = File.OpenRead(source);
                 src.EndInit();
-            
+
                 ImageBehavior.SetAnimatedSource(img, src);
                 this.Content = img;
                 this.Width = src.Width;
                 this.Height = src.Height;
             }
-                        
+
             this.AllowsTransparency = true;
             this.WindowStyle = WindowStyle.None;
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
@@ -56,12 +43,10 @@ namespace Squirrel.Update
             var thread = new Thread(() => {
                 if (token.IsCancellationRequested) return;
 
-                if (!Equals(initialDelay, TimeSpan.Zero)) {
-                    try {
-                      Task.Delay(initialDelay, token).ContinueWith(t => { return true; }).Wait();
-                    } catch (Exception) {
-                      return;
-                    }
+                try {
+                    Task.Delay(initialDelay, token).ContinueWith(t => { return true; }).Wait();
+                } catch (Exception) {
+                    return;
                 }
 
                 wnd = new AnimatedGifWindow();

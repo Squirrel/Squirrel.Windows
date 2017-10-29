@@ -511,12 +511,15 @@ namespace Squirrel
                         baseKey = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, view);
                         regKey = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers");
 
+                        if (regKey == null) return;
+
                         var toDelete = regKey.GetValueNames()
                             .Where(x => x.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase))
                             .ToList();
 
                         toDelete.ForEach(x =>
-                            this.Log().LogIfThrows(LogLevel.Warn, "Failed to delete key: " + x, () => regKey.DeleteValue(x)));
+                            this.Log().LogIfThrows(LogLevel.Warn, "Failed to delete key: " + x,
+                                () => regKey.DeleteValue(x)));
                     } catch (Exception e) {
                         this.Log().WarnException("Couldn't rewrite shim RegKey, most likely no apps are shimmed", e);
                     } finally {
@@ -597,7 +600,7 @@ namespace Squirrel
                 // Finally, clean up the app-X.Y.Z directories
                 await toCleanup.ForEachAsync(async x => {
                     try {
-                        if (runningProcesses.All(p => !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
+                        if (runningProcesses.All(p => p.Item1 == null || !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
                             await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
                         }
 

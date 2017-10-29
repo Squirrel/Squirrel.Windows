@@ -17,7 +17,7 @@ using System.Text.RegularExpressions;
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, 
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut,
         Deshortcut, ProcessStart, UpdateSelf, CheckForUpdate, CreateMsi
     }
 
@@ -44,34 +44,29 @@ namespace Squirrel.Update
             // open will actually crash the uninstaller
             bool isUninstalling = args.Any(x => x.Contains("uninstall"));
 
-            // Uncomment to test Gifs
-            //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
-            //Thread.Sleep(10 * 60 * 1000);
+            using (var logger = new SetupLogLogger(isUninstalling) {Level = LogLevel.Info}) {
+                Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
 
-            var logger = args.Any(x => x.StartsWith("--releasify") || x.StartsWith("--createMsi"))
-                             ? new ConsoleLogger()
-                             : (Splat.ILogger) new SetupLogLogger(isUninstalling);
-            logger.Level = LogLevel.Info;
-            Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
-            try
-            {
-                return executeCommandLine(args);
-            }
-            catch (Exception ex)
-            {
-                logger.Write("Unhandled exception: " + ex, LogLevel.Fatal);
-                throw;
-            }
-            finally
-            {
-                // Ideally we would deregister the logger from the Locator before it was disposed - this is a hazard as it is at the moment
-                (logger as IDisposable)?.Dispose();
+                try {
+                    return executeCommandLine(args);
+                } catch (Exception ex) {
+                    logger.Write("Unhandled exception: " + ex, LogLevel.Fatal);
+                    throw;
+                }
             }
         }
 
         int executeCommandLine(string[] args)
         {
             var animatedGifWindowToken = new CancellationTokenSource();
+
+            // Uncomment to test Gifs
+            /*
+            var ps = new ProgressSource();
+            int i = 0; var t = new Timer(_ => ps.Raise(i += 10), null, 0, 1000);
+            AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token, ps);
+            Thread.Sleep(10 * 60 * 1000);
+            */
 
             using (Disposable.Create(() => animatedGifWindowToken.Cancel())) {
 

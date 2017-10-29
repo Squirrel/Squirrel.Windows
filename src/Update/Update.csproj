@@ -39,13 +39,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DeltaCompressionDotNet">
-      <HintPath>..\..\packages\DeltaCompressionDotNet.1.0.0\lib\net45\DeltaCompressionDotNet.dll</HintPath>
+      <HintPath>..\..\packages\DeltaCompressionDotNet.1.1.0\lib\net45\DeltaCompressionDotNet.dll</HintPath>
     </Reference>
     <Reference Include="DeltaCompressionDotNet.MsDelta">
-      <HintPath>..\..\packages\DeltaCompressionDotNet.1.0.0\lib\net45\DeltaCompressionDotNet.MsDelta.dll</HintPath>
+      <HintPath>..\..\packages\DeltaCompressionDotNet.1.1.0\lib\net45\DeltaCompressionDotNet.MsDelta.dll</HintPath>
     </Reference>
     <Reference Include="DeltaCompressionDotNet.PatchApi">
-      <HintPath>..\..\packages\DeltaCompressionDotNet.1.0.0\lib\net45\DeltaCompressionDotNet.PatchApi.dll</HintPath>
+      <HintPath>..\..\packages\DeltaCompressionDotNet.1.1.0\lib\net45\DeltaCompressionDotNet.PatchApi.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
@@ -61,6 +61,7 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -68,21 +69,25 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
-    <Reference Include="WpfAnimatedGif, Version=1.4.14.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\packages\WpfAnimatedGif.1.4.14\lib\net\WpfAnimatedGif.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\SolutionAssemblyInfo.cs">
       <Link>Properties\SolutionAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="AnimatedGifWindow.cs" />
+    <Compile Include="AnimatedGifWindowWinForms.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="AuthenticodeTools.cs" />
     <Compile Include="CopStache.cs" />
     <Compile Include="Mono.Options\Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TaskbarCOMInterfaces.cs" />
+    <Compile Include="TaskbarEnums.cs" />
+    <Compile Include="TaskbarInterfaces.cs" />
+    <Compile Include="TaskbarList.cs" />
+    <Compile Include="TaskbarManager.cs" />
+    <Compile Include="TaskbarNativeMethods.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -119,7 +124,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PostBuildEvent>cd "$(TargetDir)"
-"$(SolutionDir)packages\ILRepack.1.26.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) WpfAnimatedGif.dll SharpCompress.dll Microsoft.Web.XmlTransform.dll Splat.dll DeltaCompressionDotNet.dll DeltaCompressionDotNet.MsDelta.dll Squirrel.dll NuGet.Squirrel.dll Mono.Cecil.dll
+"$(SolutionDir)packages\ILRepack.1.26.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) SharpCompress.dll Microsoft.Web.XmlTransform.dll Splat.dll DeltaCompressionDotNet.dll DeltaCompressionDotNet.MsDelta.dll Squirrel.dll NuGet.Squirrel.dll Mono.Cecil.dll
 del "$(TargetFileName)"
 ren "$(TargetFileName).tmp" "$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>

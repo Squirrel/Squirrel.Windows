@@ -1,6 +1,6 @@
 #pragma once
 
-enum class NetVersion {net45=0, net451=1, net452=2, net46=3, net461=4, net462=5};
+enum class NetVersion {net45=0, net451=1, net452=2, net46=3, net461=4, net462=5, net47=6};
 
 class CFxHelper
 {
