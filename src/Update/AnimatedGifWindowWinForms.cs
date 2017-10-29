@@ -58,11 +58,13 @@ namespace Squirrel.Update
             var thread = new Thread(() => {
                 if (token.IsCancellationRequested) return;
 
-                try {
-                    Task.Delay(initialDelay, token).ContinueWith(_ => { return true; }).Wait();
-                } catch (Exception) {
-                    // NB: Cancellation will end up here, so we'll bail out
-                    return;
+                if (!Equals(initialDelay, TimeSpan.Zero)) {
+                  try {
+                      Task.Delay(initialDelay, token).ContinueWith(_ => { return true; }).Wait();
+                  } catch (Exception) {
+                      // NB: Cancellation will end up here, so we'll bail out
+                      return;
+                  }
                 }
 
                 var wnd = new AnimatedGifWindow();

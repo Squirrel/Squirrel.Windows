@@ -48,7 +48,7 @@ namespace Squirrel.Update
                ? new ConsoleLogger()
                : (Splat.ILogger) new SetupLogLogger(isUninstalling);
             logger.Level = LogLevel.Info;
-            using (logger) {
+            try {
                 Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
 
                 try {
@@ -57,6 +57,9 @@ namespace Squirrel.Update
                     logger.Write("Unhandled exception: " + ex, LogLevel.Fatal);
                     throw;
                 }
+            }
+            finally {
+                (logger as IDisposable)?.Dispose();
             }
         }
 
@@ -74,7 +77,6 @@ namespace Squirrel.Update
 
             using (Disposable.Create(() => animatedGifWindowToken.Cancel())) {
 
-#if !MONO
                 this.Log().Info("Starting Squirrel Updater: " + String.Join(" ", args));
 
                 if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
@@ -82,7 +84,7 @@ namespace Squirrel.Update
                     // anything in response to these events
                     return 0;
                 }
-#endif
+
                 bool silentInstall = false;
                 var updateAction = default(UpdateAction);
 
@@ -675,36 +677,6 @@ namespace Squirrel.Update
 
                     await files.ForEachAsync(x => signPEFile(x, signingOpts));
                 }
-
-                this.ErrorIfThrows(() =>
-                    ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
-                    "Failed to create Zip file from directory: " + tempPath);
-
-                return target;
-            }
-        }
-        async Task<string> createSetupEmbeddedZipElectron(string fullPackage, string backgroundGif)
-        {
-            string tempPath;
-
-            this.Log().Info("Building embedded zip file for Setup.exe");
-            using (Utility.WithTempDirectory(out tempPath, null)) {
-                this.ErrorIfThrows(() => {
-                    File.Copy(Assembly.GetEntryAssembly().Location.Replace("-Mono.exe", ".exe"), Path.Combine(tempPath, "Update.exe"));
-                    File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
-                }, "Failed to write package files to temp dir: " + tempPath);
-
-                if (!String.IsNullOrWhiteSpace(backgroundGif)) {
-                    this.ErrorIfThrows(() => {
-                        File.Copy(backgroundGif, Path.Combine(tempPath, "background.gif"));
-                    }, "Failed to write animated GIF to temp dir: " + tempPath);
-                }
-
-                var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
-                ReleaseEntry.WriteReleaseFile(releases, Path.Combine(tempPath, "RELEASES"));
-
-                var target = Path.GetTempFileName();
-                File.Delete(target);
 
                 this.ErrorIfThrows(() =>
                     ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
