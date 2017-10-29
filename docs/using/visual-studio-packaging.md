@@ -31,7 +31,7 @@ The first step is to define a build target in your `.csproj` file.
   <!-- Build nupkg into the project local bin\Release\ directory temporarily -->
   <Exec Command='"%(NuGetExe.FullPath)" pack $(TargetName).nuspec -Version $(SemVerNumber) -OutputDirectory $(OutDir) -BasePath $(OutDir)' />
   <!-- Squirrelify into the release dir (usually at solution level. Change the property above for a different location -->
-  <Exec Command='"%(SquirrelExe.FullPath)" --releasify $(OutDir)MyApp.$(SemVerNumber).nupkg --releaseDir=$(ReleaseDir) $(SquirrelParams)' />
+  <Exec Command='"%(SquirrelExe.FullPath)" --releasify $(OutDir)$(TargetName).$(SemVerNumber).nupkg --releaseDir=$(ReleaseDir) $(SquirrelParams)' />
 </Target>
 ```
 
