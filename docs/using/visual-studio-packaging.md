@@ -10,23 +10,28 @@ Squirrel packaging can be easily integrated directly into your build process usi
 The first step is to define a build target in your `.csproj` file.
 
 ```xml
-<ItemGroup>
-  <NuGetCommandLine Include="..\packages\NuGet.CommandLine.*\tools\nuget.exe">
-    <InProject>False</InProject>
-  </NuGetCommandLine>
-  <Squirrel Include="..\packages\Squirrel.Windows.*\tools\squirrel.exe">
-    <InProject>False</InProject>
-  </Squirrel>
-</ItemGroup>
 <Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release'">
-  <!-- Add some nice errors for the next person that comes along -->
-  <Error Condition="!Exists(@(NuGetCommandLine->'%(FullPath)'))" Text="You are trying to use the NuGet.CommandLine package, but it is not installed. Please install NuGet.CommandLine from the Package Manager." />
-  <Error Condition="!Exists(@(Squirrel->'%(FullPath)'))" Text="You are trying to use the Squirrel.Windows package, but it is not installed. Please install Squirrel.Windows from the Package Manager." />
   <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
-    <Output TaskParameter="Assemblies" ItemName="assemblyInfo" />
+    <Output TaskParameter="Assemblies" ItemName="myAssemblyInfo" />
   </GetAssemblyIdentity>
-  <Exec Command="&quot;@(NuGetCommandLine->'%(FullPath)')&quot; pack $(TargetName).nuspec -Version $([System.Version]::Parse(%(assemblyInfo.Version)).ToString(3)) -OutputDirectory $(OutDir) -BasePath $(OutDir)" />
-  <Exec Command="&quot;@(Squirrel->'%(FullPath)')&quot; --releasify $(OutDir)$(TargetName).$([System.Version]::Parse(%(assemblyInfo.Version)).ToString(3)).nupkg --releaseDir=../Releases" />
+  <ItemGroup>
+    <!-- If your .NET version is <3.5 and you get build error, move this ItemGroup outside of Target -->
+    <NuGetExe Include="..\packages\NuGet.CommandLine.*\tools\nuget.exe" />
+    <SquirrelExe Include="..\packages\Squirrel.Windows.*\tools\squirrel.exe" />
+  </ItemGroup>
+  <PropertyGroup>
+    <ReleaseDir>..\Releases\</ReleaseDir>
+    <!-- Extra optional params for squirrel. can be empty -->
+    <SquirrelParams>--no-msi</SquirrelParams>
+    <SemVerNumber>$([System.Version]::Parse(%(myAssemblyInfo.Version)).ToString(3))</SemVerNumber>
+  </PropertyGroup>
+  <!-- Add some nice errors for the next person that comes along -->
+  <Error Condition="!Exists(%(NuGetExe.FullPath))" Text="You are trying to use the NuGet.CommandLine package, but it is not installed. Please install NuGet.CommandLine from the Package Manager." />
+  <Error Condition="!Exists(%(SquirrelExe.FullPath))" Text="You are trying to use the Squirrel.Windows package, but it is not installed. Please install Squirrel.Windows from the Package Manager." />
+  <!-- Build nupkg into the project local bin\Release\ directory temporarily -->
+  <Exec Command='"%(NuGetExe.FullPath)" pack $(TargetName).nuspec -Version $(SemVerNumber) -OutputDirectory $(OutDir) -BasePath $(OutDir)' />
+  <!-- Squirrelify into the release dir (usually at solution level. Change the property above for a different location -->
+  <Exec Command='"%(SquirrelExe.FullPath)" --releasify $(OutDir)MyApp.$(SemVerNumber).nupkg --releaseDir=$(ReleaseDir) $(SquirrelParams)' />
 </Target>
 ```
 
@@ -48,7 +53,7 @@ Here is an example `MyApp.nuspec` file for the above build target example. Don't
     <dependencies />
   </metadata>
   <files>
-    <file src="*.*" target="lib\net45\" exclude="*.pdb;*.nupkg;*.vshost.*"/>
+    <file src="**\*.*" target="lib\net45\" exclude="*.pdb;*.nupkg;*.vshost.*"/>
   </files>
 </package>
 ```
