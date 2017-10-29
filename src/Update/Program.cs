@@ -44,7 +44,11 @@ namespace Squirrel.Update
             // open will actually crash the uninstaller
             bool isUninstalling = args.Any(x => x.Contains("uninstall"));
 
-            using (var logger = new SetupLogLogger(isUninstalling) {Level = LogLevel.Info}) {
+            var logger = args.Any(x => x.StartsWith("--releasify") || x.StartsWith("--createMsi"))
+               ? new ConsoleLogger()
+               : (Splat.ILogger) new SetupLogLogger(isUninstalling);
+            logger.Level = LogLevel.Info;
+            using (logger) {
                 Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
 
                 try {
