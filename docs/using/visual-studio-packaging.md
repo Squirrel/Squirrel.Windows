@@ -17,10 +17,33 @@ PM>  Install-Package NuGet.CommandLine
 
 This approach defines an `AfterBuild` build target in your `.csproj` file for the configuration you wish to build the packages from (e.g., `Release`). The exec commands do the following:
 
-1. **Package `MyApp.exe` files into `MyApp.nupkg`** - Packages your application files using `NuGet.exe` and a `.nuspec` file. The new file is created in your output directory (e.g., `bin\Release`).
+1. **Package `MyApp.exe` into `MyApp.nupkg`** - Packages your application files using `NuGet.exe` and a `.nuspec` file. The new file is created in your output directory (e.g., `bin\Release`).
 2. **Releasify your `MyApp.nupkg`** - Runs `Squirrel --releasify` on your newly packaged MyApp (e.g., `MyApp.1.0.0.nupkg`) and places the Squirrel `Releases` directory at the solution level.
 
-## Build Target Configuration
+## 1. Packaging `MyApp.exe` into `MyApp.nupkg`
+
+Here is an example `MyApp.nuspec` file to be used with the below build target example. 
+
+**`MyApp.nuspec`**
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>MyApp</id>
+    <!-- version will be replaced by MSBuild -->
+    <version>0.0.0.0</version>
+    <description>description</description>
+    <authors>authors</authors>
+    <dependencies />
+  </metadata>
+  <files>
+    <file src="**\*.*" target="lib\net45\" exclude="*.pdb;*.nupkg;*.vshost.*"/>
+  </files>
+</package>
+```
+
+## 2. Releasify your `MyApp.nupkg`
 
 The build target configuration example below incorporates the following concepts and techniques:
 
@@ -36,6 +59,8 @@ The first step is to define a build target in your `.csproj` file.
 **`MyApp.csproj`**
 
 ```xml
+<Project>
+...
 <Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release'">
   <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
     <Output TaskParameter="Assemblies" ItemName="myAssemblyInfo" />
@@ -59,27 +84,7 @@ The first step is to define a build target in your `.csproj` file.
   <!-- Squirrelify into the release dir (usually at solution level. Change the property above for a different location -->
   <Exec Command='"%(SquirrelExe.FullPath)" --releasify $(OutDir)$(TargetName).$(SemVerNumber).nupkg --releaseDir=$(ReleaseDir) $(SquirrelParams)' />
 </Target>
-```
-
-## Example .nuspec file
-
-Here is an example `MyApp.nuspec` file for the above build target example. Don't forget to change id tag and file name to match your project name.
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata>
-    <id>MyApp</id>
-    <!-- version will be replaced by MSBuild -->
-    <version>0.0.0.0</version>
-    <description>description</description>
-    <authors>authors</authors>
-    <dependencies />
-  </metadata>
-  <files>
-    <file src="**\*.*" target="lib\net45\" exclude="*.pdb;*.nupkg;*.vshost.*"/>
-  </files>
-</package>
+</Project>
 ```
 
 ## Additional Notes
@@ -91,7 +96,7 @@ Please be aware of the following when using this solution:
 * You can create a separate build configuration for building a package if you wish to avoid running `--releasify` every time you build your `Release` configuration (e.g., create a new `Package` configuration based on `Release`).
 * This will not work if your solution uses new `PackageReference` directive instead of `packages.config` file for NuGet dependencies because it will be unable to find nuget.exe and squirrel.exe. In that case change path to executables accordingly.
 
-**Source:** [Issue #630](https://github.com/Squirrel/Squirrel.Windows/issues/630)
+**Source:** [Issue #630](https://github.com/Squirrel/Squirrel.Windows/issues/630) - special thanks to @poma, @Yitzchok, @markfox1, @PHeonix25, @awbacker, and others.
 
 ---
 | Return: [Packaging Tools](packaging-tools.md) |
