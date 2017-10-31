@@ -21,16 +21,27 @@ Executing MyApp from Visual Studio will now cause it to complete the update proc
 
 ![](images/debugging-update-dir.png)
 
-**Tip:** If you want to ensure that the Update.exe is always available in your output directory, you can add the Update.exe file to the Visual Studio project and set its Properties > Copy To Output Directory to 'Copy if newer'. 
+**Tip:** If you want to ensure that the Update.exe is automatically created in your bin directory, you can add the following `Post-build event command line` in your Project > Properties > Build Events.
+
+```
+echo Dummy file for Squirrel App debugging created in Post-build Event > "$(ProjectDir)bin\Update.exe"
+```
 
 ## Catching Update Exceptions
 
 You can catch thrown exceptions and log the results. 
 
 ~~~cs
-using (var mgr = new UpdateManager("C:\\Projects\\MyApp\\Releases"))
+try
 {
-    await mgr.UpdateApp();
+	using (var mgr = new UpdateManager("C:\\Projects\\MyApp\\Releases"))
+	{
+    	await mgr.UpdateApp();
+	}
+}
+catch (Exception ex)
+{
+	Console.WriteLine("Error in Squirrel Update:" + ex.Message);
 }
 ~~~
 
