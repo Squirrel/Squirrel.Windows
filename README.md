@@ -34,16 +34,12 @@ cd squirrel.windows
 .\.NuGet\NuGet.exe restore
 msbuild /p:Configuration=Release
 ```
-See [Contributing](docs/contributing/contributing.md) for additional information on building and contributing to Squirrel.
+See [Contributing](contributing.md) for additional information on building and contributing to Squirrel.
 
 
 ## License and Usage
 
 See [COPYING](COPYING) for details on copyright and usage of the Squirrel.Windows software.
-
-
-
-
 
 
 
