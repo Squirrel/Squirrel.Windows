@@ -30,6 +30,7 @@ namespace Squirrel.Update
             }
 
             this.WindowState = FormWindowState.Minimized;
+
             Action size = () => {
                 pictureBox.Width = this.Width; pictureBox.Height = this.Height;
                 pictureBox.Left = 0; pictureBox.Top = 0;
@@ -51,6 +52,11 @@ namespace Squirrel.Update
             this.Width = 1;
             this.Height = 1;
             this.TopMost = true;
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            // Do not call base to allow transparency
         }
 
         public static void ShowWindow(TimeSpan initialDelay, CancellationToken token, ProgressSource progressSource)
