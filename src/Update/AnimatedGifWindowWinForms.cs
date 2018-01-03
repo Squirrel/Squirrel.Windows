@@ -42,8 +42,8 @@ namespace Squirrel.Update
 
                 this.SizeChanged += (_o, _e) => size();
 
-                this.Width = pictureBox.Image.Width / 2;
-                this.Height = pictureBox.Image.Height / 2;
+                this.Width = pictureBox.Image.Width;
+                this.Height = pictureBox.Image.Height;
                 this.CenterToScreen();
             };
 
