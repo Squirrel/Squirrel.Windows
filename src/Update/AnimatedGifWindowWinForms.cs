@@ -38,6 +38,7 @@ namespace Squirrel.Update
                 pictureBox.ImageLocation = source;
             }
 
+            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             this.WindowState = FormWindowState.Minimized;
 
             Action size = () => {
