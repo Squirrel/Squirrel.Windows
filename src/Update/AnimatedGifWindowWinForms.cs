@@ -74,11 +74,6 @@ namespace Squirrel.Update
             this.Text = "Installing...";
         }
 
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            // Do not call base to allow transparency
-        }
-
         public static void ShowWindow(TimeSpan initialDelay, CancellationToken token, ProgressSource progressSource)
         {
             var thread = new Thread(() => {
