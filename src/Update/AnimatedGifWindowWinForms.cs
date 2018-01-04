@@ -31,7 +31,7 @@ namespace Squirrel.Update
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                 "background.gif");
 
-            pictureBox = new PictureBox();
+            pictureBox = new PictureBox {Dock = DockStyle.Fill};
             this.Controls.Add(pictureBox);
 
             if (File.Exists(source)) {
@@ -41,17 +41,9 @@ namespace Squirrel.Update
             this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
             this.WindowState = FormWindowState.Minimized;
 
-            Action size = () => {
-                pictureBox.Width = this.Width; pictureBox.Height = this.Height;
-                pictureBox.Left = 0; pictureBox.Top = 0;
-                this.CenterToScreen();
-            };
-
             pictureBox.LoadCompleted += (o, e) => {
                 if (pictureBox.Image == null) return;
                 pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
-
-                this.SizeChanged += (_o, _e) => size();
 
                 this.Width = pictureBox.Image.Width;
                 this.Height = pictureBox.Image.Height;
