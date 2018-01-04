@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,14 @@ namespace Squirrel.Update
 {
     public class AnimatedGifWindow : Form
     {
+        const int WM_NCLBUTTONDOWN = 0xA1;
+        const int HT_CAPTION = 0x2;
+
+        [DllImport("user32.dll")]
+        static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        [DllImport("user32.dll")]
+        static extern bool ReleaseCapture();
+
         PictureBox pictureBox;
 
         AnimatedGifWindow()
@@ -45,6 +54,14 @@ namespace Squirrel.Update
                 this.Width = pictureBox.Image.Width / 2;
                 this.Height = pictureBox.Image.Height / 2;
                 this.CenterToScreen();
+            };
+
+            // Enable left-mouse button to drag window
+            pictureBox.MouseDown += (o, e) => {
+                if (e.Button == MouseButtons.Left) {
+                    ReleaseCapture();
+                    SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+                }
             };
 
             this.FormBorderStyle = FormBorderStyle.None;
