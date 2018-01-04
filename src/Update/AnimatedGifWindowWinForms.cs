@@ -27,19 +27,23 @@ namespace Squirrel.Update
 
         AnimatedGifWindow()
         {
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.WindowState = FormWindowState.Minimized;
+            this.Width = 1;
+            this.Height = 1;
+            this.TopMost = true;
+            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            this.Text = "Installing...";
+
+            pictureBox = new PictureBox { Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom };
+            this.Controls.Add(pictureBox);
+
             var source = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                 "background.gif");
-
-            pictureBox = new PictureBox {Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom};
-            this.Controls.Add(pictureBox);
-
             if (File.Exists(source)) {
                 pictureBox.ImageLocation = source;
             }
-
-            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-            this.WindowState = FormWindowState.Minimized;
 
             pictureBox.LoadCompleted += (o, e) => {
                 if (pictureBox.Image == null) return;
@@ -48,20 +52,13 @@ namespace Squirrel.Update
                 this.CenterToScreen();
             };
 
-            pictureBox.MouseDown += (o, e) => // Enable left-mouse dragging of splash
-            {
-                if (e.Button == MouseButtons.Left)
-                {
+            // Enable left-mouse dragging of splash
+            pictureBox.MouseDown += (o, e) => {
+                if (e.Button == MouseButtons.Left) {
                     ReleaseCapture();
                     SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
                 }
             };
-
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.Width = 1;
-            this.Height = 1;
-            this.TopMost = true;
-            this.Text = "Installing...";
         }
 
         public static void ShowWindow(TimeSpan initialDelay, CancellationToken token, ProgressSource progressSource)
