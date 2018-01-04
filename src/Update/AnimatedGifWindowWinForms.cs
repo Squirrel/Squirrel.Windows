@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,43 +15,50 @@ namespace Squirrel.Update
 {
     public class AnimatedGifWindow : Form
     {
+        const int WM_NCLBUTTONDOWN = 0xA1;
+        const int HT_CAPTION = 0x2;
+
+        [DllImport("user32.dll")]
+        static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+        [DllImport("user32.dll")]
+        static extern bool ReleaseCapture();
+
         PictureBox pictureBox;
 
         AnimatedGifWindow()
         {
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.WindowState = FormWindowState.Minimized;
+            this.Width = 1;
+            this.Height = 1;
+            this.TopMost = true;
+            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            this.Text = "Installing...";
+
+            pictureBox = new PictureBox { Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom };
+            this.Controls.Add(pictureBox);
+
             var source = Path.Combine(
                 Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
                 "background.gif");
-
-            pictureBox = new PictureBox();
-            this.Controls.Add(pictureBox);
-
             if (File.Exists(source)) {
                 pictureBox.ImageLocation = source;
             }
 
-            this.WindowState = FormWindowState.Minimized;
-            Action size = () => {
-                pictureBox.Width = this.Width; pictureBox.Height = this.Height;
-                pictureBox.Left = 0; pictureBox.Top = 0;
-                this.CenterToScreen();
-            };
-
             pictureBox.LoadCompleted += (o, e) => {
                 if (pictureBox.Image == null) return;
-                pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
-
-                this.SizeChanged += (_o, _e) => size();
-
-                this.Width = pictureBox.Image.Width / 2;
-                this.Height = pictureBox.Image.Height / 2;
+                this.Width = pictureBox.Image.Width;
+                this.Height = pictureBox.Image.Height;
                 this.CenterToScreen();
             };
 
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.Width = 1;
-            this.Height = 1;
-            this.TopMost = true;
+            // Enable left-mouse dragging of splash
+            pictureBox.MouseDown += (o, e) => {
+                if (e.Button == MouseButtons.Left) {
+                    ReleaseCapture();
+                    SendMessage(Handle, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+                }
+            };
         }
 
         public static void ShowWindow(TimeSpan initialDelay, CancellationToken token, ProgressSource progressSource)
