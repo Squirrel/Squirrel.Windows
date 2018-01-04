@@ -20,7 +20,7 @@ namespace Squirrel.Update
 
         [DllImport("user32.dll")]
         static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-        [DllImportAttribute("user32.dll")]
+        [DllImport("user32.dll")]
         static extern bool ReleaseCapture();
 
         PictureBox pictureBox;
@@ -71,6 +71,7 @@ namespace Squirrel.Update
             this.Width = 1;
             this.Height = 1;
             this.TopMost = true;
+            this.Text = "Installing...";
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
