@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <version>1.7.8</version>
+    <version>1.7.8.2</version>
     <authors>GitHub</authors>
     <owners>Paul Betts</owners>
     <licenseUrl>https://github.com/squirrel/Squirrel.Windows/blob/master/COPYING</licenseUrl>
@@ -15,7 +15,7 @@
       <dependency id="SharpCompress" version="0.17.1" />
     </dependencies>
 
-    <id>squirrel.windows</id>
+    <id>techsmith.squirrel.windows</id>
     <title>Squirrel for Windows</title>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An installation and update framework for Windows applications</description>
