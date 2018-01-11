@@ -62,10 +62,12 @@ namespace Squirrel.Update
 
 #if !MONO
             // Uncomment to test Gifs
+            /*
             var ps = new ProgressSource();
             int i = 0; var t = new Timer(_ => ps.Raise(i += 10), null, 0, 1000);
             AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token, ps);
             Thread.Sleep(10 * 60 * 1000);
+            */
 #endif
 
             using (Disposable.Create(() => animatedGifWindowToken.Cancel())) {
