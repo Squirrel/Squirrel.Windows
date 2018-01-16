@@ -6,7 +6,7 @@
 
     <PropertyRef Id="NETFRAMEWORK45" />
 
-    <Condition Message="This application requires .NET Framework 4.5. Please install the .NET Framework then run this installer again.">
+    <Condition Message="This application requires .NET Framework 4.5 or higher. Please install the latest .NET Framework then run this installer again.">
       <![CDATA[Installed OR NETFRAMEWORK45]]>
     </Condition>
 
