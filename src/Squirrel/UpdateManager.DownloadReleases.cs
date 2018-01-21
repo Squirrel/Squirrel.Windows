@@ -40,6 +40,8 @@ namespace Squirrel
                                 progress((int)Math.Round(current += component));
                             }
                         });
+
+                        checksumPackage(x);
                     });
                 } else {
                     // From Disk
@@ -52,6 +54,7 @@ namespace Squirrel
                             true);
 
                         lock (progress) progress((int)Math.Round(current += toIncrement));
+                        checksumPackage(x);
                     });
                 }
             }

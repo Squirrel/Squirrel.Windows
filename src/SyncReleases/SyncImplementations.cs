@@ -12,6 +12,11 @@ namespace SyncReleases
 {
     internal class SyncImplementations
     {
+        static SyncImplementations()
+        {
+            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+        }
+
         public static async Task SyncRemoteReleases(Uri targetUri, DirectoryInfo releasesDir)
         {
             var releasesUri = Utility.AppendPathToUri(targetUri, "RELEASES");
@@ -94,7 +99,10 @@ namespace SyncReleases
         {
             Console.WriteLine("Trying to download RELEASES index from {0}", uri);
 
+            var userAgent = new System.Net.Http.Headers.ProductInfoHeaderValue("Squirrel", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+
             using (HttpClient client = new HttpClient()) {
+                client.DefaultRequestHeaders.UserAgent.Add(userAgent);
                 return await client.GetStringAsync(uri);
             }
         }

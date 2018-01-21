@@ -89,6 +89,31 @@ namespace Squirrel.Tests.Core
         }
 
         [Theory]
+        [InlineData("0000000000000000000000000000000000000000  MyCool-App-1.2.nupkg                  123", "MyCool-App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool_App-1.2-full.nupkg             123", "MyCool_App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-delta.nupkg            123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-beta1.nupkg            123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-beta1-full.nupkg       123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-beta1-delta.nupkg      123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool-App-1.2.3.nupkg                123", "MyCool-App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool_App-1.2.3-full.nupkg           123", "MyCool_App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-delta.nupkg          123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-beta1.nupkg          123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-beta1-full.nupkg     123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-beta1-delta.nupkg    123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool-App-1.2.3.4.nupkg              123", "MyCool-App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool_App-1.2.3.4-full.nupkg         123", "MyCool_App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-delta.nupkg        123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-beta1.nupkg        123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-beta1-full.nupkg   123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool-App-1.2.3.4-beta1-delta.nupkg  123", "MyCool-App")]
+        public void CheckPackageName(string releaseEntry, string expected)
+        {
+            var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
+            Assert.Equal(expected, fixture.PackageName);
+        }
+
+        [Theory]
         [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.nupkg                  123 # 10%", 1, 2, 0, 0, "", false, 0.1f)]
         [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-full.nupkg             123 # 90%", 1, 2, 0, 0, "", false, 0.9f)]
         [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-delta.nupkg            123", 1, 2, 0, 0, "", true, null)]
