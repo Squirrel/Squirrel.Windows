@@ -370,10 +370,20 @@ namespace Squirrel
             async Task invokePostInstall(SemanticVersion currentVersion, bool isInitialInstall, bool firstRunOnly, bool silentInstall)
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
+
                 var args = isInitialInstall ?
                     String.Format("--squirrel-install {0}", currentVersion) :
                     String.Format("--squirrel-updated {0}", currentVersion);
 
+                var incomingArgs = Environment.GetCommandLineArgs();
+                var pathKeyArgIndex = Array.FindIndex(incomingArgs, arg => String.Equals(arg, "--installer-path"));
+                if (pathKeyArgIndex != -1 && incomingArgs.Length > pathKeyArgIndex + 1)
+                {
+                    var installerPath = incomingArgs[pathKeyArgIndex + 1];
+                    args += String.Format(" --squirrel-installer-path {0}", installerPath);
+                }
+                this.Log().Info("Incoming args to UpdateManager process: {0}", String.Join(",", incomingArgs));
+                this.Log().Info("Running app with args: {0}", args);
                 var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName);
 
                 this.Log().Info("Squirrel Enabled Apps: [{0}]", String.Join(",", squirrelApps));
