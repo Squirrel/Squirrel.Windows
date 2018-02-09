@@ -109,6 +109,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	std::wstring fullPath = FindLatestAppDir(appName);
 	fullPath += L"\\" + appName;
 
+	std::wstring updateFile;
+	updateFile.assign(FindRootAppDir());
+	updateFile += L"\\Update.exe";
+
 	STARTUPINFO si = { 0 };
 	PROCESS_INFORMATION pi = { 0 };
 
@@ -116,9 +120,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = nCmdShow;
 
-	std::wstring cmdLine(L"\"");
+	/*std::wstring cmdLine(L"\"");
 	cmdLine += fullPath;
 	cmdLine += L"\" ";
+	cmdLine += lpCmdLine;
+	*/
+
+	std::wstring cmdLine(L"\"");
+	cmdLine += updateFile;
+	cmdLine += L"\" --processStart ";
+	cmdLine += appName;
+	cmdLine += L" -a=";
 	cmdLine += lpCmdLine;
 
 	wchar_t* buf = wcsdup(cmdLine.c_str());
