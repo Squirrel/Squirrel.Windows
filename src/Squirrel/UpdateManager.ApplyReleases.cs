@@ -285,7 +285,6 @@ namespace Squirrel
             {
                 return Task.Run(async () => {
                     var target = getDirectoryForRelease(release.Version);
-                    var currentTemp = new DirectoryInfo(Path.Combine(rootAppDirectory, "currentTemp"));
 
                     // NB: This might happen if we got killed partially through applying the release
                     if (target.Exists) {
@@ -294,23 +293,11 @@ namespace Squirrel
                     }
 
                     target.Create();
-
-
-                    if (currentTemp.Exists)
-                    {
-                        this.Log().Warn("Found currentTemp folder, killing it: " + currentTemp.FullName);
-                        await Utility.DeleteDirectory(currentTemp.FullName);
-                    }
-
-                    currentTemp.Create();
                 
                     this.Log().Info("Writing files to app directory: {0}", target.FullName);
                     await ReleasePackage.ExtractZipForInstall(
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
                         target.FullName);
-                    await ReleasePackage.ExtractZipForInstall(
-                        Path.Combine(updateInfo.PackageDirectory, release.Filename),
-                        currentTemp.FullName);
 
                     return target.FullName;
                 });
@@ -385,7 +372,7 @@ namespace Squirrel
                 var targetDir = getDirectoryForRelease(currentVersion);
                 if (isInitialInstall)
                 {
-                    var currentDir = CopyToCurrent(targetDir.Parent.FullName);
+                    var currentDir = CopyToCurrent(targetDir);
                     if (currentDir != null)
                         targetDir = currentDir;
                 }
@@ -434,30 +421,34 @@ namespace Squirrel
                     .ForEach(info => Process.Start(info));
             }
 
-            public DirectoryInfo CopyToCurrent(string rootDir)
+            public DirectoryInfo CopyToCurrent(DirectoryInfo appDir)
             {
-                var currentTempDir = Path.Combine(rootDir, "currentTemp");
-                var currentDir = Path.Combine(rootDir, "current");
+                var currentDir = Path.Combine(appDir.Parent.FullName, "current");
 
-                if (Directory.Exists(currentTempDir))
+                if (appDir.Exists)
                 {
                     try
                     {
-                        this.Log().Info("Moving current temp directory to current");
+                        this.Log().Info(String.Format("Moving {0} directory to current", appDir.Name));
                         if (Directory.Exists(currentDir))
                         {
-                            Utility.EmptyDirectory(currentDir);
-                            Utility.CopyDirectory(new DirectoryInfo(currentTempDir), new DirectoryInfo(currentDir));
-                            Task task = Task.Run(() => Utility.DeleteDirectory(currentTempDir));
+                            try
+                            {
+                                Utility.EmptyDirectory(currentDir);
+                            } catch(Exception e)
+                            {
+                                this.Log().Info("Failed to empty current directory, will try to override files");
+                            }
                         }
                         else
                         {
-                            Directory.Move(currentTempDir, currentDir);
+                            Directory.CreateDirectory(currentDir);
                         }
+                        Utility.CopyDirectory(appDir, new DirectoryInfo(currentDir));
                     }
                     catch (Exception e)
                     {
-                        this.Log().InfoException("Failed to move current directory", e);
+                        this.Log().InfoException("Failed to move files to current directory", e);
                     }
                 }
                 if (!Directory.Exists(currentDir))

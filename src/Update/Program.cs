@@ -539,7 +539,7 @@ namespace Squirrel.Update
             this.Log().Info("parent has exited");
 
             try {
-                var currentExe = RunFromCurrent(exeName, appDir);
+                var currentExe = RunFromCurrent(exeName, appDir, targetExe);
                 if (currentExe != null)
                 {
                     targetExe = currentExe;
@@ -551,49 +551,66 @@ namespace Squirrel.Update
             }
         }
 
-        public FileInfo RunFromCurrent(string exeName, string appDir)
+        public FileInfo RunFromCurrent(string exeName, string appDir, FileInfo targetExe )
         {
-            var currentTempDir = Path.Combine(appDir, "currentTemp");
             var currentDir = Path.Combine(appDir, "current");
+            FileInfo currentExe = new FileInfo(Path.Combine(currentDir, exeName.Replace("%20", " ")));
 
-            if(Directory.Exists(currentTempDir))
+            try
             {
-                try
+                bool copyToCurrent = false;
+                if(currentExe.Exists)
                 {
-                    this.Log().Info("Moving current temp directory to current");
-                    if (Directory.Exists(currentDir))
+                    var currentVersion = FileVersionInfo.GetVersionInfo(currentExe.FullName);
+                    var targetVersion = FileVersionInfo.GetVersionInfo(targetExe.FullName);
+
+                    this.Log().Info("Current directory app version:" + currentVersion.FileVersion);
+                    if (currentVersion.FileVersion != targetVersion.FileVersion)
                     {
-                        Utility.EmptyDirectory(currentDir);
-                        Utility.CopyDirectory(new DirectoryInfo(currentTempDir), new DirectoryInfo(currentDir));
-                        Task task = Task.Run(() => Utility.DeleteDirectory(currentTempDir));
-                    } else
-                    {
-                        Directory.Move(currentTempDir, currentDir);
+                        copyToCurrent = true;
                     }
-                } catch(Exception e)
-                {
-                    this.Log().InfoException("Failed to move current directory", e);
                 }
+                else
+                {
+                    copyToCurrent = true;
+                }
+                
+                if(copyToCurrent)
+                {
+                    this.Log().Info("Copying target to current");
+                    try {
+                        Utility.EmptyDirectory(currentDir);
+                    }
+                    catch (Exception e)
+                    {
+                        this.Log().Info("Failed to empty current directory, will try to override files");
+                    }
+                    Utility.CopyDirectory(new DirectoryInfo(targetExe.Directory.FullName), new DirectoryInfo(currentDir));
+                }
+            } catch(Exception e)
+            {
+                this.Log().InfoException("Failed to move current directory", e);
             }
-            if(!Directory.Exists(currentDir))
+
+            if (!Directory.Exists(currentDir))
             {
                 return null;
             }
-            FileInfo targetExe = new FileInfo(Path.Combine(currentDir,  exeName.Replace("%20", " ")));
-            this.Log().Info("Want to launch '{0}'", targetExe);
+            
+            this.Log().Info("Want to launch '{0}'", currentExe);
 
             // Check for path canonicalization attacks
-            if (!targetExe.FullName.StartsWith(appDir, StringComparison.Ordinal))
+            if (!currentExe.FullName.StartsWith(appDir, StringComparison.Ordinal))
             {
                 return null;
             }
 
-            if (!targetExe.Exists)
+            if (!currentExe.Exists)
             {
-                this.Log().Error("File {0} doesn't exist in current release", targetExe);
+                this.Log().Error("File {0} doesn't exist in current release", currentExe);
                 return null;
             }
-            return targetExe;
+            return currentExe;
         }
 
         public void ShowHelp()
