@@ -3,6 +3,8 @@
 ## Eclipse
 #################
 
+vendor/nuget*
+.vs/*
 *.pydevproject
 .project
 .metadata
