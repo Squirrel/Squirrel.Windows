@@ -344,7 +344,6 @@ namespace Squirrel.Update
 
         public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true)
         {
-            this.Log().Info("This is a custom version of Squirrel's Update.exe for Plays.tv");
             ensureConsole();
 
             if (baseUrl != null) {
