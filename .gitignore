@@ -3,8 +3,6 @@
 ## Eclipse
 #################
 
-vendor/nuget*
-.vs/*
 *.pydevproject
 .project
 .metadata
@@ -183,3 +181,4 @@ tests/Test.xml
 ## CPP db crap
 *.db
 *.opendb
+/.vs/Squirrel/v15
