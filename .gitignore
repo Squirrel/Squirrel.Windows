@@ -181,4 +181,3 @@ tests/Test.xml
 ## CPP db crap
 *.db
 *.opendb
-/.vs/Squirrel/v15
