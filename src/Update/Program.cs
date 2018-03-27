@@ -198,7 +198,7 @@ namespace Squirrel.Update
         {
             sourceDirectory = sourceDirectory ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
-            var everGreenPath = Path.Combine(sourceDirectory, "EVERGREEN");
+            var isEverGreen = File.Exists(Path.Combine(sourceDirectory, "EVERGREEN"));
 
             this.Log().Info("Starting install, writing to {0}", sourceDirectory);
 
@@ -221,7 +221,7 @@ namespace Squirrel.Update
                     mgr.KillAllExecutablesBelongingToPackage();
                     await Task.Delay(500);
 
-                    if (!File.Exists(everGreenPath)){
+                    if (isEverGreen){
                         this.Log().Warn("Install path {0} already exists, burning it to the ground", mgr.RootAppDirectory);
 
                         await this.ErrorIfThrows(() => Utility.DeleteDirectory(mgr.RootAppDirectory),
@@ -238,10 +238,17 @@ namespace Squirrel.Update
                 this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
-                await mgr.FullInstall(silentInstall, progressSource.Raise);
+                if (isEverGreen)
+                {
+                    await mgr.UpdateApp(progressSource.Raise);
+                }
+                else
+                {
+                    await mgr.FullInstall(silentInstall, progressSource.Raise);
 
-                await this.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
-                    "Failed to create uninstaller registry entry");
+                    await this.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
+                        "Failed to create uninstaller registry entry");
+                }
             }
         }
 
