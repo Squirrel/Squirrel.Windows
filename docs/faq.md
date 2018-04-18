@@ -16,8 +16,8 @@ Frequently Asked Questions for Squirrel.Windows, organized by area below.
    
 ```
 var assembly = Assembly.GetEntryAssembly();   
-var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), '..', 'Update.exe');
-var isInstalled = File.Exists(updateDotExe);
+var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..", "Update.exe");
+var isSquirrelInstall = File.Exists(updateDotExe);
 ```
 
 ## Packaging
