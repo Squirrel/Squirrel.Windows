@@ -8,7 +8,7 @@ Frequently Asked Questions for Squirrel.Windows, organized by area below.
 ## Integrating
 
 1. **Can Squirrel.Windows be used on applications that aren't made with .Net?**  
-   Yes, you can package a non-c# application in the same manner as described in the Getting Started guide. For additional customization, see [custom squirrel events for non-c# apps](using/custom-squirrel-events-non-CS.md).  
+   Yes, you can package a non-c# application in the same manner as described in the Getting Started guide. For additional customization, see [custom squirrel events for non-c# apps](using/custom-squirrel-events-non-cs.md).  
 1. **How do I migrate a ClickOnce app to Squirrel?**  
    You may want to look into the [ClickOnceToSquirrelMigrator](https://github.com/flagbug/ClickOnceToSquirrelMigrator) migration helper.
 1. **How can I determine if my app is a Squirrel app? I provide a squirrel and non-squirrel install version and want to know which is running.**  
