@@ -16,10 +16,24 @@ An example invocation including both of these features would be something like:
 PM> Squirrel --releasify MyApp.1.0.0.nupkg -n "/a /f CodeCert.pfx /p MySecretCertPassword /fd sha256 /tr http://timestamp.digicert.com /td sha256"
 ~~~
 
+If you are using the [Visual Studio Build Packaging](visual-studio-packaging.md) process be careful how you escape your quotation marks in the `XML` of your `.csproj` file for the -n, --signWithParams argument. The wrapping quotation marks must be defined in `XML` safe ampersand escape strings or `&quot;`. Within this command you will likely need quotation marks around your certificate password. Since this is already within a quoted string you will need to double quote the password: `/p &quot;&quot;PASSWORD&quot;&quot;`.
+
+~~~xml
+  <Target Name="AfterBuild" Condition=" '$(Configuration)' == 'Release'">
+    <GetAssemblyIdentity AssemblyFiles="$(TargetPath)">
+      <Output TaskParameter="Assemblies" ItemName="myAssemblyInfo" />
+    </GetAssemblyIdentity>
+    <Exec Command="nuget pack MyApp.nuspec -Version %(myAssemblyInfo.Version) -Properties Configuration=Release -OutputDirectory $(OutDir) -BasePath $(OutDir)" />
+    <!-- Notice the use of &quot; rather than " after the \n flag. For the password to contain spaces we need to double-&quot; the string.  -->
+    <Exec Command="squirrel --releasify $(OutDir)MyApp.$([System.Version]::Parse(%(myAssemblyInfo.Version)).ToString(3)).nupkg -n &quot;/a /f .\CertificateInProjectFolder.pfx /p &quot;&quot;CERTIFICATE PASSWORD&quot;&quot; /fd sha256 /tr http://timestamp.digicert.com /td sha256&quot;" />
+  </Target>
+~~~
+
 
 
 ## See Also
 * [Squirrel Command Line](squirrel-command-line.md) - command line options for `Squirrel --releasify`
+* [Visual Studio Build Packaging](visual-studio-packaging.md) - integrating Squirrel packaging into your build process
 
 
 ---
