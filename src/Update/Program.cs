@@ -443,7 +443,7 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts, setupIcon).Result;
 
             var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
@@ -581,7 +581,7 @@ namespace Squirrel.Update
             }
         }
 
-        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts)
+        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts, string setupIcon)
         {
             string tempPath;
 
@@ -596,6 +596,12 @@ namespace Squirrel.Update
                     this.ErrorIfThrows(() => {
                         File.Copy(backgroundGif, Path.Combine(tempPath, "background.gif"));
                     }, "Failed to write animated GIF to temp dir: " + tempPath);
+                }
+
+                if (!String.IsNullOrWhiteSpace(setupIcon)) {
+                    this.ErrorIfThrows(() => {
+                        File.Copy(setupIcon, Path.Combine(tempPath, "setupIcon.ico"));
+                    }, "Failed to write icon to temp dir: " + tempPath);
                 }
 
                 var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };

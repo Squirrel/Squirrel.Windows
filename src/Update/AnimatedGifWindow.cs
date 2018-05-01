@@ -21,8 +21,9 @@ namespace Squirrel.Update
             var img = new Image();
             var src = default(BitmapImage);
 
+            var executionLocation = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var source = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                executionLocation,
                 "background.gif");
 
             if (File.Exists(source)) {
@@ -35,6 +36,11 @@ namespace Squirrel.Update
                 this.Content = img;
                 this.Width = src.Width;
                 this.Height = src.Height;
+            }
+
+            var setupIcon = Path.Combine(executionLocation, "setupIcon.ico");
+            if (File.Exists(setupIcon)) {
+                Icon = BitmapFrame.Create(new Uri(setupIcon, UriKind.Relative));
             }
                         
             this.AllowsTransparency = true;
