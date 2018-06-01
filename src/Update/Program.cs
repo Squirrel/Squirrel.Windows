@@ -643,17 +643,25 @@ namespace Squirrel.Update
                 if (!File.Exists(exe)) exe = "signtool.exe";
             }
 
-            var processResult = await Utility.InvokeProcessAsync(exe,
-                String.Format("sign {0} \"{1}\"", signingOpts, exePath), CancellationToken.None);
 
-            if (processResult.Item1 != 0) {
-                var optsWithPasswordHidden = new Regex(@"/p\s+\w+").Replace(signingOpts, "/p ********");
-                var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}'",
-                    exe, optsWithPasswordHidden, exePath);
+            var maxAttempts = 3;
+            for (var signAttempts = 1; signAttempts <= maxAttempts; signAttempts++) {
 
-                throw new Exception(msg);
-            } else {
-                Console.WriteLine(processResult.Item2);
+                var processResult = await Utility.InvokeProcessAsync(exe,
+                    String.Format("sign {0} \"{1}\"", signingOpts, exePath), CancellationToken.None);
+
+                if (processResult.Item1 != 0) {
+                    if (signAttempts == maxAttempts) {
+                        var optsWithPasswordHidden = new Regex(@"/p\s+\w+").Replace(signingOpts, "/p ********");
+                        var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}'\nReturn Code:{3}\nOutput{4}",
+                            exe, optsWithPasswordHidden, exePath, processResult.Item1, processResult.Item2);
+
+                        throw new Exception(msg);
+                    }
+                } else {
+                    Console.WriteLine(processResult.Item2);
+                    break;
+                }
             }
         }
         bool isPEFileSigned(string path)
