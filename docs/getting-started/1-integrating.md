@@ -41,7 +41,9 @@ using Squirrel;
 ~~~cs
 using (var mgr = new UpdateManager("C:\\Projects\\MyApp\\Releases"))
 {
-    await mgr.UpdateApp();
+    Task t = mgr.UpdateApp();
+    t.Start();
+    t.Wait();
 }
 ~~~
 
