@@ -264,6 +264,30 @@ namespace Squirrel.Tests.Core
         }
 
         [Fact]
+        public void SortDoubleDigitPrereleaseVersionsCorrectly()
+        {
+            var path = Path.GetTempFileName();
+            var secondVersion = new SemanticVersion("1.2.0-beta9");
+            var thirdVersion = new SemanticVersion("1.2.0-beta10");
+            var fourthVersion = new SemanticVersion("1.2.0-beta100");
+
+            var releaseEntries = new[] {
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta1-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta9-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta100-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta10-full.nupkg"))
+            };
+
+            ReleaseEntry.WriteReleaseFile(releaseEntries, path);
+
+            var releases = ReleaseEntry.ParseReleaseFile(File.ReadAllText(path)).ToArray();
+
+            Assert.Equal(secondVersion, releases[1].Version);
+            Assert.Equal(thirdVersion, releases[2].Version);
+            Assert.Equal(fourthVersion, releases[3].Version);
+        }
+
+        [Fact]
         public void StagingUsersGetBetaSoftware()
         {
             // NB: We're kind of using a hack here, in that we know that the 
