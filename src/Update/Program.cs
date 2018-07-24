@@ -392,13 +392,14 @@ namespace Squirrel.Update
 
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
-                    new DirectoryInfo(pkgPath).GetAllFilesRecursively()
-                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
-                        .Where(x => !x.Name.ToLowerInvariant().Contains("squirrel.exe"))
-                        .Where(x => Utility.IsFileTopLevelInPackage(x.FullName, pkgPath))
-                        .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
-                        .ForEachAsync(x => createExecutableStubForExe(x.FullName))
-                        .Wait();
+                    new DirectoryInfo(pkgPath)
+                                    .GetAllFilesRecursively("*.exe")
+                                    .Where(x => !x.Name.ToLowerInvariant().Contains("squirrel.exe"))
+                                    .Where(x => Utility.IsFileTopLevelInPackage(x.FullName, pkgPath))
+                                    .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
+                                    .ToList()
+                                    .ForEachAsync(x => createExecutableStubForExe(x.FullName))
+                                    .Wait();
 
                     if (signingOpts == null) return;
 
