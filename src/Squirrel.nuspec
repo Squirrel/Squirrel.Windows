@@ -12,7 +12,7 @@
       <dependency id="DeltaCompressionDotNet" version="[1.1,2.0)" />
       <dependency id="Splat" version="1.6.2" />
       <dependency id="Mono.Cecil" version="0.9.6.1" />
-      <dependency id="SharpCompress" version="0.17.1" />
+      <dependency id="SharpCompress" version="0.22.0" />
     </dependencies>
 
     <id>squirrel.windows</id>
