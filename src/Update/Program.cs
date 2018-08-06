@@ -99,6 +99,7 @@ namespace Squirrel.Update
                 bool shouldWait = false;
                 bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
                 bool noDelta = false;
+                bool updateOnly = false;
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -132,6 +133,7 @@ namespace Squirrel.Update
                     { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
                     { "no-msi", "Don't generate an MSI package", v => noMsi = true},
                     { "no-delta", "Don't generate delta packages to save time", v => noDelta = true},
+                    { "updateOnly", "Argument that will be used while creating shortcut, decides whether to just update the shortcuts", v => updateOnly = false},
                     { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
                 };
 
@@ -173,7 +175,7 @@ namespace Squirrel.Update
                     UpdateSelf().Wait();
                     break;
                 case UpdateAction.Shortcut:
-                    Shortcut(target, shortcutArgs, processStartArgs, setupIcon);
+                    Shortcut(target, shortcutArgs, updateOnly, processStartArgs, setupIcon);
                     break;
                 case UpdateAction.Deshortcut:
                     Deshortcut(target, shortcutArgs);
@@ -473,7 +475,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
+        public void Shortcut(string exeName, string shortcutArgs, bool updateOnly, string processStartArgs, string icon)
         {
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
@@ -485,7 +487,7 @@ namespace Squirrel.Update
             var locations = parseShortcutLocations(shortcutArgs);
 
             using (var mgr = new UpdateManager("", appName)) {
-                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false, processStartArgs, icon);
+                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, updateOnly, processStartArgs, icon);
             }
         }
 
