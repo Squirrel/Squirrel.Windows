@@ -99,6 +99,7 @@ namespace Squirrel.Update
                 bool shouldWait = false;
                 bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
                 bool noDelta = false;
+                int? stagingPerccentage = null;
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -133,6 +134,7 @@ namespace Squirrel.Update
                     { "no-msi", "Don't generate an MSI package", v => noMsi = true},
                     { "no-delta", "Don't generate delta packages to save time", v => noDelta = true},
                     { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
+                    { "staging-percentage=", "Set the staging percentage of the new release", (int v) => stagingPerccentage = v},
                 };
 
                 opts.Parse(args);
@@ -183,7 +185,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion, !noDelta);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion, !noDelta, stagingPerccentage);
                     break;
                 }
             }
@@ -342,7 +344,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true, int? stagingPercentage = null)
         {
             ensureConsole();
 
@@ -433,6 +435,12 @@ namespace Squirrel.Update
             var newReleaseEntries = processed
                 .Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl))
                 .ToList();
+
+            if (stagingPercentage.HasValue)
+            {
+                newReleaseEntries.ForEach(releaseEntry => releaseEntry.SetStagingPercentage(stagingPercentage.Value));
+            }
+
             var distinctPreviousReleases = previousReleases
                 .Where(x => !newReleaseEntries.Select(e => e.Version).Contains(x.Version));
             var releaseEntries = distinctPreviousReleases.Concat(newReleaseEntries).ToList();
