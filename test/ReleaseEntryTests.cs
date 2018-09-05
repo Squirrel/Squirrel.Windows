@@ -264,9 +264,10 @@ namespace Squirrel.Tests.Core
         }
 
         [Fact]
-        public void SortDoubleDigitPrereleaseVersionsCorrectly()
+        public void WhenPreReleasesAreOutOfOrderSortByNumericSuffix()
         {
             var path = Path.GetTempFileName();
+            var firstVersion = new SemanticVersion("1.1.9-beta105");
             var secondVersion = new SemanticVersion("1.2.0-beta9");
             var thirdVersion = new SemanticVersion("1.2.0-beta10");
             var fourthVersion = new SemanticVersion("1.2.0-beta100");
@@ -275,6 +276,7 @@ namespace Squirrel.Tests.Core
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta1-full.nupkg")),
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta9-full.nupkg")),
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta100-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.1.9-beta105-full.nupkg")),
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta10-full.nupkg"))
             };
 
@@ -282,9 +284,10 @@ namespace Squirrel.Tests.Core
 
             var releases = ReleaseEntry.ParseReleaseFile(File.ReadAllText(path)).ToArray();
 
-            Assert.Equal(secondVersion, releases[1].Version);
-            Assert.Equal(thirdVersion, releases[2].Version);
-            Assert.Equal(fourthVersion, releases[3].Version);
+            Assert.Equal(firstVersion, releases[0].Version);
+            Assert.Equal(secondVersion, releases[2].Version);
+            Assert.Equal(thirdVersion, releases[3].Version);
+            Assert.Equal(fourthVersion, releases[4].Version);
         }
 
         [Fact]
