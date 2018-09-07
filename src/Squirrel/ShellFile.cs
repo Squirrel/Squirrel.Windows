@@ -69,6 +69,45 @@ namespace Squirrel.Shell
 
                 return pv;
             }
+
+            public static PropVariant FromGuid(Guid guid)
+            {
+                byte[] bytes = ((Guid)guid).ToByteArray();
+                var pv = new PropVariant()
+                {
+                    variantType = 72,  // VT_CLSID
+                    pointerValue = Marshal.AllocCoTaskMem(bytes.Length),
+                };
+                Marshal.Copy(bytes, 0, pv.pointerValue, bytes.Length);
+
+                return pv;
+            }
+
+            /// <summary>
+            /// Called to properly clean up the memory referenced by a PropVariant instance.
+            /// </summary>
+            [DllImport("ole32.dll")]
+            private extern static int PropVariantClear(ref PropVariant pvar);
+
+            /// <summary>
+            /// Called to clear the PropVariant's referenced and local memory.
+            /// </summary>
+            /// <remarks>
+            /// You must call Clear to avoid memory leaks.
+            /// </remarks>
+            public void Clear()
+            {
+                // Can't pass "this" by ref, so make a copy to call PropVariantClear with
+                PropVariant tmp = this;
+                PropVariantClear(ref tmp);
+
+                // Since we couldn't pass "this" by ref, we need to clear the member fields manually
+                // NOTE: PropVariantClear already freed heap data for us, so we are just setting
+                //       our references to null.
+                variantType = (short)VarEnum.VT_EMPTY;
+                Reserved1 = Reserved2 = Reserved3 = 0;
+                pointerValue = IntPtr.Zero;
+            }
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -886,10 +925,32 @@ namespace Squirrel.Shell
         /// </summary>
         public void SetToastActivatorCLSID(string clsid)
         {
+            Guid guid = Guid.Parse(clsid);
+            SetToastActivatorCLSID(guid);
+        }
+
+        /// <summary>
+        /// Sets the ToastActivatorCLSID
+        /// </summary>
+        public void SetToastActivatorCLSID(Guid clsid)
+        {
             var propStore = (IPropertyStore)linkW;
+
             var pkey = PROPERTYKEY.PKEY_AppUserModel_ToastActivatorCLSID;
-            var str = PropVariant.FromString (clsid);
-            propStore.SetValue(ref pkey, ref str);
+
+            PropVariant varGuid = PropVariant.FromGuid(clsid);
+            try
+            {
+                int errCode = propStore.SetValue(ref pkey, ref varGuid);
+                Marshal.ThrowExceptionForHR(errCode);
+
+                errCode = propStore.Commit();
+                Marshal.ThrowExceptionForHR(errCode);
+            }
+            finally
+            {
+                varGuid.Clear();
+            }
         }
 
         /// <summary>
