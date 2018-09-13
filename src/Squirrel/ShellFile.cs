@@ -72,9 +72,8 @@ namespace Squirrel.Shell
 
             public static PropVariant FromGuid(Guid guid)
             {
-                byte[] bytes = ((Guid)guid).ToByteArray();
-                var pv = new PropVariant()
-                {
+                byte[] bytes = guid.ToByteArray();
+                var pv = new PropVariant() {
                     variantType = 72,  // VT_CLSID
                     pointerValue = Marshal.AllocCoTaskMem(bytes.Length),
                 };
@@ -925,7 +924,7 @@ namespace Squirrel.Shell
         /// </summary>
         public void SetToastActivatorCLSID(string clsid)
         {
-            Guid guid = Guid.Parse(clsid);
+            var guid = Guid.Parse(clsid);
             SetToastActivatorCLSID(guid);
         }
 
@@ -938,17 +937,14 @@ namespace Squirrel.Shell
 
             var pkey = PROPERTYKEY.PKEY_AppUserModel_ToastActivatorCLSID;
 
-            PropVariant varGuid = PropVariant.FromGuid(clsid);
-            try
-            {
+            var varGuid = PropVariant.FromGuid(clsid);
+            try {
                 int errCode = propStore.SetValue(ref pkey, ref varGuid);
                 Marshal.ThrowExceptionForHR(errCode);
 
                 errCode = propStore.Commit();
                 Marshal.ThrowExceptionForHR(errCode);
-            }
-            finally
-            {
+            } finally {
                 varGuid.Clear();
             }
         }
