@@ -181,3 +181,5 @@ tests/Test.xml
 ## CPP db crap
 *.db
 *.opendb
+*.db-shm
+*.db-wal

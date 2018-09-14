@@ -319,12 +319,12 @@ namespace Squirrel.Update
                 var releaseNotes = updateInfo.FetchReleaseNotes();
 
                 var sanitizedUpdateInfo = new {
-                    currentVersion = updateInfo.CurrentlyInstalledVersion.Version.ToString(),
-                    futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
-                    releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
+                    currentVersion = (updateInfo!=null && updateInfo.CurrentlyInstalledVersion!= null)? updateInfo.CurrentlyInstalledVersion.Version.ToString():null,
+                    futureVersion = (updateInfo != null && updateInfo.FutureReleaseEntry != null)? updateInfo.FutureReleaseEntry.Version.ToString():null,
+                    releasesToApply = (updateInfo != null)? updateInfo.ReleasesToApply.Select(x => new {
                         version = x.Version.ToString(),
                         releaseNotes = releaseNotes.ContainsKey(x) ? releaseNotes[x] : "",
-                    }).ToArray(),
+                    }).ToArray():null,
                 };
 
                 return SimpleJson.SerializeObject(sanitizedUpdateInfo);
