@@ -361,9 +361,9 @@ namespace Squirrel
                     "..", "..", "..",
                     "vendor", "7zip"
                 );
-                return FindHelperExecutable("7z.exe", new[] { vendorDir });
+                return FindHelperExecutable("7za.exe", new[] { vendorDir });
             } else {
-                return FindHelperExecutable("7z.exe");
+                return FindHelperExecutable("7za.exe");
             }
         }
 
