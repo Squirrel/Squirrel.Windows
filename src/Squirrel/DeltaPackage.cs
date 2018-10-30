@@ -69,9 +69,6 @@ namespace Squirrel
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
                 Utility.ExtractZipToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName).Wait();
-                var opts = new ExtractionOptions() { ExtractFullPath = true, Overwrite = true, PreserveFileTime = true };
-
-                Utility.ExtractZipToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName).Wait();
                 Utility.ExtractZipToDirectory(newPackage.ReleasePackageFile, tempInfo.FullName).Wait();
 
                 // Collect a list of relative paths under 'lib' and map them
