@@ -369,16 +369,16 @@ namespace Squirrel
 
         public static async Task ExtractZipToDirectory(string zipFilePath, string outFolder)
         {
-            var sevenZip = find7Zip();
+            var sevenZip = Environment.GetEnvironmentVariable("SZA_PATH") ?? find7Zip();
             var result = default(Tuple<int, string>);
 
             try {
                 var cmd = sevenZip;
                 var args = String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder);
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
-                    cmd = "wine";
-                    args = sevenZip + " " + args;
-                }
+//                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
+//                    cmd = "wine";
+//                    args = sevenZip + " " + args;
+//                }
 
                 result = await Utility.InvokeProcessAsync(cmd, args, CancellationToken.None);
                 if (result.Item1 != 0) throw new Exception(result.Item2);
@@ -390,16 +390,17 @@ namespace Squirrel
 
         public static async Task CreateZipFromDirectory(string zipFilePath, string inFolder)
         {
-            var sevenZip = find7Zip();
+            var sevenZip = Environment.GetEnvironmentVariable("SZA_PATH") ?? find7Zip();
+
             var result = default(Tuple<int, string>);
 
             try {
                 var cmd = sevenZip;
                 var args = String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath);
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
-                    cmd = "wine";
-                    args = sevenZip + " " + args;
-                }
+//                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
+//                    cmd = "wine";
+//                    args = sevenZip + " " + args;
+//                }
 
                 result = await Utility.InvokeProcessAsync(cmd, args, CancellationToken.None, inFolder);
                 if (result.Item1 != 0) throw new Exception(result.Item2);
