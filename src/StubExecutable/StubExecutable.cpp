@@ -103,8 +103,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	si.dwFlags = STARTF_USESHOWWINDOW;
 	si.wShowWindow = nCmdShow;
 
+	TCHAR cwd[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, cwd);
+
 	std::wstring cmdLine(L"\"");
 	cmdLine += fullPath;
+	cmdLine += L"\" --squirrel-cwd=\"";
+	cmdLine += cwd;
 	cmdLine += L"\" ";
 	cmdLine += lpCmdLine;
 
