@@ -134,6 +134,7 @@ namespace Squirrel.Update
                     { "no-msi", "Don't generate an MSI package", v => noMsi = true},
                     { "no-delta", "Don't generate delta packages to save time", v => noDelta = true},
                     { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
+                    { "logLevel=", "Set the log level (Debug, Info, Warn, Error, Fatal).", SetLogLevel }
                 };
 
                 opts.Parse(args);
@@ -190,6 +191,13 @@ namespace Squirrel.Update
             }
 
             return 0;
+        }
+
+        private void SetLogLevel(string value)
+        {
+            if(Enum.TryParse<LogLevel>(value, ignoreCase: true, result: out var logLevel)) {
+                this.Log().Level = logLevel;
+            }
         }
 
         public async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
