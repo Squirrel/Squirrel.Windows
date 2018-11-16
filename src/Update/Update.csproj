@@ -39,13 +39,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DeltaCompressionDotNet">
-      <HintPath>..\..\packages\DeltaCompressionDotNet.1.1.0\lib\net45\DeltaCompressionDotNet.dll</HintPath>
+      <HintPath>..\..\packages\DeltaCompressionDotNet.1.1.0\lib\net20\DeltaCompressionDotNet.dll</HintPath>
     </Reference>
     <Reference Include="DeltaCompressionDotNet.MsDelta">
-      <HintPath>..\..\packages\DeltaCompressionDotNet.1.1.0\lib\net45\DeltaCompressionDotNet.MsDelta.dll</HintPath>
+      <HintPath>..\..\packages\DeltaCompressionDotNet.1.1.0\lib\net20\DeltaCompressionDotNet.MsDelta.dll</HintPath>
     </Reference>
     <Reference Include="DeltaCompressionDotNet.PatchApi">
-      <HintPath>..\..\packages\DeltaCompressionDotNet.1.1.0\lib\net45\DeltaCompressionDotNet.PatchApi.dll</HintPath>
+      <HintPath>..\..\packages\DeltaCompressionDotNet.1.1.0\lib\net20\DeltaCompressionDotNet.PatchApi.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Web.XmlTransform">
       <HintPath>..\..\packages\Microsoft.Web.Xdt.2.1.1\lib\net40\Microsoft.Web.XmlTransform.dll</HintPath>
