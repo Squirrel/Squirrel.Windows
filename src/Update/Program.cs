@@ -857,7 +857,7 @@ namespace Squirrel.Update
     class SetupLogLogger : Splat.ILogger, IDisposable
     {
         TextWriter inner;
-        readonly object gate = 42;
+        readonly object gate = new object();
         public Splat.LogLevel Level { get; set; }
 
         public SetupLogLogger(bool saveInTemp)
@@ -870,7 +870,7 @@ namespace Squirrel.Update
 
                     var file = Path.Combine(dir, String.Format("SquirrelSetup.{0}.log", i).Replace(".0.log", ".log"));
                     var str = File.Open(file, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-                    inner = new StreamWriter(str, Encoding.UTF8, 4096, false);
+                    inner = new StreamWriter(str, Encoding.UTF8, 4096, false) { AutoFlush = true };
                     return;
                 } catch (Exception ex) {
                     // Didn't work? Keep going
