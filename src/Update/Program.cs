@@ -345,8 +345,27 @@ namespace Squirrel.Update
 
         public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true)
         {
-            ensureConsole();
+            try {
+                this.Log().Debug("Begin Releasify");
+                ensureConsole();
+                ReleasifyValidateBaseUrl(ref baseUrl);
+                ReleasifyValidatePaths(ref targetDir, ref packagesDir, ref bootstrapperExe);
+                ReleasifyPrepareFiles(package, targetDir, out var di, out var toProcess, out var processed, out var releaseFilePath, out var previousReleases);
+                ReleasifyProcessFiles(targetDir, packagesDir, signingOpts, generateDeltas, toProcess, di, processed, previousReleases);
+                ReleasifyCleanupFiles(toProcess);
+                ReleasifyWriteReleaseFile(baseUrl, processed, previousReleases, releaseFilePath, out var releaseEntries);
+                ReleasifyCreateSetupExe(package, bootstrapperExe, backgroundGif, signingOpts, setupIcon, frameworkVersion, di, releaseEntries, out var targetSetupExe);
+                ReleasifyGenerateMsi(package, signingOpts, generateMsi, targetSetupExe);
+                this.Log().Debug("Completed Releasify");
+            } catch (Exception ex) {
+                this.Log().Error(ex);
+                throw;
+            }
+        }
 
+        private void ReleasifyValidateBaseUrl(ref string baseUrl)
+        {
+            this.Log().Debug("Validating BaseUrl");
             if (baseUrl != null) {
                 if (!Utility.IsHttpUrl(baseUrl)) {
                     throw new Exception(string.Format("Invalid --baseUrl '{0}'. A base URL must start with http or https and be a valid URI.", baseUrl));
@@ -356,7 +375,11 @@ namespace Squirrel.Update
                     baseUrl += "/";
                 }
             }
+        }
 
+        private void ReleasifyValidatePaths(ref string targetDir, ref string packagesDir, ref string bootstrapperExe)
+        {
+            this.Log().Debug("Validating Paths");
             targetDir = targetDir ?? Path.Combine(".", "Releases");
             packagesDir = packagesDir ?? ".";
             bootstrapperExe = bootstrapperExe ?? Path.Combine(".", "Setup.exe");
@@ -370,24 +393,33 @@ namespace Squirrel.Update
                     Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),
                     "Setup.exe");
             }
-
             this.Log().Info("Bootstrapper EXE found at:" + bootstrapperExe);
+        }
 
-            var di = new DirectoryInfo(targetDir);
+        private void ReleasifyPrepareFiles(string package, string targetDir, out DirectoryInfo di,
+            out IEnumerable<FileInfo> toProcess, out List<string> processed, out string releaseFilePath, out List<ReleaseEntry> previousReleases)
+        {
+            this.Log().Debug("Preparing Files");
+            di = new DirectoryInfo(targetDir);
             File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
 
             var allNuGetFiles = di.EnumerateFiles()
                 .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase));
 
-            var toProcess = allNuGetFiles.Where(x => !x.Name.Contains("-delta") && !x.Name.Contains("-full"));
-            var processed = new List<string>();
+            toProcess = allNuGetFiles.Where(x => !x.Name.Contains("-delta") && !x.Name.Contains("-full"));
+            processed = new List<string>();
 
-            var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
-            var previousReleases = new List<ReleaseEntry>();
+            releaseFilePath = Path.Combine(di.FullName, "RELEASES");
+            previousReleases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
                 previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
             }
+        }
 
+        private void ReleasifyProcessFiles(string targetDir, string packagesDir, string signingOpts, bool generateDeltas,
+            IEnumerable<FileInfo> toProcess, DirectoryInfo di, List<string> processed, List<ReleaseEntry> previousReleases)
+        {
+            this.Log().Debug("Processing Files");
             foreach (var file in toProcess) {
                 this.Log().Info("Creating release package: " + file.FullName);
 
@@ -428,19 +460,33 @@ namespace Squirrel.Update
                     processed.Insert(0, dp.InputPackageFile);
                 }
             }
+        }
 
+        private void ReleasifyCleanupFiles(IEnumerable<FileInfo> toProcess)
+        {
+            this.Log().Debug("Cleaning Up Files");
             foreach (var file in toProcess) { File.Delete(file.FullName); }
+        }
 
+        private void ReleasifyWriteReleaseFile(string baseUrl, List<string> processed, List<ReleaseEntry> previousReleases, string releaseFilePath,
+            out List<ReleaseEntry> releaseEntries)
+        {
+            this.Log().Debug("Writing RELEASES file");
             var newReleaseEntries = processed
                 .Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl))
                 .ToList();
             var distinctPreviousReleases = previousReleases
                 .Where(x => !newReleaseEntries.Select(e => e.Version).Contains(x.Version));
-            var releaseEntries = distinctPreviousReleases.Concat(newReleaseEntries).ToList();
+            releaseEntries = distinctPreviousReleases.Concat(newReleaseEntries).ToList();
 
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
+        }
 
-            var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
+        private void ReleasifyCreateSetupExe(string package, string bootstrapperExe, string backgroundGif, string signingOpts,
+            string setupIcon, string frameworkVersion, DirectoryInfo di, List<ReleaseEntry> releaseEntries, out string targetSetupExe)
+        {
+            this.Log().Debug("Creating Setup.exe");
+            targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
@@ -458,14 +504,20 @@ namespace Squirrel.Update
                 File.Delete(zipPath);
             }
 
+            // Alias parameter because cannot pass to anonymous lambda otherwise
+            var targetSetupExeAlias = targetSetupExe;
             Utility.Retry(() =>
-                setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
+                setPEVersionInfoAndIcon(targetSetupExeAlias, new ZipPackage(package), setupIcon).Wait());
 
             if (signingOpts != null) {
                 signPEFile(targetSetupExe, signingOpts).Wait();
             }
+        }
 
+        private void ReleasifyGenerateMsi(string package, string signingOpts, bool generateMsi, string targetSetupExe)
+        {
             if (generateMsi) {
+                this.Log().Debug("Generating .msi");
                 createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
 
                 if (signingOpts != null) {
@@ -473,6 +525,7 @@ namespace Squirrel.Update
                 }
             }
         }
+
 
         public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
         {
