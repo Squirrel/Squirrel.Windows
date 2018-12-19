@@ -286,8 +286,8 @@ namespace Squirrel
                     var target = getDirectoryForRelease(release.Version);
 	                var temporaryTarget = new DirectoryInfo(target.FullName.Replace("app", "TEMP"));
 
-					// NB: This might happen if we got killed partially through applying the release
-					if (target.Exists) {
+                    // NB: This might happen if we got killed partially through applying the release
+                    if (target.Exists) {
                         this.Log().Warn("Found partially applied release folder, killing it: " + target.FullName);
                         await Utility.DeleteDirectory(target.FullName);
                     }
@@ -305,10 +305,10 @@ namespace Squirrel
                         temporaryTarget.FullName,
                         rootAppDirectory);
 
-	                this.Log().Info("Renaming temporary app directory: {0} to: {1}", temporaryTarget.FullName, target.FullName);
+                    this.Log().Info("Renaming temporary app directory: {0} to: {1}", temporaryTarget.FullName, target.FullName);
 	                temporaryTarget.MoveTo(target.FullName);
 
-					return target.FullName;
+                    return target.FullName;
                 });
             }
 
