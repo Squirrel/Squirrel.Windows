@@ -284,22 +284,31 @@ namespace Squirrel
             {
                 return Task.Run(async () => {
                     var target = getDirectoryForRelease(release.Version);
+	                var temporaryTarget = new DirectoryInfo(target.FullName.Replace("app", "TEMP"));
 
-                    // NB: This might happen if we got killed partially through applying the release
-                    if (target.Exists) {
+					// NB: This might happen if we got killed partially through applying the release
+					if (target.Exists) {
                         this.Log().Warn("Found partially applied release folder, killing it: " + target.FullName);
                         await Utility.DeleteDirectory(target.FullName);
                     }
 
-                    target.Create();
+	                if (temporaryTarget.Exists) {
+		                this.Log().Warn("Found partially applied temporary folder, killing it: " + temporaryTarget.FullName);
+		                await Utility.DeleteDirectory(temporaryTarget.FullName);
+	                }
 
-                    this.Log().Info("Writing files to app directory: {0}", target.FullName);
-                    await ReleasePackage.ExtractZipForInstall(
+	                temporaryTarget.Create();
+
+	                this.Log().Info("Writing files to temporary app directory: {0}", temporaryTarget.FullName);
+					await ReleasePackage.ExtractZipForInstall(
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
-                        target.FullName,
+                        temporaryTarget.FullName,
                         rootAppDirectory);
 
-                    return target.FullName;
+	                this.Log().Info("Renaming temporary app directory: {0} to: {1}", temporaryTarget.FullName, target.FullName);
+	                temporaryTarget.MoveTo(target.FullName);
+
+					return target.FullName;
                 });
             }
 
@@ -562,7 +571,7 @@ namespace Squirrel
                 // NT's only error code, ERROR_ACCESS_DENIED. Squelch errors that
                 // come from here.
                 var toCleanup = di.GetDirectories()
-                    .Where(x => x.Name.ToLowerInvariant().Contains("app-"))
+                    .Where(x => x.Name.ToLowerInvariant().Contains("app-") || x.Name.ToLowerInvariant().Contains("TEMP-"))
                     .Where(x => x.Name != currentVersionFolder && x.Name != originalVersionFolder)
                     .Where(x => !isAppFolderDead(x.FullName));
 
