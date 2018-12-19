@@ -300,7 +300,7 @@ namespace Squirrel
 	                temporaryTarget.Create();
 
 	                this.Log().Info("Writing files to temporary app directory: {0}", temporaryTarget.FullName);
-					await ReleasePackage.ExtractZipForInstall(
+                    await ReleasePackage.ExtractZipForInstall(
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
                         temporaryTarget.FullName,
                         rootAppDirectory);
