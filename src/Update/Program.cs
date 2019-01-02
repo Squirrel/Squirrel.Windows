@@ -58,11 +58,9 @@ namespace Squirrel.Update
         }
 
         string target = default(string);
-        string releaseDir = default(string);
         string packagesDir = default(string);
         string bootstrapperExe = default(string);
         string backgroundGif = default(string);
-        string signingParameters = default(string);
         string baseUrl = default(string);
         string setupIcon = default(string);
         string frameworkVersion = "net45";
@@ -97,10 +95,12 @@ namespace Squirrel.Update
                 var updateAction = default(UpdateAction);
 
                 string processStart = default(string);
-                string processStartArgs = default(string);
-                string icon = default(string);
-                string shortcutArgs = default(string);
                 bool shouldWait = false;
+                string releaseDir = default(string);
+                string icon = default(string);
+                string signingParameters = default(string);
+                string processStartArgs = default(string);
+                string shortcutArgs = default(string);
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -344,17 +344,6 @@ namespace Squirrel.Update
             }
         }
 
-        string package;
-        string signingOpts;
-        string targetDir;
-        DirectoryInfo targetDirInfo;
-        string targetSetupExe;
-        IEnumerable<FileInfo> toProcess;
-        List<string> processed;
-        string releaseFilePath;
-        List<ReleaseEntry> releaseEntries;
-        List<ReleaseEntry> previousReleases;
-
         public void Releasify()
         {
             try {
@@ -389,6 +378,7 @@ namespace Squirrel.Update
             }
         }
 
+        string targetDir;
         void ValidatePaths()
         {
             this.Log().Debug("Validating Paths");
@@ -408,6 +398,12 @@ namespace Squirrel.Update
             this.Log().Info("Bootstrapper EXE found at:" + bootstrapperExe);
         }
 
+        DirectoryInfo targetDirInfo;
+        string package;
+        IEnumerable<FileInfo> toProcess;
+        List<string> processed;
+        string releaseFilePath;
+        List<ReleaseEntry> previousReleases;
         void PrepareFiles()
         {
             this.Log().Debug("Preparing Files");
@@ -427,6 +423,7 @@ namespace Squirrel.Update
             }
         }
 
+        string signingOpts;
         void ProcessFiles()
         {
             this.Log().Debug("Processing Files");
@@ -478,6 +475,7 @@ namespace Squirrel.Update
             foreach (var file in toProcess) { File.Delete(file.FullName); }
         }
 
+        List<ReleaseEntry> releaseEntries;
         void WriteReleaseFile()
         {
             this.Log().Debug("Writing RELEASES file");
@@ -491,6 +489,7 @@ namespace Squirrel.Update
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
         }
 
+        string targetSetupExe;
         void CreateSetupExe()
         {
             this.Log().Debug("Creating Setup.exe");
