@@ -57,6 +57,18 @@ namespace Squirrel.Update
             }
         }
 
+        string target = default(string);
+        string releaseDir = default(string);
+        string packagesDir = default(string);
+        string bootstrapperExe = default(string);
+        string backgroundGif = default(string);
+        string signingParameters = default(string);
+        string baseUrl = default(string);
+        string setupIcon = default(string);
+        string frameworkVersion = "net45";
+        bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
+        bool noDelta = false;
+
         int executeCommandLine(string[] args)
         {
             var animatedGifWindowToken = new CancellationTokenSource();
@@ -84,22 +96,11 @@ namespace Squirrel.Update
                 bool silentInstall = false;
                 var updateAction = default(UpdateAction);
 
-                string target = default(string);
-                string releaseDir = default(string);
-                string packagesDir = default(string);
-                string bootstrapperExe = default(string);
-                string backgroundGif = default(string);
-                string signingParameters = default(string);
-                string baseUrl = default(string);
                 string processStart = default(string);
                 string processStartArgs = default(string);
-                string setupIcon = default(string);
                 string icon = default(string);
                 string shortcutArgs = default(string);
-                string frameworkVersion = "net45";
                 bool shouldWait = false;
-                bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
-                bool noDelta = false;
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -184,7 +185,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion, !noDelta);
+                    Releasify();
                     break;
                 }
             }
@@ -343,19 +344,30 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true)
+        string package;
+        string signingOpts;
+        string targetDir;
+        DirectoryInfo targetDirInfo;
+        string targetSetupExe;
+        IEnumerable<FileInfo> toProcess;
+        List<string> processed;
+        string releaseFilePath;
+        List<ReleaseEntry> releaseEntries;
+        List<ReleaseEntry> previousReleases;
+
+        public void Releasify()
         {
             try {
                 this.Log().Debug("Begin Releasify");
                 ensureConsole();
-                ValidateBaseUrl(ref baseUrl);
-                ValidatePaths(ref targetDir, ref packagesDir, ref bootstrapperExe);
-                PrepareFiles(package, targetDir, out var di, out var toProcess, out var processed, out var releaseFilePath, out var previousReleases);
-                ProcessFiles(targetDir, packagesDir, signingOpts, generateDeltas, toProcess, di, processed, previousReleases);
-                CleanupFiles(toProcess);
-                WriteReleaseFile(baseUrl, processed, previousReleases, releaseFilePath, out var releaseEntries);
-                CreateSetupExe(package, bootstrapperExe, backgroundGif, signingOpts, setupIcon, frameworkVersion, di, releaseEntries, out var targetSetupExe);
-                GenerateMsi(package, signingOpts, generateMsi, targetSetupExe);
+                ValidateBaseUrl();
+                ValidatePaths();
+                PrepareFiles();
+                ProcessFiles();
+                CleanupFiles();
+                WriteReleaseFile();
+                CreateSetupExe();
+                GenerateMsi();
                 this.Log().Debug("Completed Releasify");
             } catch (Exception ex) {
                 this.Log().Error(ex);
@@ -363,7 +375,7 @@ namespace Squirrel.Update
             }
         }
 
-        void ValidateBaseUrl(ref string baseUrl)
+        void ValidateBaseUrl()
         {
             this.Log().Debug("Validating BaseUrl");
             if (baseUrl != null) {
@@ -377,7 +389,7 @@ namespace Squirrel.Update
             }
         }
 
-        void ValidatePaths(ref string targetDir, ref string packagesDir, ref string bootstrapperExe)
+        void ValidatePaths()
         {
             this.Log().Debug("Validating Paths");
             targetDir = targetDir ?? Path.Combine(".", "Releases");
@@ -396,35 +408,33 @@ namespace Squirrel.Update
             this.Log().Info("Bootstrapper EXE found at:" + bootstrapperExe);
         }
 
-        void PrepareFiles(string package, string targetDir, out DirectoryInfo di,
-            out IEnumerable<FileInfo> toProcess, out List<string> processed, out string releaseFilePath, out List<ReleaseEntry> previousReleases)
+        void PrepareFiles()
         {
             this.Log().Debug("Preparing Files");
-            di = new DirectoryInfo(targetDir);
-            File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
+            targetDirInfo = new DirectoryInfo(targetDir);
+            File.Copy(package, Path.Combine(targetDirInfo.FullName, Path.GetFileName(package)), true);
 
-            var allNuGetFiles = di.EnumerateFiles()
+            var allNuGetFiles = targetDirInfo.EnumerateFiles()
                 .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase));
 
             toProcess = allNuGetFiles.Where(x => !x.Name.Contains("-delta") && !x.Name.Contains("-full"));
             processed = new List<string>();
 
-            releaseFilePath = Path.Combine(di.FullName, "RELEASES");
+            releaseFilePath = Path.Combine(targetDirInfo.FullName, "RELEASES");
             previousReleases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
                 previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
             }
         }
 
-        void ProcessFiles(string targetDir, string packagesDir, string signingOpts, bool generateDeltas,
-            IEnumerable<FileInfo> toProcess, DirectoryInfo di, List<string> processed, List<ReleaseEntry> previousReleases)
+        void ProcessFiles()
         {
             this.Log().Debug("Processing Files");
             foreach (var file in toProcess) {
                 this.Log().Info("Creating release package: " + file.FullName);
 
                 var rp = new ReleasePackage(file.FullName);
-                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+                rp.CreateReleasePackage(Path.Combine(targetDirInfo.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
                         .Where(x => !x.Name.ToLowerInvariant().Contains("squirrel.exe"))
@@ -452,24 +462,23 @@ namespace Squirrel.Update
                 processed.Add(rp.ReleasePackageFile);
 
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
-                if (prev != null && generateDeltas) {
+                if (prev != null && !noDelta) {
                     var deltaBuilder = new DeltaPackageBuilder(null);
 
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
-                        Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                        Path.Combine(targetDirInfo.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
                     processed.Insert(0, dp.InputPackageFile);
                 }
             }
         }
 
-        void CleanupFiles(IEnumerable<FileInfo> toProcess)
+        void CleanupFiles()
         {
             this.Log().Debug("Cleaning Up Files");
             foreach (var file in toProcess) { File.Delete(file.FullName); }
         }
 
-        void WriteReleaseFile(string baseUrl, List<string> processed, List<ReleaseEntry> previousReleases, string releaseFilePath,
-            out List<ReleaseEntry> releaseEntries)
+        void WriteReleaseFile()
         {
             this.Log().Debug("Writing RELEASES file");
             var newReleaseEntries = processed
@@ -482,15 +491,14 @@ namespace Squirrel.Update
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
         }
 
-        void CreateSetupExe(string package, string bootstrapperExe, string backgroundGif, string signingOpts,
-            string setupIcon, string frameworkVersion, DirectoryInfo di, List<ReleaseEntry> releaseEntries, out string targetSetupExe)
+        void CreateSetupExe()
         {
             this.Log().Debug("Creating Setup.exe");
-            targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
+            targetSetupExe = Path.Combine(targetDirInfo.FullName, "Setup.exe");
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts, setupIcon).Result;
+            var zipPath = createSetupEmbeddedZip(Path.Combine(targetDirInfo.FullName, newestFullRelease.Filename), targetDirInfo.FullName, backgroundGif, signingOpts, setupIcon).Result;
 
             var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
@@ -514,9 +522,9 @@ namespace Squirrel.Update
             }
         }
 
-        void GenerateMsi(string package, string signingOpts, bool generateMsi, string targetSetupExe)
+        void GenerateMsi()
         {
-            if (generateMsi) {
+            if (!noMsi) {
                 this.Log().Debug("Generating .msi");
                 createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
 
@@ -525,7 +533,6 @@ namespace Squirrel.Update
                 }
             }
         }
-
 
         public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
         {
