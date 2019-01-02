@@ -512,10 +512,8 @@ namespace Squirrel.Update
                 File.Delete(zipPath);
             }
 
-            // Alias parameter because cannot pass to anonymous lambda otherwise
-            var targetSetupExeAlias = targetSetupExe;
             Utility.Retry(() =>
-                setPEVersionInfoAndIcon(targetSetupExeAlias, new ZipPackage(package), setupIcon).Wait());
+                setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
             if (signingOpts != null) {
                 signPEFile(targetSetupExe, signingOpts).Wait();
