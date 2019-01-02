@@ -95,12 +95,12 @@ namespace Squirrel.Update
                 bool silentInstall = false;
                 var updateAction = default(UpdateAction);
 
-                string processStart = default(string);
-                bool shouldWait = false;
                 string releaseDir = default(string);
-                string icon = default(string);
+                string processStart = default(string);
                 string processStartArgs = default(string);
+                string icon = default(string);
                 string shortcutArgs = default(string);
+                bool shouldWait = false;
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
