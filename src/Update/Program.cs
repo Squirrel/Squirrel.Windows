@@ -348,14 +348,14 @@ namespace Squirrel.Update
             try {
                 this.Log().Debug("Begin Releasify");
                 ensureConsole();
-                ReleasifyValidateBaseUrl(ref baseUrl);
-                ReleasifyValidatePaths(ref targetDir, ref packagesDir, ref bootstrapperExe);
-                ReleasifyPrepareFiles(package, targetDir, out var di, out var toProcess, out var processed, out var releaseFilePath, out var previousReleases);
-                ReleasifyProcessFiles(targetDir, packagesDir, signingOpts, generateDeltas, toProcess, di, processed, previousReleases);
-                ReleasifyCleanupFiles(toProcess);
-                ReleasifyWriteReleaseFile(baseUrl, processed, previousReleases, releaseFilePath, out var releaseEntries);
-                ReleasifyCreateSetupExe(package, bootstrapperExe, backgroundGif, signingOpts, setupIcon, frameworkVersion, di, releaseEntries, out var targetSetupExe);
-                ReleasifyGenerateMsi(package, signingOpts, generateMsi, targetSetupExe);
+                ValidateBaseUrl(ref baseUrl);
+                ValidatePaths(ref targetDir, ref packagesDir, ref bootstrapperExe);
+                PrepareFiles(package, targetDir, out var di, out var toProcess, out var processed, out var releaseFilePath, out var previousReleases);
+                ProcessFiles(targetDir, packagesDir, signingOpts, generateDeltas, toProcess, di, processed, previousReleases);
+                CleanupFiles(toProcess);
+                WriteReleaseFile(baseUrl, processed, previousReleases, releaseFilePath, out var releaseEntries);
+                CreateSetupExe(package, bootstrapperExe, backgroundGif, signingOpts, setupIcon, frameworkVersion, di, releaseEntries, out var targetSetupExe);
+                GenerateMsi(package, signingOpts, generateMsi, targetSetupExe);
                 this.Log().Debug("Completed Releasify");
             } catch (Exception ex) {
                 this.Log().Error(ex);
@@ -363,7 +363,7 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyValidateBaseUrl(ref string baseUrl)
+        void ValidateBaseUrl(ref string baseUrl)
         {
             this.Log().Debug("Validating BaseUrl");
             if (baseUrl != null) {
@@ -377,7 +377,7 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyValidatePaths(ref string targetDir, ref string packagesDir, ref string bootstrapperExe)
+        void ValidatePaths(ref string targetDir, ref string packagesDir, ref string bootstrapperExe)
         {
             this.Log().Debug("Validating Paths");
             targetDir = targetDir ?? Path.Combine(".", "Releases");
@@ -396,7 +396,7 @@ namespace Squirrel.Update
             this.Log().Info("Bootstrapper EXE found at:" + bootstrapperExe);
         }
 
-        private void ReleasifyPrepareFiles(string package, string targetDir, out DirectoryInfo di,
+        void PrepareFiles(string package, string targetDir, out DirectoryInfo di,
             out IEnumerable<FileInfo> toProcess, out List<string> processed, out string releaseFilePath, out List<ReleaseEntry> previousReleases)
         {
             this.Log().Debug("Preparing Files");
@@ -416,7 +416,7 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyProcessFiles(string targetDir, string packagesDir, string signingOpts, bool generateDeltas,
+        void ProcessFiles(string targetDir, string packagesDir, string signingOpts, bool generateDeltas,
             IEnumerable<FileInfo> toProcess, DirectoryInfo di, List<string> processed, List<ReleaseEntry> previousReleases)
         {
             this.Log().Debug("Processing Files");
@@ -462,13 +462,13 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyCleanupFiles(IEnumerable<FileInfo> toProcess)
+        void CleanupFiles(IEnumerable<FileInfo> toProcess)
         {
             this.Log().Debug("Cleaning Up Files");
             foreach (var file in toProcess) { File.Delete(file.FullName); }
         }
 
-        private void ReleasifyWriteReleaseFile(string baseUrl, List<string> processed, List<ReleaseEntry> previousReleases, string releaseFilePath,
+        void WriteReleaseFile(string baseUrl, List<string> processed, List<ReleaseEntry> previousReleases, string releaseFilePath,
             out List<ReleaseEntry> releaseEntries)
         {
             this.Log().Debug("Writing RELEASES file");
@@ -482,7 +482,7 @@ namespace Squirrel.Update
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
         }
 
-        private void ReleasifyCreateSetupExe(string package, string bootstrapperExe, string backgroundGif, string signingOpts,
+        void CreateSetupExe(string package, string bootstrapperExe, string backgroundGif, string signingOpts,
             string setupIcon, string frameworkVersion, DirectoryInfo di, List<ReleaseEntry> releaseEntries, out string targetSetupExe)
         {
             this.Log().Debug("Creating Setup.exe");
@@ -514,7 +514,7 @@ namespace Squirrel.Update
             }
         }
 
-        private void ReleasifyGenerateMsi(string package, string signingOpts, bool generateMsi, string targetSetupExe)
+        void GenerateMsi(string package, string signingOpts, bool generateMsi, string targetSetupExe)
         {
             if (generateMsi) {
                 this.Log().Debug("Generating .msi");
