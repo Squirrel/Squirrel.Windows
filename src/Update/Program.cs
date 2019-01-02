@@ -857,7 +857,7 @@ namespace Squirrel.Update
     class SetupLogLogger : Splat.ILogger, IDisposable
     {
         TextWriter inner;
-        readonly object gate = new object();
+        readonly object gate = 42;
         public Splat.LogLevel Level { get; set; }
 
         public SetupLogLogger(bool saveInTemp)
