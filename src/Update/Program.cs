@@ -62,6 +62,7 @@ namespace Squirrel.Update
         string bootstrapperExe = default(string);
         string backgroundGif = default(string);
         string baseUrl = default(string);
+        string signingParameters = default(string);
         string setupIcon = default(string);
         string frameworkVersion = "net45";
         bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
@@ -98,7 +99,6 @@ namespace Squirrel.Update
                 bool shouldWait = false;
                 string releaseDir = default(string);
                 string icon = default(string);
-                string signingParameters = default(string);
                 string processStartArgs = default(string);
                 string shortcutArgs = default(string);
 
@@ -423,7 +423,6 @@ namespace Squirrel.Update
             }
         }
 
-        string signingOpts;
         void ProcessFiles()
         {
             this.Log().Debug("Processing Files");
@@ -440,7 +439,7 @@ namespace Squirrel.Update
                         .ForEachAsync(x => createExecutableStubForExe(x.FullName))
                         .Wait();
 
-                    if (signingOpts == null) return;
+                    if (signingParameters == null) return;
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
@@ -451,7 +450,7 @@ namespace Squirrel.Update
                             }
 
                             this.Log().Info("About to sign {0}", x.FullName);
-                            await signPEFile(x.FullName, signingOpts);
+                            await signPEFile(x.FullName, signingParameters);
                         }, 1)
                         .Wait();
                 });
@@ -497,7 +496,7 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(targetDirInfo.FullName, newestFullRelease.Filename), targetDirInfo.FullName, backgroundGif, signingOpts, setupIcon).Result;
+            var zipPath = createSetupEmbeddedZip(Path.Combine(targetDirInfo.FullName, newestFullRelease.Filename), targetDirInfo.FullName, backgroundGif, signingParameters, setupIcon).Result;
 
             var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
@@ -514,8 +513,8 @@ namespace Squirrel.Update
             Utility.Retry(() =>
                 setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
-            if (signingOpts != null) {
-                signPEFile(targetSetupExe, signingOpts).Wait();
+            if (signingParameters != null) {
+                signPEFile(targetSetupExe, signingParameters).Wait();
             }
         }
 
@@ -525,8 +524,8 @@ namespace Squirrel.Update
                 this.Log().Debug("Generating .msi");
                 createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
 
-                if (signingOpts != null) {
-                    signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
+                if (signingParameters != null) {
+                    signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingParameters).Wait();
                 }
             }
         }
