@@ -399,7 +399,6 @@ namespace Squirrel.Update
         }
 
         DirectoryInfo targetDirInfo;
-        string package;
         IEnumerable<FileInfo> toProcess;
         List<string> processed;
         string releaseFilePath;
@@ -408,7 +407,7 @@ namespace Squirrel.Update
         {
             this.Log().Debug("Preparing Files");
             targetDirInfo = new DirectoryInfo(targetDir);
-            File.Copy(package, Path.Combine(targetDirInfo.FullName, Path.GetFileName(package)), true);
+            File.Copy(target, Path.Combine(targetDirInfo.FullName, Path.GetFileName(target)), true);
 
             var allNuGetFiles = targetDirInfo.EnumerateFiles()
                 .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase));
@@ -511,7 +510,7 @@ namespace Squirrel.Update
             }
 
             Utility.Retry(() =>
-                setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
+                setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(target), setupIcon).Wait());
 
             if (signingParameters != null) {
                 signPEFile(targetSetupExe, signingParameters).Wait();
@@ -522,7 +521,7 @@ namespace Squirrel.Update
         {
             if (!noMsi) {
                 this.Log().Debug("Generating .msi");
-                createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
+                createMsiPackage(targetSetupExe, new ZipPackage(target)).Wait();
 
                 if (signingParameters != null) {
                     signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingParameters).Wait();
