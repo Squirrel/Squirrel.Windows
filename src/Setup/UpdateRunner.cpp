@@ -3,6 +3,11 @@
 #include "Resource.h"
 #include "UpdateRunner.h"
 #include <vector>
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <winver.h>
 
 void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 {
@@ -15,7 +20,8 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 	// TODO: Something about contacting support?
 	if (logFile == NULL) {
 		dlg.SetButtons(&buttons[1], 1, 1);
-	} else {
+	}
+	else {
 		dlg.SetButtons(buttons, 2, 1);
 	}
 
@@ -138,13 +144,13 @@ bool CUpdateRunner::DirectoryExists(wchar_t* szPath)
 
 bool CUpdateRunner::DirectoryIsWritable(wchar_t * szPath)
 {
-		wchar_t szTempFileName[MAX_PATH];
-		UINT uRetVal = GetTempFileNameW(szPath, L"Squirrel", 0, szTempFileName);
-		if (uRetVal == 0) {
-			return false;
-		}
-		DeleteFile(szTempFileName);
-		return true;
+	wchar_t szTempFileName[MAX_PATH];
+	UINT uRetVal = GetTempFileNameW(szPath, L"Squirrel", 0, szTempFileName);
+	if (uRetVal == 0) {
+		return false;
+	}
+	DeleteFile(szTempFileName);
+	return true;
 }
 
 int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir)
@@ -190,8 +196,10 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 
 gotADir:
 
+	CheckSpecialBuild(targetDir, lpCommandLine);
+
 	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
-	
+
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
 		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
@@ -275,7 +283,7 @@ gotADir:
 
 	if (dwExitCode != 0) {
 		DisplayErrorMessage(CString(
-			L"There was an error while installing the application. " 
+			L"There was an error while installing the application. "
 			L"Check the setup log for more information and contact the author."), logFile);
 	}
 
@@ -285,7 +293,7 @@ gotADir:
 
 	CloseHandle(pi.hProcess);
 	CloseHandle(pi.hThread);
-	return (int) dwExitCode;
+	return (int)dwExitCode;
 
 failedExtract:
 	if (!useFallbackDir) {
@@ -294,5 +302,76 @@ failedExtract:
 	}
 
 	DisplayErrorMessage(CString(L"Failed to extract installer"), NULL);
-	return (int) dwExitCode;
+	return (int)dwExitCode;
+}
+
+void CUpdateRunner::CheckSpecialBuild(wchar_t* targetDir, wchar_t* commandLine) {
+	CString specialBuild = CString();
+
+	std::wstringstream iss(commandLine);
+	std::vector<std::wstring> v;
+	std::wstring s;
+
+	while (iss >> std::quoted(s)) {
+		v.push_back(s);
+	}
+
+	auto index = std::find(v.begin(), v.end(), std::wstring(L"--special-build"));
+	if (index != v.end()) {
+		index = std::next(index, 1);
+		if (index != v.end()) {
+			specialBuild = index->c_str();
+		}
+	}
+
+	if (specialBuild.IsEmpty()) {
+		HMODULE hLib = GetModuleHandle(NULL);
+
+		HRSRC hVersion = FindResource(hLib,
+			MAKEINTRESOURCE(VS_VERSION_INFO), RT_VERSION);
+		if (hVersion != NULL)
+		{
+			HGLOBAL hGlobal = LoadResource(hLib, hVersion);
+			if (hGlobal != NULL)
+			{
+				LPVOID versionInfo = LockResource(hGlobal);
+				if (versionInfo != NULL)
+				{
+					DWORD vLen, langD;
+					BOOL retVal;
+
+					LPVOID retbuf = NULL;
+
+					static wchar_t fileEntry[256];
+
+					wsprintf(fileEntry, L"\\VarFileInfo\\Translation");
+					retVal = VerQueryValue(versionInfo, fileEntry, &retbuf, (UINT *)&vLen);
+					if (retVal && vLen == 4)
+					{
+						memcpy(&langD, retbuf, 4);
+						wsprintf(fileEntry, L"\\StringFileInfo\\%02X%02X%02X%02X\\%s",
+							(langD & 0xff00) >> 8, langD & 0xff, (langD & 0xff000000) >> 24,
+							(langD & 0xff0000) >> 16, L"SpecialBuild");
+					}
+					else
+						wsprintf(fileEntry, L"\\StringFileInfo\\%04X04B0\\%s",
+							GetUserDefaultLangID(), L"SpecialBuild");
+
+					if (VerQueryValue(versionInfo, fileEntry, &retbuf, (UINT *)&vLen)) {
+						if (vLen > 0)
+						{
+							specialBuild = CString((wchar_t*)retbuf);
+						}
+					}
+				}
+			}
+
+			UnlockResource(hGlobal);
+			FreeResource(hGlobal);
+		}
+	}
+
+	if (!specialBuild.IsEmpty()) {
+		SetEnvironmentVariable(L"SQUIRREL_SPECIAL_BUILD", specialBuild);
+	}
 }
