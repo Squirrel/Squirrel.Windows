@@ -67,7 +67,7 @@ std::wstring FindLatestAppDir()
 
 		version::Semver200_version thisVer(s);
 
-		if (thisVer > acc) {
+		if (thisVer >= acc) {
 			acc = thisVer;
 			acc_s = appVer;
 		}
