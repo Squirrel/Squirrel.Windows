@@ -48,14 +48,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_ LPWSTR lpCmdLine,
                       _In_ int nCmdShow)
 {
-	MitigateDllHijacking();
-
-	// Attempt to mitigate http://textslashplain.com/2015/12/18/dll-hijacking-just-wont-die
-	HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
-	ATLASSERT(hKernel32 != NULL);
-
-	SetDefaultDllDirectoriesFunction pfn = (SetDefaultDllDirectoriesFunction) GetProcAddress(hKernel32, "SetDefaultDllDirectories");
-	if (pfn) { (*pfn)(LOAD_LIBRARY_SEARCH_SYSTEM32); }
+	MitigateDllHijacking();	
 
 	int exitCode = -1;
 	CString cmdLine(lpCmdLine);
