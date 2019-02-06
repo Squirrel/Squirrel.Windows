@@ -133,7 +133,7 @@ namespace Squirrel.Update
                     { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
                     { "no-msi", "Don't generate an MSI package", v => noMsi = true},
                     { "no-delta", "Don't generate delta packages to save time", v => noDelta = true},
-                    { "updateOnly", "Argument that will be used while creating shortcut, decides whether to just update the shortcuts", v => updateOnly = false},
+                    { "updateOnly", "Argument that will be used while creating shortcut, decides whether to just update the shortcuts", v => updateOnly = true},
                     { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
                 };
 
