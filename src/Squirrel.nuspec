@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <version>1.8.0</version>
+    <version>1.9.1</version>
     <authors>GitHub</authors>
     <owners>Paul Betts</owners>
     <licenseUrl>https://github.com/squirrel/Squirrel.Windows/blob/master/COPYING</licenseUrl>
@@ -25,6 +25,8 @@
     <file src="Squirrel\bin\Release\Squirrel.*" target="lib\Net45" />
     <file src="Squirrel\bin\Release\NuGet.Squirrel.*" target="lib\Net45" />
     <file src="Squirrel\bin\Release\ICSharpCode.*" target="lib\Net45" />
+    <file src="squirrel.windows.props" target="build" />
+    <file src="squirrel.windows.targets" target="build" />
     <file src="Setup\bin\Release\Setup.exe" target="tools" />
     <file src="WriteZipToSetup\bin\Release\WriteZipToSetup.exe" target="tools" />
     <file src="StubExecutable\bin\Release\StubExecutable.exe" target="tools" />

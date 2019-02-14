@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -725,6 +726,9 @@ namespace Squirrel.Update
             var setupExeDir = Path.GetDirectoryName(setupExe);
             var company = String.Join(",", package.Authors);
 
+            var culture = CultureInfo.GetCultureInfo(package.Language ?? "").TextInfo.ANSICodePage;
+
+
             var templateText = File.ReadAllText(Path.Combine(pathToWix, "template.wxs"));
             var templateData = new Dictionary<string, string> {
                 { "Id", package.Id },
@@ -732,6 +736,7 @@ namespace Squirrel.Update
                 { "Author", company },
                 { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
                 { "Summary", package.Summary ?? package.Description ?? package.Id },
+                { "Codepage", $"{culture}" }
             };
 
             // NB: We need some GUIDs that are based on the package ID, but unique (i.e.
@@ -865,7 +870,7 @@ namespace Squirrel.Update
 
                     var file = Path.Combine(dir, String.Format("SquirrelSetup.{0}.log", i).Replace(".0.log", ".log"));
                     var str = File.Open(file, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-                    inner = new StreamWriter(str, Encoding.UTF8, 4096, false);
+                    inner = new StreamWriter(str, Encoding.UTF8, 4096, false) { AutoFlush = true };
                     return;
                 } catch (Exception ex) {
                     // Didn't work? Keep going
