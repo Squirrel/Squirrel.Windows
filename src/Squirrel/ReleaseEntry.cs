@@ -74,6 +74,11 @@ namespace Squirrel
             }
         }
 
+        public void SetStagingPercentage(float stagingPercentage)
+        {
+            this.StagingPercentage = stagingPercentage;
+        }
+
         public string GetReleaseNotes(string packageDirectory)
         {
             var zp = new ZipPackage(Path.Combine(packageDirectory, Filename));
