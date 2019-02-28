@@ -100,6 +100,7 @@ namespace Squirrel.Update
                 bool shouldWait = false;
                 bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
                 bool noDelta = false;
+                bool packageAs64Bit = false;
 
                 opts = new OptionSet() {
                     "Usage: Squirrel.exe command [OPTS]",
@@ -134,6 +135,7 @@ namespace Squirrel.Update
                     { "no-msi", "Don't generate an MSI package", v => noMsi = true},
                     { "no-delta", "Don't generate delta packages to save time", v => noDelta = true},
                     { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
+                    { "msi-win64", "Mark the MSI as 64-bit, which is useful in Enterprise deployment scenarios", _ => packageAs64Bit = true},
                 };
 
                 opts.Parse(args);
@@ -184,7 +186,7 @@ namespace Squirrel.Update
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion, !noDelta);
+                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, packageAs64Bit, frameworkVersion, !noDelta);
                     break;
                 }
             }
@@ -343,7 +345,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null, bool generateDeltas = true)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, bool packageAs64Bit = false, string frameworkVersion = null, bool generateDeltas = true)
         {
             ensureConsole();
 
@@ -466,7 +468,7 @@ namespace Squirrel.Update
             }
 
             if (generateMsi) {
-                createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
+                createMsiPackage(targetSetupExe, new ZipPackage(package), packageAs64Bit).Wait();
 
                 if (signingOpts != null) {
                     signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
@@ -720,7 +722,7 @@ namespace Squirrel.Update
             }
         }
 
-        static async Task createMsiPackage(string setupExe, IPackage package)
+        static async Task createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
         {
             var pathToWix = pathToWixTools();
             var setupExeDir = Path.GetDirectoryName(setupExe);
@@ -736,7 +738,10 @@ namespace Squirrel.Update
                 { "Author", company },
                 { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
                 { "Summary", package.Summary ?? package.Description ?? package.Id },
-                { "Codepage", $"{culture}" }
+                { "Codepage", $"{culture}" },
+                { "Platform", packageAs64Bit ? "x64" : "x86" },
+                { "ProgramFilesFolder", packageAs64Bit ? "ProgramFiles64Folder" : "ProgramFilesFolder" },
+                { "Win64YesNo", packageAs64Bit ? "yes" : "no" }
             };
 
             // NB: We need some GUIDs that are based on the package ID, but unique (i.e.
