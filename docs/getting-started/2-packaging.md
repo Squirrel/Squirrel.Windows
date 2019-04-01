@@ -56,6 +56,8 @@ PM> Squirrel --releasify MyApp.1.0.0.nupkg
 
 **Tip:** If you get an error stating that `...'Squirrel' is not recognized...` then you may simply need to restart Visual Studio so the `Package Manager Console` will have loaded all the package tools.
 
+**Tip:** Be aware, the `releasify` command "injects" your current application into a copy of the Setup.exe application. Virus scanners may detect this behavior as malicious and block it. You may need to exclude the Squirrel.exe (found in packages) and/or your project directory in your virus scanner settings.
+
 ### Releasify Output
 
 The `Squirrel --releasify` command completes the following:

@@ -1,4 +1,4 @@
-| README.md |
+| readme.md |
 |:---|
 
 ![](docs/artwork/Squirrel-Logo.png)
@@ -34,16 +34,12 @@ cd squirrel.windows
 .\.NuGet\NuGet.exe restore
 msbuild /p:Configuration=Release
 ```
-See [Contributing](docs/contributing/contributing.md) for additional information on building and contributing to Squirrel.
+See [contributing](contributing.md) for additional information on building and contributing to Squirrel.
 
 
 ## License and Usage
 
-See [COPYING](COPYING) for details on copyright and usage of the Squirrel.Windows software.
-
-
-
-
+See [copying](copying) for details on copyright and usage of the Squirrel.Windows software.
 
 
 

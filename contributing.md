@@ -1,4 +1,4 @@
-| [docs](..)  / [contributing](.) / contributing.md
+| contributing.md
 |:---|
 
 # Contributing
@@ -13,9 +13,9 @@ Why not give back and help make Squirrel even better? Here is an overview of way
 
 ## See Also
 
-* [Building Squirrel](building-squirrel.md) - steps to build squirrel for the impatient.
-* [VS Solution Overview](vs-solution-overview.md) - overview of the various projects in the Squirrel.Windows Visual Studio solution.
+* [Building Squirrel](docs/contributing/building-squirrel.md) - steps to build squirrel for the impatient.
+* [VS Solution Overview](docs/contributing/vs-solution-overview.md) - overview of the various projects in the Squirrel.Windows Visual Studio solution.
 
 ---
-| Return: [Table of Contents](../readme.md) |
+| Return: [Table of Contents](docs/readme.md) |
 |----|

@@ -57,6 +57,6 @@ The **[Getting Started Guide](getting-started/0-overview.md)** provides a step-b
 
 Why not give back and help make Squirrel even better by contributing to the project.
 
-* [Contributing](contributing/contributing.md) - overview of ways you can become more involved with Squirrel.Windows.
+* [Contributing](../contributing.md) - overview of ways you can become more involved with Squirrel.Windows.
 * [Building Squirrel](contributing/building-squirrel.md) - steps to build squirrel for the impatient.
 * [VS Solution Overview](contributing/vs-solution-overview.md) - overview of the various projects in the Squirrel.Windows Visual Studio solution.
