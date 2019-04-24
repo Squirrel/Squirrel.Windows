@@ -1,11 +1,9 @@
 | README.md |
 |:---|
 
-# DEPRECATED: This repo is no longer maintained
+# Contributors Needed
 
-[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
-
-This project is no longer maintained, pull requests are no longer being reviewed or merged and issues are no longer being responded to. 
+We are looking for help with maintaining this important project - please read the discussion in [#1470](https://github.com/Squirrel/Squirrel.Windows/issues/1470) for more information.
 
 ---
 
