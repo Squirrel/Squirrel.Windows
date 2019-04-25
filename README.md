@@ -11,6 +11,7 @@ We are looking for help with maintaining this important project - please read th
 
 ![](docs/artwork/Squirrel-Logo.png)
 
+[![Build Status](https://dev.azure.com/squirrel-installers/Squirrel.Windows/_apis/build/status/Squirrel.Squirrel.Windows?branchName=master)](https://dev.azure.com/squirrel-installers/Squirrel.Windows/_build/latest?definitionId=1&branchName=master)
 
 Squirrel is both a set of tools and a library, to completely manage both installation and updating your Desktop Windows application, written in either C# or any other language (i.e., Squirrel can manage native C++ applications).
 
