@@ -86,11 +86,11 @@ dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
 
 #Style - qualification options
 
-#prefer events not to be prefaced with this. or Me. in Visual Basic
+#prefer events not to be prefaced with this.
 dotnet_style_qualification_for_event = false:suggestion
-#prefer fields not to be prefaced with this. or Me. in Visual Basic
+#prefer fields not to be prefaced with this.
 dotnet_style_qualification_for_field = false:suggestion
-#prefer methods not to be prefaced with this. or Me. in Visual Basic
+#prefer methods not to be prefaced with this.
 dotnet_style_qualification_for_method = false:suggestion
-#prefer properties not to be prefaced with this. or Me. in Visual Basic
+#prefer properties not to be prefaced with this.
 dotnet_style_qualification_for_property = false:suggestion
