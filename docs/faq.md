@@ -65,6 +65,8 @@ var isSquirrelInstall = File.Exists(updateDotExe);
    You can't. So, how can you do it? The basic trick that ClickOnce uses is, you have a folder of EXEs and DLLs, and an Application Shortcut. When ClickOnce goes to update its stuff, it builds a completely *new* folder of binaries, then the last thing it does is rewrite the app shortcut to point to the new folder.
 4. **My previous application version is still around after the update. Doesn't Squirrel clean up old versions?**  
    The current and immediately previous version of your application are not deleted on clean up (see [issue #589](https://github.com/Squirrel/Squirrel.Windows/issues/589)). 
+5. **How can I persist the [.NET Application Settings](https://docs.microsoft.com/en-us/dotnet/framework/winforms/advanced/application-settings-overview) after an update?**
+   See (https://github.com/Squirrel/Squirrel.Windows/issues/198#issuecomment-299262613) for a simple workaround if you want to keep using .NET Application Settings. Another solution is to use a different app/user settings mechanism such as storing it in JSON file.
 
 ---
 | Return: [Table of Contents](readme.md) |
