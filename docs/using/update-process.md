@@ -13,6 +13,11 @@ The following steps are performed by the `UpdateManager` each time your app is e
 4. **Update Shortcuts** - desktop and Windows Start Menu shortcuts are updated to point to the new MyApp version (via the `--processStart` command line parameter passed to `Update.exe`).
 5. **Previous Version Clean-up** - on the next startup of MyApp, all but current and immediately previous version of your app are deleted as part of clean up (e.g., after updating to app-1.0.5, app-1.0.4 will remain, but app-1.0.3 and before will be deleted - see [issue #589](https://github.com/Squirrel/Squirrel.Windows/issues/589)). 
 
+## Rollback
+
+Currently, there is no built-in support for rolling back to a previous version. The suggested workaround is to release the previous stable version with a higher version #.
+Another workaround is to implement rollback on your own code base (see [sample](https://github.com/Squirrel/Squirrel.Windows/issues/524#issuecomment-450904627)).
+
 ## See Also
 
 * [Update Manager](update-manager.md) - reference guide for the `UpdateManager`. 
