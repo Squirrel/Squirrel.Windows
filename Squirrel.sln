@@ -20,6 +20,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SyncReleases", "src\SyncRel
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionLevel", "SolutionLevel", "{ED657D2C-F8A0-4012-A64F-7367D41BE4D2}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		src\SolutionAssemblyInfo.cs = src\SolutionAssemblyInfo.cs
 		src\Squirrel.nuspec = src\Squirrel.nuspec
 		vendor\wix\template.wxs = vendor\wix\template.wxs
