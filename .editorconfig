@@ -1,3 +1,10 @@
+# top-most EditorConfig file
+root = true
+
+[*]
+insert_final_newline = true
+trim_trailing_whitespace = true
+
 [*.cs]
 
 #Core editorconfig formatting - indentation
