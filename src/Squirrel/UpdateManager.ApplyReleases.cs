@@ -12,8 +12,6 @@ using NuGet;
 using Splat;
 using System.Threading;
 using Squirrel.Shell;
-using ICSharpCode.SharpZipLib.Zip;
-using ICSharpCode.SharpZipLib.Core;
 using Microsoft.Win32;
 
 namespace Squirrel
@@ -33,6 +31,7 @@ namespace Squirrel
             {
                 progress = progress ?? (_ => { });
 
+                progress(0);
                 var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
                 progress(10);
 
@@ -297,7 +296,8 @@ namespace Squirrel
                     this.Log().Info("Writing files to app directory: {0}", target.FullName);
                     await ReleasePackage.ExtractZipForInstall(
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
-                        target.FullName);
+                        target.FullName,
+                        rootAppDirectory);
 
                     return target.FullName;
                 });
@@ -511,12 +511,15 @@ namespace Squirrel
                         baseKey = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, view);
                         regKey = baseKey.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers");
 
+                        if (regKey == null) return;
+
                         var toDelete = regKey.GetValueNames()
                             .Where(x => x.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase))
                             .ToList();
 
                         toDelete.ForEach(x =>
-                            this.Log().LogIfThrows(LogLevel.Warn, "Failed to delete key: " + x, () => regKey.DeleteValue(x)));
+                            this.Log().LogIfThrows(LogLevel.Warn, "Failed to delete key: " + x,
+                                () => regKey.DeleteValue(x)));
                     } catch (Exception e) {
                         this.Log().WarnException("Couldn't rewrite shim RegKey, most likely no apps are shimmed", e);
                     } finally {
@@ -533,25 +536,25 @@ namespace Squirrel
             // directory are "dead" (i.e. already uninstalled, but not deleted), and
             // we blow them away. This is to make sure that we don't attempt to run
             // an uninstaller on an already-uninstalled version.
-            async Task cleanDeadVersions(SemanticVersion originalVersion, SemanticVersion currentVersion, bool forceUninstall = false)
+            async Task cleanDeadVersions(SemanticVersion currentVersion, SemanticVersion newVersion, bool forceUninstall = false)
             {
-                if (currentVersion == null) return;
+                if (newVersion == null) return;
 
                 var di = new DirectoryInfo(rootAppDirectory);
                 if (!di.Exists) return;
 
-                this.Log().Info("cleanDeadVersions: for version {0}", currentVersion);
-
-                string originalVersionFolder = null;
-                if (originalVersion != null) {
-                    originalVersionFolder = getDirectoryForRelease(originalVersion).Name;
-                    this.Log().Info("cleanDeadVersions: exclude folder {0}", originalVersionFolder);
-                }
+                this.Log().Info("cleanDeadVersions: checking for version {0}", newVersion);
 
                 string currentVersionFolder = null;
                 if (currentVersion != null) {
                     currentVersionFolder = getDirectoryForRelease(currentVersion).Name;
-                    this.Log().Info("cleanDeadVersions: exclude folder {0}", currentVersionFolder);
+                    this.Log().Info("cleanDeadVersions: exclude current version folder {0}", currentVersionFolder);
+                }
+
+                string newVersionFolder = null;
+                if (newVersion != null) {
+                    newVersionFolder = getDirectoryForRelease(newVersion).Name;
+                    this.Log().Info("cleanDeadVersions: exclude new version folder {0}", newVersionFolder);
                 }
 
                 // NB: If we try to access a directory that has already been 
@@ -560,7 +563,7 @@ namespace Squirrel
                 // come from here.
                 var toCleanup = di.GetDirectories()
                     .Where(x => x.Name.ToLowerInvariant().Contains("app-"))
-                    .Where(x => x.Name != currentVersionFolder && x.Name != originalVersionFolder)
+                    .Where(x => x.Name != newVersionFolder && x.Name != currentVersionFolder)
                     .Where(x => !isAppFolderDead(x.FullName));
 
                 if (forceUninstall == false) {
@@ -588,12 +591,18 @@ namespace Squirrel
                 // Include dead folders in folders to :fire:
                 toCleanup = di.GetDirectories()
                     .Where(x => x.Name.ToLowerInvariant().Contains("app-"))
-                    .Where(x => x.Name != currentVersionFolder && x.Name != originalVersionFolder);
+                    .Where(x => x.Name != newVersionFolder && x.Name != currentVersionFolder);
+
+                // Get the current process list in an attempt to not burn 
+                // directories which have running processes
+                var runningProcesses = UnsafeUtility.EnumerateProcesses(); 
 
                 // Finally, clean up the app-X.Y.Z directories
                 await toCleanup.ForEachAsync(async x => {
                     try {
-                        await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
+                        if (runningProcesses.All(p => p.Item1 == null || !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
+                            await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
+                        }
 
                         if (Directory.Exists(x.FullName)) {
                             // NB: If we cannot clean up a directory, we need to make 
@@ -616,7 +625,7 @@ namespace Squirrel
                 var releaseEntry = default(ReleaseEntry);
 
                 foreach (var entry in entries) {
-                    if (entry.Version == currentVersion) {
+                    if (entry.Version == newVersion) {
                         releaseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(pkgDir, entry.Filename));
                         continue;
                     }

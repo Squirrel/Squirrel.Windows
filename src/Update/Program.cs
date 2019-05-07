@@ -1,29 +1,29 @@
-﻿using System;
+﻿using NuGet;
+using Splat;
+using Squirrel.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Mono.Options;
-using Splat;
-using Squirrel.Json;
-using NuGet;
-using System.Text.RegularExpressions;
 
 namespace Squirrel.Update
 {
     enum UpdateAction {
-        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut, 
+        Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut,
         Deshortcut, ProcessStart, UpdateSelf, CheckForUpdate
     }
 
-    class Program : IEnableLogger 
+    class Program : IEnableLogger
     {
-        static OptionSet opts;
+        static StartupOption opt;
 
         public static int Main(string[] args)
         {
@@ -40,29 +40,45 @@ namespace Squirrel.Update
 
         int main(string[] args)
         {
-            // NB: Trying to delete the app directory while we have Setup.log 
+            try {
+                opt = new StartupOption(args);
+            } catch (Exception ex) {
+                using (var logger = new SetupLogLogger(true, "OptionParsing") { Level = LogLevel.Info }) {
+                    Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
+                    logger.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
+                }
+                throw;
+            }
+
+            // NB: Trying to delete the app directory while we have Setup.log
             // open will actually crash the uninstaller
-            bool isUninstalling = args.Any(x => x.Contains("uninstall"));
+            bool isUninstalling = opt.updateAction == UpdateAction.Uninstall;
 
-            // Uncomment to test Gifs
-            //AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token);
-            //Thread.Sleep(10 * 60 * 1000);
-
-            using (var logger = new SetupLogLogger(isUninstalling) {Level = LogLevel.Info}) {
+            using (var logger = new SetupLogLogger(isUninstalling, opt.updateAction.ToString()) {Level = LogLevel.Info}) {
                 Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
+
                 try {
                     return executeCommandLine(args);
                 } catch (Exception ex) {
-                    logger.Write("Unhandled exception: " + ex, LogLevel.Fatal);
+                    logger.Write("Finished with unhandled exception: " + ex, LogLevel.Fatal);
                     throw;
                 }
-                // Ideally we would deregister the logger from the Locator before it was disposed - this is a hazard as it is at the moment
             }
         }
 
         int executeCommandLine(string[] args)
         {
             var animatedGifWindowToken = new CancellationTokenSource();
+
+#if !MONO
+            // Uncomment to test Gifs
+            /*
+            var ps = new ProgressSource();
+            int i = 0; var t = new Timer(_ => ps.Raise(i += 10), null, 0, 1000);
+            AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token, ps);
+            Thread.Sleep(10 * 60 * 1000);
+            */
+#endif
 
             using (Disposable.Create(() => animatedGifWindowToken.Cancel())) {
 
@@ -74,112 +90,53 @@ namespace Squirrel.Update
                     return 0;
                 }
 
-                bool silentInstall = false;
-                var updateAction = default(UpdateAction);
-
-                string target = default(string);
-                string releaseDir = default(string);
-                string packagesDir = default(string);
-                string bootstrapperExe = default(string);
-                string backgroundGif = default(string);
-                string signingParameters = default(string);
-                string baseUrl = default(string);
-                string processStart = default(string);
-                string processStartArgs = default(string);
-                string setupIcon = default(string);
-                string icon = default(string);
-                string shortcutArgs = default(string);
-                string frameworkVersion = "net45";
-                bool shouldWait = false;
-                bool noMsi = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
-
-                opts = new OptionSet() {
-                    "Usage: Squirrel.exe command [OPTS]",
-                    "Manages Squirrel packages",
-                    "",
-                    "Commands",
-                    { "install=", "Install the app whose package is in the specified directory", v => { updateAction = UpdateAction.Install; target = v; } },
-                    { "uninstall", "Uninstall the app the same dir as Update.exe", v => updateAction = UpdateAction.Uninstall},
-                    { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
-                    { "checkForUpdate=", "Check for one available update and writes new results to stdout as JSON", v => { updateAction = UpdateAction.CheckForUpdate; target = v; } },
-                    { "update=", "Update the application to the latest remote version specified by URL", v => { updateAction = UpdateAction.Update; target = v; } },
-                    { "releasify=", "Update or generate a releases directory with a given NuGet package", v => { updateAction = UpdateAction.Releasify; target = v; } },
-                    { "createShortcut=", "Create a shortcut for the given executable name", v => { updateAction = UpdateAction.Shortcut; target = v; } },
-                    { "removeShortcut=", "Remove a shortcut for the given executable name", v => { updateAction = UpdateAction.Deshortcut; target = v; } },
-                    { "updateSelf=", "Copy the currently executing Update.exe into the default location", v => { updateAction =  UpdateAction.UpdateSelf; target = v; } },
-                    { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
-                    { "processStartAndWait=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; shouldWait = true; }, true},
-                    "",
-                    "Options:",
-                    { "h|?|help", "Display Help and exit", _ => {} },
-                    { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
-                    { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
-                    { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
-                    { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
-                    { "i=|icon", "Path to an ICO file that will be used for icon shortcuts", v => icon = v},
-                    { "setupIcon=", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
-                    { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
-                    { "s|silent", "Silent install", _ => silentInstall = true},
-                    { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
-                    { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
-                    { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
-                    { "no-msi", "Don't generate an MSI package", v => noMsi = true},
-                    { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
-                };
-
-                opts.Parse(args);
-
-                // NB: setupIcon and icon are just aliases for compatibility
-                // reasons, because of a dumb breaking rename I made in 1.0.1
-                setupIcon = setupIcon ?? icon;
-
-                if (updateAction == UpdateAction.Unset) {
+                if (opt.updateAction == UpdateAction.Unset) {
                     ShowHelp();
                     return -1;
                 }
 
-                switch (updateAction) {
+                switch (opt.updateAction) {
 #if !MONO
                 case UpdateAction.Install:
                     var progressSource = new ProgressSource();
-                    if (!silentInstall) { 
+                    if (!opt.silentInstall) {
                         AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token, progressSource);
                     }
 
-                    Install(silentInstall, progressSource, Path.GetFullPath(target)).Wait();
+                    Install(opt.silentInstall, progressSource, Path.GetFullPath(opt.target)).Wait();
                     animatedGifWindowToken.Cancel();
                     break;
                 case UpdateAction.Uninstall:
                     Uninstall().Wait();
                     break;
                 case UpdateAction.Download:
-                    Console.WriteLine(Download(target).Result);
+                    Console.WriteLine(Download(opt.target).Result);
                     break;
                 case UpdateAction.Update:
-                    Update(target).Wait();
+                    Update(opt.target).Wait();
                     break;
                 case UpdateAction.CheckForUpdate:
-                    Console.WriteLine(CheckForUpdate(target).Result);
+                    Console.WriteLine(CheckForUpdate(opt.target).Result);
                     break;
                 case UpdateAction.UpdateSelf:
                     UpdateSelf().Wait();
                     break;
                 case UpdateAction.Shortcut:
-                    Shortcut(target, shortcutArgs, processStartArgs, setupIcon);
+                    Shortcut(opt.target, opt.shortcutArgs, opt.processStartArgs, opt.setupIcon);
                     break;
                 case UpdateAction.Deshortcut:
-                    Deshortcut(target, shortcutArgs);
+                    Deshortcut(opt.target, opt.shortcutArgs);
                     break;
                 case UpdateAction.ProcessStart:
-                    ProcessStart(processStart, processStartArgs, shouldWait);
+                    ProcessStart(opt.processStart, opt.processStartArgs, opt.shouldWait);
                     break;
 #endif
                 case UpdateAction.Releasify:
-                    Releasify(target, releaseDir, packagesDir, bootstrapperExe, backgroundGif, signingParameters, baseUrl, setupIcon, !noMsi, frameworkVersion);
+                    Releasify(opt.target, opt.releaseDir, opt.packagesDir, opt.bootstrapperExe, opt.backgroundGif, opt.signingParameters, opt.baseUrl, opt.setupIcon, !opt.noMsi, opt.packageAs64Bit, opt.frameworkVersion, !opt.noDelta);
                     break;
                 }
             }
-
+            this.Log().Info("Finished Squirrel Updater");
             return 0;
         }
 
@@ -216,7 +173,7 @@ namespace Squirrel.Update
                     this.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.RootAppDirectory), 3),
                         "Couldn't recreate app directory, perhaps Antivirus is blocking it");
                 }
- 
+
                 Directory.CreateDirectory(mgr.RootAppDirectory);
 
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
@@ -242,7 +199,7 @@ namespace Squirrel.Update
 
             retry:
                 try {
-                    var updateInfo = await mgr.CheckForUpdate(ignoreDeltaUpdates: ignoreDeltaUpdates, progress: x => Console.WriteLine(x / 3));
+                    var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, ignoreDeltaUpdates: ignoreDeltaUpdates, progress: x => Console.WriteLine(x / 3));
                     await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
                     await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(66 + x / 3));
                 } catch (Exception ex) {
@@ -283,7 +240,7 @@ namespace Squirrel.Update
 
             this.Log().Info("Fetching update information, downloading from " + updateUrl);
             using (var mgr = new UpdateManager(updateUrl, appName)) {
-                var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x / 3));
+                var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
 
                 var releaseNotes = updateInfo.FetchReleaseNotes();
@@ -307,7 +264,7 @@ namespace Squirrel.Update
 
             this.Log().Info("Fetching update information, downloading from " + updateUrl);
             using (var mgr = new UpdateManager(updateUrl, appName)) {
-                var updateInfo = await mgr.CheckForUpdate(progress: x => Console.WriteLine(x));
+                var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x));
                 var releaseNotes = updateInfo.FetchReleaseNotes();
 
                 var sanitizedUpdateInfo = new {
@@ -334,7 +291,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, string frameworkVersion = null)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, bool packageAs64Bit = false, string frameworkVersion = null, bool generateDeltas = true)
         {
             ensureConsole();
 
@@ -387,6 +344,7 @@ namespace Squirrel.Update
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
                         .Where(x => !x.Name.ToLowerInvariant().Contains("squirrel.exe"))
+                        .Where(x => Utility.IsFileTopLevelInPackage(x.FullName, pkgPath))
                         .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ForEachAsync(x => createExecutableStubForExe(x.FullName))
                         .Wait();
@@ -403,14 +361,14 @@ namespace Squirrel.Update
 
                             this.Log().Info("About to sign {0}", x.FullName);
                             await signPEFile(x.FullName, signingOpts);
-                        })
+                        }, 1)
                         .Wait();
                 });
 
                 processed.Add(rp.ReleasePackageFile);
 
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
-                if (prev != null) {
+                if (prev != null && generateDeltas) {
                     var deltaBuilder = new DeltaPackageBuilder(null);
 
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
@@ -434,9 +392,9 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts).Result;
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts, setupIcon).Result;
 
-            var writeZipToSetup = findExecutable("WriteZipToSetup.exe");
+            var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
             try {
                 var arguments = String.Format("\"{0}\" \"{1}\" \"--set-required-framework\" \"{2}\"", targetSetupExe, zipPath, frameworkVersion);
@@ -456,7 +414,7 @@ namespace Squirrel.Update
             }
 
             if (generateMsi) {
-                createMsiPackage(targetSetupExe, new ZipPackage(package)).Wait();
+                createMsiPackage(targetSetupExe, new ZipPackage(package), packageAs64Bit).Wait();
 
                 if (signingOpts != null) {
                     signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
@@ -508,7 +466,7 @@ namespace Squirrel.Update
             var releases = ReleaseEntry.ParseReleaseFile(
                 File.ReadAllText(Utility.LocalReleaseFileForAppDir(appDir), Encoding.UTF8));
 
-            // NB: We add the hacked up version in here to handle a migration 
+            // NB: We add the hacked up version in here to handle a migration
             // issue, where versions of Squirrel pre PR #450 will not understand
             // prerelease tags, so it will end up writing the release name sans
             // tags. However, the RELEASES file _will_ have them, so we need to look
@@ -549,7 +507,7 @@ namespace Squirrel.Update
         public void ShowHelp()
         {
             ensureConsole();
-            opts.WriteOptionDescriptions(Console.Out);
+            opt.WriteOptionDescriptions();
         }
 
         void waitForParentToExit()
@@ -572,7 +530,7 @@ namespace Squirrel.Update
             }
         }
 
-        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts)
+        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts, string setupIcon)
         {
             string tempPath;
 
@@ -587,6 +545,12 @@ namespace Squirrel.Update
                     this.ErrorIfThrows(() => {
                         File.Copy(backgroundGif, Path.Combine(tempPath, "background.gif"));
                     }, "Failed to write animated GIF to temp dir: " + tempPath);
+                }
+
+                if (!String.IsNullOrWhiteSpace(setupIcon)) {
+                    this.ErrorIfThrows(() => {
+                        File.Copy(setupIcon, Path.Combine(tempPath, "setupIcon.ico"));
+                    }, "Failed to write icon to temp dir: " + tempPath);
                 }
 
                 var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
@@ -657,7 +621,7 @@ namespace Squirrel.Update
 
         async Task createExecutableStubForExe(string fullName)
         {
-            var exe = findExecutable(@"StubExecutable.exe");
+            var exe = Utility.FindHelperExecutable(@"StubExecutable.exe");
 
             var target = Path.Combine(
                 Path.GetDirectoryName(fullName),
@@ -666,7 +630,7 @@ namespace Squirrel.Update
             await Utility.CopyToAsync(exe, target);
 
             await Utility.InvokeProcessAsync(
-                findExecutable("WriteZipToSetup.exe"), 
+                Utility.FindHelperExecutable("WriteZipToSetup.exe"),
                 String.Format("--copy-stub-resources \"{0}\" \"{1}\"", fullName, target),
                 CancellationToken.None);
         }
@@ -689,7 +653,7 @@ namespace Squirrel.Update
             }
 
             // Try to find rcedit.exe
-            string exe = findExecutable("rcedit.exe");
+            string exe = Utility.FindHelperExecutable("rcedit.exe");
 
             var processResult = await Utility.InvokeProcessAsync(exe, args.ToString(), CancellationToken.None);
 
@@ -704,26 +668,14 @@ namespace Squirrel.Update
             }
         }
 
-        static string findExecutable(string toFind)
-        {
-            var exe = @".\" + toFind;
-            if (!File.Exists(exe)) {
-                exe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
-                    toFind);
-
-                // Run down PATH and hope for the best
-                if (!File.Exists(exe)) exe = toFind;
-            }
-
-            return exe;
-        }
-
-        static async Task createMsiPackage(string setupExe, IPackage package)
+        static async Task createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
         {
             var pathToWix = pathToWixTools();
             var setupExeDir = Path.GetDirectoryName(setupExe);
             var company = String.Join(",", package.Authors);
+
+            var culture = CultureInfo.GetCultureInfo(package.Language ?? "").TextInfo.ANSICodePage;
+
 
             var templateText = File.ReadAllText(Path.Combine(pathToWix, "template.wxs"));
             var templateData = new Dictionary<string, string> {
@@ -732,6 +684,10 @@ namespace Squirrel.Update
                 { "Author", company },
                 { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
                 { "Summary", package.Summary ?? package.Description ?? package.Id },
+                { "Codepage", $"{culture}" },
+                { "Platform", packageAs64Bit ? "x64" : "x86" },
+                { "ProgramFilesFolder", packageAs64Bit ? "ProgramFiles64Folder" : "ProgramFilesFolder" },
+                { "Win64YesNo", packageAs64Bit ? "yes" : "no" }
             };
 
             // NB: We need some GUIDs that are based on the package ID, but unique (i.e.
@@ -751,7 +707,7 @@ namespace Squirrel.Update
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
-                    "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
                     "candle.exe", candleParams, processResult.Item2);
 
                 throw new Exception(msg);
@@ -763,7 +719,7 @@ namespace Squirrel.Update
 
             if (processResult.Item1 != 0) {
                 var msg = String.Format(
-                    "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}", 
+                    "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
                     "light.exe", lightParams, processResult.Item2);
 
                 throw new Exception(msg);
@@ -780,7 +736,7 @@ namespace Squirrel.Update
 
         static string pathToWixTools()
         {
-            var ourPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location); 
+            var ourPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
             // Same Directory? (i.e. released)
             if (File.Exists(Path.Combine(ourPath, "candle.exe"))) {
@@ -855,17 +811,17 @@ namespace Squirrel.Update
         readonly object gate = 42;
         public Splat.LogLevel Level { get; set; }
 
-        public SetupLogLogger(bool saveInTemp)
+        public SetupLogLogger(bool saveInTemp, string commandSuffix = null)
         {
             for (int i=0; i < 10; i++) {
                 try {
                     var dir = saveInTemp ?
                         Path.GetTempPath() :
                         Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-
-                    var file = Path.Combine(dir, String.Format("SquirrelSetup.{0}.log", i).Replace(".0.log", ".log"));
-                    var str = File.Open(file, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-                    inner = new StreamWriter(str, Encoding.UTF8, 4096, false);
+                    var fileName = commandSuffix == null ? String.Format($"Squirrel.{i}.log", i) : String.Format($"Squirrel-{commandSuffix}.{i}.log", i);
+                    var file = Path.Combine(dir, fileName.Replace(".0.log", ".log"));
+                    var str = File.Open(file, FileMode.Append, FileAccess.Write, FileShare.Read);
+                    inner = new StreamWriter(str, Encoding.UTF8, 4096, false) { AutoFlush = true };
                     return;
                 } catch (Exception ex) {
                     // Didn't work? Keep going
@@ -882,7 +838,7 @@ namespace Squirrel.Update
                 return;
             }
 
-            lock (gate) inner.WriteLine("{0}> {1}", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), message);
+            lock (gate) inner.WriteLine($"[{DateTime.Now.ToString("dd/MM/yy HH:mm:ss")}] {logLevel.ToString().ToLower()}: {message}");
         }
 
         public void Dispose()
@@ -894,4 +850,3 @@ namespace Squirrel.Update
         }
     }
 }
-

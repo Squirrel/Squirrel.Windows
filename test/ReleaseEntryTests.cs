@@ -89,6 +89,31 @@ namespace Squirrel.Tests.Core
         }
 
         [Theory]
+        [InlineData("0000000000000000000000000000000000000000  MyCool-App-1.2.nupkg                  123", "MyCool-App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool_App-1.2-full.nupkg             123", "MyCool_App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-delta.nupkg            123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-beta1.nupkg            123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-beta1-full.nupkg       123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-beta1-delta.nupkg      123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool-App-1.2.3.nupkg                123", "MyCool-App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool_App-1.2.3-full.nupkg           123", "MyCool_App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-delta.nupkg          123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-beta1.nupkg          123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-beta1-full.nupkg     123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3-beta1-delta.nupkg    123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool-App-1.2.3.4.nupkg              123", "MyCool-App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool_App-1.2.3.4-full.nupkg         123", "MyCool_App")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-delta.nupkg        123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-beta1.nupkg        123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.3.4-beta1-full.nupkg   123", "MyCoolApp")]
+        [InlineData("0000000000000000000000000000000000000000  MyCool-App-1.2.3.4-beta1-delta.nupkg  123", "MyCool-App")]
+        public void CheckPackageName(string releaseEntry, string expected)
+        {
+            var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
+            Assert.Equal(expected, fixture.PackageName);
+        }
+
+        [Theory]
         [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2.nupkg                  123 # 10%", 1, 2, 0, 0, "", false, 0.1f)]
         [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-full.nupkg             123 # 90%", 1, 2, 0, 0, "", false, 0.9f)]
         [InlineData("0000000000000000000000000000000000000000  MyCoolApp-1.2-delta.nupkg            123", 1, 2, 0, 0, "", true, null)]
@@ -236,6 +261,33 @@ namespace Squirrel.Tests.Core
             Assert.Equal(true, releases[3].IsDelta);
             Assert.Equal(thirdVersion, releases[4].Version);
             Assert.Equal(false, releases[4].IsDelta);
+        }
+
+        [Fact]
+        public void WhenPreReleasesAreOutOfOrderSortByNumericSuffix()
+        {
+            var path = Path.GetTempFileName();
+            var firstVersion = new SemanticVersion("1.1.9-beta105");
+            var secondVersion = new SemanticVersion("1.2.0-beta9");
+            var thirdVersion = new SemanticVersion("1.2.0-beta10");
+            var fourthVersion = new SemanticVersion("1.2.0-beta100");
+
+            var releaseEntries = new[] {
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta1-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta9-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta100-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.1.9-beta105-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta10-full.nupkg"))
+            };
+
+            ReleaseEntry.WriteReleaseFile(releaseEntries, path);
+
+            var releases = ReleaseEntry.ParseReleaseFile(File.ReadAllText(path)).ToArray();
+
+            Assert.Equal(firstVersion, releases[0].Version);
+            Assert.Equal(secondVersion, releases[2].Version);
+            Assert.Equal(thirdVersion, releases[3].Version);
+            Assert.Equal(fourthVersion, releases[4].Version);
         }
 
         [Fact]
