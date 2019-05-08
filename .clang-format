@@ -1,0 +1,10 @@
+AlignTrailingComments: false
+AllowShortIfStatementsOnASingleLine: true
+BreakBeforeBraces: Linux
+BreakInheritanceList: AfterColon
+ColumnLimit: 0
+ConstructorInitializerIndentWidth: 2
+PointerBindsToType: true
+SortIncludes: false
+TabWidth: 2
+UseTab: Always
