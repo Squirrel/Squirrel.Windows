@@ -55,3 +55,29 @@ dotnet_style_qualification_for_event = false:suggestion
 dotnet_style_qualification_for_field = false:suggestion
 dotnet_style_qualification_for_method = false:suggestion
 dotnet_style_qualification_for_property = false:suggestion
+
+[/vendor/nuget/**.cs]
+
+# Expression bodied member
+csharp_style_expression_bodied_accessors = false:none
+csharp_style_expression_bodied_constructors = false:none
+csharp_style_expression_bodied_methods = false:none
+csharp_style_expression_bodied_operators = false:none
+csharp_style_expression_bodied_properties = false:none
+
+# Expression level
+csharp_style_inlined_variable_declaration = false:none
+dotnet_style_predefined_type_for_member_access = false:none
+
+# Implicit and explicit types
+csharp_style_var_for_built_in_types = false:none
+csharp_style_var_when_type_is_apparent = true:none
+
+# Language keyword and framework type
+dotnet_style_predefined_type_for_locals_parameters_members = true:none
+
+# Qualification
+dotnet_style_qualification_for_event = false:none
+dotnet_style_qualification_for_field = false:none
+dotnet_style_qualification_for_method = false:none
+dotnet_style_qualification_for_property = false:none
