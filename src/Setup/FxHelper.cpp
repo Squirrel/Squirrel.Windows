@@ -13,6 +13,7 @@ static const int fx462ReleaseVersion = 394802; // Minimum version for .NET 4.6.2
 static const int fx47ReleaseVersion = 460798; // Minimum version for .NET 4.7
 static const int fx471ReleaseVersion = 461308; // Minimum version for .NET 4.7.1
 static const int fx472ReleaseVersion = 461808; // Minimum version for .NET 4.7.2
+static const int fx48ReleaseVersion = 528040; // Minimum version for .NET 4.8
 
 // According to https://msdn.microsoft.com/en-us/library/8z6watww%28v=vs.110%29.aspx,
 // to install .NET 4.5 we must be Vista SP2+, Windows 7 SP1+, or later.
@@ -34,6 +35,7 @@ NetVersion CFxHelper::GetRequiredDotNetVersion()
 	if (resourceFlag.Compare(L"net47") == 0) return NetVersion::net47;
 	if (resourceFlag.Compare(L"net471") == 0) return NetVersion::net471;
 	if (resourceFlag.Compare(L"net472") == 0) return NetVersion::net472;
+	if (resourceFlag.Compare(L"net48") == 0) return NetVersion::net48;
 
 	//Default to standard net45
 	return NetVersion::net45;
@@ -75,6 +77,8 @@ UINT CFxHelper::GetDotNetVersionReleaseNumber(NetVersion version)
 		return fx471ReleaseVersion;
 	case NetVersion::net472:
 		return fx472ReleaseVersion;
+	case NetVersion::net48:
+		return fx48ReleaseVersion;
 	case NetVersion::net45:
 	default:
 		return fx45ReleaseVersion;
@@ -281,6 +285,10 @@ out:
 
 UINT CFxHelper::GetInstallerMainInstructionForVersion(NetVersion version)
 {
+	if (version >= NetVersion::net48) {
+		return IDS_FXINSTRUCTION48;
+	}
+
 	if (version >= NetVersion::net47) {
 		return IDS_FXINSTRUCTION47;
 	}
@@ -293,6 +301,10 @@ UINT CFxHelper::GetInstallerMainInstructionForVersion(NetVersion version)
 
 UINT CFxHelper::GetInstallerContentForVersion(NetVersion version)
 {
+	if (version >= NetVersion::net48) {
+		return IDS_FXCONTENT48;
+	}
+
 	if (version >= NetVersion::net47) {
 		return IDS_FXCONTENT47;
 	}
@@ -305,6 +317,10 @@ UINT CFxHelper::GetInstallerContentForVersion(NetVersion version)
 
 UINT CFxHelper::GetInstallerExpandedInfoForVersion(NetVersion version)
 {
+	if (version >= NetVersion::net48) {
+		return IDS_FXEXPANDEDINFO48;
+	}
+
 	if (version >= NetVersion::net47) {
 		return IDS_FXEXPANDEDINFO47;
 	}
@@ -317,6 +333,10 @@ UINT CFxHelper::GetInstallerExpandedInfoForVersion(NetVersion version)
 
 UINT CFxHelper::GetInstallerUrlForVersion(NetVersion version)
 {
+	if (version >= NetVersion::net48) {
+		return IDS_FXDOWNLOADURL48;
+	}
+
 	if (version >= NetVersion::net47) {
 		return IDS_FXDOWNLOADURL47;
 	}
