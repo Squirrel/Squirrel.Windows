@@ -47,8 +47,8 @@ The **[Getting Started Guide](getting-started/0-overview.md)** provides a step-b
   * [GitHub](using/github.md) - overview of using GitHub for installing, distributing, and updating.
 * **Updating** - documentation related to updating an existing install via the `UpdateManager`.
   * [Update Process](using/update-process.md) - overview of the steps in the update process.
-  * [Update Manager](using/update-manager.md) - reference guide for the `UpdateManager`.  
-  * [GitHub](using/github.md) - overview of using GitHub for installing, distributing, and updating.  
+  * [Update Manager](using/update-manager.md) - reference guide for the `UpdateManager`.
+  * [GitHub](using/github.md) - overview of using GitHub for installing, distributing, and updating.
   * [Debugging Updates](using/debugging-updates.md) - tips for debugging Squirrel.Windows updates.
   * [Staged Rollouts](using/staged-rollouts.md) - how to use staged rollouts to ramp up install distribution over time
 
