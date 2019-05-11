@@ -60,3 +60,4 @@ Why not give back and help make Squirrel even better by contributing to the proj
 * [Contributing](contributing/contributing.md) - overview of ways you can become more involved with Squirrel.Windows.
 * [Building Squirrel](contributing/building-squirrel.md) - steps to build squirrel for the impatient.
 * [VS Solution Overview](contributing/vs-solution-overview.md) - overview of the various projects in the Squirrel.Windows Visual Studio solution.
+* [Branching Strategy](contributing/branching-strategy.md) - overview of the different branches used in squirrel development.
