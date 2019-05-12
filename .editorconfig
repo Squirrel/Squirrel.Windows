@@ -1,0 +1,83 @@
+# top-most EditorConfig file
+root = true
+
+[*]
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.cs]
+indent_style = space
+dotnet_sort_system_directives_first = true
+
+# New line
+csharp_new_line_before_catch = true
+csharp_new_line_before_else = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_open_brace = properties, object_collection_array_initializers, types, control_blocks, lambdas, methods
+
+# Wrapping
+csharp_preserve_single_line_blocks = true
+
+# Indentation
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+
+# Spacing
+csharp_space_after_cast = false
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_between_method_call_empty_parameter_list_parentheses = false
+csharp_space_between_method_call_name_and_opening_parenthesis = false
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+
+# Expression bodied member
+csharp_style_expression_bodied_accessors = false:suggestion
+csharp_style_expression_bodied_constructors = false:suggestion
+csharp_style_expression_bodied_methods = false:suggestion
+csharp_style_expression_bodied_properties = false:suggestion
+
+# Expression level
+csharp_style_inlined_variable_declaration = false:suggestion
+dotnet_style_predefined_type_for_member_access = false:suggestion
+
+# Implicit and explicit types
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+
+# Language keyword and framework type
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+
+# Qualification
+dotnet_style_qualification_for_event = false:suggestion
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+
+[/vendor/nuget/**.cs]
+
+# Expression bodied member
+csharp_style_expression_bodied_accessors = false:none
+csharp_style_expression_bodied_constructors = false:none
+csharp_style_expression_bodied_methods = false:none
+csharp_style_expression_bodied_operators = false:none
+csharp_style_expression_bodied_properties = false:none
+
+# Expression level
+csharp_style_inlined_variable_declaration = false:none
+dotnet_style_predefined_type_for_member_access = false:none
+
+# Implicit and explicit types
+csharp_style_var_for_built_in_types = false:none
+csharp_style_var_when_type_is_apparent = true:none
+
+# Language keyword and framework type
+dotnet_style_predefined_type_for_locals_parameters_members = true:none
+
+# Qualification
+dotnet_style_qualification_for_event = false:none
+dotnet_style_qualification_for_field = false:none
+dotnet_style_qualification_for_method = false:none
+dotnet_style_qualification_for_property = false:none
