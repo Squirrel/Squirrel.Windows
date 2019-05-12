@@ -191,7 +191,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 gotADir:
 
 	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
-	
+
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
 		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
@@ -275,7 +275,7 @@ gotADir:
 
 	if (dwExitCode != 0) {
 		DisplayErrorMessage(CString(
-			L"There was an error while installing the application. " 
+			L"There was an error while installing the application. "
 			L"Check the setup log for more information and contact the author."), logFile);
 	}
 

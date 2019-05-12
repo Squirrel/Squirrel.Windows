@@ -31,7 +31,7 @@ namespace Squirrel.Update
                 src.BeginInit();
                 src.StreamSource = File.OpenRead(source);
                 src.EndInit();
-            
+
                 ImageBehavior.SetAnimatedSource(img, src);
                 this.Content = img;
                 this.Width = src.Width;
@@ -42,7 +42,7 @@ namespace Squirrel.Update
             if (File.Exists(setupIcon)) {
                 Icon = BitmapFrame.Create(new Uri(setupIcon, UriKind.Relative));
             }
-                        
+
             this.AllowsTransparency = true;
             this.WindowStyle = WindowStyle.None;
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;

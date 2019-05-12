@@ -19,4 +19,3 @@ private:
 	static UINT GetInstallerContentForVersion(NetVersion version);
 	static UINT GetInstallerExpandedInfoForVersion(NetVersion version);
 };
-

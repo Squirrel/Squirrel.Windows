@@ -369,7 +369,7 @@ HRESULT CFxHelper::HandleRebootRequirement(bool isQuiet)
 }
 
 //
-// Write a runonce entry to the registry to tell it to continue with 
+// Write a runonce entry to the registry to tell it to continue with
 // setup after a reboot
 //
 bool CFxHelper::WriteRunOnceEntry()
@@ -415,4 +415,3 @@ bool CFxHelper::RebootSystem()
 	// Now we have that privilege, we can ask Windows to restart
 	return ExitWindowsEx(EWX_REBOOT, 0) != 0;
 }
-
