@@ -15,8 +15,7 @@ The following steps are performed by the `UpdateManager` each time your app is e
 
 ## Rollback
 
-Currently, there is no built-in support for rolling back to a previous version. The suggested workaround is to release the previous stable version with a higher version number.
-Another workaround is to implement rollback on your own code base (see [sample](https://github.com/Squirrel/Squirrel.Windows/issues/524#issuecomment-450904627)).
+Currently, there is no built-in support for rolling back to a previous version.
 
 ## See Also
 
