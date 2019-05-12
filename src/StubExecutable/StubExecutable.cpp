@@ -108,8 +108,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	cmdLine += L"\" ";
 	cmdLine += lpCmdLine;
 
-	wchar_t* lpCommandLine = wcsdup(cmdLine.c_str());
-	wchar_t* lpCurrentDirectory = wcsdup(workingDir.c_str());
+	wchar_t* lpCommandLine = _wcsdup(cmdLine.c_str());
+	wchar_t* lpCurrentDirectory = _wcsdup(workingDir.c_str());
 	if (!CreateProcess(NULL, lpCommandLine, NULL, NULL, true, 0, NULL, lpCurrentDirectory, &si, &pi)) {
 		return -1;
 	}

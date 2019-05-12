@@ -56,7 +56,7 @@ bool CFxHelper::IsDotNetInstalled(NetVersion required)
 	return true;
 }
 
-int CFxHelper::GetDotNetVersionReleaseNumber(NetVersion version)
+UINT CFxHelper::GetDotNetVersionReleaseNumber(NetVersion version)
 {
 	switch (version) {
 	case NetVersion::net451:
