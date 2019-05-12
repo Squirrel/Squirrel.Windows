@@ -90,7 +90,7 @@ int wmain(int argc, wchar_t* argv[])
 	printf("Starting to read in Zip file!\n");
 	do {
 		if (!ReadFile(hFile, pCurrent, 0x1000, &dwBytesRead, NULL)) {
-			printf("Failed to read file! 0x%p\n", GetLastError());
+			printf("Failed to read file! 0x%u\n", GetLastError());
 			goto fail;
 		}
 
@@ -111,7 +111,7 @@ int wmain(int argc, wchar_t* argv[])
 
 	if (setFramework) {
 		if (!UpdateResource(hRes, L"FLAGS", (LPCWSTR)132, 0x0409, argv[4], (wcslen(argv[4])+1) * sizeof(wchar_t))) {
-			printf("Failed to update resouce\n");
+			printf("Failed to update resource\n");
 			goto fail;
 		}
 	}
