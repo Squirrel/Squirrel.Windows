@@ -25,7 +25,7 @@ BOOL CALLBACK EnumResNameProc(HMODULE hModule, LPCTSTR lpszType, LPTSTR lpszName
 	return true;
 }
 
-BOOL CALLBACK EnumResTypeProc(HMODULE hMod, LPTSTR lpszType, LONG_PTR lParam) 
+BOOL CALLBACK EnumResTypeProc(HMODULE hMod, LPTSTR lpszType, LONG_PTR lParam)
 {
 	std::vector<wchar_t*>* typeList = (std::vector<wchar_t*>*)lParam;
 	if (IS_INTRESOURCE(lpszType)) {
@@ -37,7 +37,7 @@ BOOL CALLBACK EnumResTypeProc(HMODULE hMod, LPTSTR lpszType, LONG_PTR lParam)
 	return true;
 }
 
-int CopyResourcesToStubExecutable(wchar_t* src, wchar_t* dest) 
+int CopyResourcesToStubExecutable(wchar_t* src, wchar_t* dest)
 {
 	HMODULE hSrc = LoadLibraryEx(src, NULL, LOAD_LIBRARY_AS_DATAFILE);
 	if (!hSrc) return GetLastError();
