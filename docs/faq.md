@@ -66,7 +66,7 @@ var isSquirrelInstall = File.Exists(updateDotExe);
 4. **My previous application version is still around after the update. Doesn't Squirrel clean up old versions?**  
    The current and immediately previous version of your application are not deleted on clean up (see [issue #589](https://github.com/Squirrel/Squirrel.Windows/issues/589)). 
 5. **How can I persist the [.NET Application Settings](https://docs.microsoft.com/en-us/dotnet/framework/winforms/advanced/application-settings-overview) after an update?**
-   See (https://github.com/Squirrel/Squirrel.Windows/issues/198#issuecomment-299262613) for a simple workaround if you want to keep using .NET Application Settings. Another solution is to use a different app/user settings mechanism such as storing it in JSON file.
+   See (https://github.com/Squirrel/Squirrel.Windows/issues/198#issuecomment-299262613) for a simple workaround if you want to keep using .NET Application Settings. Alternatively, consider using a solution that lets you control where the settings are persisted, and store settings in an app-specific location under `%LOCALAPPDATA%`.
 
 ---
 | Return: [Table of Contents](readme.md) |
