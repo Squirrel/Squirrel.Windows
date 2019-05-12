@@ -14,6 +14,14 @@ namespace Squirrel.Tests
 {
     public class SquirrelAwareExecutableDetectorTests
     {
+#if DEBUG
+        private const string NativeBuildRootRelativePath = @"..\build\Debug\Win32\";
+        private const string ManagedBuildRootRelativePath = @"..\build\Debug\net45\";
+#else
+        private const string NativeBuildRootRelativePath = @"..\build\Release\Win32\";
+        private const string ManagedBuildRootRelativePath = @"..\build\Release\net45\";
+#endif
+
         [Fact]
         public void AtomShellShouldBeSquirrelAware()
         {
@@ -26,10 +34,7 @@ namespace Squirrel.Tests
         [Fact]
         public void SquirrelAwareViaVersionBlock()
         {
-            var target = Path.Combine(
-                IntegrationTestHelper.GetIntegrationTestRootDirectory(),
-                "..", "src", "Setup", "bin", "Release", "Setup.exe");
-
+            var target = IntegrationTestHelper.GetPath(NativeBuildRootRelativePath, "Setup.exe");
             Assert.True(File.Exists(target));
 
             var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
@@ -50,7 +55,7 @@ namespace Squirrel.Tests
         [Fact]
         public void NotSquirrelAware()
         {
-            var target = IntegrationTestHelper.GetPath("..", "src", "Update", "bin", "Release", "Update.exe");
+            var target = IntegrationTestHelper.GetPath(ManagedBuildRootRelativePath, "Update.exe");
             Assert.True(File.Exists(target));
 
             var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);

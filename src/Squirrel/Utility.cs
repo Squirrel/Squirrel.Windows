@@ -358,7 +358,7 @@ namespace Squirrel
             if (ModeDetector.InUnitTestRunner()) {
                 var vendorDir = Path.Combine(
                     Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase.Replace("file:///", "")),
-                    "..", "..", "..",
+                    "..", "..", "..", "..",
                     "vendor", "7zip"
                 );
                 return FindHelperExecutable("7z.exe", new[] { vendorDir });
