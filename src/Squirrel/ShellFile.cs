@@ -1053,6 +1053,18 @@ namespace Squirrel.Shell
                 this.shortcutFile = linkFile;
             }
         }
+
+        /// <summary>
+        /// Indicates whether the target is in the given directory.
+        /// </summary>
+        /// <param name="directory">The directory.</param>
+        /// <returns>true if the target is in the given directory; otherwise, false.</returns>
+        internal bool IsTargetInDirectory(
+            string directory)
+        {
+            return System.IO.Path.GetDirectoryName(Target)
+                .Equals(directory, StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     /// <summary>
