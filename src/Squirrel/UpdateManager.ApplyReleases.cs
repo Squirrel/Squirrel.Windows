@@ -451,7 +451,7 @@ namespace Squirrel
                     try {
                         if (shortcut == null) continue;
                         if (String.IsNullOrWhiteSpace(shortcut.Target)) continue;
-                        if (!Path.GetDirectoryName(shortcut.Target).Equals(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) continue;
+                        if (!shortcut.IsTargetInDirectory(rootAppDirectory)) continue;
 
                         if (removeAll) {
                             Utility.DeleteFileHarder(shortcut.ShortCutFile);

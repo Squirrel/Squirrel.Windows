@@ -96,6 +96,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ReleaseEntryTests.cs" />
     <Compile Include="ReleasePackageTests.cs" />
+    <Compile Include="ShellLinkTests.cs" />
     <Compile Include="SquirrelAwareExecutableDetectorTests.cs" />
     <Compile Include="TestHelpers\AssertExtensions.cs" />
     <Compile Include="TestHelpers\ExposedClass.cs" />
