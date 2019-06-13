@@ -5,6 +5,8 @@
 
 GitHub release assets can be used to distribute the necessary Squirrel files for the Squirrel install and update process. It still requires you to upload all the release files as assets for each release, but provides you a means of hosting your update files via your GitHub repository.
 
+**Important:** GitHub since February 22, 2018 [only support TLS 1.2 connections](https://githubengineering.com/crypto-removal-notice/). The host application is therefore required to use .NET framework 4.6.1, otherwise TLS 1.1 is the default protocol and check for update won't work. 
+
 ## Installing from GitHub
 
 GitHub allows you to provide a [static link](https://help.github.com/articles/linking-to-releases/) to a repositories latest release page. You can direct your users to download the `Setup.exe` from the list of assets you uploaded for the release.
