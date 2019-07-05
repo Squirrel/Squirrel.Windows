@@ -4,10 +4,12 @@
 
   <PropertyGroup>
     <TargetFramework>net45</TargetFramework>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <Description>Update</Description>
     <Title>Update</Title>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon />
+    <StartupObject />
   </PropertyGroup>
 
   <ItemGroup>
