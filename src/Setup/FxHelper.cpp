@@ -12,6 +12,7 @@ static const int fx461ReleaseVersion = 394254; // Minimum version for .NET 4.6.1
 static const int fx462ReleaseVersion = 394802; // Minimum version for .NET 4.6.2
 static const int fx47ReleaseVersion = 460798; // Minimum version for .NET 4.7
 static const int fx471ReleaseVersion = 461308; // Minimum version for .NET 4.7.1
+static const int fx472ReleaseVersion = 461808; // Minimum version for .NET 4.7.2
 
 // According to https://msdn.microsoft.com/en-us/library/8z6watww%28v=vs.110%29.aspx,
 // to install .NET 4.5 we must be Vista SP2+, Windows 7 SP1+, or later.
@@ -32,6 +33,7 @@ NetVersion CFxHelper::GetRequiredDotNetVersion()
 	if (resourceFlag.Compare(L"net462") == 0) return NetVersion::net462;
 	if (resourceFlag.Compare(L"net47") == 0) return NetVersion::net47;
 	if (resourceFlag.Compare(L"net471") == 0) return NetVersion::net471;
+	if (resourceFlag.Compare(L"net472") == 0) return NetVersion::net472;
 
 	//Default to standard net45
 	return NetVersion::net45;
@@ -71,6 +73,8 @@ int CFxHelper::GetDotNetVersionReleaseNumber(NetVersion version)
 		return fx47ReleaseVersion;
 	case NetVersion::net471:
 		return fx471ReleaseVersion;
+	case NetVersion::net472:
+		return fx472ReleaseVersion;
 	case NetVersion::net45:
 	default:
 		return fx45ReleaseVersion;
