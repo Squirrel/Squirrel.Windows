@@ -47,11 +47,11 @@ void MitigateDllHijacking()
 	}
 	catch (...)
 	{
-		HMODULE hModule = ::LoadLibrary(L"User32.dll");
+		HMODULE hModule = LoadLibrary(L"User32.dll");
 		msgbox errorMessageBox = NULL;
 
 		if (hModule != NULL) {
-			errorMessageBox = reinterpret_cast<msgbox>(::GetProcAddress(hModule, "MessageBoxA"));
+			errorMessageBox = reinterpret_cast<msgbox>(GetProcAddress(hModule, "MessageBoxA"));
 		}
 
 		if (errorMessageBox != NULL) {
@@ -59,7 +59,7 @@ void MitigateDllHijacking()
 		}
 
 		if (hModule != NULL) {
-			::FreeLibrary(hModule);
+			FreeLibrary(hModule);
 		}
 
 		Exit(EXIT_FAILURE);
