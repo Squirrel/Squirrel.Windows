@@ -55,14 +55,14 @@ void MitigateDllHijacking()
 		}
 
 		if (errorMessageBox != NULL) {
-			(*errorMessageBox)(NULL, L"Setup", L"Installation failed, please run at least Microsoft Windows 7 Service Pack 1", MB_OK);
+			(*errorMessageBox)(NULL, "Setup", "Installation failed, please run at least Microsoft Windows 7 Service Pack 1", MB_OK);
 		}
 
 		if (hModule != NULL) {
 			FreeLibrary(hModule);
 		}
 
-		Exit(EXIT_FAILURE);
+		std::exit(EXIT_FAILURE);
 	}
 }
 
