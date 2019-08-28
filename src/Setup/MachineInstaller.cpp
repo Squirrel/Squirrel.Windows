@@ -22,7 +22,7 @@ bool directoryExists(wchar_t* path) {
 bool MachineInstaller::ShouldSilentInstall()
 {
 	// Figure out the package name from our own EXE name 
-	// The name is consist of $pkgNameDeploymentTool.exe
+	// The name consist of [$pkgName]DeploymentTool.exe
 	wchar_t ourFile[MAX_PATH];
 	HMODULE hMod = GetModuleHandle(NULL);
 	GetModuleFileName(hMod, ourFile, _countof(ourFile));
