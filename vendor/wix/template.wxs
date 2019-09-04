@@ -26,7 +26,7 @@
     <DirectoryRef Id="TARGETDIR">
       <Component Id="RegistryEntries" Guid="{{IdAsGuid3}}" Win64="{{Win64YesNo}}">
         <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\Windows\CurrentVersion\Run">
-          <RegistryValue Type="expandable" Name="{{Id}}MachineInstaller" Value="%ProgramFiles%\{{Title}} Deployment\{{Id}}DeploymentTool.exe --checkInstall" />
+          <RegistryValue Type="expandable" Name="{{Id}}Deployment" Value="&quot;[#{{Id}}.exe]&quot; --checkInstall" />
         </RegistryKey>
       </Component>
     </DirectoryRef>
