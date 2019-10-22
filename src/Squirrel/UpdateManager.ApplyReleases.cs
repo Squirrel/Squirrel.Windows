@@ -436,7 +436,7 @@ namespace Squirrel
 
                 var resolveLink = new Func<FileInfo, ShellLink>(file => {
                     try {
-                        this.Log().Info("Examining Pin: " + file);
+                        this.Log().Debug("Examining Pin: " + file);
                         return new ShellLink(file.FullName);
                     } catch (Exception ex) {
                         var message = String.Format("File '{0}' could not be converted into a valid ShellLink", file.FullName);
