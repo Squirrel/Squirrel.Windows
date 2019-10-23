@@ -291,7 +291,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, bool packageAs64Bit = false, string frameworkVersion = null, bool generateDeltas = true)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, List<string> signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, bool packageAs64Bit = false, string frameworkVersion = null, bool generateDeltas = true)
         {
             ensureConsole();
 
@@ -530,7 +530,7 @@ namespace Squirrel.Update
             }
         }
 
-        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts, string setupIcon)
+        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, List<string> signingOpts, string setupIcon)
         {
             string tempPath;
 
@@ -576,6 +576,14 @@ namespace Squirrel.Update
                     "Failed to create Zip file from directory: " + tempPath);
 
                 return target;
+            }
+        }
+
+        static async Task signPEFile(string exePath, List<string> signingOpts)
+        {
+            foreach (var signingOpt in signingOpts) {
+                // Wait for previous sign to complete
+                await signPEFile(exePath, signingOpt);
             }
         }
 
