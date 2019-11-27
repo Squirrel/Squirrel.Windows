@@ -49,7 +49,7 @@ namespace Squirrel.Bsdiff
         /// <param name="output">A <see cref="Stream"/> to which the patch will be written.</param>
         public static void Create(byte[] oldData, byte[] newData, Stream output)
         {
-            // NB: If you diff a file big enough, we blow the stack. This doesn't 
+            // NB: If you diff a file big enough, we blow the stack. This doesn't
             // solve it, just buys us more space. The solution is to rewrite Split
             // using iteration instead of recursion, but that's Hard(tm).
             var ex = default(Exception);
@@ -113,7 +113,7 @@ namespace Squirrel.Bsdiff
             int eblen = 0;
 
             using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress))
+            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress, true))
             {
                 // compute the differences, writing ctrl as we go
                 int scan = 0;
@@ -231,7 +231,7 @@ namespace Squirrel.Bsdiff
 
             // write compressed diff data
             using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress))
+            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress, true))
             {
                 bz2Stream.Write(db, 0, dblen);
             }
@@ -242,7 +242,7 @@ namespace Squirrel.Bsdiff
 
             // write compressed extra data
             using (WrappingStream wrappingStream = new WrappingStream(output, Ownership.None))
-            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress))
+            using (var bz2Stream = new BZip2Stream(wrappingStream, CompressionMode.Compress, true))
             {
                 bz2Stream.Write(eb, 0, eblen);
             }
@@ -327,9 +327,9 @@ namespace Squirrel.Bsdiff
                 compressedExtraStream.Seek(c_headerSize + controlLength + diffLength, SeekOrigin.Current);
 
                 // decompress each part (to read it)
-                using (var controlStream = new BZip2Stream(compressedControlStream, CompressionMode.Decompress))
-                using (var diffStream = new BZip2Stream(compressedDiffStream, CompressionMode.Decompress))
-                using (var extraStream = new BZip2Stream(compressedExtraStream, CompressionMode.Decompress))
+                using (var controlStream = new BZip2Stream(compressedControlStream, CompressionMode.Decompress, true))
+                using (var diffStream = new BZip2Stream(compressedDiffStream, CompressionMode.Decompress, true))
+                using (var extraStream = new BZip2Stream(compressedExtraStream, CompressionMode.Decompress, true))
                 {
                     long[] control = new long[3];
                     byte[] buffer = new byte[8];
