@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Mono.Options;
 using Octokit;
-using Splat;
+using Squirrel.SimpleSplat;
 using Squirrel;
 using Squirrel.Json;
 
@@ -35,8 +35,8 @@ namespace SyncReleases
 
         async Task<int> main(string[] args)
         {
-            using (var logger = new SetupLogLogger(false) { Level = Splat.LogLevel.Info }) {
-                Splat.Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
+            using (var logger = new SetupLogLogger(false) { Level = Squirrel.SimpleSplat.LogLevel.Info }) {
+                Squirrel.SimpleSplat.Locator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
 
                 var releaseDir = default(string);
                 var repoUrl = default(string);
@@ -89,11 +89,11 @@ namespace SyncReleases
         }
     }
 
-    class SetupLogLogger : Splat.ILogger, IDisposable
+    class SetupLogLogger : Squirrel.SimpleSplat.ILogger, IDisposable
     {
         StreamWriter inner;
         readonly object gate = 42;
-        public Splat.LogLevel Level { get; set; }
+        public Squirrel.SimpleSplat.LogLevel Level { get; set; }
 
         public SetupLogLogger(bool saveInTemp)
         {
@@ -107,7 +107,7 @@ namespace SyncReleases
             inner = new StreamWriter(file, false, Encoding.UTF8);
         }
 
-        public void Write(string message, Splat.LogLevel logLevel)
+        public void Write(string message, LogLevel logLevel)
         {
             if (logLevel < Level) {
                 return;

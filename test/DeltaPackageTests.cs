@@ -3,8 +3,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using NuGet;
-using Splat;
 using Squirrel;
+using Squirrel.SimpleSplat;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 

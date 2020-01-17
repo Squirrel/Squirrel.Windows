@@ -1,5 +1,5 @@
 ﻿using Microsoft.Win32;
-using Splat;
+using Squirrel.SimpleSplat;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

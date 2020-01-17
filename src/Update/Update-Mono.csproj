@@ -23,12 +23,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Splat" Version="1.6.2.0" />
     <PackageReference Include="WpfAnimatedGif" Version="1.4.15.0" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ILRepack" Version="1.26.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Nerdbank.GitVersioning" Version="3.0.50" />
   </ItemGroup>
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />

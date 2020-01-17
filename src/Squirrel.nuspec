@@ -3,14 +3,13 @@
   <metadata>
     <version>1.9.1</version>
     <authors>GitHub</authors>
-    <owners>Paul Betts</owners>
+    <owners>Anaïs Betts</owners>
     <licenseUrl>https://github.com/squirrel/Squirrel.Windows/blob/master/COPYING</licenseUrl>
     <projectUrl>https://github.com/squirrel/Squirrel.Windows</projectUrl>
     <iconUrl>https://raw.githubusercontent.com/Squirrel/Squirrel.Windows/master/docs/artwork/Squirrel-Logo-Square.png</iconUrl>
 
     <dependencies>
       <dependency id="DeltaCompressionDotNet" version="[1.1,2.0)" />
-      <dependency id="Splat" version="[1.6.2,7.0)" />
       <dependency id="Mono.Cecil" version="0.9.6.1" />
       <dependency id="SharpCompress" version="[0.17.1]" />
     </dependencies>

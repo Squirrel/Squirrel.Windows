@@ -1,5 +1,5 @@
 ﻿using NuGet;
-using Splat;
+using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -44,7 +44,7 @@ namespace Squirrel.Update
                 opt = new StartupOption(args);
             } catch (Exception ex) {
                 using (var logger = new SetupLogLogger(true, "OptionParsing") { Level = LogLevel.Info }) {
-                    Locator.CurrentMutable.Register(() => logger, typeof(Splat.ILogger));
+                    Locator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
                     logger.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 }
                 throw;
@@ -55,7 +55,7 @@ namespace Squirrel.Update
             bool isUninstalling = opt.updateAction == UpdateAction.Uninstall;
 
             using (var logger = new SetupLogLogger(isUninstalling, opt.updateAction.ToString()) {Level = LogLevel.Info}) {
-                Locator.CurrentMutable.Register(() => logger, typeof (Splat.ILogger));
+                Locator.CurrentMutable.Register(() => logger, typeof (SimpleSplat.ILogger));
 
                 try {
                     return executeCommandLine(args);
@@ -805,11 +805,11 @@ namespace Squirrel.Update
         }
     }
 
-    class SetupLogLogger : Splat.ILogger, IDisposable
+    class SetupLogLogger : SimpleSplat.ILogger, IDisposable
     {
         TextWriter inner;
         readonly object gate = 42;
-        public Splat.LogLevel Level { get; set; }
+        public SimpleSplat.LogLevel Level { get; set; }
 
         public SetupLogLogger(bool saveInTemp, string commandSuffix = null)
         {
