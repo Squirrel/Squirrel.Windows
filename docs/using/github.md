@@ -50,9 +50,9 @@ using System.Threading.Tasks;
 **`static async Task Main()`**
 
 ~~~cs
-using (var mgr = UpdateManager.GitHubUpdateManager("https://github.com/myuser/myapp"))
+using (var mgr = UpdateManager.GitHubUpdateManager("https://github.com/myuser/myapp").Result)
 {
-  await mgr.Result.UpdateApp();
+  await mgr.UpdateApp();
 }
 ~~~
 
