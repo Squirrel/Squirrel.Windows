@@ -188,6 +188,9 @@ namespace Squirrel
             //    we take the app's *name* rather than a full path)
 
             exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            if (exeToStart.Contains(" ") && !(exeToStart.StartsWith("\"") && exeToStart.EndsWith("\"")))
+                exeToStart = String.Format("\"{0}\"", exeToStart);
+                
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
@@ -216,6 +219,9 @@ namespace Squirrel
             //    we take the app's *name* rather than a full path)
 
             exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            if (exeToStart.Contains(" ") && !(exeToStart.StartsWith("\"") && exeToStart.EndsWith("\"")))
+                exeToStart = String.Format("\"{0}\"", exeToStart);
+                
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
