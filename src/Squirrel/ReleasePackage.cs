@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using MarkdownSharp;
 using NuGet;
-using Splat;
+using Squirrel.SimpleSplat;
 using System.Threading.Tasks;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Readers;

@@ -3,7 +3,7 @@
     <metadata>
         <id>SquirrelInstalledApp</id>
         <version>0.1.0</version>
-        <authors>paul</authors>
+        <authors>Anaïs Betts</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>My package description.</description>
     </metadata>

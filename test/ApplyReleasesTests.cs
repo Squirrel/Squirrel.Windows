@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet;
-using Splat;
+using Squirrel.SimpleSplat;
 using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;

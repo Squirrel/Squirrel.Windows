@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Splat;
+using Squirrel.SimpleSplat;
 using DeltaCompressionDotNet.MsDelta;
 using System.ComponentModel;
 using Squirrel.Bsdiff;

@@ -9,8 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using NuGet;
-using Splat;
 using System.Reflection;
+using Squirrel.SimpleSplat;
 
 namespace Squirrel
 {

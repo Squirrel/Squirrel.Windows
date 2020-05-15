@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using Squirrel;
-using Splat;
+using Squirrel.SimpleSplat;
 using Xunit;
 using System.Text;
 using SharpCompress.Archives.Zip;
