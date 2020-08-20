@@ -21,17 +21,17 @@
     <copyright>Copyright GitHub© 2017</copyright>
   </metadata>
   <files>
-    <file src="Squirrel\bin\Release\Squirrel.*" target="lib\Net45" />
-    <file src="Squirrel\bin\Release\NuGet.Squirrel.*" target="lib\Net45" />
-    <file src="Squirrel\bin\Release\ICSharpCode.*" target="lib\Net45" />
+    <file src="..\Build\Release\Net45\Squirrel.*" target="lib\Net45" />
+    <file src="..\Build\Release\Net45\NuGet.Squirrel.*" target="lib\Net45" />
+    <file src="..\Build\Release\Net45\ICSharpCode.*" target="lib\Net45" />
     <file src="squirrel.windows.props" target="build" />
-    <file src="Setup\bin\Release\Setup.exe" target="tools" />
-    <file src="WriteZipToSetup\bin\Release\WriteZipToSetup.exe" target="tools" />
-    <file src="StubExecutable\bin\Release\StubExecutable.exe" target="tools" />
-    <file src="Update\bin\Release\Update.exe" target="tools\Squirrel.exe" />
-    <file src="Update\bin\Release\Update-Mono.exe" target="tools\Squirrel-Mono.exe" />
-    <file src="Update\bin\Release\Update.com" target="tools\Squirrel.com" />
-    <file src="SyncReleases\bin\Release\SyncReleases.exe" target="tools" />
+    <file src="..\Build\Release\Win32\Setup.exe" target="tools" />
+    <file src="..\Build\Release\Win32\WriteZipToSetup.exe" target="tools" />
+    <file src="..\Build\Release\Win32\StubExecutable.exe" target="tools" />
+    <file src="..\Build\Release\Net45\Update.exe" target="tools\Squirrel.exe" />
+    <file src="..\Build\Release\Net45\Update-Mono.exe" target="tools\Squirrel-Mono.exe" />
+    <file src="..\Build\Release\Net45\Update.com" target="tools\Squirrel.com" />
+    <file src="..\Build\Release\Net45\SyncReleases.exe" target="tools" />
     <file src="Update\signtool.exe" target="tools\signtool.exe" />
     <file src="Update\rcedit.exe" target="tools\rcedit.exe" />
     <file src="..\vendor\wix\*" target="tools" />
