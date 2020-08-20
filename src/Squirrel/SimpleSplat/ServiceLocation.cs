@@ -5,21 +5,21 @@ using System.Threading;
 
 namespace Squirrel.SimpleSplat
 {
-    public static class Locator
+    public static class SquirrelLocator
     {
         [ThreadStatic] static IDependencyResolver unitTestDependencyResolver;
         static IDependencyResolver dependencyResolver;
 
         static readonly List<Action> resolverChanged = new List<Action>();
 
-        static Locator()
+        static SquirrelLocator()
         {
             var r = new ModernDependencyResolver();
             dependencyResolver = r;
 
             RegisterResolverCallbackChanged(() => {
-                if (Locator.CurrentMutable == null) return;
-                Locator.CurrentMutable.InitializeSplat();
+                if (SquirrelLocator.CurrentMutable == null) return;
+                SquirrelLocator.CurrentMutable.InitializeSplat();
             });
         }
 
@@ -175,10 +175,10 @@ namespace Squirrel.SimpleSplat
         /// <param name="resolver">The test resolver to use.</param>
         public static IDisposable WithResolver(this IDependencyResolver resolver)
         {
-            var origResolver = Locator.Current;
-            Locator.Current = resolver;
+            var origResolver = SquirrelLocator.Current;
+            SquirrelLocator.Current = resolver;
 
-            return new ActionDisposable(() => Locator.Current = origResolver);
+            return new ActionDisposable(() => SquirrelLocator.Current = origResolver);
         }
                 
         public static void RegisterConstant(this IMutableDependencyResolver This, object value, Type serviceType, string contract = null)

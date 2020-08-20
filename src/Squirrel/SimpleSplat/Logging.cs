@@ -102,7 +102,7 @@ namespace Squirrel.SimpleSplat
 
         public DefaultLogManager(IDependencyResolver dependencyResolver = null)
         {
-            dependencyResolver = dependencyResolver ?? Locator.Current;
+            dependencyResolver = dependencyResolver ?? SquirrelLocator.Current;
 
             loggerCache = new MemoizingMRUCache<Type, IFullLogger>((type, _) => {
                 var ret = dependencyResolver.GetService<ILogger>();
@@ -191,7 +191,7 @@ namespace Squirrel.SimpleSplat
             get {
                 if (suppressLogging) return nullLogger;
 
-                var factory = Locator.Current.GetService<ILogManager>();
+                var factory = SquirrelLocator.Current.GetService<ILogManager>();
                 if (factory == null) {
                     throw new Exception("ILogManager is null. This should never happen, your dependency resolver is broken");
                 }
@@ -207,7 +207,7 @@ namespace Squirrel.SimpleSplat
         {
             if (suppressLogging) return nullLogger;
 
-            var factory = Locator.Current.GetService<ILogManager>();
+            var factory = SquirrelLocator.Current.GetService<ILogManager>();
             if (factory == null) {
                 throw new Exception("ILogManager is null. This should never happen, your dependency resolver is broken");
             }

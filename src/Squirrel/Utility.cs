@@ -673,7 +673,7 @@ namespace Squirrel
         static IFullLogger Log()
         {
             return logger ??
-                (logger = Locator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(Utility)));
+                (logger = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(Utility)));
         }
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
