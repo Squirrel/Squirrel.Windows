@@ -1,11 +1,11 @@
 {
-  "version": "1.9.2-preview.{height}",
+  "version": "2.0.0",
   "publicReleaseRefSpec": [
     "^refs/heads/master$"
   ],
   "cloudBuild": {
     "buildNumber": {
-      "enabled": true
+      "enabled": false
     }
   }
 }
