@@ -1,5 +1,0 @@
-<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Target Name="CopySquirrel" BeforeTargets="Build">
-    <Copy SourceFiles="$(SquirrelToolsPath)\Squirrel.exe" DestinationFiles="$(OutputPath)\..\Update.exe" SkipUnchangedFiles="true" />
-  </Target>
-</Project>
