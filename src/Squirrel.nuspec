@@ -25,7 +25,6 @@
     <file src="Squirrel\bin\Release\NuGet.Squirrel.*" target="lib\Net45" />
     <file src="Squirrel\bin\Release\ICSharpCode.*" target="lib\Net45" />
     <file src="squirrel.windows.props" target="build" />
-    <file src="squirrel.windows.targets" target="build" />
     <file src="Setup\bin\Release\Setup.exe" target="tools" />
     <file src="WriteZipToSetup\bin\Release\WriteZipToSetup.exe" target="tools" />
     <file src="StubExecutable\bin\Release\StubExecutable.exe" target="tools" />

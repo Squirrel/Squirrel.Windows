@@ -44,7 +44,7 @@ namespace Squirrel.Update
                 opt = new StartupOption(args);
             } catch (Exception ex) {
                 using (var logger = new SetupLogLogger(true, "OptionParsing") { Level = LogLevel.Info }) {
-                    Locator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
+                    SquirrelLocator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
                     logger.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 }
                 throw;
@@ -55,7 +55,7 @@ namespace Squirrel.Update
             bool isUninstalling = opt.updateAction == UpdateAction.Uninstall;
 
             using (var logger = new SetupLogLogger(isUninstalling, opt.updateAction.ToString()) {Level = LogLevel.Info}) {
-                Locator.CurrentMutable.Register(() => logger, typeof (SimpleSplat.ILogger));
+                SquirrelLocator.CurrentMutable.Register(() => logger, typeof (SimpleSplat.ILogger));
 
                 try {
                     return executeCommandLine(args);

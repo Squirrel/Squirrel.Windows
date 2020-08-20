@@ -36,7 +36,7 @@ namespace SyncReleases
         async Task<int> main(string[] args)
         {
             using (var logger = new SetupLogLogger(false) { Level = Squirrel.SimpleSplat.LogLevel.Info }) {
-                Squirrel.SimpleSplat.Locator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
+                Squirrel.SimpleSplat.SquirrelLocator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
 
                 var releaseDir = default(string);
                 var repoUrl = default(string);
