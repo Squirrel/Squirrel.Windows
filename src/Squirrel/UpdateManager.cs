@@ -65,12 +65,12 @@ namespace Squirrel
             await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
         }
 
-        public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
+        public async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall = false, Action<int> progress = null)
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
             await acquireUpdateLock();
 
-            return await applyReleases.ApplyReleases(updateInfo, false, false, progress);
+            return await applyReleases.ApplyReleases(updateInfo, silentInstall, false, progress);
         }
 
         public async Task FullInstall(bool silentInstall = false, Action<int> progress = null)
