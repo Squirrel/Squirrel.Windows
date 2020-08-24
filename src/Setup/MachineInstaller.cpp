@@ -22,13 +22,14 @@ bool directoryExists(wchar_t* path) {
 bool MachineInstaller::ShouldSilentInstall()
 {
 	// Figure out the package name from our own EXE name 
+	// The name consist of [$pkgName]DeploymentTool.exe
 	wchar_t ourFile[MAX_PATH];
 	HMODULE hMod = GetModuleHandle(NULL);
 	GetModuleFileName(hMod, ourFile, _countof(ourFile));
 
 	CString fullPath = CString(ourFile);
 	CString pkgName = CString(ourFile + fullPath.ReverseFind(L'\\'));
-	pkgName.Replace(L".exe", L"");
+	pkgName.Replace(L"DeploymentTool.exe", L"");
 	
 	wchar_t installFolder[MAX_PATH];
 
