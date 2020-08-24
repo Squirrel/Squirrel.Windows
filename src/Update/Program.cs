@@ -388,16 +388,16 @@ namespace Squirrel.Update
 
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
-            var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
+            var tempTargetSetupExe = Path.GetTempFileName(); 
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
-            File.Copy(bootstrapperExe, targetSetupExe, true);
+            File.Copy(bootstrapperExe, tempTargetSetupExe, true);
             var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts, setupIcon).Result;
 
             var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
             try {
-                var arguments = String.Format("\"{0}\" \"{1}\" \"--set-required-framework\" \"{2}\"", targetSetupExe, zipPath, frameworkVersion);
+                var arguments = String.Format("\"{0}\" \"{1}\" \"--set-required-framework\" \"{2}\"", tempTargetSetupExe, zipPath, frameworkVersion);
                 var result = Utility.InvokeProcessAsync(writeZipToSetup, arguments, CancellationToken.None).Result;
                 if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
             } catch (Exception ex) {
@@ -407,11 +407,17 @@ namespace Squirrel.Update
             }
 
             Utility.Retry(() =>
-                setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
+                setPEVersionInfoAndIcon(tempTargetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
             if (signingOpts != null) {
-                signPEFile(targetSetupExe, signingOpts).Wait();
+                signPEFile(tempTargetSetupExe, signingOpts).Wait();
             }
+
+            var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
+            if(File.Exists(targetSetupExe)) {
+                File.Delete(targetSetupExe);
+            }
+            File.Move(tempTargetSetupExe, targetSetupExe);
 
             if (generateMsi) {
                 createMsiPackage(targetSetupExe, new ZipPackage(package), packageAs64Bit).Wait();
