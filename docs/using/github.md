@@ -50,12 +50,15 @@ using Squirrel;
 
 ~~~cs
 using (var mgr = UpdateManager.GitHubUpdateManager("https://github.com/myuser/myapp"))
+using (var result = await mgr)
 {
-  await mgr.Result.UpdateApp();
+  await result.UpdateApp();
 }
 ~~~
 
 **Important:** Make sure your url doesn't end in a forward slash ("/"). Adding the trailing forward slash will cause it to fail with a 404 error ([see #641](https://github.com/Squirrel/Squirrel.Windows/issues/641#issuecomment-201478324)).
+
+**Important:** Make sure to dispose `result`. Not disposing `mgr.Result` will leak mutex (see [#587](https://github.com/Squirrel/Squirrel.Windows/issues/587#issuecomment-332396577)).
 
 **Tip:** You can also specify that the update manager should use `prerelease` for updating (see method signature for details).
 
