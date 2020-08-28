@@ -134,9 +134,9 @@ private:
 	CComPtr<IProgressDialog> m_spProgressDialog;
 };
 
-HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet)
+HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet,bool skipNetModalDialog)
 {
-	if (!isQuiet) {
+	if (!isQuiet && !skipNetModalDialog) {
 		CTaskDialog dlg;
 		TASKDIALOG_BUTTON buttons[] = {
 			{ 1, L"Install", },

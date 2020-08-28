@@ -72,6 +72,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 	bool weAreUACElevated = CUpdateRunner::AreWeUACElevated() == S_OK;
+	bool skipNetModalDialog = (cmdLine.Find(L"--doNotAskInstallDotNet") >= 0);
 	bool attemptingToRerun = (cmdLine.Find(L"--rerunningWithoutUAC") >= 0);
 
 	if (weAreUACElevated && attemptingToRerun) {
@@ -90,7 +91,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	NetVersion requiredVersion = CFxHelper::GetRequiredDotNetVersion();
 
 	if (!CFxHelper::IsDotNetInstalled(requiredVersion)) {
-		hr = CFxHelper::InstallDotNetFramework(requiredVersion, isQuiet);
+		hr = CFxHelper::InstallDotNetFramework(requiredVersion, isQuiet,skipNetModalDialog);
 		if (FAILED(hr)) {
 			exitCode = hr; // #yolo
 			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing the latest version manually"), NULL);
