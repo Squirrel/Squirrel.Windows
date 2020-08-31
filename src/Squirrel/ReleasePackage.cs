@@ -192,12 +192,25 @@ namespace Squirrel
 
         public static Task ExtractZipForInstall(string zipFilePath, string outFolder, string rootPackageFolder)
         {
+            return ExtractZipForInstall(zipFilePath, outFolder, rootPackageFolder, x => { });
+        }
+
+        public static Task ExtractZipForInstall(string zipFilePath, string outFolder, string rootPackageFolder, Action<int> progress)
+        {
             var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
             return Task.Run(() => {
                 using (var za = ZipArchive.Open(zipFilePath))
                 using (var reader = za.ExtractAllEntries()) {
+                    var totalItems = za.Entries.Count;
+                    var currentItem = 0;
+
                     while (reader.MoveToNextEntry()) {
+                        // Report progress early since we might be need to continue for non-matches
+                        currentItem++;
+                        var percentage = (currentItem * 100d) / totalItems;
+                        progress((int)percentage);
+
                         var parts = reader.Entry.Key.Split('\\', '/');
                         var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
 
@@ -234,6 +247,8 @@ namespace Squirrel
                         }
                     }
                 }
+
+                progress(100);
             });
         }
 

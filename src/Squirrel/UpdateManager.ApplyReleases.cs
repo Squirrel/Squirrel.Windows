@@ -312,7 +312,8 @@ namespace Squirrel
                     await ReleasePackage.ExtractZipForInstall(
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
                         target.FullName,
-                        rootAppDirectory);
+                        rootAppDirectory,
+                        progressCallback);
 
                     return target.FullName;
                 });
