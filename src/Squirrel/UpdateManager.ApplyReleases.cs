@@ -34,7 +34,7 @@ namespace Squirrel
                 progress(0);
 
                 // Progress range: 00 -> 40
-                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion, x => progress(CalculateProgress(x, 0, 40)));
+                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion, new ApplyReleasesProgress(updateInfo.ReleasesToApply.Count, x => progress(CalculateProgress(x, 0, 40))));
 
                 progress(40);
 
@@ -318,7 +318,7 @@ namespace Squirrel
                 });
             }
 
-            async Task<ReleaseEntry> createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion, Action<int> progressCallback)
+            async Task<ReleaseEntry> createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion, ApplyReleasesProgress progress)
             {
                 Contract.Requires(releasesToApply != null);
 
@@ -336,6 +336,16 @@ namespace Squirrel
                     throw new Exception("Cannot apply combinations of delta and full packages");
                 }
 
+                // Progress calculation is "complex" here. We need to known how many releases, and then give each release a similar amount of
+                // progress. For example, when applying 5 releases:
+                //
+                // release 1: 00 => 20
+                // release 2: 20 => 40
+                // release 3: 40 => 60
+                // release 4: 60 => 80
+                // release 5: 80 => 100
+                // 
+
                 // Smash together our base full package and the nearest delta
                 var ret = await Task.Run(() => {
                     var basePkg = new ReleasePackage(Path.Combine(rootAppDirectory, "packages", currentVersion.Filename));
@@ -344,8 +354,11 @@ namespace Squirrel
                     var deltaBuilder = new DeltaPackageBuilder(Directory.GetParent(this.rootAppDirectory).FullName);
 
                     return deltaBuilder.ApplyDeltaPackage(basePkg, deltaPkg,
-                        Regex.Replace(deltaPkg.InputPackageFile, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
+                        Regex.Replace(deltaPkg.InputPackageFile, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+                        x => progress.ReportReleaseProgress(x));
                 });
+
+                progress.FinishRelease();
 
                 if (releasesToApply.Count() == 1) {
                     return ReleaseEntry.GenerateFromFile(ret.InputPackageFile);
@@ -355,7 +368,7 @@ namespace Squirrel
                 var entry = ReleaseEntry.GenerateFromFile(fi.OpenRead(), fi.Name);
 
                 // Recursively combine the rest of them
-                return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progressCallback);
+                return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progress);
             }
 
             void executeSelfUpdate(SemanticVersion currentVersion)
