@@ -32,8 +32,11 @@ namespace Squirrel
                 progress = progress ?? (_ => { });
 
                 progress(0);
-                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion);
-                progress(10);
+
+                // Progress range: 00 -> 40
+                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion, x => progress(CalculateProgress(x, 0, 40)));
+
+                progress(40);
 
                 if (release == null) {
                     if (attemptingFullInstall) {
@@ -45,23 +48,32 @@ namespace Squirrel
                     return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
                 }
 
-                var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release), 
+                // Progress range: 40 -> 80
+                var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release, x => progress(CalculateProgress(x, 40, 80))), 
                     "Failed to install package to app dir");
-                progress(30);
+
+                progress(80);
 
                 var currentReleases = await this.ErrorIfThrows(() => updateLocalReleasesFile(),
                     "Failed to update local releases file");
-                progress(50);
+
+                progress(85);
 
                 var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
                 executeSelfUpdate(newVersion);
 
+                progress(90);
+
                 await this.ErrorIfThrows(() => invokePostInstall(newVersion, attemptingFullInstall, false, silentInstall),
                     "Failed to invoke post-install");
-                progress(75);
+
+                progress(95);
 
                 this.Log().Info("Starting fixPinnedExecutables");
+
                 this.ErrorIfThrows(() => fixPinnedExecutables(updateInfo.FutureReleaseEntry.Version));
+
+                progress(96);
 
                 this.Log().Info("Fixing up tray icons");
 
@@ -70,10 +82,12 @@ namespace Squirrel
                 var allExes = appDir.GetFiles("*.exe").Select(x => x.Name).ToList();
 
                 this.ErrorIfThrows(() => trayFixer.RemoveDeadEntries(allExes, rootAppDirectory, updateInfo.FutureReleaseEntry.Version.ToString()));
-                progress(80);
+
+                progress(97);
 
                 unshimOurselves();
-                progress(85);
+
+                progress(98);
 
                 try {
                     var currentVersion = updateInfo.CurrentlyInstalledVersion != null ?
@@ -83,6 +97,7 @@ namespace Squirrel
                 } catch (Exception ex) {
                     this.Log().WarnException("Failed to clean dead versions, continuing anyways", ex);
                 }
+
                 progress(100);
 
                 return ret;
@@ -280,7 +295,7 @@ namespace Squirrel
                 fixPinnedExecutables(zf.Version);
             }
 
-            Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release)
+            Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release, Action<int> progressCallback)
             {
                 return Task.Run(async () => {
                     var target = getDirectoryForRelease(release.Version);
@@ -303,7 +318,7 @@ namespace Squirrel
                 });
             }
 
-            async Task<ReleaseEntry> createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion)
+            async Task<ReleaseEntry> createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion, Action<int> progressCallback)
             {
                 Contract.Requires(releasesToApply != null);
 
@@ -340,7 +355,7 @@ namespace Squirrel
                 var entry = ReleaseEntry.GenerateFromFile(fi.OpenRead(), fi.Name);
 
                 // Recursively combine the rest of them
-                return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry);
+                return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progressCallback);
             }
 
             void executeSelfUpdate(SemanticVersion currentVersion)
