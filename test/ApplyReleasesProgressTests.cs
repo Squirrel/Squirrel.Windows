@@ -11,7 +11,7 @@ namespace Squirrel.Tests
     {
 
         [Fact]
-        public void CalculatesPercentageCorrectly()
+        public async void CalculatesPercentageCorrectly()
         {
             // Just 1 complex situation should be enough to cover this
 
@@ -24,6 +24,9 @@ namespace Squirrel.Tests
 
             // Report 40 % in current release
             progress.ReportReleaseProgress(50);
+
+            // Required for callback to be invoked
+            await Task.Delay(50);
 
             // 20 per release
             // 10 because we are half-way the 3rd release

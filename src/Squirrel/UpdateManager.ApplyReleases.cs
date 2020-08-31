@@ -323,6 +323,8 @@ namespace Squirrel
             {
                 Contract.Requires(releasesToApply != null);
 
+                progress = progress ?? new ApplyReleasesProgress(releasesToApply.Count(), x => { });
+
                 // If there are no remote releases at all, bail
                 if (!releasesToApply.Any()) {
                     return null;
