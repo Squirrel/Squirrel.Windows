@@ -34,7 +34,7 @@ Section [NuGet Package Metadata](../using/nuget-package-metadata.md) provides ad
 3. **Add lib & net45** - add the `lib` folder and the `net45` folder to the project. Squirrel is expecting a single `lib / net45` directory provided regardless of whether your app is a `net45` application.
 4. **Add Release Files** - add all the files from `bin\Release` needed by MyApp to execute (including the various files required by Squirrel).
    * **Include MyApp Files:** MyApp.exe, MyApp.exe.config, any non-standard .NET dll's needed by MyApp.exe.
-   * **Include Squirrel Files:** Squirrel.dll, Splat.dll, NuGet.Squirrel.dll, Mono.Cecil.\*, DeltaCompressionDotNet.\*, ICSharpCode.SharpZipLib.\*
+   * **Include Squirrel Files:** Squirrel.dll, Splat.dll, NuGet.Squirrel.dll, Mono.Cecil.\*, DeltaCompressionDotNet.\*,
    * **Exclude:** *.vshost.\*, *.pdb files 
 5. **Save the NuGet Package File** - save the NuGet package file to where you can easily access later (e.g., `MyApp.sln` directory). Follow the given naming format (e.g., `MyApp.1.0.0.nupkg`).
  
