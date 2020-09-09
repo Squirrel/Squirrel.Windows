@@ -353,16 +353,16 @@ namespace Squirrel.Update
 
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
-                        .ForEachAsync(async x => {
-                            if (isPEFileSigned(x.FullName)) {
+                        .ForEach(x => {
+                            if (isPEFileSigned(x.FullName))
+                            {
                                 this.Log().Info("{0} is already signed, skipping", x.FullName);
                                 return;
                             }
 
                             this.Log().Info("About to sign {0}", x.FullName);
-                            await signPEFile(x.FullName, signingOpts);
-                        }, 1)
-                        .Wait();
+                            signPEFile(x.FullName, signingOpts).Wait();
+                        });
                 });
 
                 processed.Add(rp.ReleasePackageFile);
