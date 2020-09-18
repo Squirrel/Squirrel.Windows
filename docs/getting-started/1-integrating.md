@@ -36,7 +36,7 @@ The following code is added to MyApp `Program.cs` to cause the application to ch
 using Squirrel;
 ~~~
 
-**`static void Main()`**
+**`static void UpdateApp()`**
 
 ~~~cs
 using (var mgr = new UpdateManager("C:\\Projects\\MyApp\\Releases"))
