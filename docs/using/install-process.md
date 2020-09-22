@@ -46,7 +46,7 @@ The `Setup.exe` application preforms the following:
 1. **Create `%LocalAppData%\MyApp` Directory** - creates a directory for the MyApp to be installed.
 2. **Extracts `Update.exe`** - extracts the `Update.exe` application to the application directory (`%LocalAppData%\MyApp`).
 3. **Extracts `MyApp.1.0.0-full.nupkg`** - extracts the MyApp full application package to the  `%LocalAppData%\MyApp\packages\temp` directory.
-4. **Executes `Update.exe` to Finish Install** - executes the `Updater.exe` application with the `/install` switch to finish the application installation and then launch the application.
+4. **Executes `Update.exe` to Finish Install** - executes the `Update.exe` application with the `/install` switch to finish the application installation and then launch the application.
     1. **Copy MyApp to `app-1.0.0` Directory** - copy the full version of MyApp files to a application sub-directory (e.g., `MyApp\app-1.0.0`). 
     2. **Launch MyApp** - at the end of the setup process, the Updater launches the  newly installed version of MyApp.
 6. **MyApp Creates Shortcuts** - the first execution of the application will cause shortcuts to be created on the desktop and Windows start menu for MyApp. 
