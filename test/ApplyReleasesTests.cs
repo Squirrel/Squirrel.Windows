@@ -437,7 +437,7 @@ namespace Squirrel.Tests
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.1.0.0-delta.nupkg"));
 
                 var resultObs = (Task<ReleaseEntry>)fixture.GetType().GetMethod("createFullPackagesFromDeltas", BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Invoke(fixture, new object[] { new[] {deltaEntry}, baseEntry });
+                    .Invoke(fixture, new object[] { new[] {deltaEntry}, baseEntry, null });
 
                 var result = await resultObs;
                 var zp = new ZipPackage(Path.Combine(tempDir, "theApp", "packages", result.Filename));

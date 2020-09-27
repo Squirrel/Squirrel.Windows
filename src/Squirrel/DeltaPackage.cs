@@ -94,6 +94,11 @@ namespace Squirrel
 
         public ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile)
         {
+            return ApplyDeltaPackage(basePackage, deltaPackage, outputFile, x => { });
+        }
+
+        public ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile, Action<int> progress)
+        {
             Contract.Requires(deltaPackage != null);
             Contract.Requires(!String.IsNullOrEmpty(outputFile) && !File.Exists(outputFile));
 
@@ -108,10 +113,15 @@ namespace Squirrel
                 using (var reader = za.ExtractAllEntries()) {
                     reader.WriteAllToDirectory(deltaPath, opts);
                 }
+
+                progress(25);
+
                 using (var za = ZipArchive.Open(basePackage.InputPackageFile))
                 using (var reader = za.ExtractAllEntries()) {
                     reader.WriteAllToDirectory(workingPath, opts);
                 }
+
+                progress(50);
 
                 var pathsVisited = new List<string>();
 
@@ -130,6 +140,8 @@ namespace Squirrel
                         applyDiffToFile(deltaPath, file, workingPath);
                     });
 
+                progress(75);
+
                 // Delete all of the files that were in the old package but
                 // not in the new one.
                 new DirectoryInfo(workingPath).GetAllFilesRecursively()
@@ -139,6 +151,8 @@ namespace Squirrel
                         this.Log().Info("{0} was in old package but not in new one, deleting", x);
                         File.Delete(Path.Combine(workingPath, x));
                     });
+
+                progress(80);
 
                 // Update all the files that aren't in 'lib' with the delta
                 // package's versions (i.e. the nuspec file, etc etc).
@@ -156,6 +170,8 @@ namespace Squirrel
                     za.AddAllFromDirectory(workingPath);
                     za.SaveTo(tgt);
                 }
+
+                progress(100);
             }
 
             return new ReleasePackage(outputFile);
