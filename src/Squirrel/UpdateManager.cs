@@ -173,8 +173,8 @@ namespace Squirrel
         }
 
         static bool exiting = false;
-        public static void RestartApp(string exeToStart = null, string arguments = null)
-        { 
+        public static void RestartApp(string exeToStart = null, string arguments = null, bool setupOnly = false)
+        {
             // NB: Here's how this method works:
             //
             // 1. We're going to pass the *name* of our EXE and the params to 
@@ -199,7 +199,11 @@ namespace Squirrel
             // we can't use WaitForInputIdle because we probably don't have
             // whatever WaitForInputIdle considers a message loop.
             Thread.Sleep(500);
-            Environment.Exit(0);
+
+            if (!setupOnly)
+            {
+                Environment.Exit(0);
+            }
         }
         
         public static async Task<Process> RestartAppWhenExited(string exeToStart = null, string arguments = null)
