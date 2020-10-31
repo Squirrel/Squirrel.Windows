@@ -26,6 +26,7 @@ namespace Squirrel.Update
         internal bool noMsi { get; private set; } = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
         internal bool packageAs64Bit { get; private set; } = false;
         internal bool noDelta { get; private set; } = false;
+        internal bool onlyUpdateShortcuts { get; private set; } = false;
                
         public StartupOption(string[] args) {
            optionSet = Parse(args);
@@ -66,6 +67,7 @@ namespace Squirrel.Update
                 { "no-delta", "Don't generate delta packages to save time", v => noDelta = true},
                 { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
                 { "msi-win64", "Mark the MSI as 64-bit, which is useful in Enterprise deployment scenarios", _ => packageAs64Bit = true},
+                { "updateOnly", "Update shortcuts that already exist, rather than creating new ones", _ => onlyUpdateShortcuts = true},
             };
 
             opts.Parse(args);

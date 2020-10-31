@@ -122,7 +122,7 @@ namespace Squirrel.Update
                     UpdateSelf().Wait();
                     break;
                 case UpdateAction.Shortcut:
-                    Shortcut(opt.target, opt.shortcutArgs, opt.processStartArgs, opt.setupIcon);
+                    Shortcut(opt.target, opt.shortcutArgs, opt.processStartArgs, opt.setupIcon, opt.onlyUpdateShortcuts);
                     break;
                 case UpdateAction.Deshortcut:
                     Deshortcut(opt.target, opt.shortcutArgs);
@@ -422,7 +422,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon)
+        public void Shortcut(string exeName, string shortcutArgs, string processStartArgs, string icon, bool onlyUpdate)
         {
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
@@ -434,7 +434,7 @@ namespace Squirrel.Update
             var locations = parseShortcutLocations(shortcutArgs);
 
             using (var mgr = new UpdateManager("", appName)) {
-                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, false, processStartArgs, icon);
+                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, onlyUpdate, processStartArgs, icon);
             }
         }
 
