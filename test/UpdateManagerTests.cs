@@ -347,6 +347,44 @@ namespace Squirrel.Tests
 
                 Assert.Equal(expectedPercentage, percentage);
             }
+
+            [Fact]
+            public void CalculatesPercentageCorrectlyForUpdateExe()
+            {
+                // Note: this mimicks the update.exe progress reporting of multiple steps
+
+                var progress = new List<int>();
+
+                // 3 % (3 stages), check for updates
+                foreach (var step in new [] { 0, 33, 66, 100 })
+                {
+                    progress.Add(UpdateManager.CalculateProgress(step, 0, 3));
+
+                    Assert.InRange(progress.Last(), 0, 3);
+                }
+
+                Assert.Equal(3, progress.Last());
+
+                // 3 - 30 %, download releases
+                for (var step = 0; step <= 100; step++)
+                {
+                    progress.Add(UpdateManager.CalculateProgress(step, 3, 30));
+
+                    Assert.InRange(progress.Last(), 3, 30);
+                }
+
+                Assert.Equal(30, progress.Last());
+
+                // 30 - 100 %, apply releases
+                for (var step = 0; step <= 100; step++)
+                {
+                    progress.Add(UpdateManager.CalculateProgress(step, 30, 100));
+
+                    Assert.InRange(progress.Last(), 30, 100);
+                }
+
+                Assert.Equal(100, progress.Last());
+            }
         }
     }
 }
