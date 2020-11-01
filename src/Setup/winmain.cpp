@@ -12,6 +12,7 @@
 CAppModule* _Module;
 
 typedef BOOL(WINAPI *SetDefaultDllDirectoriesFunction)(DWORD DirectoryFlags);
+typedef int(WINAPI *ErrorMessageBox)(HWND, LPCWSTR, LPCWSTR, UINT);
 
 // Some libraries are still loaded from the current directories.
 // If we pre-load them with an absolute path then we are good.
@@ -29,18 +30,52 @@ void PreloadLibs()
 	LoadLibrary(sspicli.c_str());
 }
 
+void ExitinError()
+{
+	HMODULE hModule = LoadLibrary(L"User32.dll");
+	ErrorMessageBox errorMessageBox = NULL;
+
+	if (hModule != NULL) 
+	{
+		errorMessageBox = reinterpret_cast<ErrorMessageBox>(GetProcAddress(hModule, "MessageBoxW"));
+	}
+
+	if (errorMessageBox != NULL) 
+	{
+		(*errorMessageBox)(NULL,  L"Installation failed, please run at least Microsoft Windows 7 Service Pack 1", L"Setup", MB_OK);
+	}
+
+	if (hModule != NULL) 
+	{
+		FreeLibrary(hModule);
+	}
+
+	std::exit(EXIT_FAILURE);
+}
+
 void MitigateDllHijacking()
 {
-	// Set the default DLL lookup directory to System32 for ourselves and kernel32.dll
-	SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+	try 
+	{
+		HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
+		ATLASSERT(hKernel32 != NULL);
 
-	HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
-	ATLASSERT(hKernel32 != NULL);
+		SetDefaultDllDirectoriesFunction pfn = (SetDefaultDllDirectoriesFunction)GetProcAddress(hKernel32, "SetDefaultDllDirectories");
+		if (pfn && GetLastError() == 0)
+		{ 
+			(*pfn)(LOAD_LIBRARY_SEARCH_SYSTEM32); 
+		}
+		else
+		{
+			ExitinError();
+		}
 
-	SetDefaultDllDirectoriesFunction pfn = (SetDefaultDllDirectoriesFunction)GetProcAddress(hKernel32, "SetDefaultDllDirectories");
-	if (pfn) { (*pfn)(LOAD_LIBRARY_SEARCH_SYSTEM32); }
-
-	PreloadLibs();
+		PreloadLibs();
+	}
+	catch (...)
+	{
+		ExitinError();
+	}
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
