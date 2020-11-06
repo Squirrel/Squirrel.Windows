@@ -187,7 +187,14 @@ namespace Squirrel
             //    launching a different version than we started with (this is why
             //    we take the app's *name* rather than a full path)
 
-            exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            if (exeToStart == null)
+            {
+                var exeFileFullPath = Process.GetCurrentProcess().MainModule.FileName;
+                // Get everything after the last backslash.
+                var fileNameRegex = new Regex(@"^.*\\(?<FileName>[^\\]+\.exe)$");
+                exeToStart = fileNameRegex.Match(exeFileFullPath).Groups["FileName"].Value;
+            }
+
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
