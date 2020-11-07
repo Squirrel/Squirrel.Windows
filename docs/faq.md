@@ -13,12 +13,15 @@ Frequently Asked Questions for Squirrel.Windows, organized by area below.
    You may want to look into the [ClickOnceToSquirrelMigrator](https://github.com/flagbug/ClickOnceToSquirrelMigrator) migration helper.
 1. **How can I determine if my app is a Squirrel app? I provide a squirrel and non-squirrel install version and want to know which is running.**  
    You can check for the `Update.exe` in the parent directory to determine if the app is using Squirrel ([see #574](https://github.com/Squirrel/Squirrel.Windows/issues/574#issuecomment-176043311)).
-   
-```
-var assembly = Assembly.GetEntryAssembly();   
-var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..", "Update.exe");
-var isSquirrelInstall = File.Exists(updateDotExe);
-```
+
+    ```
+    var assembly = Assembly.GetEntryAssembly();   
+    var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..", "Update.exe");
+    var isSquirrelInstall = File.Exists(updateDotExe);
+    ```
+
+1. **Why can't I integrate my console application to Squirrel.Windows**
+   Console application is currently not supported. Subscribe to [#1098](https://github.com/Squirrel/Squirrel.Windows/issues/1098) to keep track of this issue.
 
 ## Packaging
 
