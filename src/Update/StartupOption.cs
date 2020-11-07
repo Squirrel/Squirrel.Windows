@@ -16,6 +16,9 @@ namespace Squirrel.Update
         internal string backgroundGif { get; private set; } = default(string);
         internal string signingParameters { get; private set; } = default(string);
         internal string baseUrl { get; private set; } = default(string);
+        internal string proxyUrl { get; private set; } = default(string);
+        internal string proxyUser { get; private set; } = default(string);
+        internal string proxyPassword { get; private set; } = default(string);
         internal string processStart { get; private set; } = default(string);
         internal string processStartArgs { get; private set; } = default(string);
         internal string setupIcon { get; private set; } = default(string);
@@ -60,6 +63,9 @@ namespace Squirrel.Update
                 { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                 { "s|silent", "Silent install", _ => silentInstall = true},
                 { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
+                { "proxyUrl=", "Defines the URL of the proxy", v => proxyUrl = v},
+                { "proxyUser=", "Defines the username of the proxy", v => proxyUser = v},
+                { "proxyPassword=", "Defines the password of the proxy", v => proxyPassword = v},
                 { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                 { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
                 { "no-msi", "Don't generate an MSI package", v => noMsi = true},
