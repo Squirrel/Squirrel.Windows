@@ -48,7 +48,25 @@ namespace version {
 
 		// Compare alphanumeric prerelease identifiers.
 		inline int cmp_alnum_prerel_ids(const string& l, const string& r) {
+			// If both versions have a prerelease section with the same prefix
+			// and end with digits, compare based on the digits' numeric order
+			auto index_l = l.find_last_not_of("0123456789");
+			auto index_r = r.find_last_not_of("0123456789");
+
+			if (index_l != string::npos && index_r != string::npos) {
+				string name_l = l.substr(0, index_l + 1);
+				string name_r = r.substr(0, index_r + 1);
+
+				if (name_l == name_r) {
+					int il = stoi(l.substr(index_l + 1));
+					int ir = stoi(r.substr(index_r + 1));
+
+					return il > ir ? 1 : -1;
+				}
+			}
+
 			auto cmp = l.compare(r);
+
 			if (cmp == 0) {
 				return cmp;
 			} else {
