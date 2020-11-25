@@ -178,13 +178,14 @@ namespace Squirrel
                         var fullTargetDir = Path.GetDirectoryName(fullTargetFile);
                         Directory.CreateDirectory(fullTargetDir);
 
-                        Utility.Retry(() => {
-                            if (reader.Entry.IsDirectory) {
-                                Directory.CreateDirectory(Path.Combine(outFolder, decoded));
-                            } else {
-                                reader.WriteEntryToFile(Path.Combine(outFolder, decoded));
-                            }
-                        }, 5);
+                        if (reader.Entry.IsDirectory)
+                        {
+                            Directory.CreateDirectory(Path.Combine(outFolder, decoded));
+                        }
+                        else
+                        {
+                            reader.WriteEntryToFile(Path.Combine(outFolder, decoded));
+                        }
                     }
                 }
             });
@@ -233,14 +234,16 @@ namespace Squirrel
                             LogHost.Default.Info("Rigging execution stub for {0} to {1}", decoded, fullTargetFile);
                         }
 
-                        try {
-                            Utility.Retry(() => {
-                                if (reader.Entry.IsDirectory) {
-                                    Directory.CreateDirectory(fullTargetFile);
-                                } else {
-                                    reader.WriteEntryToFile(fullTargetFile);
-                                }
-                            }, 5);
+                        try 
+                        {
+                            if (reader.Entry.IsDirectory)
+                            {
+                                Directory.CreateDirectory(fullTargetFile);
+                            }
+                            else
+                            {
+                                reader.WriteEntryToFile(fullTargetFile);
+                            }
                         } catch (Exception e) {
                             if (!failureIsOkay) throw;
                             LogHost.Default.WarnException("Can't write execution stub, probably in use", e);

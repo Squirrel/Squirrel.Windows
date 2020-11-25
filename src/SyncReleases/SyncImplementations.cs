@@ -50,13 +50,13 @@ namespace SyncReleases
             }
 
             var nwo = nwoFromRepoUrl(repoUrl);
-            var releases = (await client.Release.GetAll(nwo.Item1, nwo.Item2))
+            var releases = (await client.Repository.Release.GetAll(nwo.Item1, nwo.Item2))
                 .OrderByDescending(x => x.PublishedAt)
                 .Take(5);
 
             await releases.ForEachAsync(async release => {
                 // NB: Why do I have to double-fetch the release assets? It's already in GetAll
-                var assets = await client.Release.GetAllAssets(nwo.Item1, nwo.Item2, release.Id);
+                var assets = await client.Repository.Release.GetAllAssets(nwo.Item1, nwo.Item2, release.Id);
 
                 await assets
                     .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))

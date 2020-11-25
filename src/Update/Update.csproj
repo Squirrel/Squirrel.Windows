@@ -3,8 +3,8 @@
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
-    <TargetFramework>net45</TargetFramework>
-    <OutputType>WinExe</OutputType>
+    <TargetFramework>net462</TargetFramework>
+    <OutputType>Exe</OutputType>
     <Description>Update</Description>
     <Title>Update</Title>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -22,25 +22,31 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="WpfAnimatedGif" Version="1.4.15.0" />
+    <PackageReference Include="WpfAnimatedGif" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ILRepack" Version="1.26.0" PrivateAssets="All" />
+    <PackageReference Include="ILRepack" Version="2.0.18" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Nerdbank.GitVersioning" Version="3.0.50" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <Reference Include="WindowsBase" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Nerdbank.GitVersioning" Version="3.3.37" />
   </ItemGroup>
 
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <PostBuildEvent>
-      cd "$(TargetDir)"
-      "$(NuGetPackageRoot)ilrepack\1.26.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) WpfAnimatedGif.dll SharpCompress.dll Microsoft.Web.XmlTransform.dll DeltaCompressionDotNet.dll DeltaCompressionDotNet.MsDelta.dll Squirrel.dll NuGet.Squirrel.dll Mono.Cecil.dll
-      del "$(TargetFileName)"
-      ren "$(TargetFileName).tmp" "$(TargetFileName)"
-    </PostBuildEvent>
+		cd "$(TargetDir)"
+		"$(NuGetPackageRoot)ilrepack\2.0.18\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) WpfAnimatedGif.dll SharpCompress.dll System.Memory.dll System.Buffers.dll System.Runtime.CompilerServices.Unsafe.dll Microsoft.Web.XmlTransform.dll DeltaCompressionDotNet.dll Squirrel.dll NuGet.Squirrel.dll Mono.Cecil.dll System.Numerics.Vectors.dll System.Spatial.dll
+		del "$(TargetFileName)"
+		ren "$(TargetFileName).tmp" "$(TargetFileName)"
+	</PostBuildEvent>
   </PropertyGroup>
 
 </Project>
