@@ -1,16 +1,17 @@
 name: Build Squirrel.Windows
 
-on: workflow_dispatch
+on: push
 
 jobs:
-  test:
+  build:
     runs-on: windows-latest
     timeout-minutes: 10
 
     env:
-      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages/
 
     steps:
+
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -20,6 +21,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
 
     - name: Cache nuget packages
+      id: cache-nuget
       uses: actions/cache@v2
       with:
         path: ${{ github.workspace }}/.nuget/packages
@@ -28,13 +30,16 @@ jobs:
           ${{ runner.os }}-nuget-
 
     - name: NuGet restore
-      run: .\.NuGet\NuGet.exe restore
+      run: ./.NuGet/NuGet.exe restore
 
-    - name: MsBuild
+    - name: Build Squirrel.Windows solution
       run: msbuild /p:Configuration=Release     
-      
+
+    - name: Prepare artifact
+      shell: bash
+      run: |
+        vendor/7zip/7z.exe a Squirrel.Windows.zip @electron-builder.listfile.txt
+
     - uses: actions/upload-artifact@v2
-      if: always()
       with:
-        name: Squirrel.Windows
-        path: build/Release/net45
+        path: Squirrel.Windows.zip

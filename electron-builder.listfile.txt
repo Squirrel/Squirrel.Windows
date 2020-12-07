@@ -1,0 +1,8 @@
+﻿.\src\Setup\bin\Release\Setup.exe
+.\src\WriteZipToSetup\bin\Release\WriteZipToSetup.exe
+.\src\StubExecutable\bin\Release\StubExecutable.exe
+.\src\Update\bin\Release\Update.exe
+.\src\Update\bin\Release\Update.com
+.\src\Update\bin\Release\Update-Mono.exe
+.\src\SyncReleases\bin\Release\SyncReleases.exe
+.\vendor\wix\*
