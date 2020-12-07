@@ -1,0 +1,40 @@
+name: Build Squirrel.Windows
+
+on: workflow_dispatch
+
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Cache nuget packages
+      uses: actions/cache@v2
+      with:
+        path: ${{ github.workspace }}/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: NuGet restore
+      run: .\.NuGet\NuGet.exe restore
+
+    - name: MsBuild
+      run: msbuild /p:Configuration=Release     
+      
+    - uses: actions/upload-artifact@v2
+      if: always()
+      with:
+        name: Squirrel.Windows
+        path: build/Release/net45
