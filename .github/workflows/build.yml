@@ -4,6 +4,7 @@ on: push
 
 jobs:
   build:
+    name: Build Squirrel.Windows
     runs-on: windows-latest
     timeout-minutes: 10
 
