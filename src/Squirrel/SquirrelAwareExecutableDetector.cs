@@ -28,9 +28,27 @@ namespace Squirrel
         {
             if (!File.Exists(executable)) return null;
             var fullname = Path.GetFullPath(executable);
+            var backingDll = fullname.Substring(0, fullname.Length - 3) + "dll";
+            
+            return Utility.Retry<int?>(() =>
+            {
+                var assemblySquirrelAwareVersion = GetAssemblySquirrelAwareVersion(fullname);
+                if (assemblySquirrelAwareVersion != null)
+                {
+                    return assemblySquirrelAwareVersion;
+                }
 
-            return Utility.Retry<int?>(() => 
-                GetAssemblySquirrelAwareVersion(fullname) ?? GetVersionBlockSquirrelAwareValue(fullname));
+                if (File.Exists(backingDll))
+                {
+                    var assemblyDllSquirrelAwareVersion = GetAssemblySquirrelAwareVersion(backingDll);
+                    if (assemblyDllSquirrelAwareVersion != null)
+                    {
+                        return assemblyDllSquirrelAwareVersion;
+                    }
+                }
+
+                return GetVersionBlockSquirrelAwareValue(fullname);
+            });
         }
 
         static int? GetAssemblySquirrelAwareVersion(string executable)
@@ -70,8 +88,21 @@ namespace Squirrel
             var buf = new byte[size];
             if (!NativeMethods.GetFileVersionInfo(executable, 0, size, buf)) return null;
 
-            IntPtr result; int resultSize;
-            if (!NativeMethods.VerQueryValue(buf, "\\StringFileInfo\\040904B0\\SquirrelAwareVersion", out result, out resultSize)) {
+            const string englishUS = "040904B0";
+            const string neutral = "000004B0";
+            var supportedLanguageCodes = new[] {englishUS, neutral};
+
+            IntPtr result;
+            int resultSize;
+            if (!supportedLanguageCodes.Any(
+                languageCode =>
+                    NativeMethods.VerQueryValue(
+                        buf,
+                        $"\\StringFileInfo\\{languageCode}\\SquirrelAwareVersion",
+                        out result, out resultSize
+                    )
+            ))
+            {
                 return null;
             }
 
