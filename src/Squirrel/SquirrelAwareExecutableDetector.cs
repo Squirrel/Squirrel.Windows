@@ -70,8 +70,21 @@ namespace Squirrel
             var buf = new byte[size];
             if (!NativeMethods.GetFileVersionInfo(executable, 0, size, buf)) return null;
 
-            IntPtr result; int resultSize;
-            if (!NativeMethods.VerQueryValue(buf, "\\StringFileInfo\\040904B0\\SquirrelAwareVersion", out result, out resultSize)) {
+            const string englishUS = "040904B0";
+            const string neutral = "000004B0";
+            var supportedLanguageCodes = new[] {englishUS, neutral};
+
+            IntPtr result;
+            int resultSize;
+            if (!supportedLanguageCodes.Any(
+                languageCode =>
+                    NativeMethods.VerQueryValue(
+                        buf,
+                        $"\\StringFileInfo\\{languageCode}\\SquirrelAwareVersion",
+                        out result, out resultSize
+                    )
+            ))
+            {
                 return null;
             }
 
