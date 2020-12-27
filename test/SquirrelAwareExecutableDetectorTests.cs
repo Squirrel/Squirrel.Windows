@@ -42,6 +42,17 @@ namespace Squirrel.Tests
         }
 
         [Fact]
+        public void SquirrelAwareViaLanguageNeutralVersionBlock()
+        {
+            var target = IntegrationTestHelper.GetPath("fixtures", "SquirrelAwareNetCoreApp.exe");
+            Assert.True(File.Exists(target));
+
+            var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
+            Assert.Equal(1, ret.Value);
+        }
+
+
+        [Fact]
         public void SquirrelAwareViaAssemblyAttribute()
         {
             var target = Assembly.GetExecutingAssembly().Location;
