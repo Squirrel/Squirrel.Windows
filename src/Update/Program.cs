@@ -103,7 +103,7 @@ namespace Squirrel.Update
                         AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token, progressSource);
                     }
 
-                    Install(opt.silentInstall, progressSource, Path.GetFullPath(opt.target)).Wait();
+                    Install(opt.silentInstall, progressSource, Path.GetFullPath(opt.target), opt.installationPath).Wait();
                     animatedGifWindowToken.Cancel();
                     break;
                 case UpdateAction.Uninstall:
@@ -140,7 +140,7 @@ namespace Squirrel.Update
             return 0;
         }
 
-        public async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
+        public async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null, string installationPath = null)
         {
             sourceDirectory = sourceDirectory ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
@@ -159,7 +159,7 @@ namespace Squirrel.Update
             var ourAppName = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesPath, Encoding.UTF8))
                 .First().PackageName;
 
-            using (var mgr = new UpdateManager(sourceDirectory, ourAppName)) {
+            using (var mgr = new UpdateManager(sourceDirectory, ourAppName, installationPath)) {
                 this.Log().Info("About to install to: " + mgr.RootAppDirectory);
                 if (Directory.Exists(mgr.RootAppDirectory)) {
                     this.Log().Warn("Install path {0} already exists, burning it to the ground", mgr.RootAppDirectory);

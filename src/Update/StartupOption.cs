@@ -20,6 +20,7 @@ namespace Squirrel.Update
         internal string processStartArgs { get; private set; } = default(string);
         internal string setupIcon { get; private set; } = default(string);
         internal string icon { get; private set; } = default(string);
+        internal string installationPath { get; private set; } = default(string);
         internal string shortcutArgs { get; private set; } = default(string);
         internal string frameworkVersion { get; private set; } = "net45";
         internal bool shouldWait { get; private set; } = false;
@@ -57,6 +58,7 @@ namespace Squirrel.Update
                 { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                 { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
                 { "i=|icon", "Path to an ICO file that will be used for icon shortcuts", v => icon = v},
+                { "installationPath=|iPath", "Path to where application is going to be installed.", v => installationPath = v},
                 { "setupIcon=", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
                 { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
                 { "s|silent", "Silent install", _ => silentInstall = true},
