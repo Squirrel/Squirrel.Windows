@@ -290,5 +290,28 @@ namespace Squirrel.Tests.Core
                 tempFiles.ForEach(File.Delete);
             }
         }
+
+        [Fact]
+        public void HandleBsDiffWithoutExtraData()
+        {
+            var baseFileData = new byte[] { 1, 1, 1, 1 };
+            var newFileData = new byte[] { 2, 1, 1, 1 };
+
+            byte[] patchData;
+
+            using (var patchOut = new MemoryStream())
+            {
+                Bsdiff.BinaryPatchUtility.Create(baseFileData, newFileData, patchOut);
+                patchData = patchOut.ToArray();
+            }
+
+            using (var toPatch = new MemoryStream(baseFileData))
+            using (var patched = new MemoryStream())
+            {
+                Bsdiff.BinaryPatchUtility.Apply(toPatch, () => new MemoryStream(patchData), patched);
+
+                Assert.Equal(newFileData, patched.ToArray());
+            }
+        }
     }
 }
