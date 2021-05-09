@@ -73,6 +73,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 	bool weAreUACElevated = CUpdateRunner::AreWeUACElevated() == S_OK;
 	bool attemptingToRerun = (cmdLine.Find(L"--rerunningWithoutUAC") >= 0);
+	bool skipUACCheck = (cmdLine.Find(L"--wineUserFix") >= 0);
 
 	if (weAreUACElevated && attemptingToRerun) {
 		CUpdateRunner::DisplayErrorMessage(CString(L"Please re-run this installer as a normal user instead of \"Run as Administrator\"."), NULL);
@@ -106,7 +107,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// If we're UAC-elevated, we shouldn't be because it will give us permissions
 	// problems later. Just silently rerun ourselves.
-	if (weAreUACElevated) {
+	if (weAreUACElevated && !skipUACCheck) {
 		wchar_t buf[4096];
 		HMODULE hMod = GetModuleHandle(NULL);
 		GetModuleFileNameW(hMod, buf, 4096);
