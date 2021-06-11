@@ -148,7 +148,6 @@ namespace Squirrel
 
                 this.Log().Info("Removing unnecessary data");
                 removeDependenciesFromPackageSpec(specPath);
-                removeDeveloperDocumentation(tempDir);
 
                 if (releaseNotesProcessor != null) {
                     renderReleaseNotesMarkdown(specPath, releaseNotesProcessor);
@@ -274,15 +273,6 @@ namespace Squirrel
                     }
                 });
             });
-        }
-
-        void removeDeveloperDocumentation(DirectoryInfo expandedRepoPath)
-        {
-            expandedRepoPath.GetAllFilesRecursively()
-                .Where(x => x.Name.EndsWith(".dll", true, CultureInfo.InvariantCulture))
-                .Select(x => new FileInfo(x.FullName.ToLowerInvariant().Replace(".dll", ".xml")))
-                .Where(x => x.Exists)
-                .ForEach(x => x.Delete());
         }
 
         void renderReleaseNotesMarkdown(string specPath, Func<string, string> releaseNotesProcessor)
