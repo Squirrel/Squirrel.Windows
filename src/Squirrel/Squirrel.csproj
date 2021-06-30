@@ -84,6 +84,7 @@
     <Compile Include="ContentType.cs" />
     <Compile Include="DeltaPackage.cs" />
     <Compile Include="EnumerableExtensions.cs" />
+    <Compile Include="ExceptionTypes.cs" />
     <Compile Include="FileDownloader.cs" />
     <Compile Include="IUpdateManager.cs" />
     <Compile Include="MarkdownSharp.cs" />

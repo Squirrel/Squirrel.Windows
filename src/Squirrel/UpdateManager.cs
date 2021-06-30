@@ -310,7 +310,7 @@ namespace Squirrel
             var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..\\Update.exe");
             var target = new FileInfo(updateDotExe);
 
-            if (!target.Exists) throw new Exception("Update.exe not found, not a Squirrel-installed app?");
+            if (!target.Exists) throw new SquirrelNoUpdateException("Update.exe not found, not a Squirrel-installed app?");
             return target.FullName;
         }
     }

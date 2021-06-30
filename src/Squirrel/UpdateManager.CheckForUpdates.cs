@@ -97,7 +97,7 @@ namespace Squirrel
                             "The directory {0} does not exist, something is probably broken with your application",
                             updateUrlOrPath);
 
-                        throw new Exception(message);
+                        throw new SquirrelReleasesMissingException(message);
                     }
 
                     var fi = new FileInfo(Path.Combine(updateUrlOrPath, "RELEASES"));
@@ -110,7 +110,7 @@ namespace Squirrel
 
                         var packages = (new DirectoryInfo(updateUrlOrPath)).GetFiles("*.nupkg");
                         if (packages.Length == 0) {
-                            throw new Exception(message);
+                            throw new SquirrelReleasesMissingException(message);
                         }
 
                         // NB: Create a new RELEASES file since we've got a directory of packages
@@ -127,7 +127,7 @@ namespace Squirrel
                 progress(66);
 
                 if (!remoteReleases.Any()) {
-                    throw new Exception("Remote release File is empty or corrupted");
+                    throw new SquirrelReleasesCorruptException("Remote release File is empty or corrupted");
                 }
 
                 ret = determineUpdateInfo(intention, localReleases, remoteReleases, ignoreDeltaUpdates);
@@ -154,7 +154,7 @@ namespace Squirrel
 
                 if (remoteReleases == null) {
                     this.Log().Warn("Release information couldn't be determined due to remote corrupt RELEASES file");
-                    throw new Exception("Corrupt remote RELEASES file");
+                    throw new SquirrelReleasesCorruptException("Corrupt remote RELEASES file");
                 }
 
                 var latestFullRelease = Utility.FindCurrentVersion(remoteReleases);
