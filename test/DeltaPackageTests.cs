@@ -70,7 +70,7 @@ namespace Squirrel.Tests.Core
             }
         }
 
-        [Fact]
+        [Fact(Skip = "Rewrite this test, the original uses too many heavyweight fixtures")]
         public void ApplyMultipleDeltaPackagesGeneratesCorrectHash()
         {
             Assert.True(false, "Rewrite this test, the original uses too many heavyweight fixtures");
@@ -288,6 +288,29 @@ namespace Squirrel.Tests.Core
                 });
             } finally {
                 tempFiles.ForEach(File.Delete);
+            }
+        }
+
+        [Fact]
+        public void HandleBsDiffWithoutExtraData()
+        {
+            var baseFileData = new byte[] { 1, 1, 1, 1 };
+            var newFileData = new byte[] { 2, 1, 1, 1 };
+
+            byte[] patchData;
+
+            using (var patchOut = new MemoryStream())
+            {
+                Bsdiff.BinaryPatchUtility.Create(baseFileData, newFileData, patchOut);
+                patchData = patchOut.ToArray();
+            }
+
+            using (var toPatch = new MemoryStream(baseFileData))
+            using (var patched = new MemoryStream())
+            {
+                Bsdiff.BinaryPatchUtility.Apply(toPatch, () => new MemoryStream(patchData), patched);
+
+                Assert.Equal(newFileData, patched.ToArray());
             }
         }
     }
