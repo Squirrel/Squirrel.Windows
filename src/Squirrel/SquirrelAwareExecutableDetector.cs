@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -28,8 +29,9 @@ namespace Squirrel
         {
             if (!File.Exists(executable)) return null;
             var fullname = Path.GetFullPath(executable);
-            var backingDll = fullname.Substring(0, fullname.Length - 3) + "dll";
             
+            var backingDll = LookForNetCoreDll(fullname);
+
             return Utility.Retry<int?>(() =>
             {
                 var assemblySquirrelAwareVersion = GetAssemblySquirrelAwareVersion(fullname);
@@ -38,7 +40,7 @@ namespace Squirrel
                     return assemblySquirrelAwareVersion;
                 }
 
-                if (File.Exists(backingDll))
+                if (backingDll != null && File.Exists(backingDll))
                 {
                     var assemblyDllSquirrelAwareVersion = GetAssemblySquirrelAwareVersion(backingDll);
                     if (assemblyDllSquirrelAwareVersion != null)
@@ -49,6 +51,16 @@ namespace Squirrel
 
                 return GetVersionBlockSquirrelAwareValue(fullname);
             });
+        }
+
+        private static string LookForNetCoreDll(string fullname)
+        {
+            var exeFileVersionInfo = FileVersionInfo.GetVersionInfo(fullname);
+            var originalFilename = exeFileVersionInfo.OriginalFilename;
+
+            var backingDll = originalFilename == null ? null 
+                : Path.Combine(Path.GetDirectoryName(fullname), originalFilename);
+            return backingDll;
         }
 
         static int? GetAssemblySquirrelAwareVersion(string executable)
