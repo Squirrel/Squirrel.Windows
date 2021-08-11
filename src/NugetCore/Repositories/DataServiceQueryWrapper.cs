@@ -93,35 +93,37 @@ namespace NuGet
 
         private IEnumerable<T> GetAll()
         {
-            DataServiceQuery fixedQuery = _query;
+            throw new NotImplementedException();
+            //DataServiceQuery fixedQuery = _query;
 
-            // Hack for WCF 5.6.1 to avoid using the interface
-            if (typeof(T) == typeof(IPackage))
-            {
-                fixedQuery = (DataServiceQuery)_query.Provider.CreateQuery<DataServicePackage>(_query.Expression).Cast<DataServicePackage>();
-            }
+            //// Hack for WCF 5.6.1 to avoid using the interface
+            //if (typeof(T) == typeof(IPackage))
+            //{
+            //    fixedQuery = (DataServiceQuery)_query.Provider.CreateQuery<DataServicePackage>(_query.Expression).Cast<DataServicePackage>();
+            //}
 
-            IEnumerable results = Execute(fixedQuery.Execute);
 
-            DataServiceQueryContinuation continuation;
-            do
-            {
-                lock (_context)
-                {
-                    foreach (T item in results)
-                    {
-                        yield return item;
-                    }
-                }
+            //IEnumerable results = Execute(fixedQuery.Execute);
 
-                continuation = ((QueryOperationResponse)results).GetContinuation();
+            //DataServiceQueryContinuation continuation;
+            //do
+            //{
+            //    lock (_context)
+            //    {
+            //        foreach (T item in results)
+            //        {
+            //            yield return item;
+            //        }
+            //    }
 
-                if (continuation != null)
-                {
-                    results = _context.Execute<T>(_concreteType, continuation);
-                }
+            //    continuation = ((QueryOperationResponse)results).GetContinuation();
 
-            } while (continuation != null);
+            //    if (continuation != null)
+            //    {
+            //        results = _context.Execute<T>(_concreteType, continuation);
+            //    }
+
+            //} while (continuation != null);
         }
 
         private Expression GetInnerExpression(Expression expression)

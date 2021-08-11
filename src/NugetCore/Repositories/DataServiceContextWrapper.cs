@@ -27,9 +27,9 @@ namespace NuGet
             }
 
             _context = new DataServiceContext(serviceRoot)
-                       {
-                           MergeOption = MergeOption.NoTracking
-                       };
+            {
+                MergeOption = MergeOption.NoTracking
+            };
 
             _metadataUri = _context.GetMetadataUri();
 
@@ -147,9 +147,10 @@ namespace NuGet
 
         public IEnumerable<T> ExecuteBatch<T>(DataServiceRequest request)
         {
-            return _context.ExecuteBatch(request)
-                           .Cast<QueryOperationResponse>()
-                           .SelectMany(o => o.Cast<T>());
+            throw new NotImplementedException();
+            //return _context.ExecuteBatch(request)
+            //               .Cast<QueryOperationResponse>()
+            //               .SelectMany(o => o.Cast<T>());
         }
 
         public bool SupportsServiceMethod(string methodName)

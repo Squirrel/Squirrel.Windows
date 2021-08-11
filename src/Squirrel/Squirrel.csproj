@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFramework>net5.0-windows</TargetFramework>
     <Description>Squirrel</Description>
     <Title>Squirrel</Title>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -10,19 +10,13 @@
 
   <ItemGroup>
     <PackageReference Include="DeltaCompressionDotNet" Version="1.1.0.0" />
-    <PackageReference Include="Microsoft.Web.Xdt" Version="2.1.1" />
     <PackageReference Include="Mono.Cecil" Version="0.11.2" />
     <PackageReference Include="SharpCompress" Version="0.17.1.0" />
+    <PackageReference Include="System.Drawing.Common" Version="5.0.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Web" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="Nerdbank.GitVersioning" Version="3.0.50" />
+    <ProjectReference Include="..\NugetCore\NugetCore.csproj" />
   </ItemGroup>
 
 </Project>
