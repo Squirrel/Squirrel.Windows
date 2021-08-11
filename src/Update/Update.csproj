@@ -2,22 +2,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <Description>Update</Description>
     <Title>Update</Title>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <UseWPF>true</UseWPF>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="rcedit.exe" CopyToOutputDirectory="PreserveNewest" />
     <None Include="signtool.exe" CopyToOutputDirectory="PreserveNewest" />
     <None Include="update.com" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="WpfAnimatedGif" Version="1.4.15.0" />
   </ItemGroup>
 
   <ItemGroup>

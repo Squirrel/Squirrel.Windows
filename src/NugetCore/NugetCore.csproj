@@ -1,11 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net5.0-windows</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <RootNamespace>NuGet</RootNamespace>
     <AssemblyName>NuGet.Squirrel</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Authoring\nuspec.xsd">
@@ -20,6 +19,11 @@
     <PackageReference Include="System.ServiceModel.Duplex" Version="4.8.1" />
     <PackageReference Include="System.ServiceModel.NetTcp" Version="4.8.1" />
     <PackageReference Include="System.ServiceModel.Federation" Version="4.8.1" />
+    <PackageReference Include="System.IO.Packaging" Version="5.0.0" />
+    <PackageReference Include="System.Diagnostics.Tracing" Version="4.3.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="5.0.0" />
+    <PackageReference Include="SimpleWeakEventListener" Version="1.1.0" />
     <PackageReference Include="Microsoft.Data.Services.Client" Version="5.8.4" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
   </ItemGroup>
 </Project>

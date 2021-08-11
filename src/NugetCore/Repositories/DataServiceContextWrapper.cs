@@ -12,7 +12,7 @@ using System.Xml.Linq;
 namespace NuGet
 {
     [CLSCompliant(false)]
-    public class DataServiceContextWrapper : IDataServiceContext, IWeakEventListener
+    public class DataServiceContextWrapper : IDataServiceContext
     {
         private const string MetadataKey = "DataServiceMetadata|";
         private static readonly MethodInfo _executeMethodInfo = typeof(DataServiceContext).GetMethod("Execute", new[] { typeof(Uri) });

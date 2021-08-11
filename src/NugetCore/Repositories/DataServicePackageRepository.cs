@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Windows;
+using MissingFrom.Net;
 using NuGet.Resources;
 
 namespace NuGet
@@ -21,8 +22,7 @@ namespace NuGet
         ICultureAwareRepository, 
         IOperationAwareRepository,
         IPackageLookup,
-        ILatestPackageLookup,
-        IWeakEventListener
+        ILatestPackageLookup
     {
         private const string FindPackagesByIdSvcMethod = "FindPackagesById";
         private const string PackageServiceEntitySetName = "Packages";
@@ -35,6 +35,7 @@ namespace NuGet
         private CultureInfo _culture;
         private Tuple<string, string, string> _currentOperation;
         private event EventHandler<WebRequestEventArgs> _sendingRequest;
+        private WeakEventManager manager = new WeakEventManager();
 
         public DataServicePackageRepository(Uri serviceRoot)
             : this(new HttpClient(serviceRoot))
@@ -68,8 +69,11 @@ namespace NuGet
             }
             else
             {
-                // weak event pattern            
-                SendingRequestEventManager.AddListener(_packageDownloader, this);
+                // weak event pattern
+                manager.AddWeakEventListener<PackageDownloader, WebRequestEventArgs>(
+                    _packageDownloader, 
+                    nameof(_packageDownloader.SendingRequest), 
+                    OnPackageDownloaderSendingRequest);
             }
         }
 
@@ -483,19 +487,6 @@ namespace NuGet
         private static string ToLowerCaseString(bool value)
         {
             return value.ToString().ToLowerInvariant();
-        }
-
-        public bool ReceiveWeakEvent(Type managerType, object sender, EventArgs e)
-        {
-            if (managerType == typeof(SendingRequestEventManager))
-            {
-                OnPackageDownloaderSendingRequest(sender, (WebRequestEventArgs)e);
-                return true;
-            }
-            else
-            {
-                return false;
-            } 
         }
     }
 }

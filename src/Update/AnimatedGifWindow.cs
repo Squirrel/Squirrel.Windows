@@ -1,4 +1,4 @@
-﻿#if !MONO
+﻿#if false
 using System;
 using System.IO;
 using System.Reflection;

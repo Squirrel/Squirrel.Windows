@@ -99,9 +99,9 @@ namespace Squirrel.Update
 #if !MONO
                 case UpdateAction.Install:
                     var progressSource = new ProgressSource();
-                    if (!opt.silentInstall) {
-                        AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token, progressSource);
-                    }
+                    //if (!opt.silentInstall) {
+                    //    AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token, progressSource);
+                    //}
 
                     Install(opt.silentInstall, progressSource, Path.GetFullPath(opt.target)).Wait();
                     animatedGifWindowToken.Cancel();
