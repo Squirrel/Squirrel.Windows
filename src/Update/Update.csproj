@@ -1,13 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project>
-  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFramework>net5.0-windows</TargetFramework>
     <OutputType>WinExe</OutputType>
     <Description>Update</Description>
     <Title>Update</Title>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,23 +17,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\vendor\nuget\src\Core\Core.csproj" />
-    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="WpfAnimatedGif" Version="1.4.15.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ILRepack" Version="1.26.0" PrivateAssets="All" />
+    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="Nerdbank.GitVersioning" Version="3.0.50" />
-  </ItemGroup>
-
-  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+  <!--<Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <PostBuildEvent>
       cd "$(TargetDir)"
@@ -41,6 +32,6 @@
       del "$(TargetFileName)"
       ren "$(TargetFileName).tmp" "$(TargetFileName)"
     </PostBuildEvent>
-  </PropertyGroup>
+  </PropertyGroup>-->
 
 </Project>

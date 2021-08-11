@@ -18,7 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\vendor\nuget\src\Core\Core.csproj" />
     <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
   </ItemGroup>
 
