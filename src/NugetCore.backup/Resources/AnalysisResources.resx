@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AssemblyOutsideLibDescription" xml:space="preserve">
+    <value>The assembly '{0}' is not inside the 'lib' folder and hence it won't be added as reference when the package is installed into a project.</value>
+  </data>
+  <data name="AssemblyOutsideLibSolution" xml:space="preserve">
+    <value>Move it into the 'lib' folder if it should be referenced.</value>
+  </data>
+  <data name="AssemblyOutsideLibTitle" xml:space="preserve">
+    <value>Assembly outside lib folder.</value>
+  </data>
+  <data name="AssemblyUnderLibDescription" xml:space="preserve">
+    <value>The assembly '{0}' is placed directly under 'lib' folder. It is recommended that assemblies be placed inside a framework-specific folder.</value>
+  </data>
+  <data name="AssemblyUnderLibSolution" xml:space="preserve">
+    <value>Move it into a framework-specific folder. If this assembly is targeted for multiple frameworks, ignore this warning.</value>
+  </data>
+  <data name="AssemblyUnderLibTitle" xml:space="preserve">
+    <value>Assembly not inside a framework folder.</value>
+  </data>
+  <data name="InvalidFrameworkDescription" xml:space="preserve">
+    <value>The folder '{0}' under 'lib' is not recognized as a valid framework name or a supported culture identifier.</value>
+  </data>
+  <data name="InvalidFrameworkSolution" xml:space="preserve">
+    <value>Rename it to a valid framework name.</value>
+  </data>
+  <data name="InvalidFrameworkTitle" xml:space="preserve">
+    <value>Invalid framework folder.</value>
+  </data>
+  <data name="MisplacedInitScriptDescription" xml:space="preserve">
+    <value>The file '{0}' will be ignored by NuGet because it is not directly under 'tools' folder.</value>
+  </data>
+  <data name="MisplacedInitScriptSolution" xml:space="preserve">
+    <value>Place the file directly under 'tools' folder.</value>
+  </data>
+  <data name="MisplacedInitScriptTitle" xml:space="preserve">
+    <value>Init.ps1 script will be ignored.</value>
+  </data>
+  <data name="MisplacedTransformFileDescription" xml:space="preserve">
+    <value>The transform file '{0}' is outside the 'content' folder and hence will not be transformed during installation of this package.</value>
+  </data>
+  <data name="MisplacedTransformFileSolution" xml:space="preserve">
+    <value>Move it into the 'content' folder.</value>
+  </data>
+  <data name="MisplacedTransformFileTitle" xml:space="preserve">
+    <value>Transform file outside content folder.</value>
+  </data>
+  <data name="MissingSummaryDescription" xml:space="preserve">
+    <value>The Description text is long but the Summary text is empty. This means the Description text will be truncated in the 'Manage NuGet Packages' dialog.</value>
+  </data>
+  <data name="MissingSummarySolution" xml:space="preserve">
+    <value>Provide a brief summary of the package in the Summary field.</value>
+  </data>
+  <data name="MissingSummaryTitle" xml:space="preserve">
+    <value>Consider providing Summary text.</value>
+  </data>
+  <data name="ScriptOutsideToolsDescription" xml:space="preserve">
+    <value>The script file '{0}' is outside the 'tools' folder and hence will not be executed during installation of this package.</value>
+  </data>
+  <data name="ScriptOutsideToolsSolution" xml:space="preserve">
+    <value>Move it into the 'tools' folder.</value>
+  </data>
+  <data name="ScriptOutsideToolsTitle" xml:space="preserve">
+    <value>PowerShell file outside tools folder.</value>
+  </data>
+  <data name="UnrecognizedScriptDescription" xml:space="preserve">
+    <value>The script file '{0}' is not recognized by NuGet and hence will not be executed during installation of this package.</value>
+  </data>
+  <data name="UnrecognizedScriptSolution" xml:space="preserve">
+    <value>Rename it to install.ps1, uninstall.ps1 or init.ps1 and place it directly under 'tools'.</value>
+  </data>
+  <data name="UnrecognizedScriptTitle" xml:space="preserve">
+    <value>Unrecognized PowerShell file.</value>
+  </data>
+  <data name="WinRTObsoleteDescription" xml:space="preserve">
+    <value>The file at '{0}' uses the obsolete 'WinRT' as the framework folder.</value>
+  </data>
+  <data name="WinRTObsoleteSolution" xml:space="preserve">
+    <value>Replace 'WinRT' or 'WinRT45' with 'NetCore45'.</value>
+  </data>
+  <data name="WinRTObsoleteTitle" xml:space="preserve">
+    <value>The framework name 'WinRT' is obsolete.</value>
+  </data>
+</root>

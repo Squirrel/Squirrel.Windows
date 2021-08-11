@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\vendor\nuget\src\Core\Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="DeltaCompressionDotNet" Version="1.1.0.0" />
     <PackageReference Include="Microsoft.Web.Xdt" Version="2.1.1" />
     <PackageReference Include="Mono.Cecil" Version="0.11.2" />

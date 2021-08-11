@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="CircularDependencyDetected" xml:space="preserve">
+    <value>Circular dependency detected '{0}'.</value>
+  </data>
+  <data name="ConflictErrorWithDependent" xml:space="preserve">
+    <value>Updating '{0}' to '{1}' failed. Unable to find a version of '{2}' that is compatible with '{1}'.</value>
+  </data>
+  <data name="ConflictErrorWithDependents" xml:space="preserve">
+    <value>Updating '{0}' to '{1}' failed. Unable to find versions of '{2}' that are compatible with '{1}'.</value>
+  </data>
+  <data name="Debug_AddedFile" xml:space="preserve">
+    <value>Added file '{0}'.</value>
+  </data>
+  <data name="Debug_AddedFileToFolder" xml:space="preserve">
+    <value>Added file '{0}' to folder '{1}'.</value>
+  </data>
+  <data name="Debug_LookingForUpdates" xml:space="preserve">
+    <value>Looking for updates for '{0}'...</value>
+  </data>
+  <data name="Debug_RemovedFile" xml:space="preserve">
+    <value>Removed file '{0}'.</value>
+  </data>
+  <data name="Debug_RemovedFileFromFolder" xml:space="preserve">
+    <value>Removed file '{0}' to folder '{1}'.</value>
+  </data>
+  <data name="Debug_RemovedFolder" xml:space="preserve">
+    <value>Removed folder '{0}'.</value>
+  </data>
+  <data name="DependencyOnlyCannotMixDependencies" xml:space="preserve">
+    <value>Child dependencies of dependency only packages cannot mix external and project packages.</value>
+  </data>
+  <data name="ExternalPackagesCannotDependOnProjectLevelPackages" xml:space="preserve">
+    <value>External packages cannot depend on packages that target projects.</value>
+  </data>
+  <data name="Log_AttemptingToRetrievePackageFromSource" xml:space="preserve">
+    <value>Attempting to resolve dependency '{0}'.</value>
+  </data>
+  <data name="Log_NoUpdatesAvailable" xml:space="preserve">
+    <value>No updates available for '{0}'.</value>
+  </data>
+  <data name="Log_PackageAlreadyInstalled" xml:space="preserve">
+    <value>'{0}' already installed.</value>
+  </data>
+  <data name="Log_PackageInstalledSuccessfully" xml:space="preserve">
+    <value>Successfully installed '{0}'.</value>
+  </data>
+  <data name="Log_ProjectAlreadyReferencesPackage" xml:space="preserve">
+    <value>{0} already has a reference to '{1}'.</value>
+  </data>
+  <data name="Log_SuccessfullyAddedPackageReference" xml:space="preserve">
+    <value>Successfully added '{0}' to {1}.</value>
+  </data>
+  <data name="Log_SuccessfullyRemovedPackageReference" xml:space="preserve">
+    <value>Successfully removed '{0}' from {1}.</value>
+  </data>
+  <data name="Log_SuccessfullyUninstalledPackage" xml:space="preserve">
+    <value>Successfully uninstalled '{0}'.</value>
+  </data>
+  <data name="Manifest_DependencyIdRequired" xml:space="preserve">
+    <value>Dependency Id is required.</value>
+  </data>
+  <data name="Manifest_RequireLicenseAcceptanceRequiresLicenseUrl" xml:space="preserve">
+    <value>Enabling license acceptance requires a license url.</value>
+  </data>
+  <data name="Manifest_UriCannotBeEmpty" xml:space="preserve">
+    <value>{0} cannot be empty.</value>
+  </data>
+  <data name="NewerVersionAlreadyReferenced" xml:space="preserve">
+    <value>Already referencing a newer version of '{0}'.</value>
+  </data>
+  <data name="PackageDoesNotContainManifest" xml:space="preserve">
+    <value>Package does not contain a manifest.</value>
+  </data>
+  <data name="PackageHasDependent" xml:space="preserve">
+    <value>Unable to uninstall '{0}' because '{1}' depends on it.</value>
+  </data>
+  <data name="PackageHasDependents" xml:space="preserve">
+    <value>Unable to uninstall '{0}' because '{1}' depend on it.</value>
+  </data>
+  <data name="ProjectDoesNotHaveReference" xml:space="preserve">
+    <value>{0} does not reference '{1}'.</value>
+  </data>
+  <data name="TokenHasNoValue" xml:space="preserve">
+    <value>The replacement token '{0}' has no value.</value>
+  </data>
+  <data name="UnableToFindCompatibleItems" xml:space="preserve">
+    <value>Could not install package '{0}'. You are trying to install this package into a project that targets '{1}', but the package does not contain any assembly references or content files that are compatible with that framework. For more information, contact the package author.</value>
+  </data>
+  <data name="UnableToLocateDependency" xml:space="preserve">
+    <value>Unable to locate dependency '{0}'. It may have been uninstalled.</value>
+  </data>
+  <data name="UnableToResolveDependency" xml:space="preserve">
+    <value>Unable to resolve dependency '{0}'.</value>
+  </data>
+  <data name="UnknownPackage" xml:space="preserve">
+    <value>Unable to find package '{0}'.</value>
+  </data>
+  <data name="Warning_FileAlreadyExists" xml:space="preserve">
+    <value>'{0}' already exists. Skipping...</value>
+  </data>
+  <data name="Warning_FileModified" xml:space="preserve">
+    <value>Skipping '{0}' because it was modified.</value>
+  </data>
+  <data name="Warning_PackageSkippedBecauseItIsInUse" xml:space="preserve">
+    <value>'{0}' skipped, because it is in use by '{1}'.</value>
+  </data>
+  <data name="Warning_UninstallingPackageWillBreakDependents" xml:space="preserve">
+    <value>Uninstalling '{0}' might cause '{1}' to be broken.</value>
+  </data>
+  <data name="AggregateQueriesRequireOrder" xml:space="preserve">
+    <value>Aggregate queries require at least one OrderBy.</value>
+  </data>
+  <data name="CannotCreateEmptyPackage" xml:space="preserve">
+    <value>Cannot create a package that has no dependencies nor content.</value>
+  </data>
+  <data name="ErrorReadingFile" xml:space="preserve">
+    <value>Error reading '{0}'.</value>
+  </data>
+  <data name="InvalidVersionString" xml:space="preserve">
+    <value>'{0}' is not a valid version string.</value>
+  </data>
+  <data name="DependencyHasInvalidVersion" xml:space="preserve">
+    <value>Dependency '{0}' has an invalid version.</value>
+  </data>
+  <data name="DuplicateDependenciesDefined" xml:space="preserve">
+    <value>'{0}' already has a dependency defined for '{1}'.</value>
+  </data>
+  <data name="PackageAuthoring_FileNotFound" xml:space="preserve">
+    <value>File not found: '{0}'.</value>
+  </data>
+  <data name="InvalidPackageId" xml:space="preserve">
+    <value>The package ID '{0}' contains invalid characters. Examples of valid package IDs include 'MyPackage' and 'MyPackage.Sample'.</value>
+  </data>
+  <data name="InvalidFeed" xml:space="preserve">
+    <value>Could not connect to the feed specified at '{0}'. Please verify that the package source (located in the Package Manager Settings) is valid and ensure your network connectivity.</value>
+  </data>
+  <data name="IncompatibleSchema" xml:space="preserve">
+    <value>The schema version of '{0}' is incompatible with version {1} of NuGet. Please upgrade NuGet to the latest version from http://go.microsoft.com/fwlink/?LinkId=213942.</value>
+  </data>
+  <data name="InvalidFrameworkNameFormat" xml:space="preserve">
+    <value>Invalid framework name format. Expected {framework}{version}-{profile}.</value>
+  </data>
+  <data name="MissingFrameworkName" xml:space="preserve">
+    <value>Framework name is missing.</value>
+  </data>
+  <data name="Manifest_AssemblyNameRequired" xml:space="preserve">
+    <value>Assembly name is required.</value>
+  </data>
+  <data name="DownloadProgressStatus" xml:space="preserve">
+    <value>Downloading {0} {1}...</value>
+  </data>
+  <data name="UserSettings_UnableToParseConfigFile" xml:space="preserve">
+    <value>Unable to parse config file '{0}'.</value>
+  </data>
+  <data name="UnknownPackageSpecificVersion" xml:space="preserve">
+    <value>Unable to find version '{1}' of package '{0}'.</value>
+  </data>
+  <data name="Log_NoUpdatesAvailableForProject" xml:space="preserve">
+    <value>No updates available for '{0}' in project '{1}'.</value>
+  </data>
+  <data name="Log_UpdatingPackages" xml:space="preserve">
+    <value>Updating '{0}' from version '{1}' to '{2}' in project '{3}'.</value>
+  </data>
+  <data name="UnableToResolveUri" xml:space="preserve">
+    <value>Unable to resolve '{0}'.</value>
+  </data>
+  <data name="AdditonalConstraintsDefined" xml:space="preserve">
+    <value>'{0}' has an additional constraint {1} defined in {2}.</value>
+  </data>
+  <data name="Log_ApplyingConstraints" xml:space="preserve">
+    <value>Applying constraint '{0} {1}' defined in {2}.</value>
+  </data>
+  <data name="Manifest_SourceContainsInvalidCharacters" xml:space="preserve">
+    <value>Source path '{0}' contains invalid characters.</value>
+  </data>
+  <data name="Manifest_ExcludeContainsInvalidCharacters" xml:space="preserve">
+    <value>Exclude path '{0}' contains invalid characters.</value>
+  </data>
+  <data name="Manifest_TargetContainsInvalidCharacters" xml:space="preserve">
+    <value>Target path '{0}' contains invalid characters.</value>
+  </data>
+  <data name="Manifest_InvalidReference" xml:space="preserve">
+    <value>Invalid assembly reference '{0}'. Ensure that a file named '{0}' exists in the lib directory.</value>
+  </data>
+  <data name="Manifest_InvalidReferenceFile" xml:space="preserve">
+    <value>Assembly reference '{0}' contains invalid characters.</value>
+  </data>
+  <data name="Manifest_InvalidSchemaNamespace" xml:space="preserve">
+    <value>Invalid schema namespace '{0}'.</value>
+  </data>
+  <data name="InvalidNullSettingsOperation" xml:space="preserve">
+    <value>"{0}" cannot be called on a NullSettings. This may be caused on account of insufficient permissions to read or write to "%AppData%\NuGet\NuGet.config".</value>
+  </data>
+  <data name="TypeMustBeASemanticVersion" xml:space="preserve">
+    <value>Type to compare must be an instance of SemanticVersion.</value>
+  </data>
+  <data name="Manifest_InvalidPrereleaseDependency" xml:space="preserve">
+    <value>A stable release of a package should not have on a prerelease dependency. Either modify the version spec of dependency "{0}" or update the version field.</value>
+  </data>
+  <data name="ReferenceFile_InvalidVersion" xml:space="preserve">
+    <value>Unable to parse version value '{0}' from '{1}'.</value>
+  </data>
+  <data name="UnknownSchemaVersion" xml:space="preserve">
+    <value>Unknown schema version '{0}'.</value>
+  </data>
+  <data name="SemVerSpecialVersionTooLong" xml:space="preserve">
+    <value>The special version part cannot exceed 20 characters.</value>
+  </data>
+  <data name="Manifest_IdMaxLengthExceeded" xml:space="preserve">
+    <value>Id must not exceed 100 characters.</value>
+  </data>
+  <data name="PackageServerError" xml:space="preserve">
+    <value>Failed to process request. '{0}'. 
+{1}.</value>
+  </data>
+  <data name="SettingsCredentials_UsingSavedCredentials" xml:space="preserve">
+    <value>Using credentials from config or environment. UserName: {0}</value>
+  </data>
+  <data name="Manifest_NotAvailable" xml:space="preserve">
+    <value>The manifest of this package has not been read. Call ReadManifest() before calling this method.</value>
+  </data>
+  <data name="Manifest_NotFound" xml:space="preserve">
+    <value>Could not find manifest file at '{0}'.</value>
+  </data>
+  <data name="UnableToLocateWIF" xml:space="preserve">
+    <value>Connection to feed '{0}' requires the Windows Identity Foundation runtime to be installed. </value>
+  </data>
+  <data name="UnsupportedHashAlgorithm" xml:space="preserve">
+    <value>Hash algorithm '{0}' is unsupported. Supported algorithms include: SHA512 and SHA256.</value>
+  </data>
+  <data name="Manifest_DependenciesHasMixedElements" xml:space="preserve">
+    <value>&lt;dependencies&gt; element must not contain both &lt;group&gt; and &lt;dependency&gt; child elements.</value>
+  </data>
+  <data name="SupportedFrameworkIsNull" xml:space="preserve">
+    <value>One of the supported framework is null.</value>
+  </data>
+  <data name="PortableFrameworkProfileComponentIsEmpty" xml:space="preserve">
+    <value>The profile part of a portable target framework must not contain empty component.</value>
+  </data>
+  <data name="PortableFrameworkProfileComponentIsPortable" xml:space="preserve">
+    <value>The profile part of a portable target framework must not contain a portable framework component.</value>
+  </data>
+  <data name="PortableFrameworkProfileEmpty" xml:space="preserve">
+    <value>Portable target framework must not have an empty profile part.</value>
+  </data>
+  <data name="PortableFrameworkProfileHasDash" xml:space="preserve">
+    <value>The profile part of a portable target framework must not contain the '-' character.</value>
+  </data>
+  <data name="PortableFrameworkProfileHasSpace" xml:space="preserve">
+    <value>The profile part of a portable target framework must not contain empty space.</value>
+  </data>
+  <data name="ErrorReadingPackage" xml:space="preserve">
+    <value>Unable to read package from path '{0}'.</value>
+  </data>
+  <data name="FileDoesNotExit" xml:space="preserve">
+    <value>File '{0}' does not exist.</value>
+  </data>
+  <data name="Manifest_ReferencesHasMixedElements" xml:space="preserve">
+    <value>&lt;references&gt; element must not contain both &lt;group&gt; and &lt;reference&gt; child elements.</value>
+  </data>
+  <data name="GetUpdatesParameterMismatch" xml:space="preserve">
+    <value>The 'packages' and 'versionConstraints' parameters must have the same number of elements.</value>
+  </data>
+  <data name="Log_BeginAddPackageReference" xml:space="preserve">
+    <value>Adding '{0}' to {1}.</value>
+  </data>
+  <data name="Log_BeginInstallPackage" xml:space="preserve">
+    <value>Installing '{0}'.</value>
+  </data>
+  <data name="Log_BeginRemovePackageReference" xml:space="preserve">
+    <value>Removing '{0}' from {1}.</value>
+  </data>
+  <data name="Log_BeginUninstallPackage" xml:space="preserve">
+    <value>Uninstalling '{0}'.</value>
+  </data>
+  <data name="Manifest_RequiredElementMissing" xml:space="preserve">
+    <value>The required element '{0}' is missing from the manifest.</value>
+  </data>
+  <data name="Manifest_InvalidMinClientVersion" xml:space="preserve">
+    <value>The 'minClientVersion' attribute in the package manifest has invalid value. It must be a valid version string.</value>
+  </data>
+  <data name="PackageMinVersionNotSatisfied" xml:space="preserve">
+    <value>The '{0}' package requires NuGet client version '{1}' or above, but the current NuGet version is '{2}'.</value>
+  </data>
+  <data name="Manifest_RequiredMetadataMissing" xml:space="preserve">
+    <value>{0} is required.</value>
+  </data>
+  <data name="FileConflictMessage" xml:space="preserve">
+    <value>File '{0}' already exists in project '{1}'. Do you want to overwrite it?</value>
+  </data>
+  <data name="Manifest_ReferencesIsEmpty" xml:space="preserve">
+    <value>The element package\metadata\references\group must contain at least one &lt;reference&gt; child element.</value>
+  </data>
+  <data name="ErrorLoadingPackages" xml:space="preserve">
+    <value>An error occurred while loading packages from '{0}': {1}</value>
+  </data>
+  <data name="Info_OverwriteExistingFile" xml:space="preserve">
+    <value>Overwrite existing file '{0}'.</value>
+  </data>
+  <data name="ReferenceFile_InvalidDevelopmentFlag" xml:space="preserve">
+    <value>Unable to parse developmentDependency value '{0}' from '{1}'.</value>
+  </data>
+  <data name="Error_NoWritableConfig" xml:space="preserve">
+    <value>There are no writable config files.</value>
+  </data>
+  <data name="XdtError" xml:space="preserve">
+    <value>An error occurred while applying transformation to '{0}' in project '{1}':</value>
+  </data>
+  <data name="ReferenceFile_InvalidRequireReinstallationFlag" xml:space="preserve">
+    <value>Unable to parse requireReinstallation value '{0}' from '{1}'.</value>
+  </data>
+  <data name="PackageRestoreConsentCheckBoxText" xml:space="preserve">
+    <value>&amp;Allow NuGet to download missing packages</value>
+  </data>
+  <data name="Error_PackageAlreadyExists" xml:space="preserve">
+    <value>Package '{0}' already exists.</value>
+  </data>
+  <data name="Log_UpdatingPackagesWithoutOldVersion" xml:space="preserve">
+    <value>Updating '{0}' to version '{1}' in project '{2}'.</value>
+  </data>
+  <data name="Debug_TargetFrameworkInfo" xml:space="preserve">
+    <value>&gt;&gt; {0} are being added from '{1}'{2}</value>
+  </data>
+  <data name="Debug_TargetFrameworkInfoPrefix" xml:space="preserve">
+    <value>For adding package '{0}' to project '{1}' that targets '{2}',</value>
+  </data>
+  <data name="Debug_TargetFrameworkInfo_AssemblyReferences" xml:space="preserve">
+    <value>Assembly references</value>
+  </data>
+  <data name="Debug_TargetFrameworkInfo_BuildFiles" xml:space="preserve">
+    <value>Build files</value>
+  </data>
+  <data name="Debug_TargetFrameworkInfo_ContentFiles" xml:space="preserve">
+    <value>Content files</value>
+  </data>
+  <data name="Debug_TargetFrameworkInfo_NotFrameworkSpecific" xml:space="preserve">
+    <value> (not framework-specific)</value>
+  </data>
+  <data name="Debug_TargetFrameworkInfo_PowershellScripts" xml:space="preserve">
+    <value>&gt;&gt; PowerShell scripts are being executed from '{0}'{1}</value>
+  </data>
+  <data name="Log_InstallPackage" xml:space="preserve">
+    <value>Install '{0}'</value>
+  </data>
+  <data name="Log_InstallPackageIntoProject" xml:space="preserve">
+    <value>Add '{0}' to project {1}.</value>
+  </data>
+  <data name="Log_UninstallPackage" xml:space="preserve">
+    <value>Uninstall '{0}'.</value>
+  </data>
+  <data name="Log_UninstallPackageFromProject" xml:space="preserve">
+    <value>Remove '{0}' from project {1}.</value>
+  </data>
+  <data name="Error_TooManyRedirections" xml:space="preserve">
+    <value>Too many automatic redirections were attempted.</value>
+  </data>
+  <data name="Error_InvalidPackage" xml:space="preserve">
+    <value>Unable to load version '{0}' of package '{1}'.</value>
+  </data>
+  <data name="PortableProfileTableRequiresForGetShortFrameworkName" xml:space="preserve">
+    <value>The 'portableProfileTable' parameter must be provided when getting the short name for a Portable target framework</value>
+  </data>
+  <data name="PortableProfileTableMustBeSpecified" xml:space="preserve">
+    <value>A Portable Profile Table must be specified when resolving the short name of a portable profile.</value>
+  </data>
+</root>

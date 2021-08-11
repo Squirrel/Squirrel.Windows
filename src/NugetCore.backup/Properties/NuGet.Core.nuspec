@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+    <metadata>
+        <id>$id$</id>
+        <version>$version$</version>
+        <description>$description$</description>
+        <authors>.NET Foundation</authors>
+        <owners>$author$</owners>
+        <licenseUrl>http://nuget.codeplex.com/license</licenseUrl>
+        <projectUrl>http://nuget.codeplex.com</projectUrl>
+        <copyright>$copyright$</copyright>
+        <tags>nuget</tags>
+        <dependencies>
+            <dependency id="Microsoft.Web.Xdt" version="2.1.0" />
+        </dependencies>
+    </metadata>
+</package>
