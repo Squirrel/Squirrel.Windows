@@ -19,10 +19,10 @@ namespace NuGet.Resources {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    public class NuGetResources {
+    internal class NuGetResources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace NuGet.Resources {
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        public static global::System.Resources.ResourceManager ResourceManager {
+        internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("NuGet.Resources.NuGetResources", typeof(NuGetResources).Assembly);
@@ -51,7 +51,7 @@ namespace NuGet.Resources {
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        public static global::System.Globalization.CultureInfo Culture {
+        internal static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
@@ -63,7 +63,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; has an additional constraint {1} defined in {2}..
         /// </summary>
-        public static string AdditonalConstraintsDefined {
+        internal static string AdditonalConstraintsDefined {
             get {
                 return ResourceManager.GetString("AdditonalConstraintsDefined", resourceCulture);
             }
@@ -72,7 +72,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Aggregate queries require at least one OrderBy..
         /// </summary>
-        public static string AggregateQueriesRequireOrder {
+        internal static string AggregateQueriesRequireOrder {
             get {
                 return ResourceManager.GetString("AggregateQueriesRequireOrder", resourceCulture);
             }
@@ -81,7 +81,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Cannot create a package that has no dependencies nor content..
         /// </summary>
-        public static string CannotCreateEmptyPackage {
+        internal static string CannotCreateEmptyPackage {
             get {
                 return ResourceManager.GetString("CannotCreateEmptyPackage", resourceCulture);
             }
@@ -90,7 +90,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Circular dependency detected &apos;{0}&apos;..
         /// </summary>
-        public static string CircularDependencyDetected {
+        internal static string CircularDependencyDetected {
             get {
                 return ResourceManager.GetString("CircularDependencyDetected", resourceCulture);
             }
@@ -99,7 +99,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Updating &apos;{0}&apos; to &apos;{1}&apos; failed. Unable to find a version of &apos;{2}&apos; that is compatible with &apos;{1}&apos;..
         /// </summary>
-        public static string ConflictErrorWithDependent {
+        internal static string ConflictErrorWithDependent {
             get {
                 return ResourceManager.GetString("ConflictErrorWithDependent", resourceCulture);
             }
@@ -108,7 +108,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Updating &apos;{0}&apos; to &apos;{1}&apos; failed. Unable to find versions of &apos;{2}&apos; that are compatible with &apos;{1}&apos;..
         /// </summary>
-        public static string ConflictErrorWithDependents {
+        internal static string ConflictErrorWithDependents {
             get {
                 return ResourceManager.GetString("ConflictErrorWithDependents", resourceCulture);
             }
@@ -117,7 +117,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Added file &apos;{0}&apos;..
         /// </summary>
-        public static string Debug_AddedFile {
+        internal static string Debug_AddedFile {
             get {
                 return ResourceManager.GetString("Debug_AddedFile", resourceCulture);
             }
@@ -126,7 +126,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Added file &apos;{0}&apos; to folder &apos;{1}&apos;..
         /// </summary>
-        public static string Debug_AddedFileToFolder {
+        internal static string Debug_AddedFileToFolder {
             get {
                 return ResourceManager.GetString("Debug_AddedFileToFolder", resourceCulture);
             }
@@ -135,7 +135,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Looking for updates for &apos;{0}&apos;....
         /// </summary>
-        public static string Debug_LookingForUpdates {
+        internal static string Debug_LookingForUpdates {
             get {
                 return ResourceManager.GetString("Debug_LookingForUpdates", resourceCulture);
             }
@@ -144,7 +144,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Removed file &apos;{0}&apos;..
         /// </summary>
-        public static string Debug_RemovedFile {
+        internal static string Debug_RemovedFile {
             get {
                 return ResourceManager.GetString("Debug_RemovedFile", resourceCulture);
             }
@@ -153,7 +153,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Removed file &apos;{0}&apos; to folder &apos;{1}&apos;..
         /// </summary>
-        public static string Debug_RemovedFileFromFolder {
+        internal static string Debug_RemovedFileFromFolder {
             get {
                 return ResourceManager.GetString("Debug_RemovedFileFromFolder", resourceCulture);
             }
@@ -162,7 +162,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Removed folder &apos;{0}&apos;..
         /// </summary>
-        public static string Debug_RemovedFolder {
+        internal static string Debug_RemovedFolder {
             get {
                 return ResourceManager.GetString("Debug_RemovedFolder", resourceCulture);
             }
@@ -171,7 +171,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &gt;&gt; {0} are being added from &apos;{1}&apos;{2}.
         /// </summary>
-        public static string Debug_TargetFrameworkInfo {
+        internal static string Debug_TargetFrameworkInfo {
             get {
                 return ResourceManager.GetString("Debug_TargetFrameworkInfo", resourceCulture);
             }
@@ -180,7 +180,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Assembly references.
         /// </summary>
-        public static string Debug_TargetFrameworkInfo_AssemblyReferences {
+        internal static string Debug_TargetFrameworkInfo_AssemblyReferences {
             get {
                 return ResourceManager.GetString("Debug_TargetFrameworkInfo_AssemblyReferences", resourceCulture);
             }
@@ -189,7 +189,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Build files.
         /// </summary>
-        public static string Debug_TargetFrameworkInfo_BuildFiles {
+        internal static string Debug_TargetFrameworkInfo_BuildFiles {
             get {
                 return ResourceManager.GetString("Debug_TargetFrameworkInfo_BuildFiles", resourceCulture);
             }
@@ -198,7 +198,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Content files.
         /// </summary>
-        public static string Debug_TargetFrameworkInfo_ContentFiles {
+        internal static string Debug_TargetFrameworkInfo_ContentFiles {
             get {
                 return ResourceManager.GetString("Debug_TargetFrameworkInfo_ContentFiles", resourceCulture);
             }
@@ -207,7 +207,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to  (not framework-specific).
         /// </summary>
-        public static string Debug_TargetFrameworkInfo_NotFrameworkSpecific {
+        internal static string Debug_TargetFrameworkInfo_NotFrameworkSpecific {
             get {
                 return ResourceManager.GetString("Debug_TargetFrameworkInfo_NotFrameworkSpecific", resourceCulture);
             }
@@ -216,7 +216,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &gt;&gt; PowerShell scripts are being executed from &apos;{0}&apos;{1}.
         /// </summary>
-        public static string Debug_TargetFrameworkInfo_PowershellScripts {
+        internal static string Debug_TargetFrameworkInfo_PowershellScripts {
             get {
                 return ResourceManager.GetString("Debug_TargetFrameworkInfo_PowershellScripts", resourceCulture);
             }
@@ -225,7 +225,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to For adding package &apos;{0}&apos; to project &apos;{1}&apos; that targets &apos;{2}&apos;,.
         /// </summary>
-        public static string Debug_TargetFrameworkInfoPrefix {
+        internal static string Debug_TargetFrameworkInfoPrefix {
             get {
                 return ResourceManager.GetString("Debug_TargetFrameworkInfoPrefix", resourceCulture);
             }
@@ -234,7 +234,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Dependency &apos;{0}&apos; has an invalid version..
         /// </summary>
-        public static string DependencyHasInvalidVersion {
+        internal static string DependencyHasInvalidVersion {
             get {
                 return ResourceManager.GetString("DependencyHasInvalidVersion", resourceCulture);
             }
@@ -243,7 +243,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Child dependencies of dependency only packages cannot mix external and project packages..
         /// </summary>
-        public static string DependencyOnlyCannotMixDependencies {
+        internal static string DependencyOnlyCannotMixDependencies {
             get {
                 return ResourceManager.GetString("DependencyOnlyCannotMixDependencies", resourceCulture);
             }
@@ -252,7 +252,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Downloading {0} {1}....
         /// </summary>
-        public static string DownloadProgressStatus {
+        internal static string DownloadProgressStatus {
             get {
                 return ResourceManager.GetString("DownloadProgressStatus", resourceCulture);
             }
@@ -261,7 +261,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; already has a dependency defined for &apos;{1}&apos;..
         /// </summary>
-        public static string DuplicateDependenciesDefined {
+        internal static string DuplicateDependenciesDefined {
             get {
                 return ResourceManager.GetString("DuplicateDependenciesDefined", resourceCulture);
             }
@@ -270,7 +270,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to load version &apos;{0}&apos; of package &apos;{1}&apos;..
         /// </summary>
-        public static string Error_InvalidPackage {
+        internal static string Error_InvalidPackage {
             get {
                 return ResourceManager.GetString("Error_InvalidPackage", resourceCulture);
             }
@@ -279,7 +279,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to There are no writable config files..
         /// </summary>
-        public static string Error_NoWritableConfig {
+        internal static string Error_NoWritableConfig {
             get {
                 return ResourceManager.GetString("Error_NoWritableConfig", resourceCulture);
             }
@@ -288,7 +288,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Package &apos;{0}&apos; already exists..
         /// </summary>
-        public static string Error_PackageAlreadyExists {
+        internal static string Error_PackageAlreadyExists {
             get {
                 return ResourceManager.GetString("Error_PackageAlreadyExists", resourceCulture);
             }
@@ -297,7 +297,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Too many automatic redirections were attempted..
         /// </summary>
-        public static string Error_TooManyRedirections {
+        internal static string Error_TooManyRedirections {
             get {
                 return ResourceManager.GetString("Error_TooManyRedirections", resourceCulture);
             }
@@ -306,7 +306,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to An error occurred while loading packages from &apos;{0}&apos;: {1}.
         /// </summary>
-        public static string ErrorLoadingPackages {
+        internal static string ErrorLoadingPackages {
             get {
                 return ResourceManager.GetString("ErrorLoadingPackages", resourceCulture);
             }
@@ -315,7 +315,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Error reading &apos;{0}&apos;..
         /// </summary>
-        public static string ErrorReadingFile {
+        internal static string ErrorReadingFile {
             get {
                 return ResourceManager.GetString("ErrorReadingFile", resourceCulture);
             }
@@ -324,7 +324,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to read package from path &apos;{0}&apos;..
         /// </summary>
-        public static string ErrorReadingPackage {
+        internal static string ErrorReadingPackage {
             get {
                 return ResourceManager.GetString("ErrorReadingPackage", resourceCulture);
             }
@@ -333,7 +333,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to External packages cannot depend on packages that target projects..
         /// </summary>
-        public static string ExternalPackagesCannotDependOnProjectLevelPackages {
+        internal static string ExternalPackagesCannotDependOnProjectLevelPackages {
             get {
                 return ResourceManager.GetString("ExternalPackagesCannotDependOnProjectLevelPackages", resourceCulture);
             }
@@ -342,7 +342,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to File &apos;{0}&apos; already exists in project &apos;{1}&apos;. Do you want to overwrite it?.
         /// </summary>
-        public static string FileConflictMessage {
+        internal static string FileConflictMessage {
             get {
                 return ResourceManager.GetString("FileConflictMessage", resourceCulture);
             }
@@ -351,7 +351,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to File &apos;{0}&apos; does not exist..
         /// </summary>
-        public static string FileDoesNotExit {
+        internal static string FileDoesNotExit {
             get {
                 return ResourceManager.GetString("FileDoesNotExit", resourceCulture);
             }
@@ -360,7 +360,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The &apos;packages&apos; and &apos;versionConstraints&apos; parameters must have the same number of elements..
         /// </summary>
-        public static string GetUpdatesParameterMismatch {
+        internal static string GetUpdatesParameterMismatch {
             get {
                 return ResourceManager.GetString("GetUpdatesParameterMismatch", resourceCulture);
             }
@@ -369,7 +369,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The schema version of &apos;{0}&apos; is incompatible with version {1} of NuGet. Please upgrade NuGet to the latest version from http://go.microsoft.com/fwlink/?LinkId=213942..
         /// </summary>
-        public static string IncompatibleSchema {
+        internal static string IncompatibleSchema {
             get {
                 return ResourceManager.GetString("IncompatibleSchema", resourceCulture);
             }
@@ -378,7 +378,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Overwrite existing file &apos;{0}&apos;..
         /// </summary>
-        public static string Info_OverwriteExistingFile {
+        internal static string Info_OverwriteExistingFile {
             get {
                 return ResourceManager.GetString("Info_OverwriteExistingFile", resourceCulture);
             }
@@ -387,7 +387,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Could not connect to the feed specified at &apos;{0}&apos;. Please verify that the package source (located in the Package Manager Settings) is valid and ensure your network connectivity..
         /// </summary>
-        public static string InvalidFeed {
+        internal static string InvalidFeed {
             get {
                 return ResourceManager.GetString("InvalidFeed", resourceCulture);
             }
@@ -396,7 +396,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Invalid framework name format. Expected {framework}{version}-{profile}..
         /// </summary>
-        public static string InvalidFrameworkNameFormat {
+        internal static string InvalidFrameworkNameFormat {
             get {
                 return ResourceManager.GetString("InvalidFrameworkNameFormat", resourceCulture);
             }
@@ -405,7 +405,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &quot;{0}&quot; cannot be called on a NullSettings. This may be caused on account of insufficient permissions to read or write to &quot;%AppData%\NuGet\NuGet.config&quot;..
         /// </summary>
-        public static string InvalidNullSettingsOperation {
+        internal static string InvalidNullSettingsOperation {
             get {
                 return ResourceManager.GetString("InvalidNullSettingsOperation", resourceCulture);
             }
@@ -414,7 +414,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The package ID &apos;{0}&apos; contains invalid characters. Examples of valid package IDs include &apos;MyPackage&apos; and &apos;MyPackage.Sample&apos;..
         /// </summary>
-        public static string InvalidPackageId {
+        internal static string InvalidPackageId {
             get {
                 return ResourceManager.GetString("InvalidPackageId", resourceCulture);
             }
@@ -423,7 +423,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; is not a valid version string..
         /// </summary>
-        public static string InvalidVersionString {
+        internal static string InvalidVersionString {
             get {
                 return ResourceManager.GetString("InvalidVersionString", resourceCulture);
             }
@@ -432,7 +432,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Applying constraint &apos;{0} {1}&apos; defined in {2}..
         /// </summary>
-        public static string Log_ApplyingConstraints {
+        internal static string Log_ApplyingConstraints {
             get {
                 return ResourceManager.GetString("Log_ApplyingConstraints", resourceCulture);
             }
@@ -441,7 +441,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Attempting to resolve dependency &apos;{0}&apos;..
         /// </summary>
-        public static string Log_AttemptingToRetrievePackageFromSource {
+        internal static string Log_AttemptingToRetrievePackageFromSource {
             get {
                 return ResourceManager.GetString("Log_AttemptingToRetrievePackageFromSource", resourceCulture);
             }
@@ -450,7 +450,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Adding &apos;{0}&apos; to {1}..
         /// </summary>
-        public static string Log_BeginAddPackageReference {
+        internal static string Log_BeginAddPackageReference {
             get {
                 return ResourceManager.GetString("Log_BeginAddPackageReference", resourceCulture);
             }
@@ -459,7 +459,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Installing &apos;{0}&apos;..
         /// </summary>
-        public static string Log_BeginInstallPackage {
+        internal static string Log_BeginInstallPackage {
             get {
                 return ResourceManager.GetString("Log_BeginInstallPackage", resourceCulture);
             }
@@ -468,7 +468,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Removing &apos;{0}&apos; from {1}..
         /// </summary>
-        public static string Log_BeginRemovePackageReference {
+        internal static string Log_BeginRemovePackageReference {
             get {
                 return ResourceManager.GetString("Log_BeginRemovePackageReference", resourceCulture);
             }
@@ -477,7 +477,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Uninstalling &apos;{0}&apos;..
         /// </summary>
-        public static string Log_BeginUninstallPackage {
+        internal static string Log_BeginUninstallPackage {
             get {
                 return ResourceManager.GetString("Log_BeginUninstallPackage", resourceCulture);
             }
@@ -486,7 +486,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Install &apos;{0}&apos;.
         /// </summary>
-        public static string Log_InstallPackage {
+        internal static string Log_InstallPackage {
             get {
                 return ResourceManager.GetString("Log_InstallPackage", resourceCulture);
             }
@@ -495,7 +495,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Add &apos;{0}&apos; to project {1}..
         /// </summary>
-        public static string Log_InstallPackageIntoProject {
+        internal static string Log_InstallPackageIntoProject {
             get {
                 return ResourceManager.GetString("Log_InstallPackageIntoProject", resourceCulture);
             }
@@ -504,7 +504,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to No updates available for &apos;{0}&apos;..
         /// </summary>
-        public static string Log_NoUpdatesAvailable {
+        internal static string Log_NoUpdatesAvailable {
             get {
                 return ResourceManager.GetString("Log_NoUpdatesAvailable", resourceCulture);
             }
@@ -513,7 +513,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to No updates available for &apos;{0}&apos; in project &apos;{1}&apos;..
         /// </summary>
-        public static string Log_NoUpdatesAvailableForProject {
+        internal static string Log_NoUpdatesAvailableForProject {
             get {
                 return ResourceManager.GetString("Log_NoUpdatesAvailableForProject", resourceCulture);
             }
@@ -522,7 +522,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; already installed..
         /// </summary>
-        public static string Log_PackageAlreadyInstalled {
+        internal static string Log_PackageAlreadyInstalled {
             get {
                 return ResourceManager.GetString("Log_PackageAlreadyInstalled", resourceCulture);
             }
@@ -531,7 +531,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Successfully installed &apos;{0}&apos;..
         /// </summary>
-        public static string Log_PackageInstalledSuccessfully {
+        internal static string Log_PackageInstalledSuccessfully {
             get {
                 return ResourceManager.GetString("Log_PackageInstalledSuccessfully", resourceCulture);
             }
@@ -540,7 +540,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to {0} already has a reference to &apos;{1}&apos;..
         /// </summary>
-        public static string Log_ProjectAlreadyReferencesPackage {
+        internal static string Log_ProjectAlreadyReferencesPackage {
             get {
                 return ResourceManager.GetString("Log_ProjectAlreadyReferencesPackage", resourceCulture);
             }
@@ -549,7 +549,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Successfully added &apos;{0}&apos; to {1}..
         /// </summary>
-        public static string Log_SuccessfullyAddedPackageReference {
+        internal static string Log_SuccessfullyAddedPackageReference {
             get {
                 return ResourceManager.GetString("Log_SuccessfullyAddedPackageReference", resourceCulture);
             }
@@ -558,7 +558,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Successfully removed &apos;{0}&apos; from {1}..
         /// </summary>
-        public static string Log_SuccessfullyRemovedPackageReference {
+        internal static string Log_SuccessfullyRemovedPackageReference {
             get {
                 return ResourceManager.GetString("Log_SuccessfullyRemovedPackageReference", resourceCulture);
             }
@@ -567,7 +567,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Successfully uninstalled &apos;{0}&apos;..
         /// </summary>
-        public static string Log_SuccessfullyUninstalledPackage {
+        internal static string Log_SuccessfullyUninstalledPackage {
             get {
                 return ResourceManager.GetString("Log_SuccessfullyUninstalledPackage", resourceCulture);
             }
@@ -576,7 +576,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Uninstall &apos;{0}&apos;..
         /// </summary>
-        public static string Log_UninstallPackage {
+        internal static string Log_UninstallPackage {
             get {
                 return ResourceManager.GetString("Log_UninstallPackage", resourceCulture);
             }
@@ -585,7 +585,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Remove &apos;{0}&apos; from project {1}..
         /// </summary>
-        public static string Log_UninstallPackageFromProject {
+        internal static string Log_UninstallPackageFromProject {
             get {
                 return ResourceManager.GetString("Log_UninstallPackageFromProject", resourceCulture);
             }
@@ -594,7 +594,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Updating &apos;{0}&apos; from version &apos;{1}&apos; to &apos;{2}&apos; in project &apos;{3}&apos;..
         /// </summary>
-        public static string Log_UpdatingPackages {
+        internal static string Log_UpdatingPackages {
             get {
                 return ResourceManager.GetString("Log_UpdatingPackages", resourceCulture);
             }
@@ -603,7 +603,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Updating &apos;{0}&apos; to version &apos;{1}&apos; in project &apos;{2}&apos;..
         /// </summary>
-        public static string Log_UpdatingPackagesWithoutOldVersion {
+        internal static string Log_UpdatingPackagesWithoutOldVersion {
             get {
                 return ResourceManager.GetString("Log_UpdatingPackagesWithoutOldVersion", resourceCulture);
             }
@@ -612,7 +612,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Assembly name is required..
         /// </summary>
-        public static string Manifest_AssemblyNameRequired {
+        internal static string Manifest_AssemblyNameRequired {
             get {
                 return ResourceManager.GetString("Manifest_AssemblyNameRequired", resourceCulture);
             }
@@ -621,7 +621,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &lt;dependencies&gt; element must not contain both &lt;group&gt; and &lt;dependency&gt; child elements..
         /// </summary>
-        public static string Manifest_DependenciesHasMixedElements {
+        internal static string Manifest_DependenciesHasMixedElements {
             get {
                 return ResourceManager.GetString("Manifest_DependenciesHasMixedElements", resourceCulture);
             }
@@ -630,7 +630,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Dependency Id is required..
         /// </summary>
-        public static string Manifest_DependencyIdRequired {
+        internal static string Manifest_DependencyIdRequired {
             get {
                 return ResourceManager.GetString("Manifest_DependencyIdRequired", resourceCulture);
             }
@@ -639,7 +639,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Exclude path &apos;{0}&apos; contains invalid characters..
         /// </summary>
-        public static string Manifest_ExcludeContainsInvalidCharacters {
+        internal static string Manifest_ExcludeContainsInvalidCharacters {
             get {
                 return ResourceManager.GetString("Manifest_ExcludeContainsInvalidCharacters", resourceCulture);
             }
@@ -648,7 +648,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Id must not exceed 100 characters..
         /// </summary>
-        public static string Manifest_IdMaxLengthExceeded {
+        internal static string Manifest_IdMaxLengthExceeded {
             get {
                 return ResourceManager.GetString("Manifest_IdMaxLengthExceeded", resourceCulture);
             }
@@ -657,7 +657,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The &apos;minClientVersion&apos; attribute in the package manifest has invalid value. It must be a valid version string..
         /// </summary>
-        public static string Manifest_InvalidMinClientVersion {
+        internal static string Manifest_InvalidMinClientVersion {
             get {
                 return ResourceManager.GetString("Manifest_InvalidMinClientVersion", resourceCulture);
             }
@@ -666,7 +666,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to A stable release of a package should not have on a prerelease dependency. Either modify the version spec of dependency &quot;{0}&quot; or update the version field..
         /// </summary>
-        public static string Manifest_InvalidPrereleaseDependency {
+        internal static string Manifest_InvalidPrereleaseDependency {
             get {
                 return ResourceManager.GetString("Manifest_InvalidPrereleaseDependency", resourceCulture);
             }
@@ -675,7 +675,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Invalid assembly reference &apos;{0}&apos;. Ensure that a file named &apos;{0}&apos; exists in the lib directory..
         /// </summary>
-        public static string Manifest_InvalidReference {
+        internal static string Manifest_InvalidReference {
             get {
                 return ResourceManager.GetString("Manifest_InvalidReference", resourceCulture);
             }
@@ -684,7 +684,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Assembly reference &apos;{0}&apos; contains invalid characters..
         /// </summary>
-        public static string Manifest_InvalidReferenceFile {
+        internal static string Manifest_InvalidReferenceFile {
             get {
                 return ResourceManager.GetString("Manifest_InvalidReferenceFile", resourceCulture);
             }
@@ -693,7 +693,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Invalid schema namespace &apos;{0}&apos;..
         /// </summary>
-        public static string Manifest_InvalidSchemaNamespace {
+        internal static string Manifest_InvalidSchemaNamespace {
             get {
                 return ResourceManager.GetString("Manifest_InvalidSchemaNamespace", resourceCulture);
             }
@@ -702,7 +702,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The manifest of this package has not been read. Call ReadManifest() before calling this method..
         /// </summary>
-        public static string Manifest_NotAvailable {
+        internal static string Manifest_NotAvailable {
             get {
                 return ResourceManager.GetString("Manifest_NotAvailable", resourceCulture);
             }
@@ -711,7 +711,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Could not find manifest file at &apos;{0}&apos;..
         /// </summary>
-        public static string Manifest_NotFound {
+        internal static string Manifest_NotFound {
             get {
                 return ResourceManager.GetString("Manifest_NotFound", resourceCulture);
             }
@@ -720,7 +720,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &lt;references&gt; element must not contain both &lt;group&gt; and &lt;reference&gt; child elements..
         /// </summary>
-        public static string Manifest_ReferencesHasMixedElements {
+        internal static string Manifest_ReferencesHasMixedElements {
             get {
                 return ResourceManager.GetString("Manifest_ReferencesHasMixedElements", resourceCulture);
             }
@@ -729,7 +729,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The element package\metadata\references\group must contain at least one &lt;reference&gt; child element..
         /// </summary>
-        public static string Manifest_ReferencesIsEmpty {
+        internal static string Manifest_ReferencesIsEmpty {
             get {
                 return ResourceManager.GetString("Manifest_ReferencesIsEmpty", resourceCulture);
             }
@@ -738,7 +738,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The required element &apos;{0}&apos; is missing from the manifest..
         /// </summary>
-        public static string Manifest_RequiredElementMissing {
+        internal static string Manifest_RequiredElementMissing {
             get {
                 return ResourceManager.GetString("Manifest_RequiredElementMissing", resourceCulture);
             }
@@ -747,7 +747,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to {0} is required..
         /// </summary>
-        public static string Manifest_RequiredMetadataMissing {
+        internal static string Manifest_RequiredMetadataMissing {
             get {
                 return ResourceManager.GetString("Manifest_RequiredMetadataMissing", resourceCulture);
             }
@@ -756,7 +756,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Enabling license acceptance requires a license url..
         /// </summary>
-        public static string Manifest_RequireLicenseAcceptanceRequiresLicenseUrl {
+        internal static string Manifest_RequireLicenseAcceptanceRequiresLicenseUrl {
             get {
                 return ResourceManager.GetString("Manifest_RequireLicenseAcceptanceRequiresLicenseUrl", resourceCulture);
             }
@@ -765,7 +765,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Source path &apos;{0}&apos; contains invalid characters..
         /// </summary>
-        public static string Manifest_SourceContainsInvalidCharacters {
+        internal static string Manifest_SourceContainsInvalidCharacters {
             get {
                 return ResourceManager.GetString("Manifest_SourceContainsInvalidCharacters", resourceCulture);
             }
@@ -774,7 +774,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Target path &apos;{0}&apos; contains invalid characters..
         /// </summary>
-        public static string Manifest_TargetContainsInvalidCharacters {
+        internal static string Manifest_TargetContainsInvalidCharacters {
             get {
                 return ResourceManager.GetString("Manifest_TargetContainsInvalidCharacters", resourceCulture);
             }
@@ -783,7 +783,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to {0} cannot be empty..
         /// </summary>
-        public static string Manifest_UriCannotBeEmpty {
+        internal static string Manifest_UriCannotBeEmpty {
             get {
                 return ResourceManager.GetString("Manifest_UriCannotBeEmpty", resourceCulture);
             }
@@ -792,7 +792,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Framework name is missing..
         /// </summary>
-        public static string MissingFrameworkName {
+        internal static string MissingFrameworkName {
             get {
                 return ResourceManager.GetString("MissingFrameworkName", resourceCulture);
             }
@@ -801,7 +801,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Already referencing a newer version of &apos;{0}&apos;..
         /// </summary>
-        public static string NewerVersionAlreadyReferenced {
+        internal static string NewerVersionAlreadyReferenced {
             get {
                 return ResourceManager.GetString("NewerVersionAlreadyReferenced", resourceCulture);
             }
@@ -810,7 +810,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to File not found: &apos;{0}&apos;..
         /// </summary>
-        public static string PackageAuthoring_FileNotFound {
+        internal static string PackageAuthoring_FileNotFound {
             get {
                 return ResourceManager.GetString("PackageAuthoring_FileNotFound", resourceCulture);
             }
@@ -819,7 +819,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Package does not contain a manifest..
         /// </summary>
-        public static string PackageDoesNotContainManifest {
+        internal static string PackageDoesNotContainManifest {
             get {
                 return ResourceManager.GetString("PackageDoesNotContainManifest", resourceCulture);
             }
@@ -828,7 +828,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to uninstall &apos;{0}&apos; because &apos;{1}&apos; depends on it..
         /// </summary>
-        public static string PackageHasDependent {
+        internal static string PackageHasDependent {
             get {
                 return ResourceManager.GetString("PackageHasDependent", resourceCulture);
             }
@@ -837,7 +837,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to uninstall &apos;{0}&apos; because &apos;{1}&apos; depend on it..
         /// </summary>
-        public static string PackageHasDependents {
+        internal static string PackageHasDependents {
             get {
                 return ResourceManager.GetString("PackageHasDependents", resourceCulture);
             }
@@ -846,7 +846,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos; package requires NuGet client version &apos;{1}&apos; or above, but the current NuGet version is &apos;{2}&apos;..
         /// </summary>
-        public static string PackageMinVersionNotSatisfied {
+        internal static string PackageMinVersionNotSatisfied {
             get {
                 return ResourceManager.GetString("PackageMinVersionNotSatisfied", resourceCulture);
             }
@@ -855,7 +855,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &amp;Allow NuGet to download missing packages.
         /// </summary>
-        public static string PackageRestoreConsentCheckBoxText {
+        internal static string PackageRestoreConsentCheckBoxText {
             get {
                 return ResourceManager.GetString("PackageRestoreConsentCheckBoxText", resourceCulture);
             }
@@ -865,7 +865,7 @@ namespace NuGet.Resources {
         ///   Looks up a localized string similar to Failed to process request. &apos;{0}&apos;. 
         ///{1}..
         /// </summary>
-        public static string PackageServerError {
+        internal static string PackageServerError {
             get {
                 return ResourceManager.GetString("PackageServerError", resourceCulture);
             }
@@ -874,7 +874,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The profile part of a portable target framework must not contain empty component..
         /// </summary>
-        public static string PortableFrameworkProfileComponentIsEmpty {
+        internal static string PortableFrameworkProfileComponentIsEmpty {
             get {
                 return ResourceManager.GetString("PortableFrameworkProfileComponentIsEmpty", resourceCulture);
             }
@@ -883,7 +883,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The profile part of a portable target framework must not contain a portable framework component..
         /// </summary>
-        public static string PortableFrameworkProfileComponentIsPortable {
+        internal static string PortableFrameworkProfileComponentIsPortable {
             get {
                 return ResourceManager.GetString("PortableFrameworkProfileComponentIsPortable", resourceCulture);
             }
@@ -892,7 +892,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Portable target framework must not have an empty profile part..
         /// </summary>
-        public static string PortableFrameworkProfileEmpty {
+        internal static string PortableFrameworkProfileEmpty {
             get {
                 return ResourceManager.GetString("PortableFrameworkProfileEmpty", resourceCulture);
             }
@@ -901,7 +901,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The profile part of a portable target framework must not contain the &apos;-&apos; character..
         /// </summary>
-        public static string PortableFrameworkProfileHasDash {
+        internal static string PortableFrameworkProfileHasDash {
             get {
                 return ResourceManager.GetString("PortableFrameworkProfileHasDash", resourceCulture);
             }
@@ -910,7 +910,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The profile part of a portable target framework must not contain empty space..
         /// </summary>
-        public static string PortableFrameworkProfileHasSpace {
+        internal static string PortableFrameworkProfileHasSpace {
             get {
                 return ResourceManager.GetString("PortableFrameworkProfileHasSpace", resourceCulture);
             }
@@ -919,7 +919,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to A Portable Profile Table must be specified when resolving the short name of a portable profile..
         /// </summary>
-        public static string PortableProfileTableMustBeSpecified {
+        internal static string PortableProfileTableMustBeSpecified {
             get {
                 return ResourceManager.GetString("PortableProfileTableMustBeSpecified", resourceCulture);
             }
@@ -928,7 +928,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The &apos;portableProfileTable&apos; parameter must be provided when getting the short name for a Portable target framework.
         /// </summary>
-        public static string PortableProfileTableRequiresForGetShortFrameworkName {
+        internal static string PortableProfileTableRequiresForGetShortFrameworkName {
             get {
                 return ResourceManager.GetString("PortableProfileTableRequiresForGetShortFrameworkName", resourceCulture);
             }
@@ -937,7 +937,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to {0} does not reference &apos;{1}&apos;..
         /// </summary>
-        public static string ProjectDoesNotHaveReference {
+        internal static string ProjectDoesNotHaveReference {
             get {
                 return ResourceManager.GetString("ProjectDoesNotHaveReference", resourceCulture);
             }
@@ -946,7 +946,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to parse developmentDependency value &apos;{0}&apos; from &apos;{1}&apos;..
         /// </summary>
-        public static string ReferenceFile_InvalidDevelopmentFlag {
+        internal static string ReferenceFile_InvalidDevelopmentFlag {
             get {
                 return ResourceManager.GetString("ReferenceFile_InvalidDevelopmentFlag", resourceCulture);
             }
@@ -955,7 +955,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to parse requireReinstallation value &apos;{0}&apos; from &apos;{1}&apos;..
         /// </summary>
-        public static string ReferenceFile_InvalidRequireReinstallationFlag {
+        internal static string ReferenceFile_InvalidRequireReinstallationFlag {
             get {
                 return ResourceManager.GetString("ReferenceFile_InvalidRequireReinstallationFlag", resourceCulture);
             }
@@ -964,7 +964,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to parse version value &apos;{0}&apos; from &apos;{1}&apos;..
         /// </summary>
-        public static string ReferenceFile_InvalidVersion {
+        internal static string ReferenceFile_InvalidVersion {
             get {
                 return ResourceManager.GetString("ReferenceFile_InvalidVersion", resourceCulture);
             }
@@ -973,7 +973,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The special version part cannot exceed 20 characters..
         /// </summary>
-        public static string SemVerSpecialVersionTooLong {
+        internal static string SemVerSpecialVersionTooLong {
             get {
                 return ResourceManager.GetString("SemVerSpecialVersionTooLong", resourceCulture);
             }
@@ -982,7 +982,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Using credentials from config or environment. UserName: {0}.
         /// </summary>
-        public static string SettingsCredentials_UsingSavedCredentials {
+        internal static string SettingsCredentials_UsingSavedCredentials {
             get {
                 return ResourceManager.GetString("SettingsCredentials_UsingSavedCredentials", resourceCulture);
             }
@@ -991,7 +991,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to One of the supported framework is null..
         /// </summary>
-        public static string SupportedFrameworkIsNull {
+        internal static string SupportedFrameworkIsNull {
             get {
                 return ResourceManager.GetString("SupportedFrameworkIsNull", resourceCulture);
             }
@@ -1000,7 +1000,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to The replacement token &apos;{0}&apos; has no value..
         /// </summary>
-        public static string TokenHasNoValue {
+        internal static string TokenHasNoValue {
             get {
                 return ResourceManager.GetString("TokenHasNoValue", resourceCulture);
             }
@@ -1009,7 +1009,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Type to compare must be an instance of SemanticVersion..
         /// </summary>
-        public static string TypeMustBeASemanticVersion {
+        internal static string TypeMustBeASemanticVersion {
             get {
                 return ResourceManager.GetString("TypeMustBeASemanticVersion", resourceCulture);
             }
@@ -1018,7 +1018,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Could not install package &apos;{0}&apos;. You are trying to install this package into a project that targets &apos;{1}&apos;, but the package does not contain any assembly references or content files that are compatible with that framework. For more information, contact the package author..
         /// </summary>
-        public static string UnableToFindCompatibleItems {
+        internal static string UnableToFindCompatibleItems {
             get {
                 return ResourceManager.GetString("UnableToFindCompatibleItems", resourceCulture);
             }
@@ -1027,7 +1027,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to locate dependency &apos;{0}&apos;. It may have been uninstalled..
         /// </summary>
-        public static string UnableToLocateDependency {
+        internal static string UnableToLocateDependency {
             get {
                 return ResourceManager.GetString("UnableToLocateDependency", resourceCulture);
             }
@@ -1036,7 +1036,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Connection to feed &apos;{0}&apos; requires the Windows Identity Foundation runtime to be installed. .
         /// </summary>
-        public static string UnableToLocateWIF {
+        internal static string UnableToLocateWIF {
             get {
                 return ResourceManager.GetString("UnableToLocateWIF", resourceCulture);
             }
@@ -1045,7 +1045,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to resolve dependency &apos;{0}&apos;..
         /// </summary>
-        public static string UnableToResolveDependency {
+        internal static string UnableToResolveDependency {
             get {
                 return ResourceManager.GetString("UnableToResolveDependency", resourceCulture);
             }
@@ -1054,7 +1054,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to resolve &apos;{0}&apos;..
         /// </summary>
-        public static string UnableToResolveUri {
+        internal static string UnableToResolveUri {
             get {
                 return ResourceManager.GetString("UnableToResolveUri", resourceCulture);
             }
@@ -1063,7 +1063,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to find package &apos;{0}&apos;..
         /// </summary>
-        public static string UnknownPackage {
+        internal static string UnknownPackage {
             get {
                 return ResourceManager.GetString("UnknownPackage", resourceCulture);
             }
@@ -1072,7 +1072,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to find version &apos;{1}&apos; of package &apos;{0}&apos;..
         /// </summary>
-        public static string UnknownPackageSpecificVersion {
+        internal static string UnknownPackageSpecificVersion {
             get {
                 return ResourceManager.GetString("UnknownPackageSpecificVersion", resourceCulture);
             }
@@ -1081,7 +1081,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unknown schema version &apos;{0}&apos;..
         /// </summary>
-        public static string UnknownSchemaVersion {
+        internal static string UnknownSchemaVersion {
             get {
                 return ResourceManager.GetString("UnknownSchemaVersion", resourceCulture);
             }
@@ -1090,7 +1090,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Hash algorithm &apos;{0}&apos; is unsupported. Supported algorithms include: SHA512 and SHA256..
         /// </summary>
-        public static string UnsupportedHashAlgorithm {
+        internal static string UnsupportedHashAlgorithm {
             get {
                 return ResourceManager.GetString("UnsupportedHashAlgorithm", resourceCulture);
             }
@@ -1099,7 +1099,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Unable to parse config file &apos;{0}&apos;..
         /// </summary>
-        public static string UserSettings_UnableToParseConfigFile {
+        internal static string UserSettings_UnableToParseConfigFile {
             get {
                 return ResourceManager.GetString("UserSettings_UnableToParseConfigFile", resourceCulture);
             }
@@ -1108,7 +1108,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; already exists. Skipping....
         /// </summary>
-        public static string Warning_FileAlreadyExists {
+        internal static string Warning_FileAlreadyExists {
             get {
                 return ResourceManager.GetString("Warning_FileAlreadyExists", resourceCulture);
             }
@@ -1117,7 +1117,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Skipping &apos;{0}&apos; because it was modified..
         /// </summary>
-        public static string Warning_FileModified {
+        internal static string Warning_FileModified {
             get {
                 return ResourceManager.GetString("Warning_FileModified", resourceCulture);
             }
@@ -1126,7 +1126,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; skipped, because it is in use by &apos;{1}&apos;..
         /// </summary>
-        public static string Warning_PackageSkippedBecauseItIsInUse {
+        internal static string Warning_PackageSkippedBecauseItIsInUse {
             get {
                 return ResourceManager.GetString("Warning_PackageSkippedBecauseItIsInUse", resourceCulture);
             }
@@ -1135,7 +1135,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to Uninstalling &apos;{0}&apos; might cause &apos;{1}&apos; to be broken..
         /// </summary>
-        public static string Warning_UninstallingPackageWillBreakDependents {
+        internal static string Warning_UninstallingPackageWillBreakDependents {
             get {
                 return ResourceManager.GetString("Warning_UninstallingPackageWillBreakDependents", resourceCulture);
             }
@@ -1144,7 +1144,7 @@ namespace NuGet.Resources {
         /// <summary>
         ///   Looks up a localized string similar to An error occurred while applying transformation to &apos;{0}&apos; in project &apos;{1}&apos;:.
         /// </summary>
-        public static string XdtError {
+        internal static string XdtError {
             get {
                 return ResourceManager.GetString("XdtError", resourceCulture);
             }
