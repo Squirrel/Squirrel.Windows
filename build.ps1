@@ -12,24 +12,27 @@ foreach ($Folder in $Folders) {
 }
 
 # Build Squirrel C++ and library files
-msbuild /restore /p:Configuration=Release
+msbuild /verbosity:minimal /restore /p:Configuration=Release
 
 # Build single-exe packaged projects
-dotnet publish -c Release src\Update\Update.csproj -o $Out
-dotnet publish -c Release src\SyncReleases\SyncReleases.csproj -o $Out
+dotnet publish -v minimal -c Release src\Update\Update.csproj -o $Out
+dotnet publish -v minimal -c Release src\SyncReleases\SyncReleases.csproj -o $Out
 
 # Copy over all files we need
-# Copy-Item "$In\net45\Update.exe" -Destination "$Out\Squirrel.exe"
-# Copy-Item "$In\net45\update.com" -Destination "$Out\Squirrel.com"
-# Copy-Item "$In\net45\Update.pdb" -Destination "$Out\Squirrel.pdb"
+Move-Item "$Out\Update.exe" -Destination "$Out\Squirrel.exe"
+Move-Item "$Out\Update.com" -Destination "$Out\Squirrel.com"
+# Move-Item "$Out\Update.pdb" -Destination "$Out\Squirrel.pdb"
+
+New-Item -Path "$Out\lib" -ItemType "directory" | Out-Null
+Copy-Item -Path "$In\netstandard2.0\*" -Destination "$Out\lib" -Recurse
+
 Copy-Item "$In\Win32\Setup.exe" -Destination $Out
 Copy-Item "$In\Win32\Setup.pdb" -Destination $Out
-# Copy-Item "$In\net45\Update-Mono.exe" -Destination "$Out\Squirrel-Mono.exe"
-# Copy-Item "$In\net45\Update-Mono.pdb" -Destination "$Out\Squirrel-Mono.pdb"
 Copy-Item "$In\Win32\StubExecutable.exe" -Destination $Out
-# Copy-Item "$In\net45\SyncReleases.exe" -Destination $Out
-# Copy-Item "$In\net45\SyncReleases.pdb" -Destination $Out
 Copy-Item "$In\Win32\WriteZipToSetup.exe" -Destination $Out
 Copy-Item "$In\Win32\WriteZipToSetup.pdb" -Destination $Out
+
+Copy-Item -Path ".\vendor\7zip\*" -Destination $Out -Recurse
+Copy-Item -Path ".\vendor\wix\*" -Destination $Out -Recurse
 
 Write-Output "Successfully copied files to './build/publish'"
