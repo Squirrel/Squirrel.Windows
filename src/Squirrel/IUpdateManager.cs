@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Win32;
 using Squirrel.SimpleSplat;
 using NuGet;
+using System.Diagnostics;
 
 namespace Squirrel
 {
@@ -184,7 +185,7 @@ namespace Squirrel
         public static void CreateShortcutForThisExe(this IUpdateManager This)
         {
             This.CreateShortcutsForExecutable(Path.GetFileName(
-                Assembly.GetEntryAssembly().Location),
+                Process.GetCurrentProcess().MainModule.FileName),
                 ShortcutLocation.Desktop | ShortcutLocation.StartMenu, 
                 Environment.CommandLine.Contains("squirrel-install") == false,
                 null, null);
@@ -193,7 +194,7 @@ namespace Squirrel
         public static void RemoveShortcutForThisExe(this IUpdateManager This)
         {
             This.RemoveShortcutsForExecutable(
-                Path.GetFileName(Assembly.GetEntryAssembly().Location),
+                Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName),
                 ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
         }
     }

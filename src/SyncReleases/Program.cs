@@ -99,7 +99,7 @@ namespace SyncReleases
         {
             var dir = saveInTemp ?
                 Path.GetTempPath() : 
-                Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                AppContext.BaseDirectory;
 
             var file = Path.Combine(dir, "SquirrelSetup.log");
             if (File.Exists(file)) File.Delete(file);

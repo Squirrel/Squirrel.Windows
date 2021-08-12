@@ -344,7 +344,7 @@ namespace Squirrel
         public static string FindHelperExecutable(string toFind, IEnumerable<string> additionalDirs = null)
         {
             additionalDirs = additionalDirs ?? Enumerable.Empty<string>();
-            var dirs = (new[] { Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
+            var dirs = (new[] { AppContext.BaseDirectory, Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
                 .Concat(additionalDirs ?? Enumerable.Empty<string>());
 
             var exe = @".\" + toFind;

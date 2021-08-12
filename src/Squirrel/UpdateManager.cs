@@ -161,7 +161,7 @@ namespace Squirrel
         }
 
         public bool IsInstalledApp {
-            get { return Assembly.GetExecutingAssembly().Location.StartsWith(RootAppDirectory, StringComparison.OrdinalIgnoreCase); }
+            get { return Process.GetCurrentProcess().MainModule.FileName.StartsWith(RootAppDirectory, StringComparison.OrdinalIgnoreCase); }
         }
 
         public void Dispose()
@@ -187,7 +187,7 @@ namespace Squirrel
             //    launching a different version than we started with (this is why
             //    we take the app's *name* rather than a full path)
 
-            exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            exeToStart = exeToStart ?? Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName);
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
@@ -215,7 +215,7 @@ namespace Squirrel
             //    launching a different version than we started with (this is why
             //    we take the app's *name* rather than a full path)
 
-            exeToStart = exeToStart ?? Path.GetFileName(Assembly.GetEntryAssembly().Location);
+            exeToStart = exeToStart ?? Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName);
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 

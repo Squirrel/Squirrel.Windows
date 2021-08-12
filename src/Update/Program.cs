@@ -25,6 +25,9 @@ namespace Squirrel.Update
     {
         static StartupOption opt;
 
+        public static string MyBaseDirectory => AppContext.BaseDirectory;
+        public static string MyEntryExePath => Process.GetCurrentProcess().MainModule.FileName;
+
         public static int Main(string[] args)
         {
             var pg = new Program();
@@ -123,7 +126,7 @@ namespace Squirrel.Update
 
         public async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
         {
-            sourceDirectory = sourceDirectory ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            sourceDirectory = sourceDirectory ?? MyBaseDirectory;
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
 
             this.Log().Info("Starting install, writing to {0}", sourceDirectory);
@@ -158,7 +161,7 @@ namespace Squirrel.Update
                 Directory.CreateDirectory(mgr.RootAppDirectory);
 
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
-                this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
+                this.ErrorIfThrows(() => File.Copy(MyEntryExePath, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
                 await mgr.FullInstall(silentInstall, progressSource.Raise);
@@ -210,7 +213,7 @@ namespace Squirrel.Update
         public async Task UpdateSelf()
         {
             waitForParentToExit();
-            var src = Assembly.GetExecutingAssembly().Location;
+            var src = MyEntryExePath;
             var updateDotExeForOurPackage = Path.Combine(
                 Path.GetDirectoryName(src),
                 "..", "Update.exe");
@@ -301,7 +304,7 @@ namespace Squirrel.Update
 
             if (!File.Exists(bootstrapperExe)) {
                 bootstrapperExe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetEntryAssembly().Location),
+                    MyBaseDirectory,
                     "Setup.exe");
             }
 
@@ -328,8 +331,8 @@ namespace Squirrel.Update
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
-                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
-                        .Where(x => !x.Name.ToLowerInvariant().Contains("squirrel.exe"))
+                        .Where(x => x.Name.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
+                        .Where(x => !x.Name.Contains("squirrel.exe", StringComparison.InvariantCultureIgnoreCase))
                         .Where(x => Utility.IsFileTopLevelInPackage(x.FullName, pkgPath))
                         .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ForEachAsync(x => createExecutableStubForExe(x.FullName))
@@ -448,7 +451,7 @@ namespace Squirrel.Update
             }
 
             // Find the latest installed version's app dir
-            var appDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var appDir = MyBaseDirectory;
             var releases = ReleaseEntry.ParseReleaseFile(
                 File.ReadAllText(Utility.LocalReleaseFileForAppDir(appDir), Encoding.UTF8));
 
@@ -523,7 +526,7 @@ namespace Squirrel.Update
             this.Log().Info("Building embedded zip file for Setup.exe");
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 this.ErrorIfThrows(() => {
-                    File.Copy(Assembly.GetEntryAssembly().Location.Replace("-Mono.exe", ".exe"), Path.Combine(tempPath, "Update.exe"));
+                    File.Copy(MyEntryExePath, Path.Combine(tempPath, "Update.exe"));
                     File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
                 }, "Failed to write package files to temp dir: " + tempPath);
 
@@ -551,7 +554,7 @@ namespace Squirrel.Update
                     var di = new DirectoryInfo(tempPath);
 
                     var files = di.EnumerateFiles()
-                        .Where(x => x.Name.ToLowerInvariant().EndsWith(".exe"))
+                        .Where(x => x.Name.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                         .Select(x => x.FullName);
 
                     await files.ForEachAsync(x => signPEFile(x, signingOpts));
@@ -571,7 +574,7 @@ namespace Squirrel.Update
             var exe = @".\signtool.exe";
             if (!File.Exists(exe)) {
                 exe = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                    MyBaseDirectory,
                     "signtool.exe");
 
                 // Run down PATH and hope for the best
@@ -722,7 +725,7 @@ namespace Squirrel.Update
 
         static string pathToWixTools()
         {
-            var ourPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var ourPath = MyBaseDirectory;
 
             // Same Directory? (i.e. released)
             if (File.Exists(Path.Combine(ourPath, "candle.exe"))) {
@@ -740,7 +743,7 @@ namespace Squirrel.Update
 
         static string getAppNameFromDirectory(string path = null)
         {
-            path = path ?? Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            path = path ?? MyBaseDirectory;
             return (new DirectoryInfo(path)).Name;
         }
 
@@ -803,7 +806,7 @@ namespace Squirrel.Update
                 try {
                     var dir = saveInTemp ?
                         Path.GetTempPath() :
-                        Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                        Program.MyBaseDirectory;
                     var fileName = commandSuffix == null ? String.Format($"Squirrel.{i}.log", i) : String.Format($"Squirrel-{commandSuffix}.{i}.log", i);
                     var file = Path.Combine(dir, fileName.Replace(".0.log", ".log"));
                     var str = File.Open(file, FileMode.Append, FileAccess.Write, FileShare.Read);
