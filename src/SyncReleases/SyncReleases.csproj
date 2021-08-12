@@ -1,37 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project>
-  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <OutputType>Exe</OutputType>
-    <Description>SyncReleases</Description>
-    <Title>SyncReleases</Title>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Octokit" Version="0.10.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ILRepack" Version="1.26.0" PrivateAssets="All" />
+    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="Nerdbank.GitVersioning" Version="3.0.50" />
-  </ItemGroup>
-
-  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <PostBuildEvent>
-      cd "$(TargetDir)"
-      "$(NuGetPackageRoot)ilrepack\1.26.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) SharpCompress.dll Microsoft.Web.XmlTransform.dll Squirrel.dll Octokit.dll NuGet.Squirrel.dll
-      del "$(TargetFileName)"
-      ren "$(TargetFileName).tmp" "$(TargetFileName)"
-    </PostBuildEvent>
-  </PropertyGroup>
 </Project>

@@ -4,14 +4,12 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <OutputType>WinExe</OutputType>
-    <Description>Update</Description>
-    <Title>Update</Title>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,15 +21,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
   </ItemGroup>
-
-  <!--<Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-    <PostBuildEvent>
-      cd "$(TargetDir)"
-      "$(NuGetPackageRoot)ilrepack\1.26.0\tools\ILRepack.exe" /internalize /out:$(TargetFileName).tmp $(TargetFileName) WpfAnimatedGif.dll SharpCompress.dll Microsoft.Web.XmlTransform.dll DeltaCompressionDotNet.dll DeltaCompressionDotNet.MsDelta.dll Squirrel.dll NuGet.Squirrel.dll Mono.Cecil.dll
-      del "$(TargetFileName)"
-      ren "$(TargetFileName).tmp" "$(TargetFileName)"
-    </PostBuildEvent>
-  </PropertyGroup>-->
 
 </Project>
