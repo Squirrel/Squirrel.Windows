@@ -33,6 +33,6 @@ Copy-Item "$In\Win32\WriteZipToSetup.exe" -Destination $Out
 Copy-Item "$In\Win32\WriteZipToSetup.pdb" -Destination $Out
 
 Copy-Item -Path ".\vendor\7zip\*" -Destination $Out -Recurse
-Copy-Item -Path ".\vendor\wix\*" -Destination $Out -Recurse
+# Copy-Item -Path ".\vendor\wix\*" -Destination $Out -Recurse
 
 Write-Output "Successfully copied files to './build/publish'"
