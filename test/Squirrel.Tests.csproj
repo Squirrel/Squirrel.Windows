@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
+  
   <PropertyGroup>
-    <TargetFramework>net45</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <Description>Squirrel.Tests</Description>
     <Title>Squirrel.Tests</Title>
     <IsPackable>false</IsPackable>
@@ -9,17 +10,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Squirrel\Squirrel.csproj" />
-    <ProjectReference Include="..\vendor\nuget\src\Core\Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
     <PackageReference Include="xunit" Version="2.0.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.0.0" PrivateAssets="All" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\src\Squirrel\Squirrel.csproj" />
+  </ItemGroup>
+  
 </Project>

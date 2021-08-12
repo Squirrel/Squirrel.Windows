@@ -10,7 +10,7 @@
     <OutputPath>$(BaseOutputPath)$(Configuration)\</OutputPath>
 
     <LangVersion>9.0</LangVersion>
-    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 
     <Company>GitHub</Company>
