@@ -5,11 +5,15 @@ enum class NetVersion {net45=0, net451=1, net452=2, net46=3, net461=4, net462=5,
 class CFxHelper
 {
 public:
+	static bool IsNet50Installed();
+private:
+	// CS - these are public methods i've relocated, 
+	// since I need net5.0 and can't be bothered to implement support for it properly
 	static NetVersion GetRequiredDotNetVersion();
 	static bool CanInstallDotNet4_5();
 	static bool IsDotNetInstalled(NetVersion requiredVersion);
 	static HRESULT InstallDotNetFramework(NetVersion version, bool isQuiet);
-private:
+	// these are real private methods
 	static HRESULT HandleRebootRequirement(bool isQuiet);
 	static bool WriteRunOnceEntry();
 	static bool RebootSystem();
