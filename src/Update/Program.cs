@@ -68,74 +68,55 @@ namespace Squirrel.Update
 
         int executeCommandLine(string[] args)
         {
-            var animatedGifWindowToken = new CancellationTokenSource();
+            this.Log().Info("Starting Squirrel Updater: " + String.Join(" ", args));
 
-#if !MONO
-            // Uncomment to test Gifs
-            /*
-            var ps = new ProgressSource();
-            int i = 0; var t = new Timer(_ => ps.Raise(i += 10), null, 0, 1000);
-            AnimatedGifWindow.ShowWindow(TimeSpan.FromMilliseconds(0), animatedGifWindowToken.Token, ps);
-            Thread.Sleep(10 * 60 * 1000);
-            */
-#endif
-
-            using (Disposable.Create(() => animatedGifWindowToken.Cancel())) {
-
-                this.Log().Info("Starting Squirrel Updater: " + String.Join(" ", args));
-
-                if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
-                    // NB: We're marked as Squirrel-aware, but we don't want to do
-                    // anything in response to these events
-                    return 0;
-                }
-
-                if (opt.updateAction == UpdateAction.Unset) {
-                    ShowHelp();
-                    return -1;
-                }
-
-                switch (opt.updateAction) {
-#if !MONO
-                case UpdateAction.Install:
-                    var progressSource = new ProgressSource();
-                    //if (!opt.silentInstall) {
-                    //    AnimatedGifWindow.ShowWindow(TimeSpan.FromSeconds(4), animatedGifWindowToken.Token, progressSource);
-                    //}
-
-                    Install(opt.silentInstall, progressSource, Path.GetFullPath(opt.target)).Wait();
-                    animatedGifWindowToken.Cancel();
-                    break;
-                case UpdateAction.Uninstall:
-                    Uninstall().Wait();
-                    break;
-                case UpdateAction.Download:
-                    Console.WriteLine(Download(opt.target).Result);
-                    break;
-                case UpdateAction.Update:
-                    Update(opt.target).Wait();
-                    break;
-                case UpdateAction.CheckForUpdate:
-                    Console.WriteLine(CheckForUpdate(opt.target).Result);
-                    break;
-                case UpdateAction.UpdateSelf:
-                    UpdateSelf().Wait();
-                    break;
-                case UpdateAction.Shortcut:
-                    Shortcut(opt.target, opt.shortcutArgs, opt.processStartArgs, opt.setupIcon, opt.onlyUpdateShortcuts);
-                    break;
-                case UpdateAction.Deshortcut:
-                    Deshortcut(opt.target, opt.shortcutArgs);
-                    break;
-                case UpdateAction.ProcessStart:
-                    ProcessStart(opt.processStart, opt.processStartArgs, opt.shouldWait);
-                    break;
-#endif
-                case UpdateAction.Releasify:
-                    Releasify(opt.target, opt.releaseDir, opt.packagesDir, opt.bootstrapperExe, opt.backgroundGif, opt.signingParameters, opt.baseUrl, opt.setupIcon, !opt.noMsi, opt.packageAs64Bit, opt.frameworkVersion, !opt.noDelta);
-                    break;
-                }
+            if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
+                // NB: We're marked as Squirrel-aware, but we don't want to do
+                // anything in response to these events
+                return 0;
             }
+
+            if (opt.updateAction == UpdateAction.Unset) {
+                ShowHelp();
+                return -1;
+            }
+
+            switch (opt.updateAction) {
+#if !MONO
+            case UpdateAction.Install:
+                var progressSource = new ProgressSource();
+                Install(opt.silentInstall, progressSource, Path.GetFullPath(opt.target)).Wait();
+                break;
+            case UpdateAction.Uninstall:
+                Uninstall().Wait();
+                break;
+            case UpdateAction.Download:
+                Console.WriteLine(Download(opt.target).Result);
+                break;
+            case UpdateAction.Update:
+                Update(opt.target).Wait();
+                break;
+            case UpdateAction.CheckForUpdate:
+                Console.WriteLine(CheckForUpdate(opt.target).Result);
+                break;
+            case UpdateAction.UpdateSelf:
+                UpdateSelf().Wait();
+                break;
+            case UpdateAction.Shortcut:
+                Shortcut(opt.target, opt.shortcutArgs, opt.processStartArgs, opt.setupIcon, opt.onlyUpdateShortcuts);
+                break;
+            case UpdateAction.Deshortcut:
+                Deshortcut(opt.target, opt.shortcutArgs);
+                break;
+            case UpdateAction.ProcessStart:
+                ProcessStart(opt.processStart, opt.processStartArgs, opt.shouldWait);
+                break;
+#endif
+            case UpdateAction.Releasify:
+                Releasify(opt.target, opt.releaseDir, opt.packagesDir, opt.bootstrapperExe, opt.backgroundGif, opt.signingParameters, opt.baseUrl, opt.setupIcon, !opt.noMsi, opt.packageAs64Bit, opt.frameworkVersion, !opt.noDelta);
+                break;
+            }
+
             this.Log().Info("Finished Squirrel Updater");
             return 0;
         }
