@@ -96,16 +96,7 @@ namespace Squirrel.Shell
             /// </remarks>
             public void Clear()
             {
-                // Can't pass "this" by ref, so make a copy to call PropVariantClear with
-                PropVariant tmp = this;
-                PropVariantClear(ref tmp);
-
-                // Since we couldn't pass "this" by ref, we need to clear the member fields manually
-                // NOTE: PropVariantClear already freed heap data for us, so we are just setting
-                //       our references to null.
-                variantType = (short)VarEnum.VT_EMPTY;
-                Reserved1 = Reserved2 = Reserved3 = 0;
-                pointerValue = IntPtr.Zero;
+                PropVariantClear(ref this);
             }
         }
 
