@@ -73,9 +73,11 @@ namespace Squirrel
                         File.Delete(targetPng);
                     }
                 } else {
-                    // DisplayIcon can be a path to an exe instead of an ico. If run from a Squirrel app post update and an icon file
-                    // was not specified, lets attempt to use this exe. Maybe we want to allow this to be configurable in the future.
-                    key.SetValue("DisplayIcon", AssemblyRuntimeInfo.EntryExePath, RegistryValueKind.String);
+                    // DisplayIcon can be a path to an exe instead of an ico.
+                    var appDir = new DirectoryInfo(Utility.AppDirForRelease(rootAppDirectory, latest));
+                    var appIconExe = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(appDir.FullName).FirstOrDefault()
+                        ?? appDir.GetFiles("*.exe").Select(x => x.FullName).FirstOrDefault();
+                    key.SetValue("DisplayIcon", appIconExe, RegistryValueKind.String);
                 }
 
                 var stringsToWrite = new[] {
