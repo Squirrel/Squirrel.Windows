@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Squirrel
 {
-    internal static class AssemblyRuntimeInfo
+    public static class AssemblyRuntimeInfo
     {
         public static string EntryExePath { get; }
         public static string BaseDirectory { get; }
