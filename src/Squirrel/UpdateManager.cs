@@ -236,13 +236,12 @@ namespace Squirrel
             // * We're Update.exe, running on initial install from SquirrelTemp
             // * We're a C# EXE with Squirrel linked in
 
-            var assembly = Assembly.GetEntryAssembly();
-            if (assemblyLocation == null && assembly == null) {
+            if (assemblyLocation == null && AssemblyRuntimeInfo.EntryExePath == null) {
                 // dunno lol
                 return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             }
 
-            assemblyLocation = assemblyLocation ?? assembly.Location;
+            assemblyLocation = assemblyLocation ?? AssemblyRuntimeInfo.EntryExePath;
 
             if (Path.GetFileName(assemblyLocation).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
                 // NB: Both the "SquirrelTemp" case and the "App's folder" case 
@@ -316,19 +315,17 @@ namespace Squirrel
 
         static string getUpdateExe()
         {
-            var assembly = Assembly.GetEntryAssembly();
+            var ourPath = AssemblyRuntimeInfo.EntryExePath;
 
             // Are we update.exe?
-            if (assembly != null &&
-                Path.GetFileName(assembly.Location).Equals("update.exe", StringComparison.OrdinalIgnoreCase) &&
-                assembly.Location.IndexOf("app-", StringComparison.OrdinalIgnoreCase) == -1 &&
-                assembly.Location.IndexOf("SquirrelTemp", StringComparison.OrdinalIgnoreCase) == -1) {
-                return Path.GetFullPath(assembly.Location);
+            if (ourPath != null &&
+                Path.GetFileName(ourPath).Equals("update.exe", StringComparison.OrdinalIgnoreCase) &&
+                ourPath.IndexOf("app-", StringComparison.OrdinalIgnoreCase) == -1 &&
+                ourPath.IndexOf("SquirrelTemp", StringComparison.OrdinalIgnoreCase) == -1) {
+                return Path.GetFullPath(ourPath);
             }
 
-            assembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
-
-            var updateDotExe = Path.Combine(Path.GetDirectoryName(assembly.Location), "..\\Update.exe");
+            var updateDotExe = Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..\\Update.exe");
             var target = new FileInfo(updateDotExe);
 
             if (!target.Exists) throw new Exception("Update.exe not found, not a Squirrel-installed app?");

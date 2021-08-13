@@ -385,11 +385,11 @@ namespace Squirrel
                 // If we're running in the context of Update.exe, we can't 
                 // update ourselves. Instead, ask the new Update.exe to do it
                 // once we exit
-                var us = Assembly.GetEntryAssembly();
-                if (us != null && Path.GetFileName(us.Location).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
+                var ourLocation = AssemblyRuntimeInfo.EntryExePath;
+                if (ourLocation != null && Path.GetFileName(ourLocation).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
                     var appName = targetDir.Parent.Name;
 
-                    Process.Start(newSquirrel, "--updateSelf=" + us.Location);
+                    Process.Start(newSquirrel, "--updateSelf=" + ourLocation);
                     return;
                 }
 

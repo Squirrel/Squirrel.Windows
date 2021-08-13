@@ -25,9 +25,6 @@ namespace Squirrel.Update
     {
         static StartupOption opt;
 
-        public static string MyBaseDirectory => AppContext.BaseDirectory;
-        public static string MyEntryExePath => Process.GetCurrentProcess().MainModule.FileName;
-
         public static int Main(string[] args)
         {
             var pg = new Program();
@@ -126,7 +123,7 @@ namespace Squirrel.Update
 
         public async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
         {
-            sourceDirectory = sourceDirectory ?? MyBaseDirectory;
+            sourceDirectory = sourceDirectory ?? AssemblyRuntimeInfo.BaseDirectory;
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
 
             this.Log().Info("Starting install, writing to {0}", sourceDirectory);
@@ -161,7 +158,7 @@ namespace Squirrel.Update
                 Directory.CreateDirectory(mgr.RootAppDirectory);
 
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
-                this.ErrorIfThrows(() => File.Copy(MyEntryExePath, updateTarget, true),
+                this.ErrorIfThrows(() => File.Copy(AssemblyRuntimeInfo.EntryExePath, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
                 await mgr.FullInstall(silentInstall, progressSource.Raise);
@@ -213,7 +210,7 @@ namespace Squirrel.Update
         public async Task UpdateSelf()
         {
             waitForParentToExit();
-            var src = MyEntryExePath;
+            var src = AssemblyRuntimeInfo.EntryExePath;
             var updateDotExeForOurPackage = Path.Combine(
                 Path.GetDirectoryName(src),
                 "..", "Update.exe");
@@ -304,7 +301,7 @@ namespace Squirrel.Update
 
             if (!File.Exists(bootstrapperExe)) {
                 bootstrapperExe = Path.Combine(
-                    MyBaseDirectory,
+                    AssemblyRuntimeInfo.BaseDirectory,
                     "Setup.exe");
             }
 
@@ -451,7 +448,7 @@ namespace Squirrel.Update
             }
 
             // Find the latest installed version's app dir
-            var appDir = MyBaseDirectory;
+            var appDir = AssemblyRuntimeInfo.BaseDirectory;
             var releases = ReleaseEntry.ParseReleaseFile(
                 File.ReadAllText(Utility.LocalReleaseFileForAppDir(appDir), Encoding.UTF8));
 
@@ -526,7 +523,7 @@ namespace Squirrel.Update
             this.Log().Info("Building embedded zip file for Setup.exe");
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 this.ErrorIfThrows(() => {
-                    File.Copy(MyEntryExePath, Path.Combine(tempPath, "Update.exe"));
+                    File.Copy(AssemblyRuntimeInfo.EntryExePath, Path.Combine(tempPath, "Update.exe"));
                     File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
                 }, "Failed to write package files to temp dir: " + tempPath);
 
@@ -573,9 +570,7 @@ namespace Squirrel.Update
             // Try to find SignTool.exe
             var exe = @".\signtool.exe";
             if (!File.Exists(exe)) {
-                exe = Path.Combine(
-                    MyBaseDirectory,
-                    "signtool.exe");
+                exe = Path.Combine( AssemblyRuntimeInfo.BaseDirectory, "signtool.exe");
 
                 // Run down PATH and hope for the best
                 if (!File.Exists(exe)) exe = "signtool.exe";
@@ -725,7 +720,7 @@ namespace Squirrel.Update
 
         static string pathToWixTools()
         {
-            var ourPath = MyBaseDirectory;
+            var ourPath = AssemblyRuntimeInfo.BaseDirectory;
 
             // Same Directory? (i.e. released)
             if (File.Exists(Path.Combine(ourPath, "candle.exe"))) {
@@ -743,7 +738,7 @@ namespace Squirrel.Update
 
         static string getAppNameFromDirectory(string path = null)
         {
-            path = path ?? MyBaseDirectory;
+            path = path ?? AssemblyRuntimeInfo.BaseDirectory;
             return (new DirectoryInfo(path)).Name;
         }
 
@@ -806,7 +801,7 @@ namespace Squirrel.Update
                 try {
                     var dir = saveInTemp ?
                         Path.GetTempPath() :
-                        Program.MyBaseDirectory;
+                        AssemblyRuntimeInfo.BaseDirectory;
                     var fileName = commandSuffix == null ? String.Format($"Squirrel.{i}.log", i) : String.Format($"Squirrel-{commandSuffix}.{i}.log", i);
                     var file = Path.Combine(dir, fileName.Replace(".0.log", ".log"));
                     var str = File.Open(file, FileMode.Append, FileAccess.Write, FileShare.Read);

@@ -35,7 +35,7 @@ namespace Squirrel
             string accessToken = null)
         {
             var repoUri = new Uri(repoUrl);
-            var userAgent = new ProductInfoHeaderValue("Squirrel", Assembly.GetExecutingAssembly().GetName().Version.ToString());
+            var userAgent = new ProductInfoHeaderValue("Squirrel", AssemblyRuntimeInfo.ExecutingAssemblyName.Version.ToString());
 
             if (repoUri.Segments.Length != 3) {
                 throw new Exception("Repo URL must be to the root URL of the repo e.g. https://github.com/myuser/myrepo");
