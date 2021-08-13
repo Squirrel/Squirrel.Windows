@@ -27,7 +27,6 @@ namespace Squirrel
                 this.rootAppDirectory = rootAppDirectory;
             }
 
-            const string currentVersionRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
             const string uninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
             public async Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
             {
@@ -73,6 +72,10 @@ namespace Squirrel
                     } finally {
                         File.Delete(targetPng);
                     }
+                } else {
+                    // DisplayIcon can be a path to an exe instead of an ico. If run from a Squirrel app post update and an icon file
+                    // was not specified, lets attempt to use this exe. Maybe we want to allow this to be configurable in the future.
+                    key.SetValue("DisplayIcon", AssemblyRuntimeInfo.EntryExePath, RegistryValueKind.String);
                 }
 
                 var stringsToWrite = new[] {
