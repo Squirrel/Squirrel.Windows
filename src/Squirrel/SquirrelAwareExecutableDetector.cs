@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -28,9 +29,38 @@ namespace Squirrel
         {
             if (!File.Exists(executable)) return null;
             var fullname = Path.GetFullPath(executable);
+            
+            var backingDll = LookForNetCoreDll(fullname);
 
-            return Utility.Retry<int?>(() => 
-                GetAssemblySquirrelAwareVersion(fullname) ?? GetVersionBlockSquirrelAwareValue(fullname));
+            return Utility.Retry<int?>(() =>
+            {
+                var assemblySquirrelAwareVersion = GetAssemblySquirrelAwareVersion(fullname);
+                if (assemblySquirrelAwareVersion != null)
+                {
+                    return assemblySquirrelAwareVersion;
+                }
+
+                if (backingDll != null && File.Exists(backingDll))
+                {
+                    var assemblyDllSquirrelAwareVersion = GetAssemblySquirrelAwareVersion(backingDll);
+                    if (assemblyDllSquirrelAwareVersion != null)
+                    {
+                        return assemblyDllSquirrelAwareVersion;
+                    }
+                }
+
+                return GetVersionBlockSquirrelAwareValue(fullname);
+            });
+        }
+
+        private static string LookForNetCoreDll(string fullname)
+        {
+            var exeFileVersionInfo = FileVersionInfo.GetVersionInfo(fullname);
+            var originalFilename = exeFileVersionInfo.OriginalFilename;
+
+            var backingDll = originalFilename == null ? null 
+                : Path.Combine(Path.GetDirectoryName(fullname), originalFilename);
+            return backingDll;
         }
 
         static int? GetAssemblySquirrelAwareVersion(string executable)
@@ -70,8 +100,21 @@ namespace Squirrel
             var buf = new byte[size];
             if (!NativeMethods.GetFileVersionInfo(executable, 0, size, buf)) return null;
 
-            IntPtr result; int resultSize;
-            if (!NativeMethods.VerQueryValue(buf, "\\StringFileInfo\\040904B0\\SquirrelAwareVersion", out result, out resultSize)) {
+            const string englishUS = "040904B0";
+            const string neutral = "000004B0";
+            var supportedLanguageCodes = new[] {englishUS, neutral};
+
+            IntPtr result;
+            int resultSize;
+            if (!supportedLanguageCodes.Any(
+                languageCode =>
+                    NativeMethods.VerQueryValue(
+                        buf,
+                        $"\\StringFileInfo\\{languageCode}\\SquirrelAwareVersion",
+                        out result, out resultSize
+                    )
+            ))
+            {
                 return null;
             }
 
