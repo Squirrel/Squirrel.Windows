@@ -230,28 +230,20 @@ namespace Squirrel
 
         public static string GetLocalAppDataDirectory(string assemblyLocation = null)
         {
-            // Try to divine our our own install location via reading tea leaves
-            //
-            // * We're Update.exe, running in the app's install folder
-            // * We're Update.exe, running on initial install from SquirrelTemp
-            // * We're a C# EXE with Squirrel linked in
-
-            if (assemblyLocation == null && AssemblyRuntimeInfo.EntryExePath == null) {
-                // dunno lol
-                return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            }
-
-            assemblyLocation = assemblyLocation ?? AssemblyRuntimeInfo.EntryExePath;
-
-            if (Path.GetFileName(assemblyLocation).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
-                // NB: Both the "SquirrelTemp" case and the "App's folder" case 
-                // mean that the root app dir is one up
-                var oneFolderUpFromAppFolder = Path.Combine(Path.GetDirectoryName(assemblyLocation), "..");
+            // if we're installed and running as update.exe in the app folder, the app directory root is one folder up
+            if (AssemblyRuntimeInfo.IsSingleFile && Path.GetFileName(AssemblyRuntimeInfo.EntryExePath).Equals("Update.exe", StringComparison.OrdinalIgnoreCase)) {
+                var oneFolderUpFromAppFolder = Path.Combine(Path.GetDirectoryName(AssemblyRuntimeInfo.EntryExePath), "..");
                 return Path.GetFullPath(oneFolderUpFromAppFolder);
             }
 
-            var twoFoldersUpFromAppFolder = Path.Combine(Path.GetDirectoryName(assemblyLocation), "..\\..");
-            return Path.GetFullPath(twoFoldersUpFromAppFolder);
+            // if update exists above us, we're running from within a version directory, and the appdata folder is two above us
+            if (File.Exists(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "Update.exe"))) {
+                var twoFoldersUpFromAppFolder = Path.Combine(Path.GetDirectoryName(AssemblyRuntimeInfo.EntryExePath), "..\\..");
+                return Path.GetFullPath(twoFoldersUpFromAppFolder);
+            }
+
+            // if neither of the above are true, we're probably not installed yet, so return the real appdata directory
+            return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         }
 
         ~UpdateManager()
