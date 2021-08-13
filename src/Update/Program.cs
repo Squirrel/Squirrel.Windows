@@ -128,6 +128,13 @@ namespace Squirrel.Update
 
             this.Log().Info("Starting install, writing to {0}", sourceDirectory);
 
+            if (!AssemblyRuntimeInfo.IsSingleFile)  {
+                // when doing a standard build, our executable has multiple files/dependencies.
+                // we only get turned into a single exe upon publish - and this is required to install a package.
+                // in the future, we may consider searching for a pre-published version, or perhaps copy our dependencies.
+                throw new Exception("Cannot install a package from a debug build. Publish the Squirrel assembly and retrieve a single-file first.");
+            }
+
             if (!File.Exists(releasesPath)) {
                 this.Log().Info("RELEASES doesn't exist, creating it at " + releasesPath);
                 var nupkgs = (new DirectoryInfo(sourceDirectory)).GetFiles()
