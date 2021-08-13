@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
@@ -15,13 +15,31 @@ namespace Squirrel
 {
     [Flags]
     public enum ShortcutLocation {
+
+        /// <summary>
+        /// A shortcut in ProgramFiles within a publisher sub-directory
+        /// </summary>
         StartMenu = 1 << 0,
+
+        /// <summary>
+        /// A shortcut on the current user desktop
+        /// </summary>
         Desktop = 1 << 1,
+
+        /// <summary>
+        /// A shortcut in Startup/Run folder will cause the app to be automatially started on user login.
+        /// </summary>
         Startup = 1 << 2,
+
         /// <summary>
         /// A shortcut in the application folder, useful for portable applications.
         /// </summary>
-        AppRoot = 1 << 3
+        AppRoot = 1 << 3,
+
+        /// <summary>
+        /// A shortcut in ProgramFiles root folder (not in a company/publisher sub-directory). This is commonplace as of more recent versions of windows.
+        /// </summary>
+        StartMenuRoot = 1 << 4,
     }
 
     public enum UpdaterIntention {
@@ -182,20 +200,21 @@ namespace Squirrel
                 default(ReleaseEntry);
         }
 
-        public static void CreateShortcutForThisExe(this IUpdateManager This)
+        public static void CreateShortcutForThisExe(this IUpdateManager This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
-            This.CreateShortcutsForExecutable(Path.GetFileName(
-                Process.GetCurrentProcess().MainModule.FileName),
-                ShortcutLocation.Desktop | ShortcutLocation.StartMenu, 
+            This.CreateShortcutsForExecutable(
+                Path.GetFileName(AssemblyRuntimeInfo.EntryExePath),
+                location,
                 Environment.CommandLine.Contains("squirrel-install") == false,
-                null, null);
+                null,  // shortcut arguments 
+                null); // shortcut icon
         }
 
-        public static void RemoveShortcutForThisExe(this IUpdateManager This)
+        public static void RemoveShortcutForThisExe(this IUpdateManager This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.RemoveShortcutsForExecutable(
-                Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName),
-                ShortcutLocation.Desktop | ShortcutLocation.StartMenu);
+                Path.GetFileName(AssemblyRuntimeInfo.EntryExePath),
+                location);
         }
     }
 }
