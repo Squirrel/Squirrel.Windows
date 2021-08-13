@@ -1,4 +1,7 @@
 
+# Icon for updater; can be added during a build by other scripts
+ins-update.ico
+
 #################
 ## Eclipse
 #################
