@@ -13,76 +13,117 @@ using Octokit;
 using Squirrel.SimpleSplat;
 using Squirrel;
 using Squirrel.Json;
+using SyncReleases.Sources;
 
 namespace SyncReleases
 {
-    class Program : IEnableLogger 
+    class Program : IEnableLogger
     {
         static OptionSet opts;
 
         public static int Main(string[] args)
         {
             var pg = new Program();
-            try {
-                return pg.main(args).Result;
-            } catch (Exception ex) {
-                // NB: Normally this is a terrible idea but we want to make
-                // sure Setup.exe above us gets the nonzero error code
+            try
+            {
+                return pg.main(args).GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
                 Console.Error.WriteLine(ex);
+                Console.Error.WriteLine("> SyncReleases.exe -h for help");
                 return -1;
             }
         }
 
         async Task<int> main(string[] args)
         {
-            using (var logger = new SetupLogLogger(false) { Level = Squirrel.SimpleSplat.LogLevel.Info }) {
+            using (var logger = new SetupLogLogger(false) { Level = Squirrel.SimpleSplat.LogLevel.Info })
+            {
                 Squirrel.SimpleSplat.SquirrelLocator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
 
                 var releaseDir = default(string);
                 var repoUrl = default(string);
                 var token = default(string);
+                var provider = default(string);
+                var upload = default(bool);
+                var showHelp = default(bool);
+
+                var b2KeyId = default(string);
+                var b2AppKey = default(string);
+                var bucketId = default(string);
 
                 opts = new OptionSet() {
-                    "Usage: SyncReleases.exe command [OPTS]",
-                    "Builds a Releases directory from releases on GitHub",
+                    "Usage: SyncReleases.exe  [OPTS]",
+                    "Utility to download from or upload packages to a remote package release repository",
+                    "Can be used to fully automate the distribution of new releases from CI or other scripts",
                     "",
                     "Options:",
-                    { "h|?|help", "Display Help and exit", _ => {} },
-                    { "r=|releaseDir=", "Path to a release directory to download to", v => releaseDir = v},
-                    { "u=|url=", "When pointing to GitHub, use the URL to the repository root page, else point to an existing remote Releases folder", v => repoUrl = v},
+                    { "h|?|help", "Display help and exit", v => showHelp = true },
+                    { "r=|releaseDir=", "Path to the local release directory to sync with remote", v => releaseDir = v},
+                    { "u=|url=", "A GitHub repository url, or a remote web url", v => repoUrl = v},
                     { "t=|token=", "The OAuth token to use as login credentials", v => token = v},
+                    { "p=|provider=", "Specify the release repository type, can be 'github', 'web', or 'b2'", v => provider = v },
+                    { "upload", "Upload releases in the releaseDir to the remote repository", v => upload = true },
+                    { "bucketId=", "Id or name of the bucket in B2, S3, etc", v => bucketId = v },
+                    { "b2keyid=", "B2 Auth Key Id", v => b2KeyId = v },
+                    { "b2key=", "B2 Auth Key", v => b2AppKey = v },
                 };
 
                 opts.Parse(args);
 
-                if (repoUrl == null || repoUrl.StartsWith("http", true, CultureInfo.InvariantCulture) == false) {
+                if (showHelp)
+                {
                     ShowHelp();
-                    return -1;
+                    return 0;
                 }
 
+                if (String.IsNullOrWhiteSpace(provider)) throw new ArgumentNullException(nameof(provider));
+                if (String.IsNullOrWhiteSpace(releaseDir)) throw new ArgumentNullException(nameof(releaseDir));
                 var releaseDirectoryInfo = new DirectoryInfo(releaseDir ?? Path.Combine(".", "Releases"));
                 if (!releaseDirectoryInfo.Exists) releaseDirectoryInfo.Create();
 
-                var githubException = default(Exception);
-                try {
-                    await SyncImplementations.SyncFromGitHub(repoUrl, token, releaseDirectoryInfo);
-                    return 0;
-                } catch (Exception ex) {
-                    githubException = ex;
-                    Console.Error.WriteLine("Attempting to sync URL as remote RELEASES folder");
+                IPackageRepository repository;
+
+                if (provider.Equals("github", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (String.IsNullOrWhiteSpace(repoUrl)) throw new ArgumentNullException(nameof(repoUrl));
+                    if (String.IsNullOrWhiteSpace(token)) throw new ArgumentNullException(nameof(repoUrl));
+                    repository = new GitHubRepository(repoUrl, token);
+                }
+                else if (provider.Equals("web", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (String.IsNullOrWhiteSpace(repoUrl)) throw new ArgumentNullException(nameof(repoUrl));
+                    repository = new SimpleWebRepository(new Uri(repoUrl));
+                }
+                else if (provider.Equals("b2", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (String.IsNullOrWhiteSpace(b2KeyId)) throw new ArgumentNullException(nameof(b2KeyId));
+                    if (String.IsNullOrWhiteSpace(b2AppKey)) throw new ArgumentNullException(nameof(b2AppKey));
+                    if (String.IsNullOrWhiteSpace(bucketId)) throw new ArgumentNullException(nameof(bucketId));
+                    repository = new BackblazeRepository(b2KeyId, b2AppKey, bucketId);
+                }
+                else
+                {
+                    throw new Exception("Release provider missing or invalid");
                 }
 
-                try {
-                    await SyncImplementations.SyncRemoteReleases(new Uri(repoUrl), releaseDirectoryInfo);
-                } catch (Exception) {
-                    Console.Error.WriteLine("Failed to sync URL as GitHub repo: " + githubException.Message);
-                    throw;
+                var mode = upload ? "Uploading" : "Downloading";
+                Console.WriteLine(mode + " using provider " + repository.GetType().Name);
+
+                if (upload)
+                {
+                    await repository.UploadMissingPackages(releaseDirectoryInfo);
+                }
+                else
+                {
+                    await repository.DownloadRecentPackages(releaseDirectoryInfo);
                 }
             }
 
             return 0;
         }
-        
+
         public void ShowHelp()
         {
             opts.WriteOptionDescriptions(Console.Out);
@@ -98,7 +139,7 @@ namespace SyncReleases
         public SetupLogLogger(bool saveInTemp)
         {
             var dir = saveInTemp ?
-                Path.GetTempPath() : 
+                Path.GetTempPath() :
                 AppContext.BaseDirectory;
 
             var file = Path.Combine(dir, "SquirrelSetup.log");
@@ -109,7 +150,8 @@ namespace SyncReleases
 
         public void Write(string message, LogLevel logLevel)
         {
-            if (logLevel < Level) {
+            if (logLevel < Level)
+            {
                 return;
             }
 
@@ -118,7 +160,7 @@ namespace SyncReleases
 
         public void Dispose()
         {
-            lock(gate) inner.Dispose();
+            lock (gate) inner.Dispose();
         }
     }
 }
