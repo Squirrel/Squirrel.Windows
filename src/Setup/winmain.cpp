@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Setup.h"
 #include "FxHelper.h"
+#include "DncHelper.h"
 #include "UpdateRunner.h"
 #include "MachineInstaller.h"
 #include <cstdio>
@@ -80,23 +81,32 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		goto out;
 	}
 
-	if (!CFxHelper::IsNet50Installed())
-	{
-		// we should probably try to install this at some point instead of giving up
-		CUpdateRunner::DisplayErrorMessage(CString(L"dotnet 5.0 desktop runtime must be installed to run this application."), NULL);
+	// todo: make min windows version configurable (eg, > windows 10 18362)
+	if (!CFxHelper::CanInstallDotNet4_5()) {
+		// Explain this as nicely as possible and give up.
+		MessageBox(0L, L"This program cannot run on Windows XP or before; it requires a later version of Windows.", L"Incompatible Operating System", 0);
 		exitCode = E_FAIL;
 		goto out;
 	}
 
-	//if (!CFxHelper::CanInstallDotNet4_5()) {
-	//	// Explain this as nicely as possible and give up.
-	//	MessageBox(0L, L"This program cannot run on Windows XP or before; it requires a later version of Windows.", L"Incompatible Operating System", 0);
-	//	exitCode = E_FAIL;
-	//	goto out;
-	//}
+	// hack: bootstrap .net 5.0 and ignore requests to install the full framework
+	if (!DncHelper::IsNet50Installed())
+	{
+		hr = DncHelper::InstallNet50(isQuiet);
+		if (FAILED(hr)) {
+			exitCode = hr; // #yolo
+			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install .NET, you can try installing the .NET 5.0 Desktop Runtime manually."), NULL);
+			goto out;
+		}
+
+		// S_FALSE isn't failure, but we still shouldn't try to install
+		if (hr != S_OK) {
+			exitCode = 0;
+			goto out;
+		}
+	}
 
 	//NetVersion requiredVersion = CFxHelper::GetRequiredDotNetVersion();
-
 	//if (!CFxHelper::IsDotNetInstalled(requiredVersion)) {
 	//	hr = CFxHelper::InstallDotNetFramework(requiredVersion, isQuiet);
 	//	if (FAILED(hr)) {

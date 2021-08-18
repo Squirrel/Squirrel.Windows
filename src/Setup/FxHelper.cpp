@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "FxHelper.h"
 #include "resource.h"
-#include <string>
 
 // http://msdn.microsoft.com/en-us/library/hh925568(v=vs.110).aspx#net_b
 static const wchar_t* ndpPath = L"SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full";
@@ -57,33 +56,6 @@ bool CFxHelper::IsDotNetInstalled(NetVersion required)
 	}
 
 	return true;
-}
-
-std::string exec(const char* cmd) {
-	char buffer[128];
-	std::string result = "";
-	FILE* pipe = _popen(cmd, "r");
-	if (!pipe)
-		return "";
-	try {
-		while (fgets(buffer, sizeof buffer, pipe) != NULL) {
-			result += buffer;
-		}
-	}
-	catch (...) {
-		_pclose(pipe);
-		return "";
-	}
-	_pclose(pipe);
-	return result;
-}
-
-bool CFxHelper::IsNet50Installed()
-{
-	// it might be better to parse this registry entry, but this entry only shows a single version
-	// static const wchar_t* dncPath = L"SOFTWARE\\dotnet\\Setup\\InstalledVersions";
-	auto runtimes = exec("dotnet --list-runtimes");
-	return runtimes.find("Desktop.App 5.0") != std::string::npos;
 }
 
 UINT CFxHelper::GetDotNetVersionReleaseNumber(NetVersion version)
@@ -174,7 +146,6 @@ HRESULT CFxHelper::InstallDotNetFramework(NetVersion version, bool isQuiet)
 			{ 1, L"Install", },
 			{ 2, L"Cancel", },
 		};
-
 
 		dlg.SetButtons(buttons, 2);
 		dlg.SetMainInstructionText(GetInstallerMainInstructionForVersion(version));
