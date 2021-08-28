@@ -16,7 +16,8 @@ using System.Threading.Tasks;
 
 namespace Squirrel.Update
 {
-    enum UpdateAction {
+    enum UpdateAction
+    {
         Unset = 0, Install, Uninstall, Download, Update, Releasify, Shortcut,
         Deshortcut, ProcessStart, UpdateSelf, CheckForUpdate
     }
@@ -54,8 +55,8 @@ namespace Squirrel.Update
             // open will actually crash the uninstaller
             bool isUninstalling = opt.updateAction == UpdateAction.Uninstall;
 
-            using (var logger = new SetupLogLogger(isUninstalling, opt.updateAction.ToString()) {Level = LogLevel.Info}) {
-                SquirrelLocator.CurrentMutable.Register(() => logger, typeof (SimpleSplat.ILogger));
+            using (var logger = new SetupLogLogger(isUninstalling, opt.updateAction.ToString()) { Level = LogLevel.Info }) {
+                SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
 
                 try {
                     return executeCommandLine(args);
@@ -128,7 +129,7 @@ namespace Squirrel.Update
 
             this.Log().Info("Starting install, writing to {0}", sourceDirectory);
 
-            if (!AssemblyRuntimeInfo.IsSingleFile)  {
+            if (!AssemblyRuntimeInfo.IsSingleFile) {
                 // when doing a standard build, our executable has multiple files/dependencies.
                 // we only get turned into a single exe upon publish - and this is required to install a package.
                 // in the future, we may consider searching for a pre-published version, or perhaps copy our dependencies.
@@ -577,7 +578,7 @@ namespace Squirrel.Update
             // Try to find SignTool.exe
             var exe = @".\signtool.exe";
             if (!File.Exists(exe)) {
-                exe = Path.Combine( AssemblyRuntimeInfo.BaseDirectory, "signtool.exe");
+                exe = Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "signtool.exe");
 
                 // Run down PATH and hope for the best
                 if (!File.Exists(exe)) exe = "signtool.exe";
@@ -683,7 +684,7 @@ namespace Squirrel.Update
 
             // NB: We need some GUIDs that are based on the package ID, but unique (i.e.
             // "Unique but consistent").
-            for (int i=1; i <= 10; i++) {
+            for (int i = 1; i <= 10; i++) {
                 templateData[String.Format("IdAsGuid{0}", i)] = Utility.CreateGuidFromHash(String.Format("{0}:{1}", package.Id, i)).ToString();
             }
 
@@ -757,7 +758,7 @@ namespace Squirrel.Update
                 var args = shortcutArgs.Split(new[] { ',' });
 
                 foreach (var arg in args) {
-                    var location = (ShortcutLocation)(Enum.Parse(typeof(ShortcutLocation), arg, false));
+                    var location = (ShortcutLocation) (Enum.Parse(typeof(ShortcutLocation), arg, false));
                     if (ret.HasValue) {
                         ret |= location;
                     } else {
@@ -804,7 +805,7 @@ namespace Squirrel.Update
 
         public SetupLogLogger(bool saveInTemp, string commandSuffix = null)
         {
-            for (int i=0; i < 10; i++) {
+            for (int i = 0; i < 10; i++) {
                 try {
                     var dir = saveInTemp ?
                         Path.GetTempPath() :

@@ -28,14 +28,12 @@ namespace SyncReleases
                 .Where(x => !x.IsDelta)
                 .OrderByDescending(x => x.Version)
                 .Take(1)
-                .Select(x => new
-                {
+                .Select(x => new {
                     LocalPath = Path.Combine(releasesDir.FullName, x.Filename),
                     RemoteUrl = new Uri(Utility.EnsureTrailingSlash(targetUri), x.BaseUrl + x.Filename + x.Query)
                 });
 
-            foreach (var releaseToDownload in releasesToDownload)
-            {
+            foreach (var releaseToDownload in releasesToDownload) {
                 await retryAsync(3, () => downloadRelease(releaseToDownload.LocalPath, releaseToDownload.RemoteUrl));
             }
         }
@@ -47,8 +45,7 @@ namespace SyncReleases
 
             var client = new GitHubClient(userAgent, repoUri);
 
-            if (token != null)
-            {
+            if (token != null) {
                 client.Credentials = new Credentials(token);
             }
 
@@ -57,31 +54,26 @@ namespace SyncReleases
                 .OrderByDescending(x => x.PublishedAt)
                 .Take(5);
 
-            await releases.ForEachAsync(async release =>
-            {
+            await releases.ForEachAsync(async release => {
                 // NB: Why do I have to double-fetch the release assets? It's already in GetAll
                 var assets = await client.Repository.Release.GetAllAssets(nwo.Item1, nwo.Item2, release.Id);
 
                 await assets
                     .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
-                    .Where(x =>
-                    {
+                    .Where(x => {
                         var fi = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
                         return !(fi.Exists && fi.Length == x.Size);
                     })
-                    .ForEachAsync(async x =>
-                    {
+                    .ForEachAsync(async x => {
                         var target = new FileInfo(Path.Combine(releaseDirectoryInfo.FullName, x.Name));
                         if (target.Exists) target.Delete();
 
-                        await retryAsync(3, async () =>
-                        {
+                        await retryAsync(3, async () => {
                             var hc = new HttpClient();
                             var rq = new HttpRequestMessage(HttpMethod.Get, x.Url);
                             rq.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/octet-stream"));
                             rq.Headers.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue(userAgent.Name, userAgent.Version));
-                            if (token != null)
-                            {
+                            if (token != null) {
                                 rq.Headers.Add("Authorization", "Bearer " + token);
                             }
 
@@ -89,8 +81,7 @@ namespace SyncReleases
                             resp.EnsureSuccessStatusCode();
 
                             using (var from = await resp.Content.ReadAsStreamAsync())
-                            using (var to = File.OpenWrite(target.FullName))
-                            {
+                            using (var to = File.OpenWrite(target.FullName)) {
                                 await from.CopyToAsync(to);
                             }
                         });
@@ -110,8 +101,7 @@ namespace SyncReleases
 
             var userAgent = new System.Net.Http.Headers.ProductInfoHeaderValue("Squirrel", Assembly.GetExecutingAssembly().GetName().Version.ToString());
 
-            using (HttpClient client = new HttpClient())
-            {
+            using (HttpClient client = new HttpClient()) {
                 client.DefaultRequestHeaders.UserAgent.Add(userAgent);
                 return await client.GetStringAsync(uri);
             }
@@ -119,8 +109,7 @@ namespace SyncReleases
 
         static async Task downloadRelease(string localPath, Uri remoteUrl)
         {
-            if (File.Exists(localPath))
-            {
+            if (File.Exists(localPath)) {
                 File.Delete(localPath);
             }
 
@@ -134,8 +123,7 @@ namespace SyncReleases
             var uri = new Uri(repoUrl);
 
             var segments = uri.AbsolutePath.Split('/');
-            if (segments.Count() != 3)
-            {
+            if (segments.Count() != 3) {
                 throw new Exception("Repo URL must be to the root URL of the repo e.g. https://github.com/myuser/myrepo");
             }
 
@@ -146,13 +134,10 @@ namespace SyncReleases
         {
             int retryCount = count;
 
-retry:
-            try
-            {
+        retry:
+            try {
                 return await block();
-            }
-            catch (Exception)
-            {
+            } catch (Exception) {
                 retryCount--;
                 if (retryCount >= 0) goto retry;
 

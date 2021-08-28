@@ -24,12 +24,9 @@ namespace SyncReleases
         public static int Main(string[] args)
         {
             var pg = new Program();
-            try
-            {
+            try {
                 return pg.main(args).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 Console.Error.WriteLine(ex);
                 Console.Error.WriteLine("> SyncReleases.exe -h for help");
                 return -1;
@@ -38,8 +35,7 @@ namespace SyncReleases
 
         async Task<int> main(string[] args)
         {
-            using (var logger = new SetupLogLogger(false) { Level = Squirrel.SimpleSplat.LogLevel.Info })
-            {
+            using (var logger = new SetupLogLogger(false) { Level = Squirrel.SimpleSplat.LogLevel.Info }) {
                 Squirrel.SimpleSplat.SquirrelLocator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
 
                 var releaseDir = default(string);
@@ -72,8 +68,7 @@ namespace SyncReleases
 
                 opts.Parse(args);
 
-                if (showHelp)
-                {
+                if (showHelp) {
                     ShowHelp();
                     return 0;
                 }
@@ -85,38 +80,28 @@ namespace SyncReleases
 
                 IPackageRepository repository;
 
-                if (provider.Equals("github", StringComparison.OrdinalIgnoreCase))
-                {
+                if (provider.Equals("github", StringComparison.OrdinalIgnoreCase)) {
                     if (String.IsNullOrWhiteSpace(repoUrl)) throw new ArgumentNullException(nameof(repoUrl));
                     if (String.IsNullOrWhiteSpace(token)) throw new ArgumentNullException(nameof(repoUrl));
                     repository = new GitHubRepository(repoUrl, token);
-                }
-                else if (provider.Equals("web", StringComparison.OrdinalIgnoreCase))
-                {
+                } else if (provider.Equals("web", StringComparison.OrdinalIgnoreCase)) {
                     if (String.IsNullOrWhiteSpace(repoUrl)) throw new ArgumentNullException(nameof(repoUrl));
                     repository = new SimpleWebRepository(new Uri(repoUrl));
-                }
-                else if (provider.Equals("b2", StringComparison.OrdinalIgnoreCase))
-                {
+                } else if (provider.Equals("b2", StringComparison.OrdinalIgnoreCase)) {
                     if (String.IsNullOrWhiteSpace(b2KeyId)) throw new ArgumentNullException(nameof(b2KeyId));
                     if (String.IsNullOrWhiteSpace(b2AppKey)) throw new ArgumentNullException(nameof(b2AppKey));
                     if (String.IsNullOrWhiteSpace(bucketId)) throw new ArgumentNullException(nameof(bucketId));
                     repository = new BackblazeRepository(b2KeyId, b2AppKey, bucketId);
-                }
-                else
-                {
+                } else {
                     throw new Exception("Release provider missing or invalid");
                 }
 
                 var mode = upload ? "Uploading" : "Downloading";
                 Console.WriteLine(mode + " using provider " + repository.GetType().Name);
 
-                if (upload)
-                {
+                if (upload) {
                     await repository.UploadMissingPackages(releaseDirectoryInfo);
-                }
-                else
-                {
+                } else {
                     await repository.DownloadRecentPackages(releaseDirectoryInfo);
                 }
             }
@@ -150,8 +135,7 @@ namespace SyncReleases
 
         public void Write(string message, LogLevel logLevel)
         {
-            if (logLevel < Level)
-            {
+            if (logLevel < Level) {
                 return;
             }
 

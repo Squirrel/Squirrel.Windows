@@ -15,8 +15,7 @@ namespace Squirrel.Update
             uint result = 0;
             using (WINTRUST_FILE_INFO fileInfo = new WINTRUST_FILE_INFO(fileName, Guid.Empty))
             using (UnmanagedPointer guidPtr = new UnmanagedPointer(Marshal.AllocHGlobal(Marshal.SizeOf(typeof(Guid))), AllocMethod.HGlobal))
-            using (UnmanagedPointer wvtDataPtr = new UnmanagedPointer(Marshal.AllocHGlobal(Marshal.SizeOf(typeof(WINTRUST_DATA))), AllocMethod.HGlobal))
-            {
+            using (UnmanagedPointer wvtDataPtr = new UnmanagedPointer(Marshal.AllocHGlobal(Marshal.SizeOf(typeof(WINTRUST_DATA))), AllocMethod.HGlobal)) {
                 WINTRUST_DATA data = new WINTRUST_DATA(fileInfo);
                 IntPtr pGuid = guidPtr;
                 IntPtr pData = wvtDataPtr;
@@ -40,7 +39,7 @@ namespace Squirrel.Update
         public WINTRUST_FILE_INFO(string fileName, Guid subject)
         {
 
-            cbStruct = (uint)Marshal.SizeOf(typeof(WINTRUST_FILE_INFO));
+            cbStruct = (uint) Marshal.SizeOf(typeof(WINTRUST_FILE_INFO));
             pcwszFilePath = fileName;
 
             if (subject != Guid.Empty) {
@@ -76,11 +75,13 @@ namespace Squirrel.Update
         }
     }
 
-    enum AllocMethod {
+    enum AllocMethod
+    {
         HGlobal, CoTaskMem
     };
 
-    enum UnionChoice {
+    enum UnionChoice
+    {
         File = 1,
         Catalog,
         Blob,
@@ -88,24 +89,28 @@ namespace Squirrel.Update
         Cert
     };
 
-    enum UiChoice {
+    enum UiChoice
+    {
         All = 1,
         NoUI,
         NoBad,
         NoGood
     };
-    enum RevocationCheckFlags {
+    enum RevocationCheckFlags
+    {
         None = 0,
         WholeChain
     };
-    enum StateAction {
+    enum StateAction
+    {
         Ignore = 0,
         Verify,
         Close,
         AutoCache,
         AutoCacheFlush
     };
-    enum TrustProviderFlags {
+    enum TrustProviderFlags
+    {
         UseIE4Trust = 1,
         NoIE4Chain = 2,
         NoPolicyUsage = 4,
@@ -118,7 +123,8 @@ namespace Squirrel.Update
         UseDefaultOSVerCheck = 1024,
         LifetimeSigning = 2048
     };
-    enum UIContext {
+    enum UIContext
+    {
         Execute = 0,
         Install
     };
@@ -129,7 +135,7 @@ namespace Squirrel.Update
     {
         public WINTRUST_DATA(WINTRUST_FILE_INFO fileInfo)
         {
-            this.cbStruct = (uint)Marshal.SizeOf(typeof(WINTRUST_DATA));
+            this.cbStruct = (uint) Marshal.SizeOf(typeof(WINTRUST_DATA));
             pInfoStruct = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(WINTRUST_FILE_INFO)));
 
             Marshal.StructureToPtr(fileInfo, pInfoStruct, false);
@@ -160,7 +166,7 @@ namespace Squirrel.Update
         public UIContext dwUIContext;
 
         IntPtr pwszURLReference;
-        
+
         public void Dispose()
         {
             Dispose(true);
