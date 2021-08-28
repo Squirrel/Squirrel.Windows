@@ -7,6 +7,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationIcon>squirrel.ico</ApplicationIcon>
     <RootNamespace>Squirrel.Update</RootNamespace>

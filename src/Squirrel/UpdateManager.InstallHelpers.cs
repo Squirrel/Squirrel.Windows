@@ -146,7 +146,7 @@ namespace Squirrel
             {
                 var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
                     .OpenSubKey(uninstallRegSubKey, true);
-                key.DeleteSubKeyTree(applicationName);
+                key.DeleteSubKeyTree(applicationName, false);
             }
         }
     }

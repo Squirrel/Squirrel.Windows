@@ -282,6 +282,14 @@ namespace Squirrel.Update
             using (var mgr = new UpdateManager("", appName)) {
                 await mgr.FullUninstall();
                 mgr.RemoveUninstallerRegistryEntry();
+
+                // if this exe is in the app directory, starts a process that will wait 3 seconds and then delete this exe
+                if (AssemblyRuntimeInfo.EntryExePath.StartsWith(mgr.RootAppDirectory, StringComparison.InvariantCultureIgnoreCase)) {
+                    Process.Start(new ProcessStartInfo() {
+                        Arguments = "/C choice /C Y /N /D Y /T 3 & Del \"" + AssemblyRuntimeInfo.EntryExePath + "\"",
+                        WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true, FileName = "cmd.exe"
+                    });
+                }
             }
         }
 

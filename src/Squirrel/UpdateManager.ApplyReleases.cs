@@ -105,7 +105,11 @@ namespace Squirrel
 
             public async Task FullUninstall()
             {
-                var currentRelease = getReleases().MaxBy(x => x.Name.ToSemanticVersion()).FirstOrDefault();
+                var releases = getReleases();
+                if (!releases.Any())
+                    return;
+
+                var currentRelease = releases.MaxBy(x => x.Name.ToSemanticVersion()).FirstOrDefault();
 
                 this.Log().Info("Starting full uninstall");
                 if (currentRelease.Exists) {
