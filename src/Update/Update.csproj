@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -9,10 +9,12 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <ApplicationIcon>squirrel.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <!-- If update.ico exists in project directory it will be used instead of the squirrel icon -->
   <PropertyGroup Condition="Exists('ins-update.ico')">
-    <ApplicationIcon>ins-update.ico</ApplicationIcon>
+    <ApplicationIcon>update.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
