@@ -148,7 +148,7 @@ namespace Squirrel.SimpleSplat
         /// <returns>The requested object, if found; <c>null</c> otherwise.</returns>
         public static T GetService<T>(this IDependencyResolver This, string contract = null)
         {
-            return (T)This.GetService(typeof(T), contract);
+            return (T) This.GetService(typeof(T), contract);
         }
 
         /// <summary>
@@ -180,7 +180,7 @@ namespace Squirrel.SimpleSplat
 
             return new ActionDisposable(() => SquirrelLocator.Current = origResolver);
         }
-                
+
         public static void RegisterConstant(this IMutableDependencyResolver This, object value, Type serviceType, string contract = null)
         {
             This.Register(() => value, serviceType, contract);
@@ -218,7 +218,7 @@ namespace Squirrel.SimpleSplat
 
         protected ModernDependencyResolver(Dictionary<Tuple<Type, string>, List<Func<object>>> registry)
         {
-            _registry = registry != null ? 
+            _registry = registry != null ?
                 registry.ToDictionary(k => k.Key, v => v.Value.ToList()) :
                 new Dictionary<Tuple<Type, string>, List<Func<object>>>();
 
@@ -321,14 +321,14 @@ namespace Squirrel.SimpleSplat
     {
         readonly Func<Type, string, IEnumerable<object>> innerGetServices;
         readonly Action<Func<object>, Type, string> innerRegister;
-        readonly Dictionary<Tuple<Type, string>, List<Action<IDisposable>>> _callbackRegistry = 
+        readonly Dictionary<Tuple<Type, string>, List<Action<IDisposable>>> _callbackRegistry =
             new Dictionary<Tuple<Type, string>, List<Action<IDisposable>>>();
 
         IDisposable inner;
 
         public FuncDependencyResolver(
-            Func<Type, string, IEnumerable<object>> getAllServices, 
-            Action<Func<object>, Type, string> register = null, 
+            Func<Type, string, IEnumerable<object>> getAllServices,
+            Action<Func<object>, Type, string> register = null,
             IDisposable toDispose = null)
         {
             innerGetServices = getAllServices;
@@ -346,8 +346,8 @@ namespace Squirrel.SimpleSplat
             return innerGetServices(serviceType, contract);
         }
 
-        public void Dispose() 
-        { 
+        public void Dispose()
+        {
             Interlocked.Exchange(ref inner, ActionDisposable.Empty).Dispose();
         }
 
@@ -407,7 +407,7 @@ namespace Squirrel.SimpleSplat
         Action block;
 
         public static IDisposable Empty {
-            get { return new ActionDisposable(() => {}); }
+            get { return new ActionDisposable(() => { }); }
         }
 
         public ActionDisposable(Action block)
@@ -417,7 +417,7 @@ namespace Squirrel.SimpleSplat
 
         public void Dispose()
         {
-            Interlocked.Exchange(ref block, () => {})();
+            Interlocked.Exchange(ref block, () => { })();
         }
     }
 }

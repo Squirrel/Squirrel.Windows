@@ -29,22 +29,18 @@ namespace Squirrel
         {
             if (!File.Exists(executable)) return null;
             var fullname = Path.GetFullPath(executable);
-            
+
             var backingDll = LookForNetCoreDll(fullname);
 
-            return Utility.Retry<int?>(() =>
-            {
+            return Utility.Retry<int?>(() => {
                 var assemblySquirrelAwareVersion = GetAssemblySquirrelAwareVersion(fullname);
-                if (assemblySquirrelAwareVersion != null)
-                {
+                if (assemblySquirrelAwareVersion != null) {
                     return assemblySquirrelAwareVersion;
                 }
 
-                if (backingDll != null && File.Exists(backingDll))
-                {
+                if (backingDll != null && File.Exists(backingDll)) {
                     var assemblyDllSquirrelAwareVersion = GetAssemblySquirrelAwareVersion(backingDll);
-                    if (assemblyDllSquirrelAwareVersion != null)
-                    {
+                    if (assemblyDllSquirrelAwareVersion != null) {
                         return assemblyDllSquirrelAwareVersion;
                     }
                 }
@@ -58,7 +54,7 @@ namespace Squirrel
             var exeFileVersionInfo = FileVersionInfo.GetVersionInfo(fullname);
             var originalFilename = exeFileVersionInfo.OriginalFilename;
 
-            var backingDll = originalFilename == null ? null 
+            var backingDll = originalFilename == null ? null
                 : Path.Combine(Path.GetDirectoryName(fullname), originalFilename);
             return backingDll;
         }
@@ -85,9 +81,7 @@ namespace Squirrel
 
                     return result;
                 }
-            }
-            catch (FileLoadException) { return null; }
-            catch (BadImageFormatException) { return null; }
+            } catch (FileLoadException) { return null; } catch (BadImageFormatException) { return null; }
         }
 
         static int? GetVersionBlockSquirrelAwareValue(string executable)
@@ -102,7 +96,7 @@ namespace Squirrel
 
             const string englishUS = "040904B0";
             const string neutral = "000004B0";
-            var supportedLanguageCodes = new[] {englishUS, neutral};
+            var supportedLanguageCodes = new[] { englishUS, neutral };
 
             IntPtr result;
             int resultSize;
@@ -113,8 +107,7 @@ namespace Squirrel
                         $"\\StringFileInfo\\{languageCode}\\SquirrelAwareVersion",
                         out result, out resultSize
                     )
-            ))
-            {
+            )) {
                 return null;
             }
 

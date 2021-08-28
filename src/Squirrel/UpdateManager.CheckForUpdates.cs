@@ -38,8 +38,7 @@ namespace Squirrel
                 if (intention != UpdaterIntention.Install) {
                     try {
                         localReleases = Utility.LoadLocalReleases(localReleaseFile);
-                    }
-                    catch (Exception ex) {
+                    } catch (Exception ex) {
                         // Something has gone pear-shaped, let's start from scratch
                         this.Log().WarnException("Failed to load local releases, starting from scratch", ex);
                         shouldInitialize = true;
@@ -163,7 +162,7 @@ namespace Squirrel
                 if (latestFullRelease == currentRelease) {
                     this.Log().Info("No updates, remote and local are the same");
 
-                    var info = UpdateInfo.Create(currentRelease, new[] {latestFullRelease}, packageDirectory);
+                    var info = UpdateInfo.Create(currentRelease, new[] { latestFullRelease }, packageDirectory);
                     return info;
                 }
 
@@ -178,12 +177,12 @@ namespace Squirrel
                         this.Log().Warn("No local releases found, starting from scratch");
                     }
 
-                    return UpdateInfo.Create(null, new[] {latestFullRelease}, packageDirectory);
+                    return UpdateInfo.Create(null, new[] { latestFullRelease }, packageDirectory);
                 }
 
                 if (localReleases.Max(x => x.Version) > remoteReleases.Max(x => x.Version)) {
                     this.Log().Warn("hwhat, local version is greater than remote version");
-                    return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] {latestFullRelease}, packageDirectory);
+                    return UpdateInfo.Create(Utility.FindCurrentVersion(localReleases), new[] { latestFullRelease }, packageDirectory);
                 }
 
                 return UpdateInfo.Create(currentRelease, remoteReleases, packageDirectory);

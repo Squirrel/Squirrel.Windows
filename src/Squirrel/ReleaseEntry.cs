@@ -46,7 +46,7 @@ namespace Squirrel
             Contract.Requires(filename.Contains(Path.DirectorySeparatorChar) == false);
             Contract.Requires(filesize > 0);
 
-            SHA1 = sha1; BaseUrl = baseUrl;  Filename = filename; Query = query; Filesize = filesize; IsDelta = isDelta; StagingPercentage = stagingPercentage;
+            SHA1 = sha1; BaseUrl = baseUrl; Filename = filename; Query = query; Filesize = filesize; IsDelta = isDelta; StagingPercentage = stagingPercentage;
         }
 
         [IgnoreDataMember]
@@ -68,8 +68,8 @@ namespace Squirrel
         public string PackageName {
             get {
                 var match = packageNameRegex.Match(Filename);
-                return match.Success ? 
-                    match.Groups[1].Value : 
+                return match.Success ?
+                    match.Groups[1].Value :
                     Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' }));
             }
         }
@@ -126,7 +126,7 @@ namespace Squirrel
             string baseUrl = null;
             string query = null;
 
-            if(Utility.IsHttpUrl(filename)) {
+            if (Utility.IsHttpUrl(filename)) {
                 var uri = new Uri(filename);
                 var path = uri.LocalPath;
                 var authority = uri.GetLeftPart(UriPartial.Authority);
@@ -164,7 +164,7 @@ namespace Squirrel
 
             uint val = BitConverter.ToUInt32(userId.Value.ToByteArray(), 12);
 
-            double percentage = ((double)val / (double)UInt32.MaxValue);
+            double percentage = ((double) val / (double) UInt32.MaxValue);
             return percentage < StagingPercentage.Value;
         }
 

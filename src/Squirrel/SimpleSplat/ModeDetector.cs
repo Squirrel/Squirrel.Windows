@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace Squirrel.SimpleSplat
 {
@@ -26,7 +26,7 @@ namespace Squirrel.SimpleSplat
         }
 
         static bool? cachedInUnitTestRunnerResult;
-        public static bool InUnitTestRunner() 
+        public static bool InUnitTestRunner()
         {
             if (cachedInUnitTestRunnerResult.HasValue) return cachedInUnitTestRunnerResult.Value;
 
@@ -39,7 +39,7 @@ namespace Squirrel.SimpleSplat
             // runner :-/
             return false;
         }
-                
+
         static bool? cachedInDesignModeResult;
         public static bool InDesignMode()
         {
@@ -49,7 +49,7 @@ namespace Squirrel.SimpleSplat
                 cachedInDesignModeResult = current.InDesignMode();
                 if (cachedInDesignModeResult.HasValue) return cachedInDesignModeResult.Value;
             }
-            
+
             // Check Silverlight / WP8 Design Mode
             var type = Type.GetType("System.ComponentModel.DesignerProperties, System.Windows, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e", false);
             if (type != null) {
@@ -57,18 +57,18 @@ namespace Squirrel.SimpleSplat
                 var dependencyObject = Type.GetType("System.Windows.Controls.Border, System.Windows, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e", false);
 
                 if (dependencyObject != null) {
-                    cachedInDesignModeResult = (bool)mInfo.Invoke(null, new object[] { Activator.CreateInstance(dependencyObject) });
+                    cachedInDesignModeResult = (bool) mInfo.Invoke(null, new object[] { Activator.CreateInstance(dependencyObject) });
                 }
-            } else if((type = Type.GetType("System.ComponentModel.DesignerProperties, PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35", false)) != null) {
+            } else if ((type = Type.GetType("System.ComponentModel.DesignerProperties, PresentationFramework, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35", false)) != null) {
                 // loaded the assembly, could be .net 
                 var mInfo = type.GetMethod("GetIsInDesignMode");
                 Type dependencyObject = Type.GetType("System.Windows.DependencyObject, WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35", false);
                 if (dependencyObject != null) {
-                    cachedInDesignModeResult = (bool)mInfo.Invoke(null, new object[] { Activator.CreateInstance(dependencyObject) });
+                    cachedInDesignModeResult = (bool) mInfo.Invoke(null, new object[] { Activator.CreateInstance(dependencyObject) });
                 }
             } else if ((type = Type.GetType("Windows.ApplicationModel.DesignMode, Windows, ContentType=WindowsRuntime", false)) != null) {
                 // check WinRT next
-                cachedInDesignModeResult = (bool)type.GetProperty("DesignModeEnabled").GetMethod.Invoke(null, null);
+                cachedInDesignModeResult = (bool) type.GetProperty("DesignModeEnabled").GetMethod.Invoke(null, null);
             } else {
                 cachedInDesignModeResult = false;
             }

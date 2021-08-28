@@ -16,11 +16,11 @@ namespace Squirrel.SimpleSplat
             }.Select(x => new AssemblyName(x)).ToArray();
 
             foreach (var assembly in toSearch) {
-                var fullName = fullTypeName + ", " + assembly.FullName; 
+                var fullName = fullTypeName + ", " + assembly.FullName;
                 var type = Type.GetType(fullName, false);
                 if (type == null) continue;
 
-                return (T)Activator.CreateInstance(type);
+                return (T) Activator.CreateInstance(type);
             }
 
             return default(T);

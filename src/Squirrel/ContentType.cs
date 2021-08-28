@@ -24,7 +24,7 @@ namespace Squirrel
 
         public static void Merge(XmlDocument doc)
         {
-            var elements = new [] {
+            var elements = new[] {
                 Tuple.Create("Default", "diff", "application/octet" ),
                 Tuple.Create("Default", "bsdiff", "application/octet" ),
                 Tuple.Create("Default", "exe", "application/octet" ),

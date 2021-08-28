@@ -47,7 +47,7 @@ namespace Squirrel
 
             if (!string.IsNullOrWhiteSpace(accessToken))
                 releasesApiBuilder.Append("?access_token=").Append(accessToken);
-            
+
             Uri baseAddress;
 
             if (repoUri.Host.EndsWith("github.com", StringComparison.OrdinalIgnoreCase)) {

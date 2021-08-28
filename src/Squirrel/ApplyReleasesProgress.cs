@@ -40,7 +40,7 @@
             var currentReleasePercentage = (perReleaseProgressRange / 100d) * _currentReleaseProgress;
 
             var percentage = basePercentage + currentReleasePercentage;
-            OnReport((int)percentage);
+            OnReport((int) percentage);
         }
     }
 }

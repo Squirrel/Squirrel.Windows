@@ -209,7 +209,7 @@ namespace Squirrel
                         // Report progress early since we might be need to continue for non-matches
                         currentItem++;
                         var percentage = (currentItem * 100d) / totalItems;
-                        progress((int)percentage);
+                        progress((int) percentage);
 
                         var parts = reader.Entry.Key.Split('\\', '/');
                         var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
@@ -260,8 +260,7 @@ namespace Squirrel
                 pkg.GetLibFiles().ForEach(file => {
                     var outPath = new FileInfo(Path.Combine(tempPath.FullName, file.Path));
 
-                    if (!VersionUtility.IsCompatible(framework , new[] { file.TargetFramework }))
-                    {
+                    if (!VersionUtility.IsCompatible(framework, new[] { file.TargetFramework })) {
                         this.Log().Info("Ignoring {0} as the target framework is not compatible", outPath);
                         return;
                     }

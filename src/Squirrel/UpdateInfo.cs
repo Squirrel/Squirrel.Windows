@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
@@ -16,7 +16,7 @@ namespace Squirrel
 
         [IgnoreDataMember]
         public bool IsBootstrapping {
-            get { return CurrentlyInstalledVersion == null;  }
+            get { return CurrentlyInstalledVersion == null; }
         }
 
         [IgnoreDataMember]
@@ -73,8 +73,8 @@ namespace Squirrel
 
             var deltasSize = newerThanUs.Where(x => x.IsDelta).Sum(x => x.Filesize);
 
-            return (deltasSize < latestFull.Filesize && deltasSize > 0) ? 
-                new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory) : 
+            return (deltasSize < latestFull.Filesize && deltasSize > 0) ?
+                new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory) :
                 new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory);
         }
     }

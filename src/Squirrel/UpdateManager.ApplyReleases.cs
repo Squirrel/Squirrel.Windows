@@ -49,7 +49,7 @@ namespace Squirrel
                 }
 
                 // Progress range: 40 -> 80
-                var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release, x => progress(CalculateProgress(x, 40, 80))), 
+                var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release, x => progress(CalculateProgress(x, 40, 80))),
                     "Failed to install package to app dir");
 
                 progress(80);
@@ -123,7 +123,7 @@ namespace Squirrel
 
                         if (squirrelAwareApps.Count > 0) {
                             await squirrelAwareApps.ForEachAsync(async exe => {
-                                using (var cts = new CancellationTokenSource()) { 
+                                using (var cts = new CancellationTokenSource()) {
                                     cts.CancelAfter(10 * 1000);
 
                                     try {
@@ -411,7 +411,7 @@ namespace Squirrel
 
                 // For each app, run the install command in-order and wait
                 if (!firstRunOnly) await squirrelApps.ForEachAsync(async exe => {
-                    using (var cts = new CancellationTokenSource()) { 
+                    using (var cts = new CancellationTokenSource()) {
                         cts.CancelAfter(15 * 1000);
 
                         try {
@@ -605,7 +605,7 @@ namespace Squirrel
                         if (squirrelApps.Count > 0) {
                             // For each app, run the install command in-order and wait
                             await squirrelApps.ForEachAsync(async exe => {
-                                using (var cts = new CancellationTokenSource()) { 
+                                using (var cts = new CancellationTokenSource()) {
                                     cts.CancelAfter(10 * 1000);
 
                                     try {
@@ -626,7 +626,7 @@ namespace Squirrel
 
                 // Get the current process list in an attempt to not burn 
                 // directories which have running processes
-                var runningProcesses = UnsafeUtility.EnumerateProcesses(); 
+                var runningProcesses = UnsafeUtility.EnumerateProcesses();
 
                 // Finally, clean up the app-X.Y.Z directories
                 await toCleanup.ForEachAsync(async x => {
@@ -732,7 +732,7 @@ namespace Squirrel
                     dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
                     break;
                 case ShortcutLocation.Startup:
-                    dir = Environment.GetFolderPath (Environment.SpecialFolder.Startup);
+                    dir = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
                     break;
                 case ShortcutLocation.AppRoot:
                     dir = rootAppDirectory;

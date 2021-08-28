@@ -29,7 +29,7 @@ namespace Squirrel
 
         IDisposable updateLock;
 
-        public UpdateManager(string urlOrPath, 
+        public UpdateManager(string urlOrPath,
             string applicationName = null,
             string rootDirectory = null,
             IFileDownloader urlDownloader = null)
@@ -174,7 +174,7 @@ namespace Squirrel
 
         static bool exiting = false;
         public static void RestartApp(string exeToStart = null, string arguments = null)
-        { 
+        {
             // NB: Here's how this method works:
             //
             // 1. We're going to pass the *name* of our EXE and the params to 
@@ -201,9 +201,9 @@ namespace Squirrel
             Thread.Sleep(500);
             Environment.Exit(0);
         }
-        
+
         public static async Task<Process> RestartAppWhenExited(string exeToStart = null, string arguments = null)
-        { 
+        {
             // NB: Here's how this method works:
             //
             // 1. We're going to pass the *name* of our EXE and the params to 
@@ -224,7 +224,7 @@ namespace Squirrel
             var updateProcess = Process.Start(getUpdateExe(), String.Format("--processStartAndWait {0} {1}", exeToStart, argsArg));
 
             await Task.Delay(500);
-            
+
             return updateProcess;
         }
 
@@ -263,7 +263,7 @@ namespace Squirrel
                 IDisposable theLock;
                 try {
                     theLock = ModeDetector.InUnitTestRunner() ?
-                        Disposable.Create(() => {}) : new SingleGlobalInstance(key, TimeSpan.FromMilliseconds(2000));
+                        Disposable.Create(() => { }) : new SingleGlobalInstance(key, TimeSpan.FromMilliseconds(2000));
                 } catch (TimeoutException) {
                     throw new TimeoutException("Couldn't acquire update lock, another instance may be running updates");
                 }
@@ -296,7 +296,7 @@ namespace Squirrel
             var singleValue = range / 100d;
             var totalPercentage = (singleValue * percentageOfCurrentStep) + stepStartPercentage;
 
-            return (int)totalPercentage;
+            return (int) totalPercentage;
         }
 
         static string getApplicationName()

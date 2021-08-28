@@ -57,7 +57,7 @@ namespace Squirrel.SimpleSplat
             return false;
 #endif
         }
-        
+
         static bool searchForAssembly(IEnumerable<string> assemblyList)
         {
 #if SILVERLIGHT

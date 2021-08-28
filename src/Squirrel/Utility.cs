@@ -24,7 +24,7 @@ namespace Squirrel
     {
         public static string RemoveByteOrderMarkerIfPresent(string content)
         {
-            return string.IsNullOrEmpty(content) ? 
+            return string.IsNullOrEmpty(content) ?
                 string.Empty : RemoveByteOrderMarkerIfPresent(Encoding.UTF8.GetBytes(content));
         }
 
@@ -167,7 +167,7 @@ namespace Squirrel
         public static Task<Tuple<int, string>> InvokeProcessAsync(string fileName, string arguments, CancellationToken ct, string workingDirectory = "")
         {
             var psi = new ProcessStartInfo(fileName, arguments);
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT && fileName.EndsWith (".exe", StringComparison.OrdinalIgnoreCase)) {
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT && fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) {
                 psi = new ProcessStartInfo("wine", fileName + " " + arguments);
             }
 
@@ -257,7 +257,7 @@ namespace Squirrel
             var di = GetTempDirectory(localAppDirectory);
             var tempDir = default(DirectoryInfo);
 
-            var names = Enumerable.Range(0, 1<<20).Select(x => tempNameForIndex(x, "temp"));
+            var names = Enumerable.Range(0, 1 << 20).Select(x => tempNameForIndex(x, "temp"));
 
             foreach (var name in names) {
                 var target = Path.Combine(di.FullName, name);
@@ -277,7 +277,7 @@ namespace Squirrel
         public static IDisposable WithTempFile(out string path, string localAppDirectory = null)
         {
             var di = GetTempDirectory(localAppDirectory);
-            var names = Enumerable.Range(0, 1<<20).Select(x => tempNameForIndex(x, "temp"));
+            var names = Enumerable.Range(0, 1 << 20).Select(x => tempNameForIndex(x, "temp"));
 
             path = "";
             foreach (var name in names) {
@@ -419,7 +419,7 @@ namespace Squirrel
             return Path.Combine(rootAppDirectory, "app-" + version.ToString());
         }
 
-        public static string PackageDirectoryForAppDir(string rootAppDirectory) 
+        public static string PackageDirectoryForAppDir(string rootAppDirectory)
         {
             return Path.Combine(rootAppDirectory, "packages");
         }
@@ -438,7 +438,7 @@ namespace Squirrel
                 return ReleaseEntry.ParseReleaseFile(sr.ReadToEnd());
             }
         }
-            
+
         public static ReleaseEntry FindCurrentVersion(IEnumerable<ReleaseEntry> localReleases)
         {
             if (!localReleases.Any()) {
@@ -452,8 +452,7 @@ namespace Squirrel
         {
             TAcc acc = initialValue;
 
-            foreach (var x in This)
-            {
+            foreach (var x in This) {
                 acc = accFunc(acc, x);
             }
 
@@ -538,7 +537,7 @@ namespace Squirrel
                 s.Seek(peSignatureOffset, SeekOrigin.Begin);
                 s.Read(coffHeader, 0, 24);
 
-                byte[] signature = { (byte)'P', (byte)'E', (byte)'\0', (byte)'\0' };
+                byte[] signature = { (byte) 'P', (byte) 'E', (byte) '\0', (byte) '\0' };
                 for (int index = 0; index < 4; index++) {
                     if (coffHeader[index] != signature[index]) throw new Exception("File is not a PE image");
                 }
@@ -727,12 +726,12 @@ namespace Squirrel
             // set the four most significant bits (bits 12 through 15) of 
             // the time_hi_and_version field to the appropriate 4-bit 
             // version number from Section 4.1.3 (step 8)
-            newGuid[6] = (byte)((newGuid[6] & 0x0F) | (5 << 4));
+            newGuid[6] = (byte) ((newGuid[6] & 0x0F) | (5 << 4));
 
             // set the two most significant bits (bits 6 and 7) of the 
             // clock_seq_hi_and_reserved to zero and one, respectively 
             // (step 10)
-            newGuid[8] = (byte)((newGuid[8] & 0x3F) | 0x80);
+            newGuid[8] = (byte) ((newGuid[8] & 0x3F) | 0x80);
 
             // convert the resulting UUID to local byte order (step 13)
             SwapByteOrder(newGuid);
@@ -778,8 +777,8 @@ namespace Squirrel
             int bytesReturned = 0;
             var pids = new int[2048];
 
-            fixed(int* p = pids) {
-                if (!NativeMethods.EnumProcesses((IntPtr)p, sizeof(int) * pids.Length, out bytesReturned)) {
+            fixed (int* p = pids) {
+                if (!NativeMethods.EnumProcesses((IntPtr) p, sizeof(int) * pids.Length, out bytesReturned)) {
                     throw new Win32Exception("Failed to enumerate processes");
                 }
 

@@ -37,7 +37,7 @@ namespace Squirrel
                             lock (progress) {
                                 current -= component;
                                 component = toIncrement / 100.0 * p;
-                                progress((int)Math.Round(current += component));
+                                progress((int) Math.Round(current += component));
                             }
                         });
 
@@ -53,7 +53,7 @@ namespace Squirrel
                             targetFile,
                             true);
 
-                        lock (progress) progress((int)Math.Round(current += toIncrement));
+                        lock (progress) progress((int) Math.Round(current += toIncrement));
                         checksumPackage(x);
                     });
                 }
@@ -61,7 +61,7 @@ namespace Squirrel
 
             bool isReleaseExplicitlyHttp(ReleaseEntry x)
             {
-                return x.BaseUrl != null && 
+                return x.BaseUrl != null &&
                     Uri.IsWellFormedUriString(x.BaseUrl, UriKind.Absolute);
             }
 
@@ -105,7 +105,7 @@ namespace Squirrel
                 using (var file = targetPackage.OpenRead()) {
                     var hash = Utility.CalculateStreamSHA1(file);
 
-                    if (!hash.Equals(downloadedRelease.SHA1,StringComparison.OrdinalIgnoreCase)) {
+                    if (!hash.Equals(downloadedRelease.SHA1, StringComparison.OrdinalIgnoreCase)) {
                         this.Log().Error("File SHA1 should be {0}, is {1}", downloadedRelease.SHA1, hash);
                         targetPackage.Delete();
                         throw new Exception("Checksum doesn't match: " + targetPackage.FullName);

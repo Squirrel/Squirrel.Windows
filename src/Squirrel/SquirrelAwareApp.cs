@@ -57,7 +57,7 @@ namespace Squirrel
             }.ToDictionary(k => k.Key, v => v.Value);
 
             if (args[0] == "--squirrel-firstrun") {
-                (onFirstRun ?? (() => {}))();
+                (onFirstRun ?? (() => { }))();
                 return;
             }
 

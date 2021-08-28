@@ -65,7 +65,7 @@ namespace Squirrel
                 var baseTempInfo = new DirectoryInfo(baseTempPath);
                 var tempInfo = new DirectoryInfo(tempPath);
 
-                this.Log().Info("Extracting {0} and {1} into {2}", 
+                this.Log().Info("Extracting {0} and {1} into {2}",
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
                 Utility.ExtractZipToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName).Wait();
@@ -210,7 +210,7 @@ namespace Squirrel
             this.Log().Info("Delta patching {0} => {1}", baseFileListing[relativePath], targetFile.FullName);
             var msDelta = new MsDeltaCompression();
 
-            if (targetFile.Extension.Equals(".exe", StringComparison.OrdinalIgnoreCase) || 
+            if (targetFile.Extension.Equals(".exe", StringComparison.OrdinalIgnoreCase) ||
                 targetFile.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
                 targetFile.Extension.Equals(".node", StringComparison.OrdinalIgnoreCase)) {
                 try {
@@ -220,7 +220,7 @@ namespace Squirrel
                     this.Log().Warn("We couldn't create a delta for {0}, attempting to create bsdiff", targetFile.Name);
                 }
             }
-            
+
             try {
                 using (FileStream of = File.Create(targetFile.FullName + ".bsdiff")) {
                     BinaryPatchUtility.Create(oldData, newData, of);
@@ -262,7 +262,7 @@ namespace Squirrel
                     return;
                 }
 
-                 if (relativeFilePath.EndsWith(".bsdiff", StringComparison.InvariantCultureIgnoreCase)) {
+                if (relativeFilePath.EndsWith(".bsdiff", StringComparison.InvariantCultureIgnoreCase)) {
                     using (var of = File.OpenWrite(tempTargetFile))
                     using (var inf = File.OpenRead(finalTarget)) {
                         this.Log().Info("Applying BSDiff to {0}", relativeFilePath);
@@ -270,7 +270,7 @@ namespace Squirrel
                     }
 
                     verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
-                 } else if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
+                } else if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
                     this.Log().Info("Applying MSDiff to {0}", relativeFilePath);
                     var msDelta = new MsDeltaCompression();
                     msDelta.ApplyDelta(inputFile, finalTarget, tempTargetFile);
@@ -304,13 +304,13 @@ namespace Squirrel
             if (expectedReleaseEntry.Filesize != actualReleaseEntry.Filesize) {
                 this.Log().Warn("Patched file {0} has incorrect size, expected {1}, got {2}", relativeFilePath,
                     expectedReleaseEntry.Filesize, actualReleaseEntry.Filesize);
-                throw new ChecksumFailedException() {Filename = relativeFilePath};
+                throw new ChecksumFailedException() { Filename = relativeFilePath };
             }
 
             if (expectedReleaseEntry.SHA1 != actualReleaseEntry.SHA1) {
                 this.Log().Warn("Patched file {0} has incorrect SHA1, expected {1}, got {2}", relativeFilePath,
                     expectedReleaseEntry.SHA1, actualReleaseEntry.SHA1);
-                throw new ChecksumFailedException() {Filename = relativeFilePath};
+                throw new ChecksumFailedException() { Filename = relativeFilePath };
             }
         }
 
@@ -323,7 +323,7 @@ namespace Squirrel
                 return false;
             }
 
-            for(long i = 0; i < newData.LongLength; i++) {
+            for (long i = 0; i < newData.LongLength; i++) {
                 if (oldData[i] != newData[i]) {
                     return false;
                 }

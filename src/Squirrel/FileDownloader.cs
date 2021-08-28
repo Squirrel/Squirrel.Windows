@@ -60,23 +60,23 @@ namespace Squirrel
         public async Task<byte[]> DownloadUrl(string url)
         {
             using (var wc = _providedClient ?? Utility.CreateWebClient()) {
-            var failedUrl = default(string);
+                var failedUrl = default(string);
 
-        retry:
-            try {
-                this.Log().Info("Downloading url: " + (failedUrl ?? url));
+            retry:
+                try {
+                    this.Log().Info("Downloading url: " + (failedUrl ?? url));
 
-                return await this.WarnIfThrows(() => wc.DownloadDataTaskAsync(failedUrl ?? url),
-                    "Failed to download url: " + (failedUrl ?? url));
-            } catch (Exception) {
-                // NB: Some super brain-dead services are case-sensitive yet 
-                // corrupt case on upload. I can't even.
-                if (failedUrl != null) throw;
+                    return await this.WarnIfThrows(() => wc.DownloadDataTaskAsync(failedUrl ?? url),
+                        "Failed to download url: " + (failedUrl ?? url));
+                } catch (Exception) {
+                    // NB: Some super brain-dead services are case-sensitive yet 
+                    // corrupt case on upload. I can't even.
+                    if (failedUrl != null) throw;
 
-                failedUrl = url.ToLower();
-                goto retry;
+                    failedUrl = url.ToLower();
+                    goto retry;
+                }
             }
         }
     }
-}
 }

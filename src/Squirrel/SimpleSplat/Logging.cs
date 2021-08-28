@@ -13,7 +13,8 @@ namespace Squirrel.SimpleSplat
      * Interfaces
      */
 
-    public enum LogLevel {
+    public enum LogLevel
+    {
         Debug = 1, Info, Warn, Error, Fatal,
     }
 
@@ -150,7 +151,7 @@ namespace Squirrel.SimpleSplat
 
     public class NullLogger : ILogger
     {
-        public void Write(string message, LogLevel logLevel) {}
+        public void Write(string message, LogLevel logLevel) { }
         public LogLevel Level { get; set; }
     }
 
@@ -158,7 +159,7 @@ namespace Squirrel.SimpleSplat
     {
         public void Write(string message, LogLevel logLevel)
         {
-            if ((int)logLevel < (int)Level) return;
+            if ((int) logLevel < (int) Level) return;
             Debug.WriteLine(message);
         }
 
@@ -228,7 +229,7 @@ namespace Squirrel.SimpleSplat
             _inner = inner;
             prefix = String.Format(CultureInfo.InvariantCulture, "{0}: ", callingType.Name);
 
-            stringFormat = typeof (String).GetMethod("Format", new[] {typeof (IFormatProvider), typeof (string), typeof (object[])});
+            stringFormat = typeof(String).GetMethod("Format", new[] { typeof(IFormatProvider), typeof(string), typeof(object[]) });
             Contract.Requires(inner != null);
             Contract.Requires(stringFormat != null);
         }
@@ -568,13 +569,13 @@ namespace Squirrel.SimpleSplat
     }
     #endregion
 
-    #if PORTABLE || WINDOWS_PHONE || NETFX_CORE
+#if PORTABLE || WINDOWS_PHONE || NETFX_CORE
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
     public sealed class LocalizableAttribute : Attribute
     {
         public LocalizableAttribute(bool isLocalizable) { }
     }
-    #endif
+#endif
 }
 
 // vim: tw=120 ts=4 sw=4 et :

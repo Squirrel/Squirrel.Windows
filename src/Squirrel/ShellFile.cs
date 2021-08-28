@@ -350,7 +350,7 @@ namespace Squirrel.Shell
             public uint dwReserved1;
 
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] // MAX_PATH
-                public string cFileName;
+            public string cFileName;
 
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
             public string cAlternateFileName;
@@ -370,7 +370,7 @@ namespace Squirrel.Shell
             public uint dwReserved1;
 
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] // MAX_PATH
-                public string cFileName;
+            public string cFileName;
 
             [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 14)]
             public string cAlternateFileName;
@@ -483,13 +483,10 @@ namespace Squirrel.Shell
         /// </summary>
         public ShellLink()
         {
-            if (System.Environment.OSVersion.Platform == PlatformID.Win32NT)
-            {
-                linkW = (IShellLinkW)new CShellLink();
-            }
-            else
-            {
-                linkA = (IShellLinkA)new CShellLink();
+            if (System.Environment.OSVersion.Platform == PlatformID.Win32NT) {
+                linkW = (IShellLinkW) new CShellLink();
+            } else {
+                linkA = (IShellLinkA) new CShellLink();
             }
         }
 
@@ -516,20 +513,17 @@ namespace Squirrel.Shell
         /// </summary>
         public void Dispose()
         {
-            if (linkW != null)
-            {
+            if (linkW != null) {
                 Marshal.ReleaseComObject(linkW);
                 linkW = null;
             }
-            if (linkA != null)
-            {
+            if (linkA != null) {
                 Marshal.ReleaseComObject(linkA);
                 linkA = null;
             }
         }
 
-        public string ShortCutFile
-        {
+        public string ShortCutFile {
             get { return this.shortcutFile; }
             set { this.shortcutFile = value; }
         }
@@ -538,13 +532,11 @@ namespace Squirrel.Shell
         /// Gets a System.Drawing.Icon containing the icon for this
         /// ShellLink object.
         /// </summary>
-        public Icon LargeIcon
-        {
+        public Icon LargeIcon {
             get { return getIcon(true); }
         }
 
-        public Icon SmallIcon
-        {
+        public Icon SmallIcon {
             get { return getIcon(false); }
         }
 
@@ -553,51 +545,39 @@ namespace Squirrel.Shell
             // Get icon index and path:
             int iconIndex = 0;
             StringBuilder iconPath = new StringBuilder(260, 260);
-            if (linkA == null)
-            {
+            if (linkA == null) {
                 linkW.GetIconLocation(iconPath, iconPath.Capacity, out iconIndex);
-            }
-            else
-            {
+            } else {
                 linkA.GetIconLocation(iconPath, iconPath.Capacity, out iconIndex);
             }
             string iconFile = iconPath.ToString();
 
             // If there are no details set for the icon, then we must use
             // the shell to get the icon for the target:
-            if (iconFile.Length == 0)
-            {
+            if (iconFile.Length == 0) {
                 // Use the FileIcon object to get the icon:
                 FileIcon.SHGetFileInfoConstants flags =
                     FileIcon.SHGetFileInfoConstants.SHGFI_ICON |
                         FileIcon.SHGetFileInfoConstants.SHGFI_ATTRIBUTES;
-                if (large)
-                {
+                if (large) {
                     flags = flags | FileIcon.SHGetFileInfoConstants.SHGFI_LARGEICON;
-                }
-                else
-                {
+                } else {
                     flags = flags | FileIcon.SHGetFileInfoConstants.SHGFI_SMALLICON;
                 }
                 FileIcon fileIcon = new FileIcon(Target, flags);
                 return fileIcon.ShellIcon;
-            }
-            else
-            {
+            } else {
                 // Use ExtractIconEx to get the icon:
                 IntPtr[] hIconEx = new IntPtr[1] { IntPtr.Zero };
                 int iconCount = 0;
-                if (large)
-                {
+                if (large) {
                     iconCount = UnManagedMethods.ExtractIconEx(
                         iconFile,
                         iconIndex,
                         hIconEx,
                         null,
                         1);
-                }
-                else
-                {
+                } else {
                     iconCount = UnManagedMethods.ExtractIconEx(
                         iconFile,
                         iconIndex,
@@ -607,8 +587,7 @@ namespace Squirrel.Shell
                 }
                 // If success then return as a GDI+ object
                 Icon icon = null;
-                if (hIconEx[0] != IntPtr.Zero)
-                {
+                if (hIconEx[0] != IntPtr.Zero) {
                     icon = Icon.FromHandle(hIconEx[0]);
                     //UnManagedMethods.DestroyIcon(hIconEx[0]);
                 }
@@ -619,44 +598,32 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets the path to the file containing the icon for this shortcut.
         /// </summary>
-        public string IconPath
-        {
-            get
-            {
+        public string IconPath {
+            get {
                 StringBuilder iconPath = new StringBuilder(260, 260);
                 int iconIndex = 0;
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.GetIconLocation(iconPath, iconPath.Capacity, out
                         iconIndex);
-                }
-                else
-                {
+                } else {
                     linkA.GetIconLocation(iconPath, iconPath.Capacity, out
                         iconIndex);
                 }
                 return iconPath.ToString();
             }
-            set
-            {
+            set {
                 StringBuilder iconPath = new StringBuilder(260, 260);
                 int iconIndex = 0;
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.GetIconLocation(iconPath, iconPath.Capacity, out
                         iconIndex);
-                }
-                else
-                {
+                } else {
                     linkA.GetIconLocation(iconPath, iconPath.Capacity, out
                         iconIndex);
                 }
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.SetIconLocation(value, iconIndex);
-                }
-                else
-                {
+                } else {
                     linkA.SetIconLocation(value, iconIndex);
                 }
             }
@@ -665,44 +632,32 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets the index of this icon within the icon path's resources
         /// </summary>
-        public int IconIndex
-        {
-            get
-            {
+        public int IconIndex {
+            get {
                 StringBuilder iconPath = new StringBuilder(260, 260);
                 int iconIndex = 0;
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.GetIconLocation(iconPath, iconPath.Capacity, out
                         iconIndex);
-                }
-                else
-                {
+                } else {
                     linkA.GetIconLocation(iconPath, iconPath.Capacity, out
                         iconIndex);
                 }
                 return iconIndex;
             }
-            set
-            {
+            set {
                 StringBuilder iconPath = new StringBuilder(260, 260);
                 int iconIndex = 0;
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.GetIconLocation(iconPath, iconPath.Capacity, out
                         iconIndex);
-                }
-                else
-                {
+                } else {
                     linkA.GetIconLocation(iconPath, iconPath.Capacity, out
                         iconIndex);
                 }
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.SetIconLocation(iconPath.ToString(), value);
-                }
-                else
-                {
+                } else {
                     linkA.SetIconLocation(iconPath.ToString(), value);
                 }
             }
@@ -711,33 +666,24 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets/sets the fully qualified path to the link's target
         /// </summary>
-        public string Target
-        {
-            get
-            {
+        public string Target {
+            get {
                 StringBuilder target = new StringBuilder(260, 260);
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     _WIN32_FIND_DATAW fd = new _WIN32_FIND_DATAW();
                     linkW.GetPath(target, target.Capacity, ref fd,
-                        (uint)EShellLinkGP.SLGP_UNCPRIORITY);
-                }
-                else
-                {
+                        (uint) EShellLinkGP.SLGP_UNCPRIORITY);
+                } else {
                     _WIN32_FIND_DATAA fd = new _WIN32_FIND_DATAA();
                     linkA.GetPath(target, target.Capacity, ref fd,
-                        (uint)EShellLinkGP.SLGP_UNCPRIORITY);
+                        (uint) EShellLinkGP.SLGP_UNCPRIORITY);
                 }
                 return target.ToString();
             }
-            set
-            {
-                if (linkA == null)
-                {
+            set {
+                if (linkA == null) {
                     linkW.SetPath(value);
-                }
-                else
-                {
+                } else {
                     linkA.SetPath(value);
                 }
             }
@@ -746,29 +692,20 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets/sets the Working Directory for the Link
         /// </summary>
-        public string WorkingDirectory
-        {
-            get
-            {
+        public string WorkingDirectory {
+            get {
                 StringBuilder path = new StringBuilder(260, 260);
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.GetWorkingDirectory(path, path.Capacity);
-                }
-                else
-                {
+                } else {
                     linkA.GetWorkingDirectory(path, path.Capacity);
                 }
                 return path.ToString();
             }
-            set
-            {
-                if (linkA == null)
-                {
+            set {
+                if (linkA == null) {
                     linkW.SetWorkingDirectory(value);
-                }
-                else
-                {
+                } else {
                     linkA.SetWorkingDirectory(value);
                 }
             }
@@ -777,29 +714,20 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets/sets the description of the link
         /// </summary>
-        public string Description
-        {
-            get
-            {
+        public string Description {
+            get {
                 StringBuilder description = new StringBuilder(1024, 1024);
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.GetDescription(description, description.Capacity);
-                }
-                else
-                {
+                } else {
                     linkA.GetDescription(description, description.Capacity);
                 }
                 return description.ToString();
             }
-            set
-            {
-                if (linkA == null)
-                {
+            set {
+                if (linkA == null) {
                     linkW.SetDescription(value);
-                }
-                else
-                {
+                } else {
                     linkA.SetDescription(value);
                 }
             }
@@ -808,29 +736,20 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets/sets any command line arguments associated with the link
         /// </summary>
-        public string Arguments
-        {
-            get
-            {
+        public string Arguments {
+            get {
                 StringBuilder arguments = new StringBuilder(260, 260);
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.GetArguments(arguments, arguments.Capacity);
-                }
-                else
-                {
+                } else {
                     linkA.GetArguments(arguments, arguments.Capacity);
                 }
                 return arguments.ToString();
             }
-            set
-            {
-                if (linkA == null)
-                {
+            set {
+                if (linkA == null) {
                     linkW.SetArguments(value);
-                }
-                else
-                {
+                } else {
                     linkA.SetArguments(value);
                 }
             }
@@ -840,30 +759,21 @@ namespace Squirrel.Shell
         /// Gets/sets the initial display mode when the shortcut is
         /// run
         /// </summary>
-        public LinkDisplayMode DisplayMode
-        {
-            get
-            {
+        public LinkDisplayMode DisplayMode {
+            get {
                 uint cmd = 0;
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.GetShowCmd(out cmd);
-                }
-                else
-                {
+                } else {
                     linkA.GetShowCmd(out cmd);
                 }
-                return (LinkDisplayMode)cmd;
+                return (LinkDisplayMode) cmd;
             }
-            set
-            {
-                if (linkA == null)
-                {
-                    linkW.SetShowCmd((uint)value);
-                }
-                else
-                {
-                    linkA.SetShowCmd((uint)value);
+            set {
+                if (linkA == null) {
+                    linkW.SetShowCmd((uint) value);
+                } else {
+                    linkA.SetShowCmd((uint) value);
                 }
             }
         }
@@ -871,29 +781,20 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets/sets the HotKey to start the shortcut (if any)
         /// </summary>
-        public short HotKey
-        {
-            get
-            {
+        public short HotKey {
+            get {
                 short key = 0;
-                if (linkA == null)
-                {
+                if (linkA == null) {
                     linkW.GetHotkey(out key);
-                }
-                else
-                {
+                } else {
                     linkA.GetHotkey(out key);
                 }
                 return key;
             }
-            set
-            {
-                if (linkA == null)
-                {
+            set {
+                if (linkA == null) {
                     linkW.SetHotkey(value);
-                }
-                else
-                {
+                } else {
                     linkA.SetHotkey(value);
                 }
             }
@@ -904,9 +805,9 @@ namespace Squirrel.Shell
         /// </summary>
         public void SetAppUserModelId(string appId)
         {
-            var propStore = (IPropertyStore)linkW;
+            var propStore = (IPropertyStore) linkW;
             var pkey = PROPERTYKEY.PKEY_AppUserModel_ID;
-            var str = PropVariant.FromString (appId);
+            var str = PropVariant.FromString(appId);
             propStore.SetValue(ref pkey, ref str);
         }
 
@@ -924,7 +825,7 @@ namespace Squirrel.Shell
         /// </summary>
         public void SetToastActivatorCLSID(Guid clsid)
         {
-            var propStore = (IPropertyStore)linkW;
+            var propStore = (IPropertyStore) linkW;
 
             var pkey = PROPERTYKEY.PKEY_AppUserModel_ToastActivatorCLSID;
 
@@ -957,14 +858,11 @@ namespace Squirrel.Shell
             )
         {
             // Save the object to disk
-            if (linkA == null)
-            {
-                ((IPersistFile)linkW).Save(linkFile, true);
+            if (linkA == null) {
+                ((IPersistFile) linkW).Save(linkFile, true);
                 shortcutFile = linkFile;
-            }
-            else
-            {
-                ((IPersistFile)linkA).Save(linkFile, true);
+            } else {
+                ((IPersistFile) linkA).Save(linkFile, true);
                 shortcutFile = linkFile;
             }
         }
@@ -1022,24 +920,18 @@ namespace Squirrel.Shell
             uint flags;
 
             if ((resolveFlags & EShellLinkResolveFlags.SLR_NO_UI)
-                == EShellLinkResolveFlags.SLR_NO_UI)
-            {
-                flags = (uint)((int)resolveFlags | (timeOut << 16));
-            }
-            else
-            {
-                flags = (uint)resolveFlags;
+                == EShellLinkResolveFlags.SLR_NO_UI) {
+                flags = (uint) ((int) resolveFlags | (timeOut << 16));
+            } else {
+                flags = (uint) resolveFlags;
             }
 
-            if (linkA == null)
-            {
-                ((IPersistFile)linkW).Load(linkFile, 0); //STGM_DIRECT)
+            if (linkA == null) {
+                ((IPersistFile) linkW).Load(linkFile, 0); //STGM_DIRECT)
                 linkW.Resolve(hWnd, flags);
                 this.shortcutFile = linkFile;
-            }
-            else
-            {
-                ((IPersistFile)linkA).Load(linkFile, 0); //STGM_DIRECT)
+            } else {
+                ((IPersistFile) linkA).Load(linkFile, 0); //STGM_DIRECT)
                 linkA.Resolve(hWnd, flags);
                 this.shortcutFile = linkFile;
             }
@@ -1132,8 +1024,7 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets/sets the flags used to extract the icon
         /// </summary>
-        public FileIcon.SHGetFileInfoConstants Flags
-        {
+        public FileIcon.SHGetFileInfoConstants Flags {
             get { return flags; }
             set { flags = value; }
         }
@@ -1141,8 +1032,7 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets/sets the filename to get the icon for
         /// </summary>
-        public string FileName
-        {
+        public string FileName {
             get { return fileName; }
             set { fileName = value; }
         }
@@ -1150,8 +1040,7 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets the icon for the chosen file
         /// </summary>
-        public Icon ShellIcon
-        {
+        public Icon ShellIcon {
             get { return fileIcon; }
         }
 
@@ -1159,8 +1048,7 @@ namespace Squirrel.Shell
         /// Gets the display name for the selected file
         /// if the SHGFI_DISPLAYNAME flag was set.
         /// </summary>
-        public string DisplayName
-        {
+        public string DisplayName {
             get { return displayName; }
         }
 
@@ -1168,8 +1056,7 @@ namespace Squirrel.Shell
         /// Gets the type name for the selected file
         /// if the SHGFI_TYPENAME flag was set.
         /// </summary>
-        public string TypeName
-        {
+        public string TypeName {
             get { return typeName; }
         }
 
@@ -1184,23 +1071,19 @@ namespace Squirrel.Shell
             displayName = "";
 
             SHFILEINFO shfi = new SHFILEINFO();
-            uint shfiSize = (uint)Marshal.SizeOf(shfi.GetType());
+            uint shfiSize = (uint) Marshal.SizeOf(shfi.GetType());
 
             IntPtr ret = SHGetFileInfo(
-                fileName, 0, ref shfi, shfiSize, (uint)(flags));
-            if (ret != IntPtr.Zero)
-            {
-                if (shfi.hIcon != IntPtr.Zero)
-                {
+                fileName, 0, ref shfi, shfiSize, (uint) (flags));
+            if (ret != IntPtr.Zero) {
+                if (shfi.hIcon != IntPtr.Zero) {
                     fileIcon = System.Drawing.Icon.FromHandle(shfi.hIcon);
                     // Now owned by the GDI+ object
                     //DestroyIcon(shfi.hIcon);
                 }
                 typeName = shfi.szTypeName;
                 displayName = shfi.szDisplayName;
-            }
-            else
-            {
+            } else {
                 int err = GetLastError();
                 Console.WriteLine("Error {0}", err);
                 string txtS = new string('\0', 256);
