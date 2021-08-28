@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "RuntimeInfo.h"
+#include "Resource.h"
 
 using std::wstring;
 using std::string;
+using std::vector;
 
 RUNTIMEINFO supported_runtimes[] =
 {
@@ -193,4 +195,31 @@ bool IsRuntimeInstalled(const RUNTIMEINFO* runtime)
 	{
 		return IsDotNetCoreInstalled(wstring(runtime->dncRuntimeVersionName));
 	}
+}
+
+vector<const RUNTIMEINFO*> GetRequiredRuntimes()
+{
+    vector<const RUNTIMEINFO*> runtimes;
+
+	// get comma-delimited version string from exe resources
+	wchar_t* versionFlag = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_FX_VERSION_FLAG, L"FLAGS"));
+    if (versionFlag == nullptr)
+        return runtimes;
+
+	wstring version(versionFlag);
+    if (version.length() == 0)
+        return runtimes;
+
+	// split version string by comma
+	wstring temp;
+	std::wstringstream wss(version);
+	while (std::getline(wss, temp, L','))
+	{
+		const RUNTIMEINFO* rt = GetRuntimeByName(temp);
+		if (rt != nullptr)
+			runtimes.push_back(rt);
+	}
+
+	// return vector by value
+	return runtimes;
 }

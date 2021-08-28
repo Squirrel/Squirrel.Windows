@@ -39,9 +39,6 @@
     <ClInclude Include="MachineInstaller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DncHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RuntimeInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -63,9 +60,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MachineInstaller.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DncHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RuntimeInfo.cpp">

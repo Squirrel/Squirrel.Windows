@@ -102,7 +102,6 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="DncHelper.h" />
     <ClInclude Include="FxHelper.h" />
     <ClInclude Include="MachineInstaller.h" />
     <ClInclude Include="Resource.h" />
@@ -114,7 +113,6 @@
     <ClInclude Include="UpdateRunner.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DncHelper.cpp" />
     <ClCompile Include="FxHelper.cpp" />
     <ClCompile Include="MachineInstaller.cpp" />
     <ClCompile Include="RuntimeInfo.cpp" />

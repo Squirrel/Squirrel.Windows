@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include "Setup.h"
 #include "FxHelper.h"
-#include "DncHelper.h"
 #include "UpdateRunner.h"
 #include "MachineInstaller.h"
 #include <cstdio>
@@ -12,7 +11,7 @@
 
 CAppModule* _Module;
 
-typedef BOOL(WINAPI *SetDefaultDllDirectoriesFunction)(DWORD DirectoryFlags);
+typedef BOOL(WINAPI* SetDefaultDllDirectoriesFunction)(DWORD DirectoryFlags);
 
 // Some libraries are still loaded from the current directories.
 // If we pre-load them with an absolute path then we are good.
@@ -44,12 +43,13 @@ void MitigateDllHijacking()
 	PreloadLibs();
 }
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                      _In_opt_ HINSTANCE hPrevInstance,
-                      _In_ LPWSTR lpCmdLine,
-                      _In_ int nCmdShow)
+int APIENTRY wWinMain(
+	_In_ HINSTANCE hInstance,
+	_In_opt_ HINSTANCE hPrevInstance,
+	_In_ LPWSTR lpCmdLine,
+	_In_ int nCmdShow)
 {
-	MitigateDllHijacking();	
+	MitigateDllHijacking();
 
 	int exitCode = -1;
 	CString cmdLine(lpCmdLine);
@@ -75,52 +75,61 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	bool weAreUACElevated = CUpdateRunner::AreWeUACElevated() == S_OK;
 	bool attemptingToRerun = (cmdLine.Find(L"--rerunningWithoutUAC") >= 0);
 
+	// todo: make min windows version configurable (eg, > windows 10 18362)
+	auto runtimes = GetRequiredRuntimes();
+
 	if (weAreUACElevated && attemptingToRerun) {
 		CUpdateRunner::DisplayErrorMessage(CString(L"Please re-run this installer as a normal user instead of \"Run as Administrator\"."), NULL);
 		exitCode = E_FAIL;
 		goto out;
 	}
 
-	// todo: make min windows version configurable (eg, > windows 10 18362)
-	if (!CFxHelper::CanInstallDotNet4_5()) {
-		// Explain this as nicely as possible and give up.
-		MessageBox(0L, L"This program cannot run on Windows XP or before; it requires a later version of Windows.", L"Incompatible Operating System", 0);
-		exitCode = E_FAIL;
+	bool rebootRequired = false;
+
+	// check all required runtimes against the current operating system version
+	for (auto rt : runtimes)
+	{
+		if (!IsRuntimeSupported(rt))
+		{
+			// Explain this as nicely as possible and give up.
+			MessageBox(0L, L"This program cannot run on this computer; it requires a later version of Windows.", L"Incompatible Operating System", 0);
+			exitCode = E_FAIL;
+			goto out;
+		}
+	}
+
+	// install any missing runtimes
+	for (auto rt : runtimes)
+	{
+		if (!IsRuntimeInstalled(rt))
+		{
+			HRESULT hr = CFxHelper::InstallDotnet(rt, isQuiet);
+			if (hr == ERROR_SUCCESS_REBOOT_REQUIRED)
+			{
+				// we will reboot after installing all required runtimes.
+				rebootRequired = true;
+			}
+			else if (FAILED(hr))
+			{
+				exitCode = hr; // #yolo
+				CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install .NET, you can try installing it manually."), NULL);
+				goto out;
+			}
+			// S_FALSE isn't failure, but we still shouldn't try to install
+			else if (hr != S_OK) 
+			{
+				exitCode = 0;
+				goto out;
+			}
+		}
+	}
+
+	// if any runtimes indicated a reboot is required, let's do that now
+	if (rebootRequired)
+	{
+		exitCode = CFxHelper::HandleRebootRequirement(isQuiet);
 		goto out;
 	}
-
-	// hack: bootstrap .net 5.0 and ignore requests to install the full framework
-	if (!DncHelper::IsNet50Installed())
-	{
-		hr = DncHelper::InstallNet50(isQuiet);
-		if (FAILED(hr)) {
-			exitCode = hr; // #yolo
-			CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install .NET, you can try installing the .NET 5.0 Desktop Runtime manually."), NULL);
-			goto out;
-		}
-
-		// S_FALSE isn't failure, but we still shouldn't try to install
-		if (hr != S_OK) {
-			exitCode = 0;
-			goto out;
-		}
-	}
-
-	//NetVersion requiredVersion = CFxHelper::GetRequiredDotNetVersion();
-	//if (!CFxHelper::IsDotNetInstalled(requiredVersion)) {
-	//	hr = CFxHelper::InstallDotNetFramework(requiredVersion, isQuiet);
-	//	if (FAILED(hr)) {
-	//		exitCode = hr; // #yolo
-	//		CUpdateRunner::DisplayErrorMessage(CString(L"Failed to install the .NET Framework, try installing the latest version manually"), NULL);
-	//		goto out;
-	//	}
-	//
-	//	// S_FALSE isn't failure, but we still shouldn't try to install
-	//	if (hr != S_OK) {
-	//		exitCode = 0;
-	//		goto out;
-	//	}
-	//}
 
 	// If we're UAC-elevated, we shouldn't be because it will give us permissions
 	// problems later. Just silently rerun ourselves.

@@ -1,21 +1,12 @@
 #pragma once
-
-enum class NetVersion {net45=0, net451=1, net452=2, net46=3, net461=4, net462=5, net47=6, net471=7, net472=8, net48=9};
+#include "RuntimeInfo.h"
 
 class CFxHelper
 {
 public:
-	static NetVersion GetRequiredDotNetVersion();
-	static bool CanInstallDotNet4_5();
-	static bool IsDotNetInstalled(NetVersion requiredVersion);
-	static HRESULT InstallDotNetFramework(NetVersion version, bool isQuiet);
-private:
+	static HRESULT InstallDotnet(const RUNTIMEINFO* runtime, bool isQuiet);
 	static HRESULT HandleRebootRequirement(bool isQuiet);
+private:
 	static bool WriteRunOnceEntry();
 	static bool RebootSystem();
-	static UINT GetDotNetVersionReleaseNumber(NetVersion version);
-	static UINT GetInstallerUrlForVersion(NetVersion version);
-	static UINT GetInstallerMainInstructionForVersion(NetVersion version);
-	static UINT GetInstallerContentForVersion(NetVersion version);
-	static UINT GetInstallerExpandedInfoForVersion(NetVersion version);
 };
