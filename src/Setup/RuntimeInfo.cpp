@@ -197,20 +197,10 @@ bool IsRuntimeInstalled(const RUNTIMEINFO* runtime)
 	}
 }
 
-vector<const RUNTIMEINFO*> GetRequiredRuntimes()
+int ParseRuntimeString(std::wstring version, vector<const RUNTIMEINFO*>& runtimes)
 {
-    vector<const RUNTIMEINFO*> runtimes;
-
-	// get comma-delimited version string from exe resources
-	wchar_t* versionFlag = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_FX_VERSION_FLAG, L"FLAGS"));
-    if (versionFlag == nullptr)
-        return runtimes;
-
-	wstring version(versionFlag);
-    if (version.length() == 0)
-        return runtimes;
-
 	// split version string by comma
+	int ret = S_OK;
 	wstring temp;
 	std::wstringstream wss(version);
 	while (std::getline(wss, temp, L','))
@@ -218,8 +208,32 @@ vector<const RUNTIMEINFO*> GetRequiredRuntimes()
 		const RUNTIMEINFO* rt = GetRuntimeByName(temp);
 		if (rt != nullptr)
 			runtimes.push_back(rt);
+		else
+			ret = S_FALSE;
 	}
+	return ret;
+}
 
-	// return vector by value
+vector<const RUNTIMEINFO*> GetRequiredRuntimes()
+{
+	vector<const RUNTIMEINFO*> runtimes;
+
+	// get comma-delimited version string from exe resources
+	wchar_t* versionFlag = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_FX_VERSION_FLAG, L"FLAGS"));
+	if (versionFlag == nullptr)
+		return runtimes;
+
+	wstring version(versionFlag);
+	if (version.length() == 0)
+		return runtimes;
+
+	ParseRuntimeString(version, runtimes);
 	return runtimes;
 }
+
+int VerifyRuntimeString(std::wstring version)
+{
+	vector<const RUNTIMEINFO*> runtimes;
+	return ParseRuntimeString(version, runtimes);
+}
+

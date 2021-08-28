@@ -18,3 +18,4 @@ const RUNTIMEINFO* GetRuntimeByName(std::wstring name);
 bool IsRuntimeSupported(const RUNTIMEINFO* runtime);
 bool IsRuntimeInstalled(const RUNTIMEINFO* runtime);
 std::vector<const RUNTIMEINFO*> GetRequiredRuntimes();
+int VerifyRuntimeString(std::wstring runtimes);

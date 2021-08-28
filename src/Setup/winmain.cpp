@@ -54,6 +54,12 @@ int APIENTRY wWinMain(
 	int exitCode = -1;
 	CString cmdLine(lpCmdLine);
 
+	// see if the requested framework(s) are supported and exit.
+	int chkFrameworkIdx = cmdLine.Find(L"--checkFramework");
+	if (chkFrameworkIdx >= 0) {
+		return VerifyRuntimeString(std::wstring(cmdLine).substr(chkFrameworkIdx + 17));
+	}
+
 	if (cmdLine.Find(L"--checkInstall") >= 0) {
 		// If we're already installed, exit as fast as possible
 		if (!MachineInstaller::ShouldSilentInstall()) {

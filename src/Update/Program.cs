@@ -315,6 +315,15 @@ namespace Squirrel.Update
 
             this.Log().Info("Bootstrapper EXE found at:" + bootstrapperExe);
 
+            // validate that the provided "frameworkVersion" is supported by Setup.exe
+            if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
+                var chkFrameworkResult = Utility.InvokeProcessAsync(bootstrapperExe, "--checkFramework " + frameworkVersion, CancellationToken.None).Result;
+                if (chkFrameworkResult.Item1 != 0) {
+                    this.Log().Error($"Unsupported FrameworkVersion: '{frameworkVersion}'. {chkFrameworkResult.Item2}");
+                    throw new ArgumentException();
+                }
+            }
+
             var di = new DirectoryInfo(targetDir);
             File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
 
