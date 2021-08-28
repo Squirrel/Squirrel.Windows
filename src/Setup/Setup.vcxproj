@@ -106,6 +106,7 @@
     <ClInclude Include="FxHelper.h" />
     <ClInclude Include="MachineInstaller.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="RuntimeInfo.h" />
     <ClInclude Include="Setup.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -116,6 +117,7 @@
     <ClCompile Include="DncHelper.cpp" />
     <ClCompile Include="FxHelper.cpp" />
     <ClCompile Include="MachineInstaller.cpp" />
+    <ClCompile Include="RuntimeInfo.cpp" />
     <ClCompile Include="unzip.cpp" />
     <ClCompile Include="UpdateRunner.cpp" />
     <ClCompile Include="winmain.cpp" />
