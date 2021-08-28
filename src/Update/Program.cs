@@ -313,6 +313,11 @@ namespace Squirrel.Update
                     "Setup.exe");
             }
 
+            if (!File.Exists(bootstrapperExe)) {
+                this.Log().Error("Could not find Bootstrapper EXE. Please place it in the directory next to me, or use the bootstrapperExe command line option.");
+                throw new ArgumentException();
+            }
+
             this.Log().Info("Bootstrapper EXE found at:" + bootstrapperExe);
 
             // validate that the provided "frameworkVersion" is supported by Setup.exe
@@ -395,16 +400,24 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, backgroundGif, signingOpts, setupIcon).Result;
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, signingOpts, setupIcon).Result;
 
             var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
             try {
-                var arguments = String.Format("\"{0}\" \"{1}\" \"--set-required-framework\" \"{2}\"", targetSetupExe, zipPath, frameworkVersion);
+                string arguments = $"\"{targetSetupExe}\" \"{zipPath}\"";
+                if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
+                    arguments += $" --set-required-framework \"{frameworkVersion}\"";
+                }
+                if (!String.IsNullOrWhiteSpace(backgroundGif)) {
+                    arguments += $" --set-splash \"{Path.GetFullPath(backgroundGif)}\"";
+                }
+
                 var result = Utility.InvokeProcessAsync(writeZipToSetup, arguments, CancellationToken.None).Result;
                 if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
             } catch (Exception ex) {
                 this.Log().ErrorException("Failed to update Setup.exe with new Zip file", ex);
+                throw;
             } finally {
                 File.Delete(zipPath);
             }
@@ -533,7 +546,7 @@ namespace Squirrel.Update
             }
         }
 
-        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts, string setupIcon)
+        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string signingOpts, string setupIcon)
         {
             string tempPath;
 
@@ -543,12 +556,6 @@ namespace Squirrel.Update
                     File.Copy(AssemblyRuntimeInfo.EntryExePath, Path.Combine(tempPath, "Update.exe"));
                     File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
                 }, "Failed to write package files to temp dir: " + tempPath);
-
-                if (!String.IsNullOrWhiteSpace(backgroundGif)) {
-                    this.ErrorIfThrows(() => {
-                        File.Copy(backgroundGif, Path.Combine(tempPath, "background.gif"));
-                    }, "Failed to write animated GIF to temp dir: " + tempPath);
-                }
 
                 if (!String.IsNullOrWhiteSpace(setupIcon)) {
                     this.ErrorIfThrows(() => {

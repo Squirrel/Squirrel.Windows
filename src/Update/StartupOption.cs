@@ -21,7 +21,7 @@ namespace Squirrel.Update
         internal string setupIcon { get; private set; } = default(string);
         internal string icon { get; private set; } = default(string);
         internal string shortcutArgs { get; private set; } = default(string);
-        internal string frameworkVersion { get; private set; } = "net45";
+        internal string frameworkVersion { get; private set; }
         internal bool shouldWait { get; private set; } = false;
         internal bool noMsi { get; private set; } = (Environment.OSVersion.Platform != PlatformID.Win32NT);        // NB: WiX doesn't work under Mono / Wine
         internal bool packageAs64Bit { get; private set; } = false;
@@ -57,7 +57,7 @@ namespace Squirrel.Update
                 { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
                 { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                 { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
-                { "g=|loadingGif=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
+                { "g=|loadingGif=|splashImage=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
                 { "i=|icon", "Path to an ICO file that will be used for icon shortcuts", v => icon = v},
                 { "setupIcon=", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
                 { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},

@@ -6,8 +6,13 @@
 #include "FxHelper.h"
 #include "UpdateRunner.h"
 #include "MachineInstaller.h"
+#include "SplashWnd.h"
+#include "resource.h"
+#include <GdiPlus.h>
 #include <cstdio>
 #include <string>
+
+#pragma comment(lib,"gdiplus.lib")
 
 CAppModule* _Module;
 
@@ -43,6 +48,61 @@ void MitigateDllHijacking()
 	PreloadLibs();
 }
 
+// https://stackoverflow.com/a/66238748/184746
+Gdiplus::Bitmap* LoadImageFromResource(const wchar_t* resid, const wchar_t* restype)
+{
+	IStream* pStream = nullptr;
+	Gdiplus::Bitmap* pBmp = nullptr;
+	HGLOBAL hGlobal = nullptr;
+
+	HINSTANCE hInst = GetModuleHandle(NULL);
+	HRSRC hrsrc = FindResourceW(hInst, resid, restype);     // get the handle to the resource
+	if (hrsrc)
+	{
+		DWORD dwResourceSize = SizeofResource(hInst, hrsrc);
+		if (dwResourceSize > 0)
+		{
+			HGLOBAL hGlobalResource = LoadResource(hInst, hrsrc); // load it
+			if (hGlobalResource)
+			{
+				void* imagebytes = LockResource(hGlobalResource); // get a pointer to the file bytes
+
+				// copy image bytes into a real hglobal memory handle
+				hGlobal = ::GlobalAlloc(GHND, dwResourceSize);
+				if (hGlobal)
+				{
+					void* pBuffer = ::GlobalLock(hGlobal);
+					if (pBuffer)
+					{
+						memcpy(pBuffer, imagebytes, dwResourceSize);
+						HRESULT hr = CreateStreamOnHGlobal(hGlobal, TRUE, &pStream);
+						if (SUCCEEDED(hr))
+						{
+							// pStream now owns the global handle and will invoke GlobalFree on release
+							hGlobal = nullptr;
+							pBmp = new Gdiplus::Bitmap(pStream);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (pStream)
+	{
+		pStream->Release();
+		pStream = nullptr;
+	}
+
+	if (hGlobal)
+	{
+		GlobalFree(hGlobal);
+		hGlobal = nullptr;
+	}
+
+	return pBmp;
+}
+
 int APIENTRY wWinMain(
 	_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -70,12 +130,20 @@ int APIENTRY wWinMain(
 		wcscat(lpCmdLine, L" --silent");
 	}
 
+	// Initialize COM
 	HRESULT hr = ::CoInitialize(NULL);
 	ATLASSERT(SUCCEEDED(hr));
-
 	AtlInitCommonControls(ICC_COOL_CLASSES | ICC_BAR_CLASSES);
+
+	// Initialize ATL
 	_Module = new CAppModule();
 	hr = _Module->Init(NULL, hInstance);
+
+	// Initialize GDI
+	ULONG_PTR gdiplusToken;
+	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
+	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+	CSplashWnd splash;
 
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 	bool weAreUACElevated = CUpdateRunner::AreWeUACElevated() == S_OK;
@@ -150,9 +218,20 @@ int APIENTRY wWinMain(
 		goto out;
 	}
 
+	// TODO: hide splash before setup error is shown
+	auto bitmap = LoadImageFromResource(MAKEINTRESOURCE(IDR_SPLASH_IMG), L"DATA");
+
+	if (bitmap) {
+		splash.SetImage(bitmap);
+		splash.Show();
+		splash.SetAutoProgress(40, 100, 10);
+	}
+
+	// run updater
 	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine, false);
 
 out:
+	splash.Hide();
 	_Module->Term();
 	return exitCode;
 }

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -107,6 +107,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RuntimeInfo.h" />
     <ClInclude Include="Setup.h" />
+    <ClInclude Include="SplashWnd.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="unzip.h" />
@@ -116,6 +117,7 @@
     <ClCompile Include="FxHelper.cpp" />
     <ClCompile Include="MachineInstaller.cpp" />
     <ClCompile Include="RuntimeInfo.cpp" />
+    <ClCompile Include="SplashWnd.cpp" />
     <ClCompile Include="unzip.cpp" />
     <ClCompile Include="UpdateRunner.cpp" />
     <ClCompile Include="winmain.cpp" />
@@ -129,6 +131,7 @@
   <ItemGroup>
     <Image Include="Setup.ico" />
     <Image Include="small.ico" />
+    <Image Include="splash.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="flags1.bin" />
