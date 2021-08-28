@@ -27,6 +27,7 @@ namespace Squirrel.Update
         internal bool packageAs64Bit { get; private set; } = false;
         internal bool noDelta { get; private set; } = false;
         internal bool onlyUpdateShortcuts { get; private set; } = false;
+        internal bool selfContained { get; private set; } = false;
 
         public StartupOption(string[] args)
         {
@@ -70,6 +71,7 @@ namespace Squirrel.Update
                 { "framework-version=", "Set the required .NET framework version, e.g. net461", v => frameworkVersion = v },
                 { "msi-win64", "Mark the MSI as 64-bit, which is useful in Enterprise deployment scenarios", _ => packageAs64Bit = true},
                 { "updateOnly", "Update shortcuts that already exist, rather than creating new ones", _ => onlyUpdateShortcuts = true},
+                { "selfContained", "(experimental) Generates a release with a fully self-contained updater that does not have any dependencies", _ => selfContained = true},
             };
 
             opts.Parse(args);

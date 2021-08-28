@@ -114,7 +114,7 @@ namespace Squirrel.Update
                 break;
 #endif
             case UpdateAction.Releasify:
-                Releasify(opt.target, opt.releaseDir, opt.packagesDir, opt.bootstrapperExe, opt.backgroundGif, opt.signingParameters, opt.baseUrl, opt.setupIcon, !opt.noMsi, opt.packageAs64Bit, opt.frameworkVersion, !opt.noDelta);
+                Releasify(opt.target, opt.releaseDir, opt.packagesDir, opt.bootstrapperExe, opt.backgroundGif, opt.signingParameters, opt.baseUrl, opt.setupIcon, !opt.noMsi, opt.packageAs64Bit, opt.frameworkVersion, !opt.noDelta, opt.selfContained);
                 break;
             }
 
@@ -285,7 +285,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, bool packageAs64Bit = false, string frameworkVersion = null, bool generateDeltas = true)
+        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, bool packageAs64Bit = false, string frameworkVersion = null, bool generateDeltas = true, bool selfContained = false)
         {
             ensureConsole();
 
@@ -400,7 +400,7 @@ namespace Squirrel.Update
             var newestFullRelease = releaseEntries.MaxBy(x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(bootstrapperExe, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, signingOpts, setupIcon).Result;
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, signingOpts, setupIcon, selfContained).Result;
 
             var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
@@ -546,14 +546,26 @@ namespace Squirrel.Update
             }
         }
 
-        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string signingOpts, string setupIcon)
+        async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string signingOpts, string setupIcon, bool selfContained)
         {
             string tempPath;
 
             this.Log().Info("Building embedded zip file for Setup.exe");
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 this.ErrorIfThrows(() => {
-                    File.Copy(AssemblyRuntimeInfo.EntryExePath, Path.Combine(tempPath, "Update.exe"));
+
+                    if (selfContained) {
+                        var selfPath = Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "UpdateSelfContained.exe");
+                        if (File.Exists(selfPath)) {
+                            File.Copy(selfPath, Path.Combine(tempPath, "Update.exe"));
+                        } else {
+                            this.Log().Error("Could not find UpdateSelfContained.exe in base directory. Am I published?");
+                            throw new ArgumentException();
+                        }
+                    } else {
+                        File.Copy(AssemblyRuntimeInfo.EntryExePath, Path.Combine(tempPath, "Update.exe"));
+                    }
+
                     File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
                 }, "Failed to write package files to temp dir: " + tempPath);
 
