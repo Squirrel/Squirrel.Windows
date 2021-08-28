@@ -8,7 +8,7 @@ using B2Net;
 using B2Net.Models;
 using Squirrel;
 
-namespace SyncReleases.Sources
+namespace Squirrel.SyncReleases.Sources
 {
     internal class BackblazeRepository : IPackageRepository
     {

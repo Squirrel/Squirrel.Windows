@@ -8,7 +8,7 @@ using Octokit;
 using System.Reflection;
 using System.Net;
 
-namespace SyncReleases
+namespace Squirrel.SyncReleases.Sources
 {
     internal class SyncImplementations
     {

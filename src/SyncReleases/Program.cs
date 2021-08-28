@@ -13,9 +13,9 @@ using Octokit;
 using Squirrel.SimpleSplat;
 using Squirrel;
 using Squirrel.Json;
-using SyncReleases.Sources;
+using Squirrel.SyncReleases.Sources;
 
-namespace SyncReleases
+namespace Squirrel.SyncReleases
 {
     class Program : IEnableLogger
     {

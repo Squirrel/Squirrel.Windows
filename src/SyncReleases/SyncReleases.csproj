@@ -8,6 +8,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <RootNamespace>Squirrel.SyncReleases</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

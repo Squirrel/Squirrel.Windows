@@ -2,7 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 
-namespace SyncReleases.Sources
+namespace Squirrel.SyncReleases.Sources
 {
 
     internal class SimpleWebRepository : IPackageRepository
