@@ -9,6 +9,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationIcon>squirrel.ico</ApplicationIcon>
+    <RootNamespace>Squirrel.Update</RootNamespace>
   </PropertyGroup>
 
   <!-- If update.ico exists in project directory it will be used instead of the squirrel icon -->

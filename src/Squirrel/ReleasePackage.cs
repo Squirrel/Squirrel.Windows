@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics.Contracts;
@@ -9,7 +9,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using MarkdownSharp;
+using Squirrel.MarkdownSharp;
 using NuGet;
 using Squirrel.SimpleSplat;
 using System.Threading.Tasks;

@@ -1,5 +1,5 @@
 ﻿using System.Runtime.Versioning;
-using MarkdownSharp;
+using Squirrel.MarkdownSharp;
 using NuGet;
 using Squirrel;
 using Squirrel.Tests.TestHelpers;
