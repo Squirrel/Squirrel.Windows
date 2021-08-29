@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <!-- If update.ico exists in project directory it will be used instead of the squirrel icon -->
-  <PropertyGroup Condition="Exists('ins-update.ico')">
+  <PropertyGroup Condition="Exists('update.ico')">
     <ApplicationIcon>update.ico</ApplicationIcon>
   </PropertyGroup>
 
