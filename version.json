@@ -1,11 +1,5 @@
 {
-  "version": "2.0.1",
-  "publicReleaseRefSpec": [
-    "^refs/heads/master$"
-  ],
-  "cloudBuild": {
-    "buildNumber": {
-      "enabled": false
-    }
-  }
+  "$schema": "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
+  "version": "2.1-pre",
+  "gitCommitIdShortFixedLength": 6
 }
