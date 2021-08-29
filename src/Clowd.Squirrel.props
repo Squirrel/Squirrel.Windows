@@ -2,4 +2,9 @@
   <PropertyGroup>
     <SquirrelToolsPath>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)..\tools'))</SquirrelToolsPath>
   </PropertyGroup>
+
+  <Target Name="PrintSquirrelPath" AfterTargets="Publish,Build">
+    <Message Importance="high" Text="SquirrelToolsPath: '$(SquirrelToolsPath)'" />
+  </Target>
+
 </Project>

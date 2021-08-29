@@ -16,8 +16,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionLevel", "SolutionLevel", "{ED657D2C-F8A0-4012-A64F-7367D41BE4D2}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		src\Clowd.Squirrel.nuspec = src\Clowd.Squirrel.nuspec
 		src\Directory.Build.props = src\Directory.Build.props
-		src\Squirrel.nuspec = src\Squirrel.nuspec
 		vendor\wix\template.wxs = vendor\wix\template.wxs
 	EndProjectSection
 EndProject
