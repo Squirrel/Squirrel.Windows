@@ -56,7 +56,11 @@ namespace Squirrel
 
             var backingDll = originalFilename == null ? null
                 : Path.Combine(Path.GetDirectoryName(fullname), originalFilename);
-            return backingDll;
+
+            if (backingDll.EndsWith("dll", StringComparison.InvariantCultureIgnoreCase))
+                return backingDll;
+
+            return null;
         }
 
         static int? GetAssemblySquirrelAwareVersion(string executable)

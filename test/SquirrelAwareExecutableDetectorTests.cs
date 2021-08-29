@@ -16,10 +16,10 @@ namespace Squirrel.Tests
     {
 #if DEBUG
         private const string NativeBuildRootRelativePath = @"..\build\Debug\Win32\";
-        private const string ManagedBuildRootRelativePath = @"..\build\Debug\net45\";
+        private const string ManagedBuildRootRelativePath = @"..\build\Debug\net5.0\";
 #else
         private const string NativeBuildRootRelativePath = @"..\build\Release\Win32\";
-        private const string ManagedBuildRootRelativePath = @"..\build\Release\net45\";
+        private const string ManagedBuildRootRelativePath = @"..\build\Release\net5.0\";
 #endif
 
         [Fact]

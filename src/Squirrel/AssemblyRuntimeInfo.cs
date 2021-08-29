@@ -18,7 +18,9 @@ namespace Squirrel
             EntryExePath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
             BaseDirectory = AppContext.BaseDirectory;
 
-            var assyPath = Assembly.GetEntryAssembly().Location;
+            // if Assembly.Location does not exist, we're almost certainly bundled into a dotnet SingleFile
+            // is there a better way to check for this?
+            var assyPath = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly())?.Location;
             if (String.IsNullOrEmpty(assyPath) || !File.Exists(assyPath))
                 IsSingleFile = true;
         }
