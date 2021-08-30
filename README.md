@@ -55,7 +55,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    }
    ```
 
-4. Publish your app and build a Nuget package with your publish output in the "lib/net45" target folder. (yes, even if your app does not have anything to do with net45)
+4. Publish your app (with `dotnet publish` or similar) and build a Nuget package with your publish output in the "lib/net45" target folder. (yes, even if your app does not have anything to do with net45)
    You can use `NuGet.exe pack` for this, or any other Nuget creation tool (eg. OctoPack). <br/>
    [More information here](docs/using/visual-studio-packaging.md#example-nuspec-file-for-myapp) <br/>
    *Note: The package version must comply to strict SemVer syntax. (eg. `1.0.0`, `1.0.1-pre`)*
@@ -69,7 +69,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    
    Once you have located the tools folder, create a release. Example below with some useful options, but explore `Squirrel.com -h` for a complete list. You should use the same `releaseDir` each time, so delta updates can be generated.
    ```cmd
-   Squirrel.com --releasify MyApp.1.0.0 --selfContained --releaseDir=".\releases" --setupIcon=myIcon.ico
+   Squirrel.com --releasify MyApp.1.0.0.nupkg --selfContained --releaseDir=".\releases" --setupIcon=myIcon.ico
    ```
    
 6. Distribute your entire `releaseDir` folder online. This folder can be hosted on any static web/file server, [Amazon S3](docs/using/amazon-s3.md), BackBlaze B2, or even via [GitHub Releases](docs/using/github.md).
