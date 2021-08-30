@@ -337,6 +337,7 @@ namespace Squirrel.Update
                 }
             }
 
+            // copy input package to target output directory
             var di = new DirectoryInfo(targetDir);
             File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
 
@@ -357,6 +358,8 @@ namespace Squirrel.Update
 
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+
+                    // create sub executable for all exe's in this package (except Squirrel!)
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                         .Where(x => !x.Name.Contains("squirrel.exe", StringComparison.InvariantCultureIgnoreCase))
@@ -365,8 +368,18 @@ namespace Squirrel.Update
                         .ForEachAsync(x => createExecutableStubForExe(x.FullName))
                         .Wait();
 
-                    if (signingOpts == null) return;
+                    // copy myself into the package so Squirrel can also be updated
+                    // how we find the lib dir is a huge hack here, but 'ReleasePackage' verifies there can only be one of these so it should be fine.
+                    var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]?", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+                    var libDir = Directory
+                        .EnumerateDirectories(pkgPath, "*", SearchOption.AllDirectories)
+                        .Where(d => re.IsMatch(d))
+                        .OrderBy(d => d.Length)
+                        .FirstOrDefault();
+                    File.Copy(getUpdateExePath(selfContained), Path.Combine(libDir, "Squirrel.exe"));
 
+                    // sign all exe's in this package
+                    if (signingOpts == null) return;
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
                         .ForEachAsync(async x => {
@@ -554,6 +567,18 @@ namespace Squirrel.Update
             }
         }
 
+        string getUpdateExePath(bool selfContained)
+        {
+            if (selfContained) {
+                var selfPath = Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "UpdateSelfContained.exe");
+                if (!File.Exists(selfPath)) {
+                    this.Log().Error("Could not find UpdateSelfContained.exe in base directory. Am I published?");
+                }
+                return selfPath;
+            }
+            return AssemblyRuntimeInfo.EntryExePath;
+        }
+
         async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string signingOpts, string setupIcon, bool selfContained)
         {
             string tempPath;
@@ -561,19 +586,7 @@ namespace Squirrel.Update
             this.Log().Info("Building embedded zip file for Setup.exe");
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 this.ErrorIfThrows(() => {
-
-                    if (selfContained) {
-                        var selfPath = Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "UpdateSelfContained.exe");
-                        if (File.Exists(selfPath)) {
-                            File.Copy(selfPath, Path.Combine(tempPath, "Update.exe"));
-                        } else {
-                            this.Log().Error("Could not find UpdateSelfContained.exe in base directory. Am I published?");
-                            throw new ArgumentException();
-                        }
-                    } else {
-                        File.Copy(AssemblyRuntimeInfo.EntryExePath, Path.Combine(tempPath, "Update.exe"));
-                    }
-
+                    File.Copy(getUpdateExePath(selfContained), Path.Combine(tempPath, "Update.exe"));
                     File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
                 }, "Failed to write package files to temp dir: " + tempPath);
 
