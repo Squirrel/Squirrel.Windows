@@ -49,9 +49,9 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    ```cs
    private static void OnInstall(Version obj)
    {
-       using var mgr = new UpdateManager("https://the.place/you-host/updates");
-       mgr.CreateUninstallerRegistryEntry();
-       mgr.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
+      using var mgr = new UpdateManager("https://the.place/you-host/updates");
+      mgr.CreateUninstallerRegistryEntry();
+      mgr.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
    }
    ```
 
@@ -76,12 +76,15 @@ Windows apps should be as fast and as easy to install and update as apps like Go
 
 7. Update your app periodically with UpdateManager.
    ```cs
-   using var mgr = new UpdateManager("https://the.place/you-host/updates");
-   var newVersion = await mgr.UpdateApp();
-   
-   // optionally restart the app automatically, or ask the user if/when they want to restart
-   if (newVersion != null) {
-       UpdateManager.RestartApp();
+   private static void UpdateMyApp()
+   {
+      using var mgr = new UpdateManager("https://the.place/you-host/updates");
+      var newVersion = await mgr.UpdateApp();
+      
+      // optionally restart the app automatically, or ask the user if/when they want to restart
+      if (newVersion != null) {
+         UpdateManager.RestartApp();
+      }
    }
    ```
 
