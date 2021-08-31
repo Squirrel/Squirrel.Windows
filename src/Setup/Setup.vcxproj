@@ -103,6 +103,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="FxHelper.h" />
+    <ClInclude Include="ImageEx.h" />
     <ClInclude Include="MachineInstaller.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="RuntimeInfo.h" />
@@ -115,6 +116,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FxHelper.cpp" />
+    <ClCompile Include="ImageEx.cpp" />
     <ClCompile Include="MachineInstaller.cpp" />
     <ClCompile Include="RuntimeInfo.cpp" />
     <ClCompile Include="SplashWnd.cpp" />
@@ -131,7 +133,7 @@
   <ItemGroup>
     <Image Include="Setup.ico" />
     <Image Include="small.ico" />
-    <Image Include="splash.png" />
+    <Image Include="installdisk.gif" />
   </ItemGroup>
   <ItemGroup>
     <None Include="flags1.bin" />

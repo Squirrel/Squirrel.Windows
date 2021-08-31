@@ -45,6 +45,9 @@
     <ClInclude Include="SplashWnd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ImageEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -71,6 +74,9 @@
     <ClCompile Include="SplashWnd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ImageEx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Setup.rc">
@@ -84,7 +90,7 @@
     <Image Include="Setup.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="splash.png">
+    <Image Include="installdisk.gif">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

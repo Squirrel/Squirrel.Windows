@@ -2,6 +2,8 @@
 \brief Класс, реализующий splash-окно в отдельном потоке. Без MFC.
 
 Created 2006-06-08 by Kirill V. Lyadvinsky
+Modified:
+2021-08-31 Caelan Sayler - Add support for animated GIF's
 
 * The contents of this file are subject to the terms of the Common Development and
 * Distribution License ("CDDL")(collectively, the "License"). You may not use this
@@ -12,6 +14,7 @@ Created 2006-06-08 by Kirill V. Lyadvinsky
 #ifndef __SPLASHWND_H_
 #define __SPLASHWND_H_
 #include <GdiPlus.h>
+#include "ImageEx.h"
 
 class CSplashWnd
 {
@@ -19,30 +22,22 @@ class CSplashWnd
 private:
     CSplashWnd(const CSplashWnd&) {};
     CSplashWnd& operator=(const CSplashWnd&) {};
+
 protected:
     HANDLE			m_hThread;
     unsigned int    m_ThreadId;
     HANDLE			m_hEvent;
-    Gdiplus::Image* m_pImage;
+    ImageEx*        m_pImage;
     HWND		    m_hSplashWnd;
-    std::wstring	m_WindowName;
-    HWND			m_hProgressWnd;
     HWND			m_hParentWnd;
-    std::wstring	m_ProgressMsg;
-    UINT_PTR        m_TimerId;
 
 public:
     CSplashWnd(HWND hParent = NULL);
     ~CSplashWnd();
-    void SetImage(Gdiplus::Image* pImage);
+    void SetImage(const wchar_t* resid, const wchar_t* restype);
     void SetWindowName(const wchar_t* windowName);
     void Show();
     void Hide();
-    void SetProgress(UINT procent);
-    void SetProgress(UINT procent, const wchar_t* msg);
-    void SetProgress(UINT procent, UINT nResourceID = 0, HMODULE hModule = NULL);
-    void SetAutoProgress(UINT from, UINT to, UINT steps);
-    void SetProgressBarColor(COLORREF color);
 
     HWND GetWindowHwnd() const
     {

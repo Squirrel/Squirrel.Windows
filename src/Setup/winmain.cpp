@@ -48,61 +48,6 @@ void MitigateDllHijacking()
 	PreloadLibs();
 }
 
-// https://stackoverflow.com/a/66238748/184746
-Gdiplus::Bitmap* LoadImageFromResource(const wchar_t* resid, const wchar_t* restype)
-{
-	IStream* pStream = nullptr;
-	Gdiplus::Bitmap* pBmp = nullptr;
-	HGLOBAL hGlobal = nullptr;
-
-	HINSTANCE hInst = GetModuleHandle(NULL);
-	HRSRC hrsrc = FindResourceW(hInst, resid, restype);     // get the handle to the resource
-	if (hrsrc)
-	{
-		DWORD dwResourceSize = SizeofResource(hInst, hrsrc);
-		if (dwResourceSize > 0)
-		{
-			HGLOBAL hGlobalResource = LoadResource(hInst, hrsrc); // load it
-			if (hGlobalResource)
-			{
-				void* imagebytes = LockResource(hGlobalResource); // get a pointer to the file bytes
-
-				// copy image bytes into a real hglobal memory handle
-				hGlobal = ::GlobalAlloc(GHND, dwResourceSize);
-				if (hGlobal)
-				{
-					void* pBuffer = ::GlobalLock(hGlobal);
-					if (pBuffer)
-					{
-						memcpy(pBuffer, imagebytes, dwResourceSize);
-						HRESULT hr = CreateStreamOnHGlobal(hGlobal, TRUE, &pStream);
-						if (SUCCEEDED(hr))
-						{
-							// pStream now owns the global handle and will invoke GlobalFree on release
-							hGlobal = nullptr;
-							pBmp = new Gdiplus::Bitmap(pStream);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	if (pStream)
-	{
-		pStream->Release();
-		pStream = nullptr;
-	}
-
-	if (hGlobal)
-	{
-		GlobalFree(hGlobal);
-		hGlobal = nullptr;
-	}
-
-	return pBmp;
-}
-
 int APIENTRY wWinMain(
 	_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -190,7 +135,7 @@ int APIENTRY wWinMain(
 				goto out;
 			}
 			// S_FALSE isn't failure, but we still shouldn't try to install
-			else if (hr != S_OK) 
+			else if (hr != S_OK)
 			{
 				exitCode = 0;
 				goto out;
@@ -219,13 +164,8 @@ int APIENTRY wWinMain(
 	}
 
 	// TODO: hide splash before setup error is shown
-	auto bitmap = LoadImageFromResource(MAKEINTRESOURCE(IDR_SPLASH_IMG), L"DATA");
-
-	if (bitmap) {
-		splash.SetImage(bitmap);
-		splash.Show();
-		splash.SetAutoProgress(40, 100, 10);
-	}
+	splash.SetImage(MAKEINTRESOURCE(IDR_SPLASH_IMG), L"DATA");
+	splash.Show();
 
 	// run updater
 	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine, false);

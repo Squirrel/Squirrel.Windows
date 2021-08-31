@@ -5,6 +5,7 @@ Created 2006-06-08 by Kirill V. Lyadvinsky
 Modified:
 2007-05-25 Добавлена дополнительная синхронизация. Поправлена работа с таймером.
 2008-06-20 Добавлен вывод текста. Поддержка нескольких мониторов. Поддержка подгружаемых ресурсов (DLL)
+2021-08-31 Caelan Sayler - Add support for animated GIF's
 
 * The contents of this file are subject to the terms of the Common Development and
 * Distribution License ("CDDL")(collectively, the "License"). You may not use this
@@ -27,7 +28,6 @@ CSplashWnd::CSplashWnd(HWND hParent)
     m_pImage = NULL;
     m_hSplashWnd = NULL;
     m_ThreadId = 0;
-    m_hProgressWnd = NULL;
     m_hEvent = NULL;
     m_hParentWnd = hParent;
 }
@@ -38,10 +38,9 @@ CSplashWnd::~CSplashWnd()
     if (m_pImage) delete m_pImage;
 }
 
-void CSplashWnd::SetImage(Gdiplus::Image* pImage)
+void CSplashWnd::SetImage(const wchar_t* resid, const wchar_t* restype)
 {
-    if (m_pImage == NULL && pImage != NULL)
-        m_pImage = pImage->Clone();
+    m_pImage = new ImageEx(resid, restype);
 }
 
 void CSplashWnd::Show()
@@ -79,7 +78,17 @@ void CSplashWnd::Hide()
 unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
 {
     CSplashWnd* pThis = static_cast<CSplashWnd*>(lpParameter);
-    if (pThis->m_pImage == NULL) return 0;
+    if (pThis->m_pImage == NULL) 
+        return 0;
+
+    RectF rcBounds;
+    Unit bmUnit = Unit::UnitPixel;
+
+    if (pThis->m_pImage->GetBounds(&rcBounds, &bmUnit) != Status::Ok)
+        return 0;
+
+    if (rcBounds.IsEmptyArea())
+        return 0;
 
     // Register your unique class name
     WNDCLASS wndcls = { 0 };
@@ -121,10 +130,17 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
         rcArea.top = (rcArea.top + rcArea.bottom - pThis->m_pImage->GetHeight()) / 2;
     }
 
-    //
-    pThis->m_hSplashWnd = CreateWindowEx(pThis->m_WindowName.length() ? 0 : WS_EX_TOOLWINDOW, L"SplashWnd", pThis->m_WindowName.c_str(),
-        WS_CLIPCHILDREN | WS_POPUP, rcArea.left, rcArea.top, pThis->m_pImage->GetWidth(), pThis->m_pImage->GetHeight(),
-        pThis->m_hParentWnd, NULL, wndcls.hInstance, NULL);
+    pThis->m_hSplashWnd = CreateWindowEx(
+        WS_EX_TOOLWINDOW, 
+        L"SplashWnd",
+        L"Setup",
+        WS_CLIPCHILDREN | WS_POPUP, 
+        rcArea.left, rcArea.top, pThis->m_pImage->GetWidth(), pThis->m_pImage->GetHeight(),
+        pThis->m_hParentWnd, 
+        NULL, 
+        wndcls.hInstance, 
+        NULL);
+
     if (!pThis->m_hSplashWnd)
     {
         OutputDebugString(L"Unable to create SplashWnd\n");
@@ -133,6 +149,8 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
 
     SetWindowLongPtr(pThis->m_hSplashWnd, GWL_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
     ShowWindow(pThis->m_hSplashWnd, SW_SHOWNOACTIVATE);
+
+    pThis->m_pImage->InitAnimation(pThis->m_hSplashWnd, CPoint());
 
     MSG msg;
     BOOL bRet;
@@ -144,40 +162,7 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
     while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
     {
         if (msg.message == WM_QUIT) break;
-        if (msg.message == PBM_SETPOS)
-        {
-            KillTimer(NULL, pThis->m_TimerId);
-            SendMessage(pThis->m_hSplashWnd, PBM_SETPOS, msg.wParam, msg.lParam);
-            continue;
-        }
-        if (msg.message == PBM_SETSTEP)
-        {
-            SendMessage(pThis->m_hSplashWnd, PBM_SETPOS, LOWORD(msg.wParam), 0); // initiate progress bar creation
-            SendMessage(pThis->m_hProgressWnd, PBM_SETSTEP, (HIWORD(msg.wParam) - LOWORD(msg.wParam)) / msg.lParam, 0);
-            timerCount = static_cast<LONG>(msg.lParam);
-            pThis->m_TimerId = SetTimer(NULL, 0, 1000, NULL);
-            continue;
-        }
-        if (msg.message == WM_TIMER && msg.wParam == pThis->m_TimerId)
-        {
-            SendMessage(pThis->m_hProgressWnd, PBM_STEPIT, 0, 0);
-            timerCount--;
-            if (timerCount <= 0) {
-                timerCount = 0;
-                KillTimer(NULL, pThis->m_TimerId);
-                Sleep(0);
-            }
-            continue;
-        }
-        if (msg.message == PBM_SETBARCOLOR)
-        {
-            if (!IsWindow(pThis->m_hProgressWnd)) {
-                SendMessage(pThis->m_hSplashWnd, PBM_SETPOS, 0, 0); // initiate progress bar creation
-            }
-            SendMessage(pThis->m_hProgressWnd, PBM_SETBARCOLOR, msg.wParam, msg.lParam);
-            continue;
-        }
-
+      
         if (bRet == -1)
         {
             // handle the error and possibly exit
@@ -188,8 +173,8 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
             DispatchMessage(&msg);
         }
     }
-    DestroyWindow(pThis->m_hSplashWnd);
 
+    DestroyWindow(pThis->m_hSplashWnd);
     return 0;
 }
 
@@ -203,80 +188,26 @@ LRESULT CALLBACK CSplashWnd::SplashWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 
     switch (uMsg)
     {
+
     case WM_PAINT:
     {
         if (pInstance->m_pImage)
         {
-            Gdiplus::Graphics gdip(hwnd);
-            gdip.DrawImage(pInstance->m_pImage, 0, 0, pInstance->m_pImage->GetWidth(), pInstance->m_pImage->GetHeight());
-
-            if (pInstance->m_ProgressMsg.size() > 0)
+            if (pInstance->m_pImage->IsAnimatedGIF())
             {
-                Gdiplus::Font msgFont(L"Tahoma", 8, Gdiplus::UnitPixel);
-                Gdiplus::SolidBrush msgBrush(static_cast<DWORD>(Gdiplus::Color::Black));
-                gdip.DrawString(pInstance->m_ProgressMsg.c_str(), -1, &msgFont, Gdiplus::PointF(2.0f, pInstance->m_pImage->GetHeight() - 34.0f), &msgBrush);
+                // do nothing, the gif will be drawn by it's own thread.
+            }
+            else
+            {
+                Gdiplus::Graphics gdip(hwnd);
+                gdip.DrawImage(pInstance->m_pImage, 0, 0, pInstance->m_pImage->GetWidth(), pInstance->m_pImage->GetHeight());
             }
         }
         ValidateRect(hwnd, NULL);
         return 0;
     } break;
-    case PBM_SETPOS:
-    {
-        if (!IsWindow(pInstance->m_hProgressWnd))
-        {
-            RECT client;
-            GetClientRect(hwnd, &client);
-            pInstance->m_hProgressWnd = CreateWindow(PROGRESS_CLASS, NULL, WS_CHILD | WS_VISIBLE,
-                4, client.bottom - 20, client.right - 8, 16, hwnd, NULL, GetModuleHandle(NULL), NULL);
-            SendMessage(pInstance->m_hProgressWnd, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
-        }
-        SendMessage(pInstance->m_hProgressWnd, PBM_SETPOS, wParam, 0);
 
-        const std::wstring* msg = reinterpret_cast<std::wstring*>(lParam);
-        if (msg && pInstance->m_ProgressMsg != *msg)
-        {
-            pInstance->m_ProgressMsg = *msg;
-            delete msg;
-            SendMessage(pInstance->m_hSplashWnd, WM_PAINT, 0, 0);
-        }
-        return 0;
-    } break;
     }
 
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
-}
-
-void CSplashWnd::SetWindowName(const wchar_t* windowName)
-{
-    m_WindowName = windowName;
-}
-
-void CSplashWnd::SetProgress(UINT procent)
-{
-    SetProgress(procent, static_cast<wchar_t*>(NULL));
-}
-
-void CSplashWnd::SetProgress(UINT procent, const wchar_t* msg)
-{
-    std::wstring* tempmsg = new std::wstring(msg);
-    PostThreadMessage(m_ThreadId, PBM_SETPOS, procent, reinterpret_cast<LPARAM>(tempmsg));
-}
-
-void CSplashWnd::SetProgress(UINT procent, UINT nResourceID, HMODULE hModule)
-{
-    wchar_t* msg;
-    int len = ::LoadString(hModule, nResourceID, reinterpret_cast<wchar_t*>(&msg), 0);
-
-    std::wstring* tempmsg = new std::wstring(msg, len);
-    PostThreadMessage(m_ThreadId, PBM_SETPOS, procent, reinterpret_cast<LPARAM>(tempmsg));
-}
-
-void CSplashWnd::SetAutoProgress(UINT from, UINT to, UINT seconds)
-{
-    PostThreadMessage(m_ThreadId, PBM_SETSTEP, MAKEWPARAM(from, to), seconds);
-}
-
-void CSplashWnd::SetProgressBarColor(COLORREF color)
-{
-    PostThreadMessage(m_ThreadId, PBM_SETBARCOLOR, 0, color);
 }
