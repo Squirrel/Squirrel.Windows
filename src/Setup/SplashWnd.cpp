@@ -78,7 +78,7 @@ void CSplashWnd::Hide()
 unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
 {
     CSplashWnd* pThis = static_cast<CSplashWnd*>(lpParameter);
-    if (pThis->m_pImage == NULL) 
+    if (pThis->m_pImage == NULL)
         return 0;
 
     RectF rcBounds;
@@ -131,14 +131,14 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
     }
 
     pThis->m_hSplashWnd = CreateWindowEx(
-        WS_EX_TOOLWINDOW | WS_EX_TOPMOST, 
+        WS_EX_TOOLWINDOW | WS_EX_TOPMOST,
         L"SplashWnd",
         L"Setup",
-        WS_CLIPCHILDREN | WS_POPUP, 
+        WS_CLIPCHILDREN | WS_POPUP,
         rcArea.left, rcArea.top, pThis->m_pImage->GetWidth(), pThis->m_pImage->GetHeight(),
-        pThis->m_hParentWnd, 
-        NULL, 
-        wndcls.hInstance, 
+        pThis->m_hParentWnd,
+        NULL,
+        wndcls.hInstance,
         NULL);
 
     if (!pThis->m_hSplashWnd)
@@ -162,7 +162,7 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
     while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
     {
         if (msg.message == WM_QUIT) break;
-      
+
         if (bRet == -1)
         {
             // handle the error and possibly exit
@@ -205,7 +205,42 @@ LRESULT CALLBACK CSplashWnd::SplashWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
         }
         ValidateRect(hwnd, NULL);
         return 0;
-    } break;
+    }
+
+    case WM_LBUTTONDOWN:
+    {
+        GetCursorPos(&pInstance->m_ptMouseDown);
+        SetCapture(hwnd);
+        return 0;
+    }
+
+    case WM_MOUSEMOVE:
+    {
+        if (GetCapture() == hwnd)
+        {
+            RECT rcWnd;
+            GetWindowRect(hwnd, &rcWnd);
+
+            POINT pt;
+            GetCursorPos(&pt);
+
+            POINT& ptDown = pInstance->m_ptMouseDown;
+            auto xdiff = ptDown.x - pt.x;
+            auto ydiff = ptDown.y - pt.y;
+
+            SetWindowPos(hwnd, 0, rcWnd.left - xdiff, rcWnd.top - ydiff, 0, 0,
+                SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
+
+            pInstance->m_ptMouseDown = pt;
+        }
+        return 0;
+    }
+
+    case WM_LBUTTONUP:
+    {
+        ReleaseCapture();
+        return 0;
+    }
 
     }
 

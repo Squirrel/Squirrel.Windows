@@ -30,6 +30,7 @@ protected:
     ImageEx*        m_pImage;
     HWND		    m_hSplashWnd;
     HWND			m_hParentWnd;
+    POINT           m_ptMouseDown;
 
 public:
     CSplashWnd(HWND hParent = NULL);
