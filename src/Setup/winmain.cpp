@@ -89,6 +89,7 @@ int APIENTRY wWinMain(
 	Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 	Gdiplus::GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 	CSplashWnd splash;
+    std::function<void()> closeSplashFn([&]() { splash.Hide(); });
 
 	bool isQuiet = (cmdLine.Find(L"-s") >= 0);
 	bool weAreUACElevated = CUpdateRunner::AreWeUACElevated() == S_OK;
@@ -163,12 +164,11 @@ int APIENTRY wWinMain(
 		goto out;
 	}
 
-	// TODO: hide splash before setup error is shown
 	splash.SetImage(MAKEINTRESOURCE(IDR_SPLASH_IMG), L"DATA");
 	splash.Show();
 
 	// run updater
-	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine, false);
+	exitCode = CUpdateRunner::ExtractUpdaterAndRun(lpCmdLine, false, closeSplashFn);
 
 out:
 	splash.Hide();

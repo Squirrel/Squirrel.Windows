@@ -147,13 +147,14 @@ bool CUpdateRunner::DirectoryIsWritable(wchar_t * szPath)
 		return true;
 }
 
-int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir)
+int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir, std::function<void()>& callback)
 {
 	PROCESS_INFORMATION pi = { 0 };
 	STARTUPINFO si = { 0 };
 	CResource zipResource;
 	wchar_t targetDir[MAX_PATH] = { 0 };
 	wchar_t logFile[MAX_PATH];
+    DWORD dwExitCode = 0;
 
 	std::vector<CString> to_delete;
 
@@ -183,8 +184,8 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
 		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
+        callback();
 		DisplayErrorMessage(CString(err), NULL);
-
 		return -1;
 	}
 
@@ -197,7 +198,8 @@ gotADir:
 		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
 
 		if (useFallbackDir) {
-			DisplayErrorMessage(CString(err), NULL);
+            callback();
+            DisplayErrorMessage(CString(err), NULL);
 		}
 
 		goto failedExtract;
@@ -268,12 +270,12 @@ gotADir:
 
 	WaitForSingleObject(pi.hProcess, INFINITE);
 
-	DWORD dwExitCode;
 	if (!GetExitCodeProcess(pi.hProcess, &dwExitCode)) {
 		dwExitCode = (DWORD)-1;
 	}
 
 	if (dwExitCode != 0) {
+        callback();
 		DisplayErrorMessage(CString(
 			L"There was an error while installing the application. "
 			L"Check the setup log for more information and contact the author."), logFile);
@@ -290,9 +292,10 @@ gotADir:
 failedExtract:
 	if (!useFallbackDir) {
 		// Take another pass at it, using C:\ProgramData instead
-		return ExtractUpdaterAndRun(lpCommandLine, true);
+		return ExtractUpdaterAndRun(lpCommandLine, true, callback);
 	}
 
-	DisplayErrorMessage(CString(L"Failed to extract installer"), NULL);
+    callback();
+    DisplayErrorMessage(CString(L"Failed to extract installer"), NULL);
 	return (int) dwExitCode;
 }
