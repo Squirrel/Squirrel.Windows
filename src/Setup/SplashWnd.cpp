@@ -131,7 +131,7 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
     }
 
     pThis->m_hSplashWnd = CreateWindowEx(
-        WS_EX_TOOLWINDOW, 
+        WS_EX_TOOLWINDOW | WS_EX_TOPMOST, 
         L"SplashWnd",
         L"Setup",
         WS_CLIPCHILDREN | WS_POPUP, 
