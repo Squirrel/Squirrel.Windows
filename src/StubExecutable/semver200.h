@@ -26,26 +26,32 @@ SOFTWARE.
 
 #include "version.h"
 
-namespace version {
+namespace version
+{
 
-	/// Parse string into Version_data structure according to semantic versioning 2.0.0 rules.
-	struct Semver200_parser {
-		Version_data parse(const std::string&) const;
-	};
+    /// Parse string into Version_data structure according to semantic versioning 2.0.0 rules.
+    struct Semver200_parser
+    {
+        Version_data parse(const std::string&) const;
+    };
 
-	/// Compare Version_data to another using semantic versioning 2.0.0 rules.
-	struct Semver200_comparator {
-		int compare(const Version_data&, const Version_data&) const;
-	};
+    /// Compare Version_data to another using semantic versioning 2.0.0 rules.
+    struct Semver200_comparator
+    {
+        int compare(const Version_data&, const Version_data&) const;
+    };
 
-	/// Concrete version class that binds all semver 2.0.0 functionality together.
-	class Semver200_version : public Basic_version<Semver200_parser, Semver200_comparator> {
-	public:
-		Semver200_version()
-			: Basic_version{ Semver200_parser(), Semver200_comparator() } {}
+    /// Concrete version class that binds all semver 2.0.0 functionality together.
+    class Semver200_version : public Basic_version<Semver200_parser, Semver200_comparator>
+    {
+    public:
+        Semver200_version()
+            : Basic_version{ Semver200_parser(), Semver200_comparator() }
+        {}
 
-		Semver200_version(const std::string& v)
-			: Basic_version{ v, Semver200_parser(), Semver200_comparator() } {}
-	};
+        Semver200_version(const std::string& v)
+            : Basic_version{ v, Semver200_parser(), Semver200_comparator() }
+        {}
+    };
 
 }

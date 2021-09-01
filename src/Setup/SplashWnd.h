@@ -24,19 +24,18 @@ private:
     CSplashWnd& operator=(const CSplashWnd&) {};
 
 protected:
-    HANDLE			m_hThread;
-    unsigned int    m_ThreadId;
-    HANDLE			m_hEvent;
-    ImageEx*        m_pImage;
-    HWND		    m_hSplashWnd;
-    HWND			m_hParentWnd;
-    POINT           m_ptMouseDown;
+    HANDLE m_hThread;
+    unsigned int m_ThreadId;
+    HANDLE m_hEvent;
+    ImageEx* m_pImage;
+    HWND m_hSplashWnd;
+    HWND m_hParentWnd;
+    POINT m_ptMouseDown;
 
 public:
     CSplashWnd(HWND hParent = NULL);
     ~CSplashWnd();
     void SetImage(const wchar_t* resid, const wchar_t* restype);
-    void SetWindowName(const wchar_t* windowName);
     void Show();
     void Hide();
 

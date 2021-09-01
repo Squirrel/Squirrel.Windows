@@ -11,8 +11,10 @@
 #include <unordered_map>
 #include <vector>
 
-namespace flags {
-    namespace detail {
+namespace flags
+{
+    namespace detail
+    {
         using argument_map =
             std::unordered_map<std::wstring_view, std::optional<std::wstring_view>>;
 
@@ -21,8 +23,10 @@ namespace flags {
         // * If the token does not begin with a -, it will be considered a value for the
         // previous option. If there was no previous option, it will be considered a
         // positional argument.
-        struct parser {
-            parser(const int argc, wchar_t** argv) {
+        struct parser
+        {
+            parser(const int argc, wchar_t** argv)
+            {
                 for (int i = 1; i < argc; ++i) {
                     churn(argv[i]);
                 }
@@ -32,22 +36,26 @@ namespace flags {
             parser& operator=(const parser&) = delete;
 
             const argument_map& options() const { return options_; }
-            const std::vector<std::wstring_view>& positional_arguments() const {
+            const std::vector<std::wstring_view>& positional_arguments() const
+            {
                 return positional_arguments_;
             }
 
         private:
             // Advance the state machine for the current token.
-            void churn(const std::wstring_view& item) {
+            void churn(const std::wstring_view& item)
+            {
                 item.at(0) == '-' ? on_option(item) : on_value(item);
             }
 
             // Consumes the current option if there is one.
-            void flush() {
+            void flush()
+            {
                 if (current_option_) on_value();
             }
 
-            void on_option(const std::wstring_view& option) {
+            void on_option(const std::wstring_view& option)
+            {
                 // Consume the current_option and reassign it to the new option while
                 // removing all leading dashes.
                 flush();
@@ -64,7 +72,8 @@ namespace flags {
                 }
             }
 
-            void on_value(const std::optional<std::wstring_view>& value = std::nullopt) {
+            void on_value(const std::optional<std::wstring_view>& value = std::nullopt)
+            {
                 // If there's not an option preceding the value, it's a positional argument.
                 if (!current_option_) {
                     if (value) positional_arguments_.emplace_back(*value);
@@ -82,7 +91,8 @@ namespace flags {
 
         // If a key exists, return an optional populated with its value.
         inline std::optional<std::wstring_view> get_value(
-            const argument_map& options, const std::wstring_view& option) {
+            const argument_map& options, const std::wstring_view& option)
+        {
             if (const auto it = options.find(option); it != options.end()) {
                 return it->second;
             }
@@ -94,7 +104,8 @@ namespace flags {
         // nullopt.
         template <class T>
         std::optional<T> get(const argument_map& options,
-            const std::wstring_view& option) {
+            const std::wstring_view& option)
+        {
             if (const auto view = get_value(options, option)) {
                 if (T value; std::istringstream(std::wstring(*view)) >> value) return value;
             }
@@ -104,13 +115,15 @@ namespace flags {
         // Since the values are already stored as strings, there's no need to use `>>`.
         template <>
         inline std::optional<std::wstring_view> get(const argument_map& options,
-            const std::wstring_view& option) {
+            const std::wstring_view& option)
+        {
             return get_value(options, option);
         }
 
         template <>
         inline std::optional<std::wstring> get(const argument_map& options,
-            const std::wstring_view& option) {
+            const std::wstring_view& option)
+        {
             if (const auto view = get<std::wstring_view>(options, option)) {
                 return std::wstring(*view);
             }
@@ -123,7 +136,8 @@ namespace flags {
         constexpr std::array<const wchar_t*, 5> falsities{ {L"0", L"n", L"no", L"f", L"false"} };
         template <>
         inline std::optional<bool> get(const argument_map& options,
-            const std::wstring_view& option) {
+            const std::wstring_view& option)
+        {
             if (const auto value = get_value(options, option)) {
                 return std::none_of(falsities.begin(), falsities.end(),
                     [&value](auto falsity) { return *value == falsity; });
@@ -137,7 +151,8 @@ namespace flags {
         // nullopt.
         template <class T>
         std::optional<T> get(const std::vector<std::wstring_view>& positional_arguments,
-            size_t positional_index) {
+            size_t positional_index)
+        {
             if (positional_index < positional_arguments.size()) {
                 if (T value; std::istringstream(
                     std::wstring(positional_arguments[positional_index])) >>
@@ -151,7 +166,8 @@ namespace flags {
         template <>
         inline std::optional<std::wstring_view> get(
             const std::vector<std::wstring_view>& positional_arguments,
-            size_t positional_index) {
+            size_t positional_index)
+        {
             if (positional_index < positional_arguments.size()) {
                 return positional_arguments[positional_index];
             }
@@ -161,7 +177,8 @@ namespace flags {
         template <>
         inline std::optional<std::wstring> get(
             const std::vector<std::wstring_view>& positional_arguments,
-            size_t positional_index) {
+            size_t positional_index)
+        {
             if (positional_index < positional_arguments.size()) {
                 return std::wstring(positional_arguments[positional_index]);
             }
@@ -169,30 +186,36 @@ namespace flags {
         }
     }  // namespace detail
 
-    struct args {
+    struct args
+    {
         args(const int argc, wchar_t** argv) : parser_(argc, argv) {}
 
         template <class T>
-        std::optional<T> get(const std::wstring_view& option) const {
+        std::optional<T> get(const std::wstring_view& option) const
+        {
             return detail::get<T>(parser_.options(), option);
         }
 
         template <class T>
-        T get(const std::wstring_view& option, T&& default_value) const {
+        T get(const std::wstring_view& option, T&& default_value) const
+        {
             return get<T>(option).value_or(default_value);
         }
 
         template <class T>
-        std::optional<T> get(size_t positional_index) const {
+        std::optional<T> get(size_t positional_index) const
+        {
             return detail::get<T>(parser_.positional_arguments(), positional_index);
         }
 
         template <class T>
-        T get(size_t positional_index, T&& default_value) const {
+        T get(size_t positional_index, T&& default_value) const
+        {
             return get<T>(positional_index).value_or(default_value);
         }
 
-        const std::vector<std::wstring_view>& positional() const {
+        const std::vector<std::wstring_view>& positional() const
+        {
             return parser_.positional_arguments();
         }
 

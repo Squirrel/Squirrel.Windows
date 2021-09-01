@@ -17,36 +17,36 @@ class ImageEx : public Image
 {
 
 public:
-	ImageEx(const wchar_t* resid, const wchar_t* restype);
-	~ImageEx();
+    ImageEx(const wchar_t* resid, const wchar_t* restype);
+    ~ImageEx();
 
 public:
-	CSize	GetSize();
-	bool	IsAnimatedGIF() { return m_nFrameCount > 1; }
-	void	SetPause(bool bPause);
-	bool	IsPaused() { return m_bPause; }
-	bool	InitAnimation(HWND hWnd, CPoint pt);
-	void	Destroy();
+    CSize GetSize();
+    bool IsAnimatedGIF() { return m_nFrameCount > 1; }
+    void SetPause(bool bPause);
+    bool IsPaused() { return m_bPause; }
+    bool InitAnimation(HWND hWnd, CPoint pt);
+    void Destroy();
 
 protected:
-	bool				TestForAnimatedGIF();
-	void				Initialize();
-	bool				DrawFrameGIF();
+    bool TestForAnimatedGIF();
+    void Initialize();
+    bool DrawFrameGIF();
 
-	void ThreadAnimation();
-	static UINT WINAPI _ThreadAnimationProc(LPVOID pParam);
+    void ThreadAnimation();
+    static UINT WINAPI _ThreadAnimationProc(LPVOID pParam);
 
-	HANDLE			m_hThread;
-	HANDLE			m_hPause;
-	HANDLE			m_hExitEvent;
-	HINSTANCE		m_hInst;
-	HWND			m_hWnd;
-	UINT			m_nFrameCount;
-	UINT			m_nFramePosition;
-	bool			m_bIsInitialized;
-	bool			m_bPause;
-	PropertyItem*	m_pPropertyItem;
-	CPoint			m_pt;
+    HANDLE m_hThread;
+    HANDLE m_hPause;
+    HANDLE m_hExitEvent;
+    HINSTANCE m_hInst;
+    HWND m_hWnd;
+    UINT m_nFrameCount;
+    UINT m_nFramePosition;
+    bool m_bIsInitialized;
+    bool m_bPause;
+    PropertyItem* m_pPropertyItem;
+    CPoint m_pt;
 
 };
 

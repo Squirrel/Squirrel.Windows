@@ -18,18 +18,19 @@ typedef DWORD ZRESULT;
 // return codes from any of the zip functions. Listed later.
 
 typedef struct
-{ int index;                 // index of this file within the zip
-  TCHAR name[MAX_PATH];      // filename within the zip
-  DWORD attr;                // attributes, as in GetFileAttributes.
-  FILETIME atime,ctime,mtime;// access, create, modify filetimes
-  long comp_size;            // sizes of item, compressed and uncompressed. These
-  long unc_size;             // may be -1 if not yet known (e.g. being streamed in)
+{
+    int index;                 // index of this file within the zip
+    TCHAR name[MAX_PATH];      // filename within the zip
+    DWORD attr;                // attributes, as in GetFileAttributes.
+    FILETIME atime, ctime, mtime;// access, create, modify filetimes
+    long comp_size;            // sizes of item, compressed and uncompressed. These
+    long unc_size;             // may be -1 if not yet known (e.g. being streamed in)
 } ZIPENTRY;
 
 
-HZIP OpenZip(const TCHAR *fn, const char *password);
-HZIP OpenZip(void *z,unsigned int len, const char *password);
-HZIP OpenZipHandle(HANDLE h, const char *password);
+HZIP OpenZip(const TCHAR* fn, const char* password);
+HZIP OpenZip(void* z, unsigned int len, const char* password);
+HZIP OpenZipHandle(HANDLE h, const char* password);
 // OpenZip - opens a zip file and returns a handle with which you can
 // subsequently examine its contents. You can open a zip file from:
 // from a pipe:             OpenZipHandle(hpipe_read,0);
@@ -46,7 +47,7 @@ HZIP OpenZipHandle(HANDLE h, const char *password);
 // but for real windows, the zip makes its own copy of your handle, so you
 // can close yours anytime.
 
-ZRESULT GetZipItem(HZIP hz, int index, ZIPENTRY *ze);
+ZRESULT GetZipItem(HZIP hz, int index, ZIPENTRY* ze);
 // GetZipItem - call this to get information about an item in the zip.
 // If index is -1 and the file wasn't opened through a pipe,
 // then it returns information about the whole zipfile
@@ -61,14 +62,14 @@ ZRESULT GetZipItem(HZIP hz, int index, ZIPENTRY *ze);
 // then then comp_size and sometimes unc_size as well may not be known until
 // after the item has been unzipped.
 
-ZRESULT FindZipItem(HZIP hz, const TCHAR *name, bool ic, int *index, ZIPENTRY *ze);
+ZRESULT FindZipItem(HZIP hz, const TCHAR* name, bool ic, int* index, ZIPENTRY* ze);
 // FindZipItem - finds an item by name. ic means 'insensitive to case'.
 // It returns the index of the item, and returns information about it.
 // If nothing was found, then index is set to -1 and the function returns
 // an error code.
 
-ZRESULT UnzipItem(HZIP hz, int index, const TCHAR *fn);
-ZRESULT UnzipItem(HZIP hz, int index, void *z,unsigned int len);
+ZRESULT UnzipItem(HZIP hz, int index, const TCHAR* fn);
+ZRESULT UnzipItem(HZIP hz, int index, void* z, unsigned int len);
 ZRESULT UnzipItemHandle(HZIP hz, int index, HANDLE h);
 // UnzipItem - given an index to an item, unzips it. You can unzip to:
 // to a pipe:             UnzipItemHandle(hz,i, hpipe_write);
@@ -85,7 +86,7 @@ ZRESULT UnzipItemHandle(HZIP hz, int index, HANDLE h);
 // If you unzip a directory with ZIP_FILENAME, then the directory gets created.
 // If you unzip it to a handle or a memory block, then nothing gets created
 // and it emits 0 bytes.
-ZRESULT SetUnzipBaseDir(HZIP hz, const TCHAR *dir);
+ZRESULT SetUnzipBaseDir(HZIP hz, const TCHAR* dir);
 // if unzipping to a filename, and it's a relative filename, then it will be relative to here.
 // (defaults to current-directory).
 
@@ -93,7 +94,7 @@ ZRESULT SetUnzipBaseDir(HZIP hz, const TCHAR *dir);
 ZRESULT CloseZip(HZIP hz);
 // CloseZip - the zip handle must be closed with this function.
 
-unsigned int FormatZipMessage(ZRESULT code, TCHAR *buf,unsigned int len);
+unsigned int FormatZipMessage(ZRESULT code, TCHAR* buf, unsigned int len);
 // FormatZipMessage - given an error code, formats it as a string.
 // It returns the length of the error message. If buf/len points
 // to a real buffer, then it also writes as much as possible into there.
@@ -199,7 +200,7 @@ unsigned int FormatZipMessage(ZRESULT code, TCHAR *buf,unsigned int len);
 // one or the other of them based on a dynamic choice. If the header file
 // for only one is present, then we will bind to that particular one.
 ZRESULT CloseZipU(HZIP hz);
-unsigned int FormatZipMessageU(ZRESULT code, TCHAR *buf,unsigned int len);
+unsigned int FormatZipMessageU(ZRESULT code, TCHAR* buf, unsigned int len);
 bool IsZipHandleU(HZIP hz);
 #ifdef _zip_H
 #undef CloseZip

@@ -45,28 +45,23 @@ void CSplashWnd::SetImage(const wchar_t* resid, const wchar_t* restype)
 
 void CSplashWnd::Show()
 {
-    if (m_hThread == NULL)
-    {
+    if (m_hThread == NULL) {
         m_hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
         m_hThread = (HANDLE)_beginthreadex(NULL, 0, SplashThreadProc, static_cast<LPVOID>(this), 0, &m_ThreadId);
-        if (WaitForSingleObject(m_hEvent, 5000) == WAIT_TIMEOUT)
-        {
+        if (WaitForSingleObject(m_hEvent, 5000) == WAIT_TIMEOUT) {
             OutputDebugString(L"Error starting SplashThread\n");
         }
     }
-    else
-    {
+    else {
         PostThreadMessage(m_ThreadId, WM_ACTIVATE, WA_CLICKACTIVE, 0);
     }
 }
 
 void CSplashWnd::Hide()
 {
-    if (m_hThread)
-    {
+    if (m_hThread) {
         PostThreadMessage(m_ThreadId, WM_QUIT, 0, 0);
-        if (WaitForSingleObject(m_hThread, 9000) == WAIT_TIMEOUT)
-        {
+        if (WaitForSingleObject(m_hThread, 9000) == WAIT_TIMEOUT) {
             ::TerminateThread(m_hThread, 2222);
         }
         CloseHandle(m_hThread);
@@ -101,8 +96,7 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
     wndcls.lpszClassName = L"SplashWnd";
     wndcls.hIcon = LoadIcon(wndcls.hInstance, MAKEINTRESOURCE(IDI_APPLICATION));
 
-    if (!RegisterClass(&wndcls))
-    {
+    if (!RegisterClass(&wndcls)) {
         if (GetLastError() != 0x00000582) // already registered)
         {
             OutputDebugString(L"Unable to register class SplashWnd\n");
@@ -118,13 +112,11 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
 
     ::GetCursorPos(&point);
     hMonitor = ::MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
-    if (::GetMonitorInfo(hMonitor, &mi))
-    {
+    if (::GetMonitorInfo(hMonitor, &mi)) {
         rcArea.left = (mi.rcMonitor.right + mi.rcMonitor.left - static_cast<long>(pThis->m_pImage->GetWidth())) / 2;
         rcArea.top = (mi.rcMonitor.top + mi.rcMonitor.bottom - static_cast<long>(pThis->m_pImage->GetHeight())) / 2;
     }
-    else
-    {
+    else {
         SystemParametersInfo(SPI_GETWORKAREA, NULL, &rcArea, NULL);
         rcArea.left = (rcArea.right + rcArea.left - pThis->m_pImage->GetWidth()) / 2;
         rcArea.top = (rcArea.top + rcArea.bottom - pThis->m_pImage->GetHeight()) / 2;
@@ -141,8 +133,7 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
         wndcls.hInstance,
         NULL);
 
-    if (!pThis->m_hSplashWnd)
-    {
+    if (!pThis->m_hSplashWnd) {
         OutputDebugString(L"Unable to create SplashWnd\n");
         return 0;
     }
@@ -159,16 +150,13 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
     PeekMessage(&msg, NULL, 0, 0, 0); // invoke creating message queue
     SetEvent(pThis->m_hEvent);
 
-    while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0)
-    {
+    while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) {
         if (msg.message == WM_QUIT) break;
 
-        if (bRet == -1)
-        {
+        if (bRet == -1) {
             // handle the error and possibly exit
         }
-        else
-        {
+        else {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
@@ -181,24 +169,19 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
 LRESULT CALLBACK CSplashWnd::SplashWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     CSplashWnd* pInstance = reinterpret_cast<CSplashWnd*>(GetWindowLongPtr(hwnd, GWL_USERDATA));
-    if (pInstance == NULL)
-    {
+    if (pInstance == NULL) {
         return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
 
-    switch (uMsg)
-    {
+    switch (uMsg) {
 
     case WM_PAINT:
     {
-        if (pInstance->m_pImage)
-        {
-            if (pInstance->m_pImage->IsAnimatedGIF())
-            {
+        if (pInstance->m_pImage) {
+            if (pInstance->m_pImage->IsAnimatedGIF()) {
                 // do nothing, the gif will be drawn by it's own thread.
             }
-            else
-            {
+            else {
                 Gdiplus::Graphics gdip(hwnd);
                 gdip.DrawImage(pInstance->m_pImage, 0, 0, pInstance->m_pImage->GetWidth(), pInstance->m_pImage->GetHeight());
             }
@@ -216,8 +199,7 @@ LRESULT CALLBACK CSplashWnd::SplashWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 
     case WM_MOUSEMOVE:
     {
-        if (GetCapture() == hwnd)
-        {
+        if (GetCapture() == hwnd) {
             RECT rcWnd;
             GetWindowRect(hwnd, &rcWnd);
 

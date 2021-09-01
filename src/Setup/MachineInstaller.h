@@ -1,6 +1,8 @@
 #pragma once
 class MachineInstaller
 {
+
 public:
-	static bool ShouldSilentInstall();
+    static bool ShouldSilentInstall();
+
 };
