@@ -48,6 +48,7 @@ namespace Squirrel.Tests
             Assert.True(File.Exists(target));
 
             var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
+            Assert.NotNull(ret);
             Assert.Equal(1, ret.Value);
         }
 
@@ -57,7 +58,7 @@ namespace Squirrel.Tests
             var target = IntegrationTestHelper.GetPath("fixtures", "SquirrelAwareNetCoreApp.exe");
             Assert.True(File.Exists(target));
 
-            var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
+            var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);            
             Assert.Equal(1, ret.Value);
         }
 
