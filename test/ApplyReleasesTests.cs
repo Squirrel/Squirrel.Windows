@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using NuGet;
+using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
 using Squirrel;
 using Squirrel.Tests.TestHelpers;

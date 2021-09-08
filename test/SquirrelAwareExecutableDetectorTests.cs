@@ -28,7 +28,7 @@ namespace Squirrel.Tests
             var target = IntegrationTestHelper.GetPath("fixtures", "atom.exe");
 
             Assert.True(File.Exists(target));
-            Assert.True(SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target) == 1);
+            Assert.True(SquirrelAwareExecutableDetector.GetSquirrelAwareVersion(target) == 1);
         }
 
         [Fact]
@@ -37,7 +37,7 @@ namespace Squirrel.Tests
             var target = IntegrationTestHelper.GetPath(NativeBuildRootRelativePath, "Setup.exe");
             Assert.True(File.Exists(target));
 
-            var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
+            var ret = SquirrelAwareExecutableDetector.GetSquirrelAwareVersion(target);
             Assert.Equal(1, ret.Value);
         }
 
@@ -47,7 +47,7 @@ namespace Squirrel.Tests
             var target = IntegrationTestHelper.GetPath("fixtures", "SquirrelAwareTweakedNetCoreApp.exe");
             Assert.True(File.Exists(target));
 
-            var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
+            var ret = SquirrelAwareExecutableDetector.GetSquirrelAwareVersion(target);
             Assert.Equal(1, ret.Value);
         }
 
@@ -57,7 +57,7 @@ namespace Squirrel.Tests
             var target = IntegrationTestHelper.GetPath("fixtures", "SquirrelAwareNetCoreApp.exe");
             Assert.True(File.Exists(target));
 
-            var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
+            var ret = SquirrelAwareExecutableDetector.GetSquirrelAwareVersion(target);
             Assert.Equal(1, ret.Value);
         }
 
@@ -68,7 +68,7 @@ namespace Squirrel.Tests
 
             Assert.True(File.Exists(target));
 
-            var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
+            var ret = SquirrelAwareExecutableDetector.GetSquirrelAwareVersion(target);
             Assert.Equal(1, ret.Value);
         }
 
@@ -78,7 +78,7 @@ namespace Squirrel.Tests
             var target = IntegrationTestHelper.GetPath(ManagedBuildRootRelativePath, "Update.exe");
             Assert.True(File.Exists(target));
 
-            var ret = SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target);
+            var ret = SquirrelAwareExecutableDetector.GetSquirrelAwareVersion(target);
             Assert.Null(ret);
         }
 
@@ -88,7 +88,7 @@ namespace Squirrel.Tests
             var target = IntegrationTestHelper.GetPath("fixtures", "SquirrelAwareApp.exe");
             Assert.True(File.Exists(target));
 
-            Assert.NotNull(SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target));
+            Assert.NotNull(SquirrelAwareExecutableDetector.GetSquirrelAwareVersion(target));
         }
 
         [Fact]
@@ -97,7 +97,7 @@ namespace Squirrel.Tests
             var target = IntegrationTestHelper.GetPath("fixtures", "NotSquirrelAwareApp.exe");
             Assert.True(File.Exists(target));
 
-            Assert.Null(SquirrelAwareExecutableDetector.GetPESquirrelAwareVersion(target));
+            Assert.Null(SquirrelAwareExecutableDetector.GetSquirrelAwareVersion(target));
         }
 
     }

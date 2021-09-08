@@ -1,8 +1,8 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using NuGet;
+using Squirrel.NuGet;
 using Squirrel;
 using Squirrel.SimpleSplat;
 using Squirrel.Tests.TestHelpers;
@@ -85,9 +85,6 @@ namespace Squirrel.Tests.Core
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
 
-            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
-            (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
-
             var baseFixture = new ReleasePackage(basePackage);
             var fixture = new ReleasePackage(newPackage);
 
@@ -96,8 +93,8 @@ namespace Squirrel.Tests.Core
                 .ToArray();
 
             try {
-                baseFixture.CreateReleasePackage(tempFiles[0], sourceDir);
-                fixture.CreateReleasePackage(tempFiles[1], sourceDir);
+                baseFixture.CreateReleasePackage(tempFiles[0]);
+                fixture.CreateReleasePackage(tempFiles[1]);
 
                 (new FileInfo(baseFixture.ReleasePackageFile)).Exists.ShouldBeTrue();
                 (new FileInfo(fixture.ReleasePackageFile)).Exists.ShouldBeTrue();
@@ -170,9 +167,6 @@ namespace Squirrel.Tests.Core
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
 
-            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
-            (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
-
             var baseFixture = new ReleasePackage(basePackage);
             var fixture = new ReleasePackage(newPackage);
 
@@ -181,14 +175,13 @@ namespace Squirrel.Tests.Core
                 .ToArray();
 
             try {
-                baseFixture.CreateReleasePackage(tempFiles[0], sourceDir);
-                fixture.CreateReleasePackage(tempFiles[1], sourceDir);
+                baseFixture.CreateReleasePackage(tempFiles[0]);
+                fixture.CreateReleasePackage(tempFiles[1]);
 
                 (new FileInfo(baseFixture.ReleasePackageFile)).Exists.ShouldBeTrue();
                 (new FileInfo(fixture.ReleasePackageFile)).Exists.ShouldBeTrue();
 
-                Assert.Throws<InvalidOperationException>(() =>
-                {
+                Assert.Throws<InvalidOperationException>(() => {
                     var deltaBuilder = new DeltaPackageBuilder();
                     deltaBuilder.CreateDeltaPackage(baseFixture, fixture, tempFiles[2]);
                 });
@@ -227,9 +220,6 @@ namespace Squirrel.Tests.Core
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
 
-            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
-            (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
-
             var baseFixture = new ReleasePackage(basePackage);
             var fixture = new ReleasePackage(newPackage);
 
@@ -238,8 +228,8 @@ namespace Squirrel.Tests.Core
                 .ToArray();
 
             try {
-                baseFixture.CreateReleasePackage(tempFiles[0], sourceDir);
-                fixture.CreateReleasePackage(tempFiles[1], sourceDir);
+                baseFixture.CreateReleasePackage(tempFiles[0]);
+                fixture.CreateReleasePackage(tempFiles[1]);
 
                 (new FileInfo(baseFixture.ReleasePackageFile)).Exists.ShouldBeTrue();
                 (new FileInfo(fixture.ReleasePackageFile)).Exists.ShouldBeTrue();
@@ -262,9 +252,6 @@ namespace Squirrel.Tests.Core
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
 
-            var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
-            (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
-
             var baseFixture = new ReleasePackage(basePackage);
             var fixture = new ReleasePackage(newPackage);
 
@@ -273,8 +260,8 @@ namespace Squirrel.Tests.Core
                 .ToArray();
 
             try {
-                baseFixture.CreateReleasePackage(tempFiles[0], sourceDir);
-                fixture.CreateReleasePackage(tempFiles[1], sourceDir);
+                baseFixture.CreateReleasePackage(tempFiles[0]);
+                fixture.CreateReleasePackage(tempFiles[1]);
 
                 (new FileInfo(baseFixture.ReleasePackageFile)).Exists.ShouldBeTrue();
                 (new FileInfo(fixture.ReleasePackageFile)).Exists.ShouldBeTrue();
@@ -299,15 +286,13 @@ namespace Squirrel.Tests.Core
 
             byte[] patchData;
 
-            using (var patchOut = new MemoryStream())
-            {
+            using (var patchOut = new MemoryStream()) {
                 Bsdiff.BinaryPatchUtility.Create(baseFileData, newFileData, patchOut);
                 patchData = patchOut.ToArray();
             }
 
             using (var toPatch = new MemoryStream(baseFileData))
-            using (var patched = new MemoryStream())
-            {
+            using (var patched = new MemoryStream()) {
                 Bsdiff.BinaryPatchUtility.Apply(toPatch, () => new MemoryStream(patchData), patched);
 
                 Assert.Equal(newFileData, patched.ToArray());

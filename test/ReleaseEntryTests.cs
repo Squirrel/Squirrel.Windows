@@ -4,7 +4,7 @@ using System.Linq;
 using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
-using NuGet;
+using Squirrel.NuGet;
 
 namespace Squirrel.Tests.Core
 {

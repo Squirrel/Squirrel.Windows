@@ -10,7 +10,7 @@ using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 using System.Net;
-using NuGet;
+using Squirrel.NuGet;
 
 namespace Squirrel.Tests
 {
