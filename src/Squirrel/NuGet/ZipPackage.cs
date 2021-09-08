@@ -7,7 +7,7 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Xml.Linq;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     internal interface IFrameworkTargetable
     {

@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
 using Squirrel.MarkdownSharp;
-using NuGet;
+using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
 using System.Threading.Tasks;
 using SharpCompress.Archives.Zip;

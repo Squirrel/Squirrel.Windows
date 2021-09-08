@@ -3,7 +3,7 @@ using System.IO;
 using System.IO.Packaging;
 using System.Linq;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     internal static class UriUtility
     {
@@ -13,8 +13,7 @@ namespace NuGet
         internal static string GetPath(Uri uri)
         {
             string path = uri.OriginalString;
-            if (path.StartsWith("/", StringComparison.Ordinal))
-            {
+            if (path.StartsWith("/", StringComparison.Ordinal)) {
                 path = path.Substring(1);
             }
 
@@ -26,7 +25,7 @@ namespace NuGet
         internal static Uri CreatePartUri(string path)
         {
             // Only the segments between the path separators should be escaped
-            var segments = path.Split( new[] { '/', Path.DirectorySeparatorChar }, StringSplitOptions.None)
+            var segments = path.Split(new[] { '/', Path.DirectorySeparatorChar }, StringSplitOptions.None)
                                .Select(Uri.EscapeDataString);
             var escapedPath = String.Join("/", segments);
             return PackUriHelper.CreatePartUri(new Uri(escapedPath, UriKind.Relative));
@@ -35,8 +34,7 @@ namespace NuGet
         // Bug 2379: SettingsCredentialProvider does not work
         private static Uri CreateODataAgnosticUri(string uri)
         {
-            if (uri.EndsWith("$metadata", StringComparison.OrdinalIgnoreCase))
-            {
+            if (uri.EndsWith("$metadata", StringComparison.OrdinalIgnoreCase)) {
                 uri = uri.Substring(0, uri.Length - 9).TrimEnd('/');
             }
             return new Uri(uri);

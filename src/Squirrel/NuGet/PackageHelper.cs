@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     public static class PackageHelper
     {

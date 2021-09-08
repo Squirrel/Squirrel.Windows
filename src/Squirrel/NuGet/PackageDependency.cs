@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     public class PackageDependency
     {
@@ -9,32 +9,28 @@ namespace NuGet
         {
         }
 
-        public PackageDependency(string id, IVersionSpec versionSpec) 
+        public PackageDependency(string id, IVersionSpec versionSpec)
         {
-            if (String.IsNullOrEmpty(id))
-            {
+            if (String.IsNullOrEmpty(id)) {
                 throw new ArgumentException("Argument_Cannot_Be_Null_Or_Empty", "id");
             }
             Id = id;
             VersionSpec = versionSpec;
         }
 
-        public string Id
-        {
+        public string Id {
             get;
             private set;
         }
 
-        public IVersionSpec VersionSpec
-        {
+        public IVersionSpec VersionSpec {
             get;
             private set;
         }
 
         public override string ToString()
         {
-            if (VersionSpec == null)
-            {
+            if (VersionSpec == null) {
                 return Id;
             }
 

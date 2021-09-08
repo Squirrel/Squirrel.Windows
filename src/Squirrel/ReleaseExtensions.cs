@@ -1,4 +1,4 @@
-﻿using NuGet;
+﻿using Squirrel.NuGet;
 using System;
 using System.Collections.Generic;
 using System.IO;

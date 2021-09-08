@@ -14,7 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
-using NuGet;
+using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
 using Squirrel.Shell;
 

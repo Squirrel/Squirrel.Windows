@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.Versioning;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     public class PackageDependencySet : IFrameworkTargetable
     {
@@ -13,8 +13,7 @@ namespace NuGet
 
         public PackageDependencySet(FrameworkName targetFramework, IEnumerable<PackageDependency> dependencies)
         {
-            if (dependencies == null)
-            {
+            if (dependencies == null) {
                 throw new ArgumentNullException("dependencies");
             }
 
@@ -22,28 +21,21 @@ namespace NuGet
             _dependencies = new ReadOnlyCollection<PackageDependency>(dependencies.ToList());
         }
 
-        public FrameworkName TargetFramework
-        {
-            get
-            {
+        public FrameworkName TargetFramework {
+            get {
                 return _targetFramework;
             }
         }
 
-        public ICollection<PackageDependency> Dependencies
-        {
-            get
-            {
+        public ICollection<PackageDependency> Dependencies {
+            get {
                 return _dependencies;
             }
         }
 
-        public IEnumerable<FrameworkName> SupportedFrameworks
-        {
-            get 
-            {
-                if (TargetFramework == null)
-                {
+        public IEnumerable<FrameworkName> SupportedFrameworks {
+            get {
+                if (TargetFramework == null) {
                     yield break;
                 }
 

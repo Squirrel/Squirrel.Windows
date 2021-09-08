@@ -1,5 +1,5 @@
 ﻿
-namespace NuGet
+namespace Squirrel.NuGet
 {
     public interface IVersionSpec
     {

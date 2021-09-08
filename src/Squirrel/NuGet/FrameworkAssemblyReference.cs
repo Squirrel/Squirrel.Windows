@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.Versioning;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     public class FrameworkAssemblyReference : IFrameworkTargetable
     {
@@ -15,13 +15,11 @@ namespace NuGet
 
         public FrameworkAssemblyReference(string assemblyName, IEnumerable<FrameworkName> supportedFrameworks)
         {
-            if (String.IsNullOrEmpty(assemblyName))
-            {
+            if (String.IsNullOrEmpty(assemblyName)) {
                 throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Argument_Cannot_Be_Null_Or_Empty", "assemblyName"));
             }
 
-            if (supportedFrameworks == null)
-            {
+            if (supportedFrameworks == null) {
                 throw new ArgumentNullException("supportedFrameworks");
             }
 

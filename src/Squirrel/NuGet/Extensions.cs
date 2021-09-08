@@ -1,25 +1,29 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
+    internal static class StringExtensions
+    {
+        public static string SafeTrim(this string value)
+        {
+            return value == null ? null : value.Trim();
+        }
+    }
+
     public static class XElementExtensions
     {
         public static string GetOptionalAttributeValue(this XElement element, string localName, string namespaceName = null)
         {
             XAttribute attr;
-            if (String.IsNullOrEmpty(namespaceName))
-            {
+            if (String.IsNullOrEmpty(namespaceName)) {
                 attr = element.Attribute(localName);
-            }
-            else
-            {
+            } else {
                 attr = element.Attribute(XName.Get(localName, namespaceName));
             }
             return attr != null ? attr.Value : null;
@@ -28,12 +32,9 @@ namespace NuGet
         public static string GetOptionalElementValue(this XContainer element, string localName, string namespaceName = null)
         {
             XElement child;
-            if (String.IsNullOrEmpty(namespaceName))
-            {
+            if (String.IsNullOrEmpty(namespaceName)) {
                 child = element.ElementsNoNamespace(localName).FirstOrDefault();
-            }
-            else
-            {
+            } else {
                 child = element.Element(XName.Get(localName, namespaceName));
             }
             return child != null ? child.Value : null;
@@ -52,8 +53,7 @@ namespace NuGet
         // REVIEW: We can use a stack if the perf is bad for Except and MergeWith
         public static XElement Except(this XElement source, XElement target)
         {
-            if (target == null)
-            {
+            if (target == null) {
                 return source;
             }
 
@@ -61,34 +61,27 @@ namespace NuGet
                                      where AttributeEquals(e, target.Attribute(e.Name))
                                      select e;
             // Remove the attributes
-            foreach (var a in attributesToRemove.ToList())
-            {
+            foreach (var a in attributesToRemove.ToList()) {
                 a.Remove();
             }
 
-            foreach (var sourceChildNode in source.Nodes().ToList())
-            {
+            foreach (var sourceChildNode in source.Nodes().ToList()) {
                 var sourceChildComment = sourceChildNode as XComment;
-                if (sourceChildComment != null)
-                {
+                if (sourceChildComment != null) {
                     bool hasMatchingComment = HasComment(target, sourceChildComment);
-                    if (hasMatchingComment)
-                    {
+                    if (hasMatchingComment) {
                         sourceChildComment.Remove();
                     }
                     continue;
                 }
 
                 var sourceChild = sourceChildNode as XElement;
-                if (sourceChild != null)
-                {
+                if (sourceChild != null) {
                     var targetChild = FindElement(target, sourceChild);
-                    if (targetChild != null && !HasConflict(sourceChild, targetChild))
-                    {
+                    if (targetChild != null && !HasConflict(sourceChild, targetChild)) {
                         Except(sourceChild, targetChild);
                         bool hasContent = sourceChild.HasAttributes || sourceChild.HasElements;
-                        if (!hasContent)
-                        {
+                        if (!hasContent) {
                             // Remove the element if there is no content
                             sourceChild.Remove();
                             targetChild.Remove();
@@ -107,17 +100,14 @@ namespace NuGet
         [SuppressMessage("Microsoft.Design", "CA1006:DoNotNestGenericTypesInMemberSignatures", Justification = "No reason to create a new type")]
         public static XElement MergeWith(this XElement source, XElement target, IDictionary<XName, Action<XElement, XElement>> nodeActions)
         {
-            if (target == null)
-            {
+            if (target == null) {
                 return source;
             }
 
             // Merge the attributes
-            foreach (var targetAttribute in target.Attributes())
-            {
+            foreach (var targetAttribute in target.Attributes()) {
                 var sourceAttribute = source.Attribute(targetAttribute.Name);
-                if (sourceAttribute == null)
-                {
+                if (sourceAttribute == null) {
                     source.Add(targetAttribute);
                 }
             }
@@ -125,40 +115,30 @@ namespace NuGet
             var pendingComments = new Queue<XComment>();
 
             // Go through the elements to be merged
-            foreach (var targetChildNode in target.Nodes())
-            {
+            foreach (var targetChildNode in target.Nodes()) {
                 var targetChildComment = targetChildNode as XComment;
-                if (targetChildComment != null)
-                {
+                if (targetChildComment != null) {
                     // always add comment to source
                     pendingComments.Enqueue(targetChildComment);
                     continue;
                 }
 
                 var targetChild = targetChildNode as XElement;
-                if (targetChild != null)
-                {
+                if (targetChild != null) {
                     var sourceChild = FindElement(source, targetChild);
-                    if (sourceChild != null)
-                    {
+                    if (sourceChild != null) {
                         // when we see an element, add all the previous comments before the child element
                         AddContents(pendingComments, sourceChild.AddBeforeSelf);
                     }
 
-                    if (sourceChild != null && !HasConflict(sourceChild, targetChild))
-                    {
+                    if (sourceChild != null && !HasConflict(sourceChild, targetChild)) {
                         // Other wise merge recursively
                         sourceChild.MergeWith(targetChild, nodeActions);
-                    }
-                    else
-                    {
+                    } else {
                         Action<XElement, XElement> nodeAction;
-                        if (nodeActions != null && nodeActions.TryGetValue(targetChild.Name, out nodeAction))
-                        {
+                        if (nodeActions != null && nodeActions.TryGetValue(targetChild.Name, out nodeAction)) {
                             nodeAction(source, targetChild);
-                        }
-                        else
-                        {
+                        } else {
                             // If that element is null then add that node
                             source.Add(targetChild);
 
@@ -191,7 +171,7 @@ namespace NuGet
         private static bool HasComment(XElement element, XComment comment)
         {
             return element.Nodes().Any(node => node.NodeType == XmlNodeType.Comment &&
-                                               ((XComment)node).Value.Equals(comment.Value, StringComparison.Ordinal));                                                
+                                               ((XComment) node).Value.Equals(comment.Value, StringComparison.Ordinal));
         }
 
         private static int Compare(XElement target, XElement left, XElement right)
@@ -202,8 +182,7 @@ namespace NuGet
             int leftExactMathes = CountMatches(left, target, AttributeEquals);
             int rightExactMathes = CountMatches(right, target, AttributeEquals);
 
-            if (leftExactMathes == rightExactMathes)
-            {
+            if (leftExactMathes == rightExactMathes) {
                 // Then check which names match
                 int leftNameMatches = CountMatches(left, target, (a, b) => a.Name == b.Name);
                 int rightNameMatches = CountMatches(right, target, (a, b) => a.Name == b.Name);
@@ -227,12 +206,10 @@ namespace NuGet
             // Get all attributes as name value pairs
             var sourceAttr = source.Attributes().ToDictionary(a => a.Name, a => a.Value);
             // Loop over all the other attributes and see if there are
-            foreach (var targetAttr in target.Attributes())
-            {
+            foreach (var targetAttr in target.Attributes()) {
                 string sourceValue;
                 // if any of the attributes are in the source (names match) but the value doesn't match then we've found a conflict
-                if (sourceAttr.TryGetValue(targetAttr.Name, out sourceValue) && sourceValue != targetAttr.Value)
-                {
+                if (sourceAttr.TryGetValue(targetAttr.Name, out sourceValue) && sourceValue != targetAttr.Value) {
                     return true;
                 }
             }
@@ -274,12 +251,9 @@ namespace NuGet
         {
             bool containerIsSelfClosed = !container.Nodes().Any();
             XText lastChildText = container.LastNode as XText;
-            if (containerIsSelfClosed || lastChildText == null)
-            {
+            if (containerIsSelfClosed || lastChildText == null) {
                 container.Add(new XText(containerIndent + oneIndentLevel));
-            }
-            else
-            {
+            } else {
                 lastChildText.Value += oneIndentLevel;
             }
         }
@@ -287,8 +261,7 @@ namespace NuGet
         private static void IndentChildrenElements(this XContainer container, string containerIndent, string oneIndentLevel)
         {
             string childIndent = containerIndent + oneIndentLevel;
-            foreach (XElement element in container.Elements())
-            {
+            foreach (XElement element in container.Elements()) {
                 element.AddBeforeSelf(new XText(childIndent));
                 element.IndentChildrenElements(childIndent + oneIndentLevel, oneIndentLevel);
             }
@@ -329,19 +302,17 @@ namespace NuGet
             string indentString = textBeforeOrNull.Value.Trim(Environment.NewLine.ToCharArray());
             char lastChar = indentString.LastOrDefault();
             char indentChar = (lastChar == '\t' ? '\t' : ' ');
-            int indentLevel = Math.Max(1, indentString.Length/depth);
+            int indentLevel = Math.Max(1, indentString.Length / depth);
             return new string(indentChar, indentLevel);
         }
 
         private static bool AttributeEquals(XAttribute source, XAttribute target)
         {
-            if (source == null && target == null)
-            {
+            if (source == null && target == null) {
                 return true;
             }
 
-            if (source == null || target == null)
-            {
+            if (source == null || target == null) {
                 return false;
             }
             return source.Name == target.Name && source.Value == target.Value;
@@ -349,10 +320,10 @@ namespace NuGet
 
         private static void AddContents<T>(Queue<T> pendingComments, Action<T> action)
         {
-            while (pendingComments.Count > 0)
-            {
+            while (pendingComments.Count > 0) {
                 action(pendingComments.Dequeue());
             }
         }
     }
+
 }

@@ -7,7 +7,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     internal static class VersionUtility
     {
@@ -125,20 +125,16 @@ namespace NuGet
         // So we use this MaxVersion value to achieve complete compatiblilty.
         private static readonly Version MaxVersion = new Version(Int32.MaxValue, Int32.MaxValue, Int32.MaxValue, Int32.MaxValue);
 
-        public static Version DefaultTargetFrameworkVersion
-        {
-            get
-            {
+        public static Version DefaultTargetFrameworkVersion {
+            get {
                 // We need to parse the version name out from the mscorlib's assembly name since
                 // we can't call GetName() in medium trust
                 return typeof(string).Assembly.GetName().Version;
             }
         }
 
-        public static FrameworkName DefaultTargetFramework
-        {
-            get
-            {
+        public static FrameworkName DefaultTargetFramework {
+            get {
                 return new FrameworkName(NetFrameworkIdentifier, DefaultTargetFrameworkVersion);
             }
         }

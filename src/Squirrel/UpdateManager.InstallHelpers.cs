@@ -8,7 +8,7 @@ using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32;
-using NuGet;
+using Squirrel.NuGet;
 using System.Reflection;
 using Squirrel.SimpleSplat;
 

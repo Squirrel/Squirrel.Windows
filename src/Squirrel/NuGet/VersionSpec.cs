@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Text;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     public class VersionSpec : IVersionSpec
     {
@@ -24,13 +24,11 @@ namespace NuGet
 
         public override string ToString()
         {
-            if (MinVersion != null && IsMinInclusive && MaxVersion == null && !IsMaxInclusive)
-            {
+            if (MinVersion != null && IsMinInclusive && MaxVersion == null && !IsMaxInclusive) {
                 return MinVersion.ToString();
             }
 
-            if (MinVersion != null && MaxVersion != null && MinVersion == MaxVersion && IsMinInclusive && IsMaxInclusive)
-            {
+            if (MinVersion != null && MaxVersion != null && MinVersion == MaxVersion && IsMinInclusive && IsMaxInclusive) {
                 return "[" + MinVersion + "]";
             }
 

@@ -2,15 +2,14 @@
 using System.Xml;
 using System.Xml.Linq;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     public static class XmlUtility
     {
         public static XDocument LoadSafe(string filePath)
         {
             var settings = CreateSafeSettings();
-            using (var reader = XmlReader.Create(filePath, settings))
-            {
+            using (var reader = XmlReader.Create(filePath, settings)) {
                 return XDocument.Load(reader);
             }
         }
@@ -38,8 +37,7 @@ namespace NuGet
 
         private static XmlReaderSettings CreateSafeSettings(bool ignoreWhiteSpace = false)
         {
-            var safeSettings = new XmlReaderSettings
-            {
+            var safeSettings = new XmlReaderSettings {
                 XmlResolver = null,
                 DtdProcessing = DtdProcessing.Prohibit,
                 IgnoreWhitespace = ignoreWhiteSpace
@@ -51,13 +49,10 @@ namespace NuGet
         internal static bool TryParseDocument(string content, out XDocument document)
         {
             document = null;
-            try
-            {
+            try {
                 document = XDocument.Parse(content);
                 return true;
-            }
-            catch (XmlException)
-            {
+            } catch (XmlException) {
                 return false;
             }
         }

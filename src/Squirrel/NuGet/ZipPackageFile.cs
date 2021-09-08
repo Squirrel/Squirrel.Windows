@@ -4,7 +4,7 @@ using System.IO;
 using System.IO.Packaging;
 using System.Runtime.Versioning;
 
-namespace NuGet
+namespace Squirrel.NuGet
 {
     internal static class StreamExtensions
     {
@@ -50,32 +50,25 @@ namespace NuGet
             EffectivePath = effectivePath;
         }
 
-        public string Path
-        {
+        public string Path {
             get;
             private set;
         }
 
-        public string EffectivePath
-        {
+        public string EffectivePath {
             get;
             private set;
         }
 
-        public FrameworkName TargetFramework
-        {
-            get
-            {
+        public FrameworkName TargetFramework {
+            get {
                 return _targetFramework;
             }
         }
 
-        IEnumerable<FrameworkName> IFrameworkTargetable.SupportedFrameworks
-        {
-            get
-            {
-                if (TargetFramework != null)
-                {
+        IEnumerable<FrameworkName> IFrameworkTargetable.SupportedFrameworks {
+            get {
+                if (TargetFramework != null) {
                     yield return TargetFramework;
                 }
                 yield break;

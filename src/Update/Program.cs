@@ -1,5 +1,4 @@
-﻿using NuGet;
-using Squirrel.SimpleSplat;
+﻿using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -13,6 +12,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Squirrel.NuGet;
 
 namespace Squirrel.Update
 {
