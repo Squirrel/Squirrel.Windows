@@ -10,14 +10,11 @@
 
     <dependencies>
       <group targetFramework="netstandard2.0">
-        <dependency id="Microsoft.CSharp" version="4.7.0" />
-        <dependency id="Microsoft.Web.Xdt" version="3.1.0" />
-        <dependency id="System.ComponentModel.Annotations" version="5.0.0" />
-        <dependency id="System.IO.Packaging" version="5.0.0" />
-        <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
         <dependency id="Mono.Cecil" version="0.11.4" />
         <dependency id="SharpCompress" version="0.28.3" />
         <dependency id="System.Drawing.Common" version="5.0.2" />
+        <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
+        <dependency id="System.IO.Packaging" version="5.0.0" />
       </group>
     </dependencies>
 
