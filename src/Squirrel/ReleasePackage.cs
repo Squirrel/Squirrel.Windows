@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics.Contracts;
@@ -18,12 +18,6 @@ using SharpCompress.Readers;
 
 namespace Squirrel
 {
-    internal static class FrameworkTargetVersion
-    {
-        public static FrameworkName Net40 = new FrameworkName(".NETFramework,Version=v4.0");
-        public static FrameworkName Net45 = new FrameworkName(".NETFramework,Version=v4.5");
-    }
-
     public interface IReleasePackage
     {
         string InputPackageFile { get; }
