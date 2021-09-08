@@ -46,14 +46,14 @@ namespace Squirrel.NuGet
     {
         public string Id { get; private set; }
         public string Description { get; private set; }
-        public IEnumerable<string> Authors { get; private set; }
+        public IEnumerable<string> Authors { get; private set; } = Enumerable.Empty<string>();
         public string Title { get; private set; }
         public string Summary { get; private set; }
         public string Language { get; private set; }
         public string Copyright { get; private set; }
         public SemanticVersion Version { get; private set; }
-        public IEnumerable<FrameworkAssemblyReference> FrameworkAssemblies { get; private set; }
-        public IEnumerable<PackageDependencySet> DependencySets { get; private set; }
+        public IEnumerable<FrameworkAssemblyReference> FrameworkAssemblies { get; private set; } = Enumerable.Empty<FrameworkAssemblyReference>();
+        public IEnumerable<PackageDependencySet> DependencySets { get; private set; } = Enumerable.Empty<PackageDependencySet>();
         public Uri ProjectUrl { get; private set; }
         public string ReleaseNotes { get; private set; }
         public Uri IconUrl { get; private set; }
@@ -96,13 +96,18 @@ namespace Squirrel.NuGet
             return GetFiles(Constants.LibDirectory);
         }
 
+        public IEnumerable<IPackageFile> GetContentFiles()
+        {
+            return GetFiles(Constants.ContentDirectory);
+        }
+
         public IEnumerable<IPackageFile> GetFiles(string directory)
         {
             string folderPrefix = directory + Path.DirectorySeparatorChar;
-            return GetFilesNoCache().Where(file => file.Path.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase));
+            return GetFiles().Where(file => file.Path.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase));
         }
 
-        private List<IPackageFile> GetFilesNoCache()
+        public List<IPackageFile> GetFiles()
         {
             using (Stream stream = _streamFactory()) {
                 Package package = Package.Open(stream);
