@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Squirrel.NuGet
 {
-    public class VersionSpec : IVersionSpec
+    internal class VersionSpec : IVersionSpec
     {
         public VersionSpec()
         {

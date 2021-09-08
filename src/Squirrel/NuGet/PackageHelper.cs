@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 
 namespace Squirrel.NuGet
 {
-    public static class PackageHelper
+    internal static class PackageHelper
     {
         public static bool IsManifest(string path)
         {

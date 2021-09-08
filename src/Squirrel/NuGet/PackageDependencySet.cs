@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 
 namespace Squirrel.NuGet
 {
-    public class PackageDependencySet : IFrameworkTargetable
+    internal class PackageDependencySet : IFrameworkTargetable
     {
         private readonly FrameworkName _targetFramework;
         private readonly ReadOnlyCollection<PackageDependency> _dependencies;

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
@@ -16,7 +17,26 @@ namespace Squirrel.NuGet
         }
     }
 
-    public static class XElementExtensions
+    internal static class StreamExtensions
+    {
+        public static Func<Stream> ToStreamFactory(this Stream stream)
+        {
+            byte[] buffer;
+
+            using (var ms = new MemoryStream()) {
+                try {
+                    stream.CopyTo(ms);
+                    buffer = ms.ToArray();
+                } finally {
+                    stream.Close();
+                }
+            }
+
+            return () => new MemoryStream(buffer);
+        }
+    }
+
+    internal static class XElementExtensions
     {
         public static string GetOptionalAttributeValue(this XElement element, string localName, string namespaceName = null)
         {
@@ -325,5 +345,4 @@ namespace Squirrel.NuGet
             }
         }
     }
-
 }

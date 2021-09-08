@@ -6,25 +6,6 @@ using System.Runtime.Versioning;
 
 namespace Squirrel.NuGet
 {
-    internal static class StreamExtensions
-    {
-        public static Func<Stream> ToStreamFactory(this Stream stream)
-        {
-            byte[] buffer;
-
-            using (var ms = new MemoryStream()) {
-                try {
-                    stream.CopyTo(ms);
-                    buffer = ms.ToArray();
-                } finally {
-                    stream.Close();
-                }
-            }
-
-            return () => new MemoryStream(buffer);
-        }
-    }
-
     internal class ZipPackageFile : IPackageFile
     {
         private readonly Func<Stream> _streamFactory;

@@ -2,7 +2,7 @@
 
 namespace Squirrel.NuGet
 {
-    public class PackageDependency
+    internal class PackageDependency
     {
         public PackageDependency(string id)
             : this(id, versionSpec: null)

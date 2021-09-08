@@ -6,7 +6,7 @@ using System.Runtime.Versioning;
 
 namespace Squirrel.NuGet
 {
-    public class FrameworkAssemblyReference : IFrameworkTargetable
+    internal class FrameworkAssemblyReference : IFrameworkTargetable
     {
         public FrameworkAssemblyReference(string assemblyName)
             : this(assemblyName, Enumerable.Empty<FrameworkName>())

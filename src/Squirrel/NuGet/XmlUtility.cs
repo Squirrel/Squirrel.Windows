@@ -4,7 +4,7 @@ using System.Xml.Linq;
 
 namespace Squirrel.NuGet
 {
-    public static class XmlUtility
+    internal static class XmlUtility
     {
         public static XDocument LoadSafe(string filePath)
         {

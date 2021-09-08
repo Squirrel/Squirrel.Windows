@@ -1,10 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace Squirrel.NuGet
 {
-    public static class Constants
+    internal static class Constants
     {
         /// <summary>
         /// Represents the ".nupkg" extension.

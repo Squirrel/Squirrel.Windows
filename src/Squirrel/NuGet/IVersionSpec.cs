@@ -1,7 +1,7 @@
 ﻿
 namespace Squirrel.NuGet
 {
-    public interface IVersionSpec
+    internal interface IVersionSpec
     {
         SemanticVersion MinVersion { get; }
         bool IsMinInclusive { get; }
