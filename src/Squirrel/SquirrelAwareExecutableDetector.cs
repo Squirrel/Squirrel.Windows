@@ -1,19 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+using System.Xml.Linq;
 using Mono.Cecil;
+using Squirrel.NuGet;
+using static Squirrel.NativeMethods;
 
 namespace Squirrel
 {
     static class SquirrelAwareExecutableDetector
     {
+        const string SQUIRREL_AWARE_KEY = "SquirrelAwareVersion";
+        const uint LOAD_LIBRARY_AS_DATAFILE = 2;
+
         public static List<string> GetAllSquirrelAwareApps(string directory, int minimumVersion = 1)
         {
             var di = new DirectoryInfo(directory);
@@ -21,14 +26,14 @@ namespace Squirrel
             return di.EnumerateFiles()
                 .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
                 .Select(x => x.FullName)
-                .Where(x => (GetPESquirrelAwareVersion(x) ?? -1) >= minimumVersion)
+                .Where(x => (GetSquirrelAwareVersion(x) ?? -1) >= minimumVersion)
                 .ToList();
         }
 
-        public static int? GetPESquirrelAwareVersion(string executable)
+        public static int? GetSquirrelAwareVersion(string exePath)
         {
-            if (!File.Exists(executable)) return null;
-            var fullname = Path.GetFullPath(executable);
+            if (!File.Exists(exePath)) return null;
+            var fullname = Path.GetFullPath(exePath);
 
             var backingDll = LookForNetCoreDll(fullname);
 
@@ -45,11 +50,16 @@ namespace Squirrel
                     }
                 }
 
-                return GetVersionBlockSquirrelAwareValue(fullname);
+                var versionBlock = GetVersionBlockSquirrelAwareValue(fullname);
+                if (versionBlock != null) {
+                    return versionBlock;
+                }
+
+                return GetManifestSquirrelAwareValue(fullname);
             });
         }
 
-        private static string LookForNetCoreDll(string fullname)
+        static string LookForNetCoreDll(string fullname)
         {
             var exeFileVersionInfo = FileVersionInfo.GetVersionInfo(fullname);
             var originalFilename = exeFileVersionInfo.OriginalFilename;
@@ -129,6 +139,53 @@ namespace Squirrel
 
             return ret;
 #endif
+        }
+
+        static int? GetManifestSquirrelAwareValue(string executable)
+        {
+            var buffer = GetManifestFromPEResources(executable);
+            if (buffer == null)
+                return null;
+
+            var document = XDocument.Load(new MemoryStream(buffer));
+            var aware = document.Root.ElementsNoNamespace(SQUIRREL_AWARE_KEY).FirstOrDefault();
+            if (aware != null && int.TryParse(aware.Value, out var pv)) {
+                return pv;
+            }
+
+            return null;
+        }
+
+        static byte[] GetManifestFromPEResources(string filePath)
+        {
+            var hModule = LoadLibraryEx(filePath, IntPtr.Zero, LOAD_LIBRARY_AS_DATAFILE);
+            if (hModule == IntPtr.Zero) {
+                throw new Win32Exception();
+            }
+
+            try {
+                var hResource = FindResource(hModule, "#1", "#24");
+                if (hResource == IntPtr.Zero)
+                    return null;
+
+                uint size = SizeofResource(hModule, hResource);
+                if (size == 0)
+                    throw new Win32Exception();
+
+                var hGlobal = LoadResource(hModule, hResource);
+                if (hGlobal == IntPtr.Zero)
+                    throw new Win32Exception();
+
+                var data = LockResource(hGlobal);
+                if (data == IntPtr.Zero)
+                    throw new Win32Exception(0x21);
+
+                var buf = new byte[size];
+                Marshal.Copy(data, buf, 0, (int) size);
+                return buf;
+            } finally {
+                FreeLibrary(hModule);
+            }
         }
     }
 }

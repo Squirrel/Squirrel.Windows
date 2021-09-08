@@ -31,6 +31,23 @@ namespace Squirrel
             return (int) pbi.InheritedFromUniqueProcessId;
         }
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr LoadLibraryEx(string lpModuleName, IntPtr hFile, uint dwFlags);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern IntPtr FindResource(IntPtr hModule, string lpName, string lpType);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern uint SizeofResource(IntPtr hModule, IntPtr handle);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr LoadResource(IntPtr hModule, IntPtr handle);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern IntPtr LockResource(IntPtr hglobal);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool FreeLibrary(IntPtr hModule);
 
         [DllImport("version.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
