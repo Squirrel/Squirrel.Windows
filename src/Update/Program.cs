@@ -28,10 +28,6 @@ namespace Squirrel.Update
 
         public static int Main(string[] args)
         {
-            var asd = new ZipPackage(@"C:\Users\Caelan\Downloads\newtonsoft.json.13.0.1.nupkg");
-            return 0;
-
-
             var pg = new Program();
             try {
                 return pg.main(args);
