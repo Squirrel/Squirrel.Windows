@@ -118,7 +118,7 @@ namespace Squirrel.Update
                 break;
 #endif
             case UpdateAction.Releasify:
-                Releasify(opt.target, opt.releaseDir, opt.packagesDir, opt.bootstrapperExe, opt.backgroundGif, opt.signingParameters, opt.baseUrl, opt.setupIcon, !opt.noMsi, opt.packageAs64Bit, opt.frameworkVersion, !opt.noDelta, opt.selfContained);
+                Releasify(opt.target, opt.releaseDir, opt.bootstrapperExe, opt.backgroundGif, opt.signingParameters, opt.baseUrl, opt.setupIcon, !opt.noMsi, opt.packageAs64Bit, opt.frameworkVersion, !opt.noDelta, opt.selfContained);
                 break;
             }
 
@@ -297,7 +297,7 @@ namespace Squirrel.Update
             }
         }
 
-        public void Releasify(string package, string targetDir = null, string packagesDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, bool packageAs64Bit = false, string frameworkVersion = null, bool generateDeltas = true, bool selfContained = false)
+        public void Releasify(string package, string targetDir = null, string bootstrapperExe = null, string backgroundGif = null, string signingOpts = null, string baseUrl = null, string setupIcon = null, bool generateMsi = true, bool packageAs64Bit = false, string frameworkVersion = null, bool generateDeltas = true, bool selfContained = false)
         {
             ensureConsole();
 
@@ -312,7 +312,6 @@ namespace Squirrel.Update
             }
 
             targetDir = targetDir ?? Path.Combine(".", "Releases");
-            packagesDir = packagesDir ?? ".";
             bootstrapperExe = bootstrapperExe ?? Path.Combine(".", "Setup.exe");
 
             if (!Directory.Exists(targetDir)) {
@@ -361,7 +360,7 @@ namespace Squirrel.Update
                 this.Log().Info("Creating release package: " + file.FullName);
 
                 var rp = new ReleasePackage(file.FullName);
-                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), packagesDir, contentsPostProcessHook: pkgPath => {
+                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: pkgPath => {
 
                     // create sub executable for all exe's in this package (except Squirrel!)
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()

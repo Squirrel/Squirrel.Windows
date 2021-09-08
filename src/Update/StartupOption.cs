@@ -11,7 +11,6 @@ namespace Squirrel.Update
         internal UpdateAction updateAction { get; private set; } = default(UpdateAction);
         internal string target { get; private set; } = default(string);
         internal string releaseDir { get; private set; } = default(string);
-        internal string packagesDir { get; private set; } = default(string);
         internal string bootstrapperExe { get; private set; } = default(string);
         internal string backgroundGif { get; private set; } = default(string);
         internal string signingParameters { get; private set; } = default(string);
@@ -56,7 +55,6 @@ namespace Squirrel.Update
                 "Options:",
                 { "h|?|help", "Display Help and exit", _ => {} },
                 { "r=|releaseDir=", "Path to a release directory to use with releasify", v => releaseDir = v},
-                { "p=|packagesDir=", "Path to the NuGet Packages directory for C# apps", v => packagesDir = v},
                 { "bootstrapperExe=", "Path to the Setup.exe to use as a template", v => bootstrapperExe = v},
                 { "g=|loadingGif=|splashImage=", "Path to an animated GIF to be displayed during installation", v => backgroundGif = v},
                 { "i=|icon", "Path to an ICO file that will be used for icon shortcuts", v => icon = v},
