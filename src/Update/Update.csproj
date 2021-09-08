@@ -11,6 +11,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationIcon>squirrel.ico</ApplicationIcon>
     <RootNamespace>Squirrel.Update</RootNamespace>
+    <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
 
   <!-- If update.ico exists in project directory it will be used instead of the squirrel icon -->

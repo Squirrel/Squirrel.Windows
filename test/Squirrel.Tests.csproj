@@ -7,6 +7,7 @@
     <Title>Squirrel.Tests</Title>
     <IsPackable>false</IsPackable>
     <IsTest>true</IsTest>
+    <NoWarn>CS1998</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
