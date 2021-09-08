@@ -1,8 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <LangVersion>default</LangVersion>
-    <Nullable>enable</Nullable>
-    <TargetFramework>netstandard2.0</TargetFramework>
-  </PropertyGroup>
-</Project>
