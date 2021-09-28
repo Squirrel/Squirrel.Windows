@@ -19,7 +19,7 @@ Squirrel uses NuGet packages to create installation and update packages, which m
 
 ## What Do We Want?
 
-Windows apps should be as fast and as easy to install and update as apps like Google Chrome. From an app developer's side, it should be really straightforward to create an installer for my app, and publish updates to it, without having to jump through insane hoops. 
+Windows apps should be as fast and as easy to install and update as apps like Google Chrome¹. From an app developer's side, it should be really straightforward to create an installer for my app, and publish updates to it, without having to jump through insane hoops. 
 
 * **Integrating** an app to use Squirrel should be extremely easy, provide a client API, and be developer friendly.
 * **Packaging** is really easy, can be automated, and supports delta update packages.
@@ -28,6 +28,8 @@ Windows apps should be as fast and as easy to install and update as apps like Go
 * **Updating** is in the background, doesn't interrupt the user, and does not require a reboot.
 
 Refer to our full list of goals for [integrating, packaging, distributing, installing, and updating](docs/goals.md).
+
+¹: _Google actually open source Chrome's update mechanism in a project called [Omaha](https://github.com/google/omaha). Compared to Squirrel, Omaha is more powerful but also harder to use._
 
 ## Documentation
 
