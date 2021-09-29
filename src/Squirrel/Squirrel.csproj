@@ -16,13 +16,14 @@
     <PackageReference Include="DeltaCompressionDotNet" Version="1.1.0.0" />
     <PackageReference Include="Microsoft.Web.Xdt" Version="2.1.1" />
     <PackageReference Include="Mono.Cecil" Version="0.11.2" />
-    <PackageReference Include="SharpCompress" Version="0.17.1.0" />
+    <PackageReference Include="SharpCompress" Version="0.29.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web" />
+    <Reference Include="netstandard" />
   </ItemGroup>
 
   <ItemGroup>
