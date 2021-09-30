@@ -11,7 +11,7 @@
     <dependencies>
       <dependency id="DeltaCompressionDotNet" version="[1.1,2.0)" />
       <dependency id="Mono.Cecil" version="0.11.2" />
-      <dependency id="SharpCompress" version="[0.17.1]" />
+      <dependency id="SharpCompress" version="0.29.0" />
     </dependencies>
 
     <id>squirrel.windows</id>
