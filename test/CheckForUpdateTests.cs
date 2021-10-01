@@ -1,8 +1,4 @@
 using System;
-using System.IO;
-using System.Linq;
-using System.Text;
-using Squirrel.Tests.TestHelpers;
 using Xunit;
 
 namespace Squirrel.Tests
