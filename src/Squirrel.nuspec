@@ -9,7 +9,7 @@
     <iconUrl>https://raw.githubusercontent.com/Squirrel/Squirrel.Windows/master/docs/artwork/Squirrel-Logo-Square.png</iconUrl>
 
     <dependencies>
-      <dependency id="DeltaCompressionDotNet" version="[1.1,2.0)" />
+      <dependency id="DeltaCompressionDotNet" version="2.0.0" />
       <dependency id="Mono.Cecil" version="0.11.2" />
       <dependency id="SharpCompress" version="[0.17.1]" />
     </dependencies>
