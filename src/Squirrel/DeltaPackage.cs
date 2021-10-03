@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Squirrel.SimpleSplat;
-using DeltaCompressionDotNet.MsDelta;
 using System.ComponentModel;
 using Squirrel.Bsdiff;
 using SharpCompress.Archives;
