@@ -3,6 +3,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
+    <LangVersion>9</LangVersion>
     <Description>Squirrel</Description>
     <Title>Squirrel</Title>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -13,7 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DeltaCompressionDotNet" Version="2.0.0" NoWarn="NU1701" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
     <PackageReference Include="Mono.Cecil" Version="0.11.2" />
