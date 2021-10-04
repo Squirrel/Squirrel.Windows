@@ -1,0 +1,3 @@
+[submodule "vendor/NuGet"]
+	path = vendor/NuGet
+	url = git@github.com:danworley/NuGet.git
