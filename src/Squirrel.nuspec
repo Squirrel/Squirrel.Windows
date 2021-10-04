@@ -9,9 +9,14 @@
     <iconUrl>https://raw.githubusercontent.com/Squirrel/Squirrel.Windows/master/docs/artwork/Squirrel-Logo-Square.png</iconUrl>
 
     <dependencies>
-      <dependency id="DeltaCompressionDotNet" version="2.0.0" />
-      <dependency id="Mono.Cecil" version="0.11.2" />
-      <dependency id="SharpCompress" version="[0.17.1]" />
+      <group targetFramework=".NETFramework4.5">
+        <dependency id="Mono.Cecil" version="0.11.2" />
+        <dependency id="SharpCompress" version="[0.17.1]" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Mono.Cecil" version="0.11.2" />
+        <dependency id="SharpCompress" version="[0.17.1]" />
+      </group>
     </dependencies>
 
     <id>squirrel.windows</id>
@@ -21,9 +26,12 @@
     <copyright>Copyright GitHub© 2017</copyright>
   </metadata>
   <files>
-    <file src="..\Build\Release\Net45\Squirrel.*" target="lib\Net45" />
-    <file src="..\Build\Release\Net45\NuGet.Squirrel.*" target="lib\Net45" />
-    <file src="..\Build\Release\Net45\ICSharpCode.*" target="lib\Net45" />
+    <file src="..\Build\Release\net45\Squirrel.*" target="lib\net45" />
+    <file src="..\Build\Release\net45\NuGet.Squirrel.*" target="lib\net45" />
+    <file src="..\Build\Release\net45\ICSharpCode.*" target="lib\net45" />
+    <file src="..\Build\Release\netstandard2.0\Squirrel.*" target="lib\netstandard2.0" />
+    <file src="..\Build\Release\netstandard2.0\NuGet.Squirrel.*" target="lib\netstandard2.0" />
+    <file src="..\Build\Release\netstandard2.0\ICSharpCode.*" target="lib\netstandard2.0" />
     <file src="squirrel.windows.props" target="build" />
     <file src="..\Build\Release\Win32\Setup.exe" target="tools" />
     <file src="..\Build\Release\Win32\WriteZipToSetup.exe" target="tools" />
