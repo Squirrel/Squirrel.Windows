@@ -1,20 +1,18 @@
+using MarkdownSharp;
+using NuGet;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Readers;
+using Squirrel.SimpleSplat;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Diagnostics.Contracts;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml;
-using MarkdownSharp;
-using NuGet;
-using Squirrel.SimpleSplat;
 using System.Threading.Tasks;
-using SharpCompress.Archives.Zip;
-using SharpCompress.Readers;
+using System.Xml;
 
 namespace Squirrel
 {

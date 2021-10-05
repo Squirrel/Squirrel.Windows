@@ -1,20 +1,18 @@
-﻿using System;
+﻿using DeltaCompressionDotNet.MsDelta;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Common;
+using SharpCompress.Compressors.Deflate;
+using SharpCompress.Readers;
+using Squirrel.Bsdiff;
+using Squirrel.SimpleSplat;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Squirrel.SimpleSplat;
-using DeltaCompressionDotNet.MsDelta;
-using System.ComponentModel;
-using Squirrel.Bsdiff;
-using SharpCompress.Archives;
-using SharpCompress.Archives.Zip;
-using SharpCompress.Writers;
-using SharpCompress.Common;
-using SharpCompress.Readers;
-using SharpCompress.Compressors.Deflate;
 
 namespace Squirrel
 {

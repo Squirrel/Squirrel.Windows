@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using SharpCompress.Compressors;
+using SharpCompress.Compressors.BZip2;
+using System;
 using System.IO;
 using System.Threading;
-using SharpCompress.Compressors;
-using SharpCompress.Compressors.BZip2;
 
 // Adapted from https://github.com/LogosBible/bsdiff.net/blob/master/src/bsdiff/BinaryPatchUtility.cs
 
