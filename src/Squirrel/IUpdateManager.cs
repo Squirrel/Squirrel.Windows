@@ -183,8 +183,17 @@ namespace Squirrel
 
         public static void CreateShortcutForThisExe(this IUpdateManager This)
         {
-            This.CreateShortcutsForExecutable(Path.GetFileName(
-                Assembly.GetEntryAssembly().Location),
+            string entrypoint = Assembly.GetEntryAssembly().Location;
+            if (String.Equals(Path.GetExtension(entrypoint), ".dll", StringComparison.OrdinalIgnoreCase)) {
+                // This happens in .NET Core apps. A shortcut to a .dll doesn't work, so replace with the .exe.
+                string candidateExe = Path.Combine(Path.GetDirectoryName(entrypoint), Path.GetFileNameWithoutExtension(entrypoint)) + ".exe";
+                if (File.Exists(candidateExe)) {
+                    entrypoint = candidateExe;
+                }
+            }
+
+            This.CreateShortcutsForExecutable(
+                Path.GetFileName(entrypoint),
                 ShortcutLocation.Desktop | ShortcutLocation.StartMenu, 
                 Environment.CommandLine.Contains("squirrel-install") == false,
                 null, null);

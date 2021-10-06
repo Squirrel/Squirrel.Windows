@@ -13,6 +13,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Squirrel.SimpleSplat;
+using System.ComponentModel;
+using Squirrel.Bsdiff;
+using SharpCompress.Archives;
+using SharpCompress.Archives.Zip;
+using SharpCompress.Writers;
+using SharpCompress.Common;
+using SharpCompress.Readers;
+using SharpCompress.Compressors.Deflate;
 
 namespace Squirrel
 {

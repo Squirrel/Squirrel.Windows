@@ -17,6 +17,8 @@ msbuild /p:Configuration=Release
 
 **Tip:** You can compile the Squirrel.Windows solution with Visual Studio version 2013 and above (including community edition).
 
+**Tip:** For Visual Studio versions that use the Visual Studio Installer (2017/2019 and above), you will need to have at least both Desktop .NET development and Desktop C++ development workloads checked in the Visual Studio Installer. You will also need to make sure that the individual package for the VC++ version used by Squirrel is checked.
+
 ---
 | Return: [Table of Contents](../readme.md) |
 |----|
