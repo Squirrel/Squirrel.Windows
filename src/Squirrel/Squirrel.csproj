@@ -26,6 +26,8 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Web" />
     <Reference Include="netstandard" />
+    <!-- These includes are required so the TeamCity build server can find these nuget packages and will need to be maintained manually, sad i know -->
+    <!-- BEGIN SECTION FOR TEAMCITY BUILD SERVER -->
     <Reference Include="SharpCompress, Version=0.30.0.0, Culture=neutral, PublicKeyToken=afb0a02973931d96, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\SharpCompress.0.30.0\lib\net461\SharpCompress.dll</HintPath>
     </Reference>
@@ -44,6 +46,7 @@
     <Reference Include="Mono.Cecil.Rocks, Version=0.11.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\Mono.Cecil.0.11.4\lib\net40\Mono.Cecil.Rocks.dll</HintPath>
     </Reference>
+    <!-- END SECTION FOR TEAMCITY BUILD SERVER -->
   </ItemGroup>
 
   <ItemGroup>
