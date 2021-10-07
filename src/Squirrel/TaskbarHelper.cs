@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace SquirrelCore.Shell
+namespace Squirrel.Shell
 {
     public static class TaskbarHelper 
     {

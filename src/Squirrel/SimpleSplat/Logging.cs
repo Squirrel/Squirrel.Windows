@@ -7,7 +7,7 @@ using System.Threading;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 
-namespace SquirrelCore.SimpleSplat
+namespace Squirrel.SimpleSplat
 {
     /*    
      * Interfaces

@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Reflection;
 
-namespace SquirrelCore.SimpleSplat
+namespace Squirrel.SimpleSplat
 {
     static class AssemblyFinder
     {

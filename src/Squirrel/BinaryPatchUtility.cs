@@ -6,7 +6,7 @@ using System.Threading;
 
 // Adapted from https://github.com/LogosBible/bsdiff.net/blob/master/src/bsdiff/BinaryPatchUtility.cs
 
-namespace SquirrelCore.Bsdiff
+namespace Squirrel.Bsdiff
 {
     /*
     The original bsdiff.c source code (http://www.daemonology.net/bsdiff/) is

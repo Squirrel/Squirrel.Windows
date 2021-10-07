@@ -11,7 +11,7 @@ using System.Windows;
 using Windows.ApplicationModel;
 #endif
 
-namespace SquirrelCore.SimpleSplat
+namespace Squirrel.SimpleSplat
 {
     public class PlatformModeDetector : IModeDetector
     {

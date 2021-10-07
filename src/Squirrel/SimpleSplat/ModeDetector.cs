@@ -1,6 +1,6 @@
 using System;
 
-namespace SquirrelCore.SimpleSplat
+namespace Squirrel.SimpleSplat
 {
     public interface IModeDetector
     {
@@ -12,7 +12,7 @@ namespace SquirrelCore.SimpleSplat
     {
         static ModeDetector()
         {
-            var platModeDetector = AssemblyFinder.AttemptToLoadType<IModeDetector>("SquirrelCore.SimpleSplat.PlatformModeDetector");
+            var platModeDetector = AssemblyFinder.AttemptToLoadType<IModeDetector>("Squirrel.SimpleSplat.PlatformModeDetector");
             current = platModeDetector;
         }
 

@@ -10,7 +10,7 @@ using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Threading;
-using SquirrelCore.SimpleSplat;
+using Squirrel.SimpleSplat;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;

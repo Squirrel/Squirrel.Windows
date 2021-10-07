@@ -9,9 +9,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using NuGet;
-using SquirrelCore.SimpleSplat;
+using Squirrel.SimpleSplat;
 using System.Threading;
-using SquirrelCore.Shell;
+using Squirrel.Shell;
 using Microsoft.Win32;
 
 namespace Squirrel
@@ -377,7 +377,7 @@ namespace Squirrel
             void executeSelfUpdate(SemanticVersion currentVersion)
             {
                 var targetDir = getDirectoryForRelease(currentVersion);
-                var newSquirrel = Path.Combine(targetDir.FullName, "SquirrelCore.exe");
+                var newSquirrel = Path.Combine(targetDir.FullName, "Squirrel.exe");
                 if (!File.Exists(newSquirrel)) {
                     return;
                 }
