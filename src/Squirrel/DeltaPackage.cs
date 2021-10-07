@@ -1,5 +1,4 @@
-﻿using DeltaCompressionDotNet.MsDelta;
-using SharpCompress.Archives;
+﻿using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using SharpCompress.Compressors.Deflate;
