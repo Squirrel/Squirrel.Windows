@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
-using Squirrel.SimpleSplat;
+using SquirrelCore.SimpleSplat;
 using NuGet;
 
 namespace Squirrel

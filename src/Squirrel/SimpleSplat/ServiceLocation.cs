@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 
-namespace Squirrel.SimpleSplat
+namespace SquirrelCore.SimpleSplat
 {
     public static class SquirrelLocator
     {

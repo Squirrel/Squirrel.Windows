@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Squirrel.SimpleSplat;
+using SquirrelCore.SimpleSplat;
 
 namespace Squirrel
 {
@@ -17,7 +17,7 @@ namespace Squirrel
         /// Call this method as early as possible in app startup. This method
         /// will dispatch to your methods to set up your app. Depending on the
         /// parameter, your app will exit after this method is called, which 
-        /// is required by Squirrel. UpdateManager has methods to help you to
+        /// is required by SquirrelCore. UpdateManager has methods to help you to
         /// do this, such as CreateShortcutForThisExe.
         /// </summary>
         /// <param name="onInitialInstall">Called when your app is initially

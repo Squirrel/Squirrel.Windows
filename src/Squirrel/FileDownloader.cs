@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
-using Squirrel.SimpleSplat;
+using SquirrelCore.SimpleSplat;
 
 namespace Squirrel
 {

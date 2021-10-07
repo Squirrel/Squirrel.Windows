@@ -5,7 +5,7 @@ using System.Text;
 
 // All of this code is from http://vbaccelerator.com/home/NET/Code/Libraries/Shell_Projects/Creating_and_Modifying_Shortcuts/article.asp
 
-namespace Squirrel.Shell
+namespace SquirrelCore.Shell
 {
     /// <summary>
     /// Summary description for ShellLink.

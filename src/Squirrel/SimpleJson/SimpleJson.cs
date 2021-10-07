@@ -66,12 +66,12 @@ using System.Globalization;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
-using Squirrel.Json.Reflection;
+using SquirrelCore.Json.Reflection;
 
 // ReSharper disable LoopCanBeConvertedToQuery
 // ReSharper disable RedundantExplicitArrayCreation
 // ReSharper disable SuggestUseVarKeywordEvident
-namespace Squirrel.Json
+namespace SquirrelCore.Json
 {
     /// <summary>
     /// Represents the json array.
@@ -484,7 +484,7 @@ namespace Squirrel.Json
     }
 }
 
-namespace Squirrel.Json
+namespace SquirrelCore.Json
 {
     /// <summary>
     /// This class encodes and decodes JSON strings.

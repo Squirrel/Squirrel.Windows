@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.Win32;
 using NuGet;
 using System.Reflection;
-using Squirrel.SimpleSplat;
+using SquirrelCore.SimpleSplat;
 
 namespace Squirrel
 {

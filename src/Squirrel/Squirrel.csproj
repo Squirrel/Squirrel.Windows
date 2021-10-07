@@ -1,32 +1,37 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
-
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
-    <Description>Squirrel</Description>
-    <Title>Squirrel</Title>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{BF921E73-B4F9-40CB-9C6C-74E532D23C93}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Squirrel</RootNamespace>
+    <AssemblyName>Squirrel</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\vendor\nuget\src\Core\Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="DeltaCompressionDotNet" Version="2.0.1" />
-    <PackageReference Include="Microsoft.Web.Xdt" Version="3.1.0" />
-    <PackageReference Include="Mono.Cecil" Version="0.11.4" />
-    <PackageReference Include="SharpCompress" Version="0.30.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Web" />
-    <Reference Include="netstandard" />
-    <Reference Include="SharpCompress, Version=0.30.0.0, Culture=neutral, PublicKeyToken=afb0a02973931d96, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\SharpCompress.0.30.0\lib\net461\SharpCompress.dll</HintPath>
-    </Reference>
     <Reference Include="DeltaCompressionDotNet, Version=2.0.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\DeltaCompressionDotNet.2.0.1\lib\net20\DeltaCompressionDotNet.dll</HintPath>
     </Reference>
@@ -42,11 +47,66 @@
     <Reference Include="Mono.Cecil.Rocks, Version=0.11.4.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\Mono.Cecil.0.11.4\lib\net40\Mono.Cecil.Rocks.dll</HintPath>
     </Reference>
+    <Reference Include="SharpCompress, Version=0.30.0.0, Culture=neutral, PublicKeyToken=afb0a02973931d96, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\SharpCompress.0.30.0\lib\net461\SharpCompress.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.0.0" />
-    <PackageReference Update="Nerdbank.GitVersioning" Version="3.4.240" />
+    <Folder Include="Properties\" />
   </ItemGroup>
-
+  <ItemGroup>
+    <Compile Include="ApplyReleasesProgress.cs" />
+    <Compile Include="BinaryPatchUtility.cs" />
+    <Compile Include="ContentType.cs" />
+    <Compile Include="DeltaPackage.cs" />
+    <Compile Include="EnumerableExtensions.cs" />
+    <Compile Include="FileDownloader.cs" />
+    <Compile Include="IUpdateManager.cs" />
+    <Compile Include="MarkdownSharp.cs" />
+    <Compile Include="NativeMethods.cs" />
+    <Compile Include="ReleaseEntry.cs" />
+    <Compile Include="ReleaseExtensions.cs" />
+    <Compile Include="ReleasePackage.cs" />
+    <Compile Include="ShellFile.cs" />
+    <Compile Include="SimpleJson\SimpleJson.cs" />
+    <Compile Include="SimpleSplat\AssemblyFinder.cs" />
+    <Compile Include="SimpleSplat\Logging.cs" />
+    <Compile Include="SimpleSplat\MemoizingMRUCache.cs" />
+    <Compile Include="SimpleSplat\ModeDetector.cs" />
+    <Compile Include="SimpleSplat\PlatformModeDetector.cs" />
+    <Compile Include="SimpleSplat\ServiceLocation.cs" />
+    <Compile Include="SquirrelAwareApp.cs" />
+    <Compile Include="SquirrelAwareExecutableDetector.cs" />
+    <Compile Include="TaskbarHelper.cs" />
+    <Compile Include="TrayHelper.cs" />
+    <Compile Include="UpdateInfo.cs" />
+    <Compile Include="UpdateManager.ApplyReleases.cs" />
+    <Compile Include="UpdateManager.CheckForUpdates.cs" />
+    <Compile Include="UpdateManager.cs" />
+    <Compile Include="UpdateManager.DownloadReleases.cs" />
+    <Compile Include="UpdateManager.Factory.cs" />
+    <Compile Include="UpdateManager.InstallHelpers.cs" />
+    <Compile Include="Utility.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Squirrel.Windows\vendor\nuget\src\Core\Core.csproj">
+      <Project>{f879f274-efa0-4157-8404-33a19b4e6aec}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

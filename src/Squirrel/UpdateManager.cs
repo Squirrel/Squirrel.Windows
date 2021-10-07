@@ -15,8 +15,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using NuGet;
-using Squirrel.SimpleSplat;
-using Squirrel.Shell;
+using SquirrelCore.SimpleSplat;
+using SquirrelCore.Shell;
 
 namespace Squirrel
 {

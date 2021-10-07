@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.Serialization;
-using Squirrel.SimpleSplat;
+using SquirrelCore.SimpleSplat;
 
 namespace Squirrel
 {

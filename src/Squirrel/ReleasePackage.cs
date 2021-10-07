@@ -2,7 +2,7 @@ using MarkdownSharp;
 using NuGet;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Readers;
-using Squirrel.SimpleSplat;
+using SquirrelCore.SimpleSplat;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
