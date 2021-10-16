@@ -18,16 +18,19 @@ steps:
     versionSpec: 4.9.4
 
 - task: NuGetCommand@2
+  displayName: Restore
   inputs:
     restoreSolution: '$(solution)'
 
 - task: VSBuild@1
+  displayName: Build
   inputs:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
 - task: VSTest@2
+  displayName: Test
   inputs:
     testAssemblyVer2: |
      **\$(buildConfiguration)\*test*.dll
@@ -36,16 +39,19 @@ steps:
     configuration: '$(buildConfiguration)'
 
 - task: NuGetCommand@2
+  displayName: Pack
   inputs:
     command: pack
     packagesToPack: src\Squirrel.nuspec
 
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifacts
+  inputs:
+    pathtoPublish: '$(build.artifactStagingDirectory)'
+
 - task: PublishSymbols@2
+  displayName: Publish Symbols
   inputs:
     searchPattern: 'build\$(buildConfiguration)\**\*.pdb'
     publishSymbols: false
   continueOnError: true
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    pathtoPublish: '$(build.artifactStagingDirectory)'
