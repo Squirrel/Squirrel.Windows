@@ -42,16 +42,10 @@ steps:
 
 - task: PublishSymbols@2
   inputs:
-    SearchPattern: '**\bin\**\*.pdb'
-    PublishSymbols: false
+    searchPattern: 'build\$(buildConfiguration)\**\*.pdb'
+    publishSymbols: false
   continueOnError: true
-
-- task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(system.defaultWorkingDirectory)'
-    Contents: '**\bin\$(buildConfiguration)\**'
-    TargetFolder: '$(build.artifactStagingDirectory)'
 
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(build.artifactStagingDirectory)'
+    pathtoPublish: '$(build.artifactStagingDirectory)'
