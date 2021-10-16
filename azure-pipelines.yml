@@ -35,6 +35,11 @@ steps:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
 
+- task: NuGetCommand@2
+  inputs:
+    command: pack
+    packagesToPack: src\Squirrel.nuspec
+
 - task: PublishSymbols@2
   inputs:
     SearchPattern: '**\bin\**\*.pdb'
