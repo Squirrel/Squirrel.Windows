@@ -19,13 +19,11 @@ foreach ($Folder in $Folders) {
 &"$MSBuildPath" /verbosity:minimal /restore /p:Configuration=Release
 
 # Build single-exe packaged projects
-dotnet publish -v minimal -c Release "$PSScriptRoot\src\Update\Update.csproj" -o "$Out" --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=true -p:TrimMode=link
-Move-Item "$Out\Update.exe" -Destination "$Out\UpdateSelfContained.exe"
-dotnet publish -v minimal -c Release "$PSScriptRoot\src\Update\Update.csproj" -o "$Out" --self-contained false
+dotnet publish -v minimal -c Release "$PSScriptRoot\src\Update\Update.csproj" -o "$Out"
 dotnet publish -v minimal -c Release "$PSScriptRoot\src\SyncReleases\SyncReleases.csproj" -o "$Out"
 
 # Copy over all files we need
-Copy-Item "$Out\Update.exe" -Destination "$Out\Squirrel.exe"
+Move-Item "$Out\Update.exe" -Destination "$Out\Squirrel.exe"
 Move-Item "$Out\Update.com" -Destination "$Out\Squirrel.com"
 
 # Move-Item "$Out\Update.pdb" -Destination "$Out\Squirrel.pdb"
