@@ -10,7 +10,6 @@
 
     <dependencies>
       <group targetFramework="netstandard2.0">
-        <dependency id="DeltaCompressionDotNet" version="2.0.1" />
         <dependency id="Mono.Cecil" version="0.11.4" />
         <dependency id="SharpCompress" version="0.28.3" />
         <dependency id="System.Drawing.Common" version="5.0.2" />
