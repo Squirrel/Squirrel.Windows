@@ -96,16 +96,23 @@ RUNTIMEINFO supported_runtimes[] =
 
     {
         _WIN32_WINNT_WIN7, 1,
-        L"netcoreapp31", L".NET Core 3.1.18",
-        L"https://download.visualstudio.microsoft.com/download/pr/aa240732-82d7-4bd1-9701-e4014d7dc735/41a460f5e9c343f7b9207f64ab0e4c90/windowsdesktop-runtime-3.1.18-win-x64.exe",
+        L"netcoreapp31", L".NET Core 3.1.20",
+        L"https://download.visualstudio.microsoft.com/download/pr/93c69a29-d379-4a5d-bb9e-3116cc14de41/907bbc52446d8bb7baa0c6faebde1d44/windowsdesktop-runtime-3.1.20-win-x64.exe",
         0, L"WindowsDesktop.App 3.1"
     },
 
     {
         _WIN32_WINNT_WIN7, 1,
-        L"net5", L".NET 5.0.9",
-        L"https://download.visualstudio.microsoft.com/download/pr/8bc41df1-cbb4-4da6-944f-6652378e9196/1014aacedc80bbcc030dabb168d2532f/windowsdesktop-runtime-5.0.9-win-x64.exe",
+        L"net5", L".NET 5.0.11",
+        L"https://download.visualstudio.microsoft.com/download/pr/06de9c13-4207-44e3-a802-1c90ff44048d/0d6cb312c95c7094434c381f77c75d8c/windowsdesktop-runtime-5.0.11-win-x64.exe",
         0, L"WindowsDesktop.App 5.0"
+    },
+
+    {
+        _WIN32_WINNT_WIN7, 1,
+        L"net6", L".NET 6.0.0-rc.2",
+        L"https://download.visualstudio.microsoft.com/download/pr/ae678751-3c1a-4f8b-a37b-e2e327af191e/3383ed7040b9f0184ff36c93ab129659/windowsdesktop-runtime-6.0.0-rc.2.21501.6-win-x64.exe",
+        0, L"WindowsDesktop.App 6.0"
     },
 
 };
