@@ -341,16 +341,24 @@ namespace Squirrel
             }
         }
 
-        public static string FindHelperExecutable(string toFind, IEnumerable<string> additionalDirs = null)
+        public static string FindHelperExecutable(string toFind, IEnumerable<string> additionalDirs = null, bool throwWhenNotFound = false)
         {
+            if (File.Exists(toFind))
+                return Path.GetFullPath(toFind);
+
             additionalDirs = additionalDirs ?? Enumerable.Empty<string>();
             var dirs = (new[] { AppContext.BaseDirectory, Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
-                .Concat(additionalDirs ?? Enumerable.Empty<string>());
+                .Concat(additionalDirs ?? Enumerable.Empty<string>()).Select(Path.GetFullPath);
 
             var exe = @".\" + toFind;
-            return dirs
+            var result = dirs
                 .Select(x => Path.Combine(x, toFind))
-                .FirstOrDefault(x => File.Exists(x)) ?? exe;
+                .FirstOrDefault(x => File.Exists(x));
+
+            if (result == null && throwWhenNotFound)
+                throw new Exception($"Could not find helper '{exe}'.");
+
+            return result ?? exe;
         }
 
         static string find7Zip()
@@ -666,6 +674,47 @@ namespace Squirrel
         public static Task<T> ErrorIfThrows<T>(this IEnableLogger This, Func<Task<T>> block, string message = null)
         {
             return This.Log().LogIfThrows(LogLevel.Error, message, block);
+        }
+
+        public static void WarnIfThrows(this IFullLogger This, Action block, string message = null)
+        {
+            This.LogIfThrows(LogLevel.Warn, message, block);
+        }
+
+        public static Task WarnIfThrows(this IFullLogger This, Func<Task> block, string message = null)
+        {
+            return This.LogIfThrows(LogLevel.Warn, message, block);
+        }
+
+        public static Task<T> WarnIfThrows<T>(this IFullLogger This, Func<Task<T>> block, string message = null)
+        {
+            return This.LogIfThrows(LogLevel.Warn, message, block);
+        }
+
+        public static void ErrorIfThrows(this IFullLogger This, Action block, string message = null)
+        {
+            This.LogIfThrows(LogLevel.Error, message, block);
+        }
+
+        public static Task ErrorIfThrows(this IFullLogger This, Func<Task> block, string message = null)
+        {
+            return This.LogIfThrows(LogLevel.Error, message, block);
+        }
+
+        public static Task<T> ErrorIfThrows<T>(this IFullLogger This, Func<Task<T>> block, string message = null)
+        {
+            return This.LogIfThrows(LogLevel.Error, message, block);
+        }
+
+        public static void ConsoleWriteWithColor(string text, ConsoleColor color)
+        {
+            var fc = Console.ForegroundColor;
+            var bc = Console.BackgroundColor;
+            Console.ForegroundColor = color;
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.Write(text);
+            Console.ForegroundColor = fc;
+            Console.BackgroundColor = bc;
         }
 
         static IFullLogger logger;

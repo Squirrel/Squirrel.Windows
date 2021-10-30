@@ -8,17 +8,19 @@ using B2Net;
 using B2Net.Models;
 using Squirrel;
 
-namespace Squirrel.SyncReleases.Sources
+namespace SquirrelCli.Sources
 {
     internal class BackblazeRepository : IPackageRepository
     {
         private B2StorageProvider _b2;
-        public BackblazeRepository(string keyId, string appKey, string bucketId)
+        private DirectoryInfo releasesDir;
+        public BackblazeRepository(SyncBackblazeOptions options)
         {
-            _b2 = new B2StorageProvider(keyId, appKey, bucketId);
+            _b2 = new B2StorageProvider(options.b2KeyId, options.b2AppKey, options.b2BucketId);
+            releasesDir = new DirectoryInfo(options.releaseDir);
         }
 
-        public async Task DownloadRecentPackages(DirectoryInfo releasesDir)
+        public async Task DownloadRecentPackages()
         {
             Console.WriteLine("Downloading RELEASES");
             var releasesBytes = await _b2.DownloadFile("RELEASES");
@@ -45,7 +47,7 @@ namespace Squirrel.SyncReleases.Sources
             }
         }
 
-        public async Task UploadMissingPackages(DirectoryInfo releasesDir)
+        public async Task UploadMissingPackages()
         {
             foreach (var f in releasesDir.GetFiles()) {
                 await _b2.UploadFile(File.ReadAllBytes(f.FullName), f.Name);

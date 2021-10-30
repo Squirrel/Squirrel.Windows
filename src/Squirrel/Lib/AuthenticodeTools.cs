@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Squirrel.Update
+namespace Squirrel.Lib
 {
     internal static class AuthenticodeTools
     {

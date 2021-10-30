@@ -23,12 +23,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="rcedit.exe" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="signtool.exe" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="update.com" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
   </ItemGroup>
 

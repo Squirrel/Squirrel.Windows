@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Squirrel.NuGet;
+using Squirrel.Lib;
 
 namespace Squirrel.Update
 {

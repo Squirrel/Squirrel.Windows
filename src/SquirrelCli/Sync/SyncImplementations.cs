@@ -8,7 +8,7 @@ using Octokit;
 using System.Reflection;
 using System.Net;
 
-namespace Squirrel.SyncReleases.Sources
+namespace SquirrelCli.Sources
 {
     internal class SyncImplementations
     {
@@ -151,6 +151,7 @@ namespace Squirrel.SyncReleases.Sources
         }
     }
 
+#pragma warning disable SYSLIB0014 // Type or member is obsolete
     class NotBrokenWebClient : WebClient
     {
         protected override WebRequest GetWebRequest(Uri address)
@@ -164,4 +165,5 @@ namespace Squirrel.SyncReleases.Sources
             return hwr;
         }
     }
+#pragma warning restore SYSLIB0014 // Type or member is obsolete
 }

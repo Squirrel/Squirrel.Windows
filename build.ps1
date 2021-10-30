@@ -20,11 +20,11 @@ foreach ($Folder in $Folders) {
 
 # Build single-exe packaged projects
 dotnet publish -v minimal -c Release "$PSScriptRoot\src\Update\Update.csproj" -o "$Out"
-dotnet publish -v minimal -c Release "$PSScriptRoot\src\SyncReleases\SyncReleases.csproj" -o "$Out"
+dotnet publish -v minimal -c Release "$PSScriptRoot\src\SquirrelCli\SquirrelCli.csproj" -o "$Out"
 
 # Copy over all files we need
-Move-Item "$Out\Update.exe" -Destination "$Out\Squirrel.exe"
-Move-Item "$Out\Update.com" -Destination "$Out\Squirrel.com"
+# Move-Item "$Out\Update.exe" -Destination "$Out\Squirrel.exe"
+# Move-Item "$Out\Update.com" -Destination "$Out\Squirrel.com"
 
 # Move-Item "$Out\Update.pdb" -Destination "$Out\Squirrel.pdb"
 # New-Item -Path "$Out\lib" -ItemType "directory" | Out-Null
@@ -38,7 +38,9 @@ Copy-Item "$In\Win32\WriteZipToSetup.pdb" -Destination "$Out"
 
 Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$Out" -Recurse
 Copy-Item -Path "$PSScriptRoot\vendor\wix\*" -Destination "$Out" -Recurse
-Copy-Item "$PSScriptRoot\.nuget\NuGet.exe" -Destination "$Out"
+Copy-Item "$PSScriptRoot\vendor\NuGet.exe" -Destination "$Out"
+Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$Out"
+Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$Out"
 
 Remove-Item "$Out\*.pdb"
 
