@@ -1,21 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <OutputType>Exe</OutputType>
         <TargetFramework>net6.0</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <LangVersion>9</LangVersion>
+        <AssemblyName>Squirrel</AssemblyName>
+        <ApplicationIcon>..\..\squirrel.ico</ApplicationIcon>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        
+        <!-- Publish -->
         <PublishSingleFile>true</PublishSingleFile>
         <SelfContained>true</SelfContained>
         <PublishTrimmed>true</PublishTrimmed>
-        <CompressionInSingleFile>true</CompressionInSingleFile>
         <RuntimeIdentifier>win-x86</RuntimeIdentifier>
-        <ApplicationIcon>squirrel.ico</ApplicationIcon>
-        <AssemblyName>Squirrel</AssemblyName>
-        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        <CompressionInSingleFile>true</CompressionInSingleFile>
     </PropertyGroup>
-
-    <ItemGroup>
-      <Content Include="squirrel.ico" />
-    </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Octokit" Version="0.50.0" />

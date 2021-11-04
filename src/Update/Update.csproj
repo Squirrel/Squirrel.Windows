@@ -1,29 +1,30 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <OutputType>WinExe</OutputType>
-    <LangVersion>9</LangVersion>
-    <RootNamespace>Squirrel.Update</RootNamespace>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>squirrel.ico</ApplicationIcon>
-    <NoWarn>CA1416</NoWarn>
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-    <PublishTrimmed>true</PublishTrimmed>
-    <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <OutputType>WinExe</OutputType>
+        <LangVersion>9</LangVersion>
+        <RootNamespace>Squirrel.Update</RootNamespace>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>..\..\squirrel.ico</ApplicationIcon>
+        <NoWarn>CA1416</NoWarn>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+        
+        <!-- Publish -->
+        <PublishSingleFile>true</PublishSingleFile>
+        <SelfContained>true</SelfContained>
+        <PublishTrimmed>true</PublishTrimmed>
+        <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+        <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    </PropertyGroup>
 
-  <!-- If update.ico exists in project directory it will be used instead of the squirrel icon -->
-  <PropertyGroup Condition="Exists('update.ico')">
-    <ApplicationIcon>update.ico</ApplicationIcon>
-  </PropertyGroup>
+    <!-- If update.ico exists in project directory it will be used instead of the squirrel icon -->
+    <PropertyGroup Condition="Exists('update.ico')">
+        <ApplicationIcon>update.ico</ApplicationIcon>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
+    </ItemGroup>
 
 </Project>

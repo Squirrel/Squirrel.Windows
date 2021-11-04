@@ -37,7 +37,7 @@ Copy-Item "$In\Win32\WriteZipToSetup.exe" -Destination "$Out"
 Copy-Item "$In\Win32\WriteZipToSetup.pdb" -Destination "$Out"
 
 Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$Out" -Recurse
-Copy-Item -Path "$PSScriptRoot\vendor\wix\*" -Destination "$Out" -Recurse
+# Copy-Item -Path "$PSScriptRoot\vendor\wix\*" -Destination "$Out" -Recurse
 Copy-Item "$PSScriptRoot\vendor\NuGet.exe" -Destination "$Out"
 Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$Out"
 Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$Out"

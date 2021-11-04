@@ -7,8 +7,7 @@
     <Description>Squirrel</Description>
     <Title>Squirrel</Title>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>9</LangVersion>
-    <AssemblyName>Squirrel.Lib</AssemblyName>
+    <AssemblyName>SquirrelLib</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
