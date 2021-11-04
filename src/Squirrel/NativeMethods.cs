@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Squirrel
 {
-    public static class NativeMethods
+    internal static class NativeMethods
     {
         public static int GetParentProcessId()
         {
@@ -30,6 +30,9 @@ namespace Squirrel
 
             return (int) pbi.InheritedFromUniqueProcessId;
         }
+
+        [DllImport("shell32.dll", SetLastError = true)]
+        public static extern void SetCurrentProcessExplicitAppUserModelID([MarshalAs(UnmanagedType.LPWStr)] string AppID);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         public static extern IntPtr LoadLibraryEx(string lpModuleName, IntPtr hFile, uint dwFlags);

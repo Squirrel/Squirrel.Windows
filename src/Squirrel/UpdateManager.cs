@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
@@ -144,6 +144,21 @@ namespace Squirrel
 
             if (appDirName == null) return null;
             return appDirName.ToSemanticVersion();
+        }
+
+        public void SetProcessAppUserModelId()
+        {
+            var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
+            var thisRelease = Utility.FindCurrentVersion(releases);
+
+            var zf = new ZipPackage(Path.Combine(
+                Utility.PackageDirectoryForAppDir(rootAppDirectory),
+                thisRelease.Filename));
+
+            var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
+
+            var appUserModelId = String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
+            NativeMethods.SetCurrentProcessExplicitAppUserModelID(appUserModelId);
         }
 
         public void KillAllExecutablesBelongingToPackage()
