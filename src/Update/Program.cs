@@ -1,4 +1,4 @@
-using Squirrel.SimpleSplat;
+﻿using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -341,12 +341,36 @@ namespace Squirrel.Update
                 })
                 .FirstOrDefault(x => Directory.Exists(x));
 
+            // CS: We maintain a junction in the app folder named "latest" that points to the latest version.
+            // Running exe's from within this "latest" folder means trayicon pins and taskbar pin settings
+            // will not require any special handling. Additionally, doing it on ProcessStart (instead of during update)
+            // allows us to support the following:
+            // - App V1 is running
+            // - App V2 is downloaded / installed 
+            // - Someone clicks an application shortcut while V1 is still running, and updating the junction will fail
+            // - Because the junction updated failed, we will execute V1 exe's again (so we don't have two different versions running at the same time)
+            // - Next time the application is fully exited and run again, the junction can be updated and V2 will be executed
+
+            Log.Info("Updating latestver junction to '{0}'", latestAppDir);
+            var latestDir = Path.Combine(appDir, "latestver");
+            if (JunctionPoint.Exists(latestDir) && JunctionPoint.GetTarget(latestDir) != latestAppDir) {
+                // delete an existing junction. If this fails, we can ignore and continue to run the old version
+                try {
+                    JunctionPoint.Delete(latestDir);
+                } catch {
+                    Log.Warn("Unable to remove junction, is the app running?");
+                }
+            }
+            if (!JunctionPoint.Exists(latestDir)) {
+                try { JunctionPoint.Create(latestDir, latestAppDir, true); } catch { }
+            }
+
             // Check for the EXE name they want
-            var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName.Replace("%20", " ")));
+            var targetExe = new FileInfo(Path.Combine(latestDir, exeName.Replace("%20", " ")));
             Log.Info("Want to launch '{0}'", targetExe);
 
             // Check for path canonicalization attacks
-            if (!targetExe.FullName.StartsWith(latestAppDir, StringComparison.Ordinal)) {
+            if (!targetExe.FullName.StartsWith(latestDir, StringComparison.Ordinal)) {
                 throw new ArgumentException();
             }
 
