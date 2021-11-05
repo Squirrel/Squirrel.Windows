@@ -1,4 +1,4 @@
-﻿using Squirrel.SimpleSplat;
+using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -352,6 +352,13 @@ namespace Squirrel.Update
 
             if (!targetExe.Exists) {
                 Log.Error("File {0} doesn't exist in current release", targetExe);
+                throw new ArgumentException();
+            }
+
+            // Do not run an unsigned EXE if we ourselves are signed. 
+            // Maybe TODO: check that it's signed with the same certificate as us?
+            if (AuthenticodeTools.IsTrusted(AssemblyRuntimeInfo.EntryExePath) && !AuthenticodeTools.IsTrusted(targetExe.FullName)) {
+                Log.Error("File {0} is not trusted, and will not be run from a trusted context.", targetExe);
                 throw new ArgumentException();
             }
 
