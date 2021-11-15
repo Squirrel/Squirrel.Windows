@@ -694,7 +694,7 @@ namespace Squirrel
 
             DirectoryInfo getDirectoryForRelease(SemanticVersion releaseVersion)
             {
-                return new DirectoryInfo(Path.Combine(rootAppDirectory, "app-" + releaseVersion));
+                return new DirectoryInfo(Path.Combine(rootAppDirectory, "current"));
             }
 
             string linkTargetForVersionInfo(ShortcutLocation location, IPackage package, FileVersionInfo versionInfo)

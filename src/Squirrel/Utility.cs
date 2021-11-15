@@ -411,12 +411,12 @@ namespace Squirrel
 
         public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
         {
-            return Path.Combine(rootAppDirectory, "app-" + entry.Version.ToString());
+            return Path.Combine(rootAppDirectory, "current");
         }
 
         public static string AppDirForVersion(string rootAppDirectory, SemanticVersion version)
         {
-            return Path.Combine(rootAppDirectory, "app-" + version.ToString());
+            return Path.Combine(rootAppDirectory, "current");
         }
 
         public static string PackageDirectoryForAppDir(string rootAppDirectory) 

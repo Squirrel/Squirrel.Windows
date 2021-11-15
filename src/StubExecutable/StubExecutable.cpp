@@ -45,43 +45,12 @@ std::wstring FindLatestAppDir()
 	std::wstring ourDir;
 	ourDir.assign(FindRootAppDir());
 
-	ourDir += L"\\app-*";
+	ourDir += L"\\current";
 
-	WIN32_FIND_DATA fileInfo = { 0 };
-	HANDLE hFile = FindFirstFile(ourDir.c_str(), &fileInfo);
-	if (hFile == INVALID_HANDLE_VALUE) {
-		return NULL;
-	}
 
-	version::Semver200_version acc("0.0.0");
-	std::wstring acc_s;
-
-	do {
-		std::wstring appVer = fileInfo.cFileName;
-		appVer = appVer.substr(4);   // Skip 'app-'
-		if (!(fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-			continue;
-		}
-
-		std::string s(appVer.begin(), appVer.end());
-
-		version::Semver200_version thisVer(s);
-
-		if (thisVer > acc) {
-			acc = thisVer;
-			acc_s = appVer;
-		}
-	} while (FindNextFile(hFile, &fileInfo));
-
-	if (acc == version::Semver200_version("0.0.0")) {
-		return NULL;
-	}
-
-	ourDir.assign(FindRootAppDir());
 	std::wstringstream ret;
-	ret << ourDir << L"\\app-" << acc_s;
+	ret << ourDir;
 
-	FindClose(hFile);
 	return ret.str();
 }
 
