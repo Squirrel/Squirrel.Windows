@@ -64,8 +64,8 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    It is shipped with the [Clowd.Squirrel](https://www.nuget.org/packages/Clowd.Squirrel/) nuget package. 
    The path of the Squirrel tools is available via the MSBuild property `$(SquirrelToolsPath)` if you are integrating this into your build pipeline.
    If not, the tools can usually be found at:
-   - `%username%\.nuget\packages\Clowd.Squirrel\tools`, or;
-   - `..\packages\Clowd.Squirrel\tools`
+   - `%userprofile%\.nuget\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`, or;
+   - `..\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`
    
    Once you have located the tools folder, create a release. Example below with some useful options, but explore `Squirrel.com -h` for a complete list. You should use the same `releaseDir` each time, so delta updates can be generated.
    ```cmd
