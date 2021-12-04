@@ -20,7 +20,8 @@ namespace SquirrelCli
     {
         public string package { get; set; }
         public string splashImage { get; private set; }
-        public string iconPath { get; private set; }
+        public string setupIcon { get; private set; }
+        //public string appIcon { get; private set; }
         public string signParams { get; private set; }
         public string framework { get; private set; }
         public bool noDelta { get; private set; }
@@ -30,7 +31,8 @@ namespace SquirrelCli
         {
             Add("p=|package=", "Path to a nuget package to releasify", v => package = v);
             Add("s=|splashImage=", "Image to be displayed during installation (can be jpg, png, gif, etc)", v => splashImage = v);
-            Add("i=|iconPath=", "Ico file that will be used where possible", v => iconPath = v);
+            //Add("i=|appIcon=", "ICO file that will be used for app shortcuts", v => appIcon = v);
+            Add("setupIcon=", "ICO file that will be used for Setup.exe", v => setupIcon = v);
             Add("n=|signParams=", "Sign the installer via SignTool.exe with the parameters given", v => signParams = v);
             Add("f=|framework=", "Set the required .NET framework version, e.g. net461", v => framework = v);
             Add("no-delta", "Don't generate delta packages to save time", v => noDelta = true);
@@ -39,11 +41,11 @@ namespace SquirrelCli
 
         public override void Validate()
         {
-            IsValidFile(nameof(iconPath));
+            IsValidFile(nameof(setupIcon), ".ico");
             IsValidFile(nameof(splashImage));
             IsValidUrl(nameof(baseUrl));
             IsRequired(nameof(package));
-            IsValidFile(nameof(package));
+            IsValidFile(nameof(package), ".nupkg");
         }
     }
 
@@ -53,23 +55,25 @@ namespace SquirrelCli
         public string packVersion { get; private set; }
         public string packAuthors { get; private set; }
         public string packDirectory { get; private set; }
+        public bool includePdb { get; private set; }
 
         public PackOptions()
         {
-            Add("packName=", "desc", v => packName = v);
-            Add("packVersion=", "desc", v => packVersion = v);
-            Add("packAuthors=", "desc", v => packAuthors = v);
-            Add("packDirectory=", "desc", v => packDirectory = v);
+            Add("packName=", "The name of the package to create", v => packName = v);
+            Add("packVersion=", "Package version", v => packVersion = v);
+            Add("packAuthors=", "Comma delimited list of package authors", v => packAuthors = v);
+            Add("packDirectory=", "The directory with the application files that will be packaged into a release", v => packDirectory = v);
+            Add("includePdb", "Include the *.pdb files in the package (default: false)", v => includePdb = true);
 
             // remove 'package' argument
-            Remove("package"); 
-            Remove("p"); 
+            Remove("package");
+            Remove("p");
         }
 
         public override void Validate()
         {
             IsRequired(nameof(packName), nameof(packVersion), nameof(packAuthors), nameof(packDirectory));
-            IsValidFile(nameof(iconPath));
+            IsValidFile(nameof(setupIcon), ".ico");
             IsValidFile(nameof(splashImage));
             IsValidUrl(nameof(baseUrl));
         }
@@ -107,6 +111,7 @@ namespace SquirrelCli
         public override void Validate()
         {
             IsRequired(nameof(url));
+            IsValidUrl(nameof(url));
         }
     }
 
@@ -124,6 +129,7 @@ namespace SquirrelCli
         public override void Validate()
         {
             IsRequired(nameof(repoUrl));
+            IsValidUrl(nameof(repoUrl));
         }
     }
 }

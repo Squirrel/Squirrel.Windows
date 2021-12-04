@@ -56,13 +56,17 @@ namespace SquirrelCli
                 throw new OptionValidationException($"Argument '{propertyName}' is required");
         }
 
-        protected virtual void IsValidFile(string propertyName)
+        protected virtual void IsValidFile(string propertyName, string forcedExtension = null)
         {
             var p = this.GetType().GetProperty(propertyName);
             var path = p.GetValue(this, null) as string;
-            if (path != null)
-                if (!File.Exists(path))
+            if (path != null) {
+                if (!File.Exists(path)) {
                     throw new OptionValidationException($"Argument '{propertyName}': Expected file to exist at this location but no file was found");
+                } else if (forcedExtension != null && !Path.GetExtension(path).TrimStart('.').Equals(forcedExtension.TrimStart('.'), StringComparison.InvariantCultureIgnoreCase)) {
+                    throw new OptionValidationException($"Argument '{propertyName}': File must be of type '{forcedExtension}'.");
+                }
+            }
         }
 
         protected virtual void IsValidUrl(string propertyName)
@@ -72,7 +76,6 @@ namespace SquirrelCli
             if (val != null)
                 if (!Utility.IsHttpUrl(val))
                     throw new OptionValidationException(propertyName, "Must start with http or https and be a valid URI.");
-
         }
 
         public abstract void Validate();
@@ -89,6 +92,24 @@ namespace SquirrelCli
         public string Description { get; protected set; }
         public abstract void Execute(IEnumerable<string> args);
         public abstract void PrintHelp();
+    }
+
+    internal class HelpText : CommandAction
+    {
+        public HelpText(string text)
+        {
+            Description = text;
+        }
+
+        public override void Execute(IEnumerable<string> args)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void PrintHelp()
+        {
+            Console.WriteLine(Description);
+        }
     }
 
     internal class CommandAction<T> : CommandAction where T : ValidatedOptionSet, new()
@@ -119,7 +140,10 @@ namespace SquirrelCli
 
     internal class CommandSet : List<CommandAction>
     {
-        //public CommandSet() : base(StringComparer.InvariantCultureIgnoreCase) { }
+        public void Add(string helpText)
+        {
+            this.Add(new HelpText(helpText));
+        }
 
         public void Add<T>(string command, string description, T options, Action<T> action) where T : ValidatedOptionSet, new()
         {
@@ -134,7 +158,7 @@ namespace SquirrelCli
             var combined = String.Join(" ", args);
             CommandAction cmd = null;
 
-            foreach (var k in this.OrderByDescending(k => k.Command.Length)) {
+            foreach (var k in this.Where(k => !String.IsNullOrWhiteSpace(k.Command)).OrderByDescending(k => k.Command.Length)) {
                 if (combined.StartsWith(k.Command, StringComparison.InvariantCultureIgnoreCase)) {
                     cmd = k;
                     break;
@@ -149,30 +173,20 @@ namespace SquirrelCli
 
         public virtual void WriteHelp()
         {
-            var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
-            Console.WriteLine($"Usage: {exeName} [command] [options]");
-            Console.WriteLine();
-            Console.WriteLine("Commands:");
-
             var array = this.ToArray();
             for (var i = 0; i < array.Length; i++) {
                 var c = array[i];
+
+                if (c is HelpText) {
+                    c.PrintHelp();
+                    continue;
+                }
 
                 // print command name + desc
                 Console.WriteLine();
                 Utility.ConsoleWriteWithColor(c.Command, ConsoleColor.Blue);
                 if (!String.IsNullOrWhiteSpace(c.Description))
                     Console.Write(": " + c.Description);
-
-
-                //Console.Write(c.Command);
-                //if(String.IsNullOrWhiteSpace(c.Description))
-                //    Console.WriteLine();
-                //else 
-                //    Console.WriteLine(": " + c.Description);
-
-
-                //Console.Write(c.);
 
                 // group similar command parameters together
                 if (i + 1 < array.Length) {
@@ -184,10 +198,6 @@ namespace SquirrelCli
 
                 Console.WriteLine();
                 c.PrintHelp();
-
-                //Console.WriteLine();
-                //c.Value.WriteOptionDescriptions();
-                //Console.WriteLine();
             }
         }
     }

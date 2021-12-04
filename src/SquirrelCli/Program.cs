@@ -25,16 +25,27 @@ namespace SquirrelCli
     {
         public static int Main(string[] args)
         {
-            //var pg = new Program();
+            var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
             var commands = new CommandSet {
+                "",
+                $"Usage: {exeName} [verb] [--option:value]",
+                "Command line tool for creating and deploying Squirrel releases",
+                "",
+                "Package Authoring:",
                 { "releasify", "Take an existing nuget package and turn it into a Squirrel release", new ReleasifyOptions(), Releasify },
                 { "pack", "Creates a nuget package from a folder and releasifies it in a single step", new PackOptions(), Pack },
+
+                "Package Deployment / Syncing:",
                 { "b2-down", "Download recent releases from BackBlaze B2", new SyncBackblazeOptions(), o => new BackblazeRepository(o).DownloadRecentPackages().Wait() },
                 { "b2-up", "Upload releases to BackBlaze B2", new SyncBackblazeOptions(), o => new BackblazeRepository(o).UploadMissingPackages().Wait() },
                 { "http-down", "Download recent releases from an HTTP source", new SyncHttpOptions(), o => new SimpleWebRepository(o).DownloadRecentPackages().Wait() },
                 //{ "http-up", "sync", new SyncHttpOptions(), o => new SimpleWebRepository(o).UploadMissingPackages().Wait() },
                 { "github-down", "Download recent releases from GitHub", new SyncGithubOptions(), o => new GitHubRepository(o).DownloadRecentPackages().Wait() },
                 //{ "github-up", "sync", new SyncGithubOptions(), o => new GitHubRepository(o).UploadMissingPackages().Wait() },
+                //"",
+                //"Examples:",
+                //$"    {exeName} pack ",
+                //$"        ",
             };
 
             var logger = new ConsoleLogger();
@@ -66,9 +77,9 @@ namespace SquirrelCli
         static string[] VendorDirs => new string[] {
             Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor")
         };
-        static string BootstrapperPath => Utility.FindHelperExecutable("Setup.exe", throwWhenNotFound: true);
-        static string UpdatePath => Utility.FindHelperExecutable("Update.exe", throwWhenNotFound: true);
-        static string NugetPath => Utility.FindHelperExecutable("NuGet.exe", VendorDirs, throwWhenNotFound: true);
+        static string BootstrapperPath = Utility.FindHelperExecutable("Setup.exe", throwWhenNotFound: true);
+        static string UpdatePath = Utility.FindHelperExecutable("Update.exe", throwWhenNotFound: true);
+        static string NugetPath = Utility.FindHelperExecutable("NuGet.exe", VendorDirs, throwWhenNotFound: true);
 
         static void Pack(PackOptions options)
         {
@@ -81,17 +92,17 @@ namespace SquirrelCli
     <title>{options.packName}</title>
     <description>{options.packName}</description>
     <authors>{options.packAuthors}</authors>
-    <version>0</version>
+    <version>{options.packVersion}</version>
   </metadata>
   <files>
-    <file src=""**"" target=""lib\app\"" exclude=""*.pdb;*.nupkg;*.vshost.*""/>
+    <file src=""**"" target=""lib\app\"" exclude=""{(options.includePdb ? "" : "*.pdb;")}*.nupkg;*.vshost.*""/>
   </files>
 </package>
 ".Trim();
                 var nuspecPath = Path.Combine(tmpDir, options.packName + ".nuspec");
                 File.WriteAllText(nuspecPath, nuspec);
 
-                var args = $"pack \"{nuspecPath}\" -BasePath \"{options.packDirectory}\" -OutputDirectory \"{tmpDir}\" -Version {options.packVersion}";
+                var args = $"pack \"{nuspecPath}\" -BasePath \"{options.packDirectory}\" -OutputDirectory \"{tmpDir}\"";
 
                 Log.Info($"Packing '{options.packDirectory}' into nupkg.");
                 var res = Utility.InvokeProcessAsync(NugetPath, args, CancellationToken.None).Result;
@@ -121,7 +132,7 @@ namespace SquirrelCli
             var baseUrl = options.baseUrl;
             var generateDeltas = !options.noDelta;
             var backgroundGif = options.splashImage;
-            var setupIcon = options.iconPath;
+            var setupIcon = options.setupIcon;
 
             // validate that the provided "frameworkVersion" is supported by Setup.exe
             if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
@@ -155,7 +166,7 @@ namespace SquirrelCli
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: pkgPath => {
 
-                    // create sub executable for all exe's in this package (except Squirrel!)
+                    // create stub executable for all exe's in this package (except Squirrel!)
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                         .Where(x => !x.Name.Contains("squirrel.exe", StringComparison.InvariantCultureIgnoreCase))

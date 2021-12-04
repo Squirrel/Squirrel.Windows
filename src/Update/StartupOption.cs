@@ -1,5 +1,6 @@
 ﻿using Mono.Options;
 using System;
+using System.IO;
 
 namespace Squirrel.Update
 {
@@ -30,11 +31,12 @@ namespace Squirrel.Update
 
         private OptionSet Parse(string[] args)
         {
+            var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
             var opts = new OptionSet() {
-                "Usage: Squirrel.exe command [OPTS]",
-                "Manages Squirrel packages",
+                $"Usage: {exeName} command [OPTS]",
+                "Manages packages and updates Squirrel applications",
                 "",
-                "Commands",
+                "Commands:",
                 { "install=", "Install the app whose package is in the specified directory", v => { updateAction = UpdateAction.Install; target = v; } },
                 { "uninstall", "Uninstall the app the same dir as Update.exe", v => updateAction = UpdateAction.Uninstall},
                 { "download=", "Download the releases specified by the URL and write new results to stdout as JSON", v => { updateAction = UpdateAction.Download; target = v; } },
