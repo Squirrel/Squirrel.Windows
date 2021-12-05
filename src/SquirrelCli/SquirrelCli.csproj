@@ -1,32 +1,32 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
-        <OutputType>Exe</OutputType>
-        <LangVersion>9</LangVersion>
-        <AssemblyName>Squirrel</AssemblyName>
-        <ApplicationIcon>..\..\squirrel.ico</ApplicationIcon>
-        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-        
-        <!-- Publish -->
-        <PublishSingleFile>true</PublishSingleFile>
-        <SelfContained>true</SelfContained>
-        <PublishTrimmed>true</PublishTrimmed>
-        <RuntimeIdentifier>win-x86</RuntimeIdentifier>
-        <CompressionInSingleFile>true</CompressionInSingleFile>
-    </PropertyGroup>
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <LangVersion>9</LangVersion>
+    <AssemblyName>Squirrel</AssemblyName>
+    <ApplicationIcon>..\..\squirrel.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 
-    <ItemGroup>
-        <PackageReference Include="Octokit" Version="0.50.0" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-        <PackageReference Include="System.IO" Version="4.3.0" />
-        <PackageReference Include="System.Net.Http" Version="4.3.4" />
-        <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.1" />
-        <PackageReference Include="B2Net" Version="0.7.5" />
-    </ItemGroup>
+    <!-- Publish -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>true</PublishTrimmed>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+    <CompressionInSingleFile>true</CompressionInSingleFile>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Octokit" Version="0.50.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="System.IO" Version="4.3.0" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.1" />
+    <PackageReference Include="B2Net" Version="0.7.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
+  </ItemGroup>
 
 </Project>

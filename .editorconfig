@@ -192,3 +192,6 @@ cpp_space_around_assignment_operator = insert
 cpp_space_pointer_reference_alignment = left
 cpp_space_around_ternary_operator = insert
 cpp_wrap_preserve_blocks = one_liners
+
+[*.csproj] 
+indent_size = 2
