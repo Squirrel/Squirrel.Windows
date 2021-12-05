@@ -2,7 +2,6 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -20,8 +19,7 @@
   <defs
      id="defs4">
     <linearGradient
-       id="linearGradient5557"
-       osb:paint="solid">
+       id="linearGradient5557">
       <stop
          style="stop-color:#000000;stop-opacity:1;"
          offset="0"
