@@ -92,16 +92,19 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    - A list of supported runtimes for the `--framework` argument is [available here](https://github.com/clowd/Clowd.Squirrel/blob/develop/src/Setup/RuntimeInfo.cpp)
    
 6. Distribute your entire `--releaseDir` folder online. This folder can be hosted on any static web/file server, [Amazon S3](docs/using/amazon-s3.md), BackBlaze B2, or even via [GitHub Releases](docs/using/github.md). 
-   - Note: If using CI to deploy releases, you can use the package syncing commands to download the currently live version, before creating a package. Complete example:
+   - Note: If using CI to deploy releases, you can use the package syncing commands to download the currently live version, before creating a package. This means delta/patch updates can be generated. Complete powershell example:
      ```ps1
      # build / publish your app
      dotnet publish -c Release -o ".\publish"
      
+     # find Squirrel.exe path and add an alias
+     Set-Alias Squirrel ($env:USERPROFILE + "\.nuget\packages\clowd.squirrel\2.6.2-pre\tools\Squirrel.exe");
+     
      # download currently live version
-     Squirrel.exe http-down --url "https://the.place/you-host/updates"
+     Squirrel http-down --url "https://the.place/you-host/updates"
      
      # build new version and delta updates. Will also bootstrap 'net6' runtime during setup if not installed already.
-     Squirrel.exe pack --framework net6 --packName "YourApp" --packVersion "1.0.0" --packAuthors "YourCompany" --packDirectory ".\publish"
+     Squirrel pack --framework net6 --packName "YourApp" --packVersion "1.0.0" --packAuthors "YourCompany" --packDirectory ".\publish"
      ```
 
 7. Update your app on startup / periodically with UpdateManager.
