@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  
+
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <Description>Squirrel.Tests</Description>
@@ -8,6 +8,8 @@
     <IsPackable>false</IsPackable>
     <IsTest>true</IsTest>
     <NoWarn>CS1998</NoWarn>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\Squirrel.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,5 +22,5 @@
   <ItemGroup>
     <ProjectReference Include="..\src\Squirrel\Squirrel.csproj" />
   </ItemGroup>
-  
+
 </Project>

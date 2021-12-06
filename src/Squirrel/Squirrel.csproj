@@ -8,6 +8,8 @@
     <Title>Squirrel</Title>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>SquirrelLib</AssemblyName>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\Squirrel.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

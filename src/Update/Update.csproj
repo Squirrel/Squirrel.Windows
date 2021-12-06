@@ -9,6 +9,8 @@
     <ApplicationIcon>..\..\squirrel.ico</ApplicationIcon>
     <NoWarn>CA1416</NoWarn>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\Squirrel.snk</AssemblyOriginatorKeyFile>
 
     <!-- Publish -->
     <PublishSingleFile>true</PublishSingleFile>
