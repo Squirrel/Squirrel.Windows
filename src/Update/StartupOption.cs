@@ -33,8 +33,9 @@ namespace Squirrel.Update
         {
             var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
             var opts = new OptionSet() {
+                "",
+                $"Squirrel Updater ({ThisAssembly.AssemblyInformationalVersion}) manages packages and installs updates for Squirrel applications",
                 $"Usage: {exeName} command [OPTS]",
-                "Manages packages and updates Squirrel applications",
                 "",
                 "Commands:",
                 { "install=", "Install the app whose package is in the specified directory", v => { updateAction = UpdateAction.Install; target = v; } },

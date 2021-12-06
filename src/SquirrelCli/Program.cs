@@ -28,8 +28,8 @@ namespace SquirrelCli
             var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
             var commands = new CommandSet {
                 "",
+                $"Squirrel ({ThisAssembly.AssemblyInformationalVersion}) command line tool for creating and deploying Squirrel releases",
                 $"Usage: {exeName} [verb] [--option:value]",
-                "Command line tool for creating and deploying Squirrel releases",
                 "",
                 "Package Authoring:",
                 { "releasify", "Take an existing nuget package and turn it into a Squirrel release", new ReleasifyOptions(), Releasify },
