@@ -7,7 +7,7 @@
 
 Squirrel is both a set of tools and a library, to completely manage both installation and updating your Desktop Windows application.
 
-This project is a fork of the library [Squirrel.Windows](https://github.com/Squirrel/Squirrel.Windows), which has been largely discontinued by the author. The main focus here has been to update to more modern tooling, such as upgrading the main libraries to `netstandard2.0`. 
+This project is a fork of the library [Squirrel.Windows](https://github.com/Squirrel/Squirrel.Windows). The main focus here has been to update to more modern tooling, such as upgrading the main libraries to `netstandard2.0`, upgrading the tools to `net6.0`, and adding lots of fixes for dotnet core support.
 
 This library will help you build a `Setup.exe`, integrated (or standalone `Update.exe`) application updater, and release updates to your users very quickly and easily. The `Setup.exe` and `Update.exe` produced by this library are completely dependency free, and can even help you bootstrap/install a runtime of your choice (such as dotnet 5, .net 4.8 or others).
 
@@ -29,54 +29,84 @@ Windows apps should be as fast and as easy to install and update as apps like Go
 
 1. Install the [Clowd.Squirrel Nuget Package](https://www.nuget.org/packages/Clowd.Squirrel/)
 
-2. Add SquirrelAwareVersion attribute somewhere in your project. (It can be placed in any cs file, but usually it goes into `AssemblyInfo.cs` if your project has one)
+2. Add SquirrelAwareVersion to your assembly manifest to indicate that your exe supports Squirrel. 
 
-   ```cs
-   [assembly: AssemblyMetadata("SquirrelAwareVersion", "1")]
+   ```xml
+   <?xml version="1.0" encoding="utf-8"?>
+   <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+     <SquirrelAwareVersion>1</SquirrelAwareVersion>
+   </assembly>
    ```
+   There are also [some](https://github.com/clowd/Clowd.Squirrel/blob/develop/docs/using/custom-squirrel-events.md) more [legacy](https://github.com/clowd/Clowd.Squirrel/blob/develop/docs/using/custom-squirrel-events-non-cs.md) ways to assign a binary SquirrelAwareVersion if you cannot edit your assembly manifest.
 3. Handle Squirrel events somewhere very early in your application startup (such as the beginning of `main()` or `Application.OnStartup()` for WPF). 
 
    ```cs
-   SquirrelAwareApp.HandleEvents(
-       onInitialInstall: OnInstall,
-       onAppUpdate: OnUpdate,
-       onAppUninstall: OnUninstall,
-       onFirstRun: OnFirstRun);
-   ```
+   public static int Main(string[] args)
+   {
+       SquirrelAwareApp.HandleEvents(
+           onInitialInstall: OnInstall,
+           onAppUpdate: OnUpdate,
+           onAppUninstall: OnUninstall,
+           onFirstRun: OnFirstRun);
+           
+       // ...
+   }
 
-   When installed, uninstalled or updated, your app will be run to give you a chance to add or remove application shortcuts. 
-
-   ```cs
    private static void OnInstall(Version obj)
    {
-      using var mgr = new UpdateManager("https://the.place/you-host/updates");
-      mgr.CreateUninstallerRegistryEntry();
-      mgr.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
+       using var mgr = new UpdateManager("https://the.place/you-host/updates");
+       mgr.CreateUninstallerRegistryEntry();
+       mgr.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
    }
+   
+   private static void OnUninstall(Version obj)
+   {
+       using var mgr = new UpdateManager("https://the.place/you-host/updates");
+       mgr.RemoveUninstallerRegistryEntry();
+       mgr.RemoveShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
+   }
+   
+   // ...
    ```
+   
+   When installed, uninstalled or updated, these methods will be executed, giving your app a chance to add or remove application shortcuts or perform other tasks. 
 
-4. Publish your app (with `dotnet publish` or similar) and build a Nuget package with your publish output in the "lib/net45" target folder. (yes, even if your app does not have anything to do with net45)
-   You can use `NuGet.exe pack` for this, or any other Nuget creation tool (eg. OctoPack). <br/>
-   [More information here](docs/using/visual-studio-packaging.md#example-nuspec-file-for-myapp) <br/>
-   *Note: The package version must comply to strict SemVer syntax. (eg. `1.0.0`, `1.0.1-pre`)*
+4. Publish your app (with `dotnet publish` or similar) 
+   - If you want your application installer to install your runtime during setup (eg, `net48` or `net6`), you can use the `--framework` option in the next step. This means your installer will be smaller, but may require the internet if your user does not already have the required runtime installed.
+   - Otherwise, you wish to ship a self contained app, you must specify `--selfContained=true` option during publish. This means your installer will be larger, but will also work offline and will not need to download or install any additional dependencies.
 
-5. Create a Squirrel release using the `Squirrel.com --releasify` command line tool. 
-   It is shipped with the [Clowd.Squirrel](https://www.nuget.org/packages/Clowd.Squirrel/) nuget package. 
-   The path of the Squirrel tools is available via the MSBuild property `$(SquirrelToolsPath)` if you are integrating this into your build pipeline.
-   If not, the tools can usually be found at:
+5. Create a Squirrel release using the `Squirrel.exe` command line tool. 
+   The tool can be downloaded from GitHub Releases, or it is also bundled into the [Clowd.Squirrel](https://www.nuget.org/packages/Clowd.Squirrel/) nuget package. 
+   If installed through NuGet, the tools can usually be found at:
    - `%userprofile%\.nuget\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`, or;
    - `..\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`
    
-   Once you have located the tools folder, create a release. Example below with some useful options, but explore `Squirrel.com -h` for a complete list. You should use the same `releaseDir` each time, so delta updates can be generated.
+   Once you have located the tools folder, create a release. Example below with some useful options, but explore `Squirrel.exe -h` for a complete list.
    ```cmd
-   Squirrel.com --releasify MyApp.1.0.0.nupkg --selfContained --releaseDir=".\releases" --setupIcon=myIcon.ico
+   Squirrel.exe pack --packName "YourApp" --packVersion "1.0.0" --packAuthors "YourCompany" --packDirectory "path-to/publish/folder"
    ```
+   Notes:
+   - Custom icons and splash art can be added to your installer using the options `--setupIcon` and `--splashImage`. Splash art can be any kind of image, but will appear animated if a `.gif` is supplied.
+   - The same `--releaseDir` (default `.\Releases`) should be used each time, so delta updates can be generated.
+   - The package version must comply to strict SemVer syntax. (eg. `1.0.0`, `1.0.1-pre`)
+   - A list of supported runtimes for the `--framework` argument is [available here](https://github.com/clowd/Clowd.Squirrel/blob/develop/src/Setup/RuntimeInfo.cpp)
    
-6. Distribute your entire `releaseDir` folder online. This folder can be hosted on any static web/file server, [Amazon S3](docs/using/amazon-s3.md), BackBlaze B2, or even via [GitHub Releases](docs/using/github.md).
+6. Distribute your entire `--releaseDir` folder online. This folder can be hosted on any static web/file server, [Amazon S3](docs/using/amazon-s3.md), BackBlaze B2, or even via [GitHub Releases](docs/using/github.md). 
+   - Note: If using CI to deploy releases, you can use the package syncing commands to download the currently live version, before creating a package. Complete example:
+     ```ps1
+     # build / publish your app
+     dotnet publish -c Release -o ".\publish"
+     
+     # download currently live version
+     Squirrel.exe http-down --url "https://the.place/you-host/updates"
+     
+     # build new version and delta updates. Will also bootstrap 'net6' runtime during setup if not installed already.
+     Squirrel.exe pack --framework net6 --packName "YourApp" --packVersion "1.0.0" --packAuthors "YourCompany" --packDirectory ".\publish"
+     ```
 
-7. Update your app periodically with UpdateManager.
+7. Update your app on startup / periodically with UpdateManager.
    ```cs
-   private static void UpdateMyApp()
+   private static async void UpdateMyApp()
    {
       using var mgr = new UpdateManager("https://the.place/you-host/updates");
       var newVersion = await mgr.UpdateApp();
