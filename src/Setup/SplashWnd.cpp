@@ -94,7 +94,7 @@ unsigned int __stdcall CSplashWnd::SplashThreadProc(void* lpParameter)
     wndcls.hCursor = LoadCursor(NULL, IDC_APPSTARTING);
     wndcls.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndcls.lpszClassName = L"SplashWnd";
-    wndcls.hIcon = LoadIcon(wndcls.hInstance, MAKEINTRESOURCE(IDI_APPLICATION));
+    wndcls.hIcon = LoadIcon(wndcls.hInstance, IDI_APPLICATION);
 
     if (!RegisterClass(&wndcls)) {
         if (GetLastError() != 0x00000582) // already registered)

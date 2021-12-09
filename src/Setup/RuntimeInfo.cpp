@@ -189,7 +189,7 @@ bool IsDotNetCoreInstalled(wstring searchString)
     // note, dotnet cli will only return x64 results.
     //auto runtimes = exec("dotnet --list-runtimes");
     auto runtimes = exec("dotnet --info");
-    return runtimes.find(searchString) != std::string::npos;
+    return runtimes.find(searchString) != std::wstring::npos;
 }
 
 bool IsRuntimeInstalled(const RUNTIMEINFO* runtime)
