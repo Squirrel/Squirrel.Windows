@@ -102,13 +102,13 @@ namespace SquirrelCli
                 var nuspecPath = Path.Combine(tmpDir, options.packName + ".nuspec");
                 File.WriteAllText(nuspecPath, nuspec);
 
-                var args = $"pack \"{nuspecPath}\" -BasePath \"{options.packDirectory}\" -OutputDirectory \"{tmpDir}\"";
+                var args = new string[] { "pack", nuspecPath, "-BasePath", options.packDirectory, "-OutputDirectory", tmpDir };
 
                 Log.Info($"Packing '{options.packDirectory}' into nupkg.");
                 var res = Utility.InvokeProcessAsync(NugetPath, args, CancellationToken.None).Result;
 
-                if (res.Item1 != 0)
-                    throw new Exception($"Failed nuget pack (exit {res.Item1}): \r\n " + res.Item2);
+                if (res.ExitCode != 0)
+                    throw new Exception($"Failed nuget pack (exit {res.ExitCode}): \r\n " + res.StdOutput);
 
                 var nupkgPath = Directory.EnumerateFiles(tmpDir).Where(f => f.EndsWith(".nupkg")).FirstOrDefault();
                 if (nupkgPath == null)
@@ -136,9 +136,9 @@ namespace SquirrelCli
 
             // validate that the provided "frameworkVersion" is supported by Setup.exe
             if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
-                var chkFrameworkResult = Utility.InvokeProcessAsync(BootstrapperPath, "--checkFramework " + frameworkVersion, CancellationToken.None).Result;
-                if (chkFrameworkResult.Item1 != 0) {
-                    throw new ArgumentException($"Unsupported FrameworkVersion: '{frameworkVersion}'. {chkFrameworkResult.Item2}");
+                var chkFrameworkResult = Utility.InvokeProcessAsync(BootstrapperPath, new string[] { "--checkFramework ", frameworkVersion }, CancellationToken.None).Result;
+                if (chkFrameworkResult.ExitCode != 0) {
+                    throw new ArgumentException($"Unsupported FrameworkVersion: '{frameworkVersion}'. {chkFrameworkResult.StdOutput}");
                 }
             }
 
@@ -233,16 +233,21 @@ namespace SquirrelCli
             var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
 
             try {
-                string arguments = $"\"{targetSetupExe}\" \"{zipPath}\"";
+                List<string> arguments = new List<string>() {
+                    targetSetupExe,
+                    zipPath
+                };
                 if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
-                    arguments += $" --set-required-framework \"{frameworkVersion}\"";
+                    arguments.Add("--set-required-framework");
+                    arguments.Add(frameworkVersion);
                 }
                 if (!String.IsNullOrWhiteSpace(backgroundGif)) {
-                    arguments += $" --set-splash \"{Path.GetFullPath(backgroundGif)}\"";
+                    arguments.Add("--set-splash");
+                    arguments.Add(Path.GetFullPath(backgroundGif));
                 }
 
                 var result = Utility.InvokeProcessAsync(writeZipToSetup, arguments, CancellationToken.None).Result;
-                if (result.Item1 != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.Item2);
+                if (result.ExitCode != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.StdOutput);
             } catch (Exception ex) {
                 Log.ErrorException("Failed to update Setup.exe with new Zip file", ex);
                 throw;
@@ -321,16 +326,17 @@ namespace SquirrelCli
             }
 
             var processResult = await Utility.InvokeProcessAsync(exe,
-                String.Format("sign {0} \"{1}\"", signingOpts, exePath), CancellationToken.None);
+                new string[] { "sign", signingOpts, exePath },
+                CancellationToken.None);
 
-            if (processResult.Item1 != 0) {
+            if (processResult.ExitCode != 0) {
                 var optsWithPasswordHidden = new Regex(@"/p\s+\w+").Replace(signingOpts, "/p ********");
                 var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}'",
                     exe, optsWithPasswordHidden, exePath);
 
                 throw new Exception(msg);
             } else {
-                Console.WriteLine(processResult.Item2);
+                Console.WriteLine(processResult.StdOutput);
             }
         }
         static bool isPEFileSigned(string path)
@@ -355,7 +361,7 @@ namespace SquirrelCli
 
             await Utility.InvokeProcessAsync(
                 Utility.FindHelperExecutable("WriteZipToSetup.exe"),
-                String.Format("--copy-stub-resources \"{0}\" \"{1}\"", fullName, target),
+                new string[] { "--copy-stub-resources", fullName, target },
                 CancellationToken.None);
         }
 
@@ -363,32 +369,33 @@ namespace SquirrelCli
         {
             var realExePath = Path.GetFullPath(exePath);
             var company = String.Join(",", package.Authors);
-            var verStrings = new Dictionary<string, string>() {
-                { "CompanyName", company },
-                { "LegalCopyright", package.Copyright ?? "Copyright © " + DateTime.Now.Year.ToString() + " " + company },
-                { "FileDescription", package.Summary ?? package.Description ?? "Installer for " + package.Id },
-                { "ProductName", package.Description ?? package.Summary ?? package.Id },
+
+            List<string> args = new List<string>() {
+                realExePath,
+                "--set-version-string", "CompanyName", company,
+                "--set-version-string", "LegalCopyright", package.Copyright ?? "Copyright © " + DateTime.Now.Year.ToString() + " " + company,
+                "--set-version-string", "FileDescription", package.Summary ?? package.Description ?? "Installer for " + package.Id,
+                "--set-version-string", "ProductName", package.Description ?? package.Summary ?? package.Id,
+                "--set-file-version", package.Version.ToString(),
+                "--set-product-version", package.Version.ToString(),
             };
 
-            var args = verStrings.Aggregate(new StringBuilder("\"" + realExePath + "\""), (acc, x) => { acc.AppendFormat(" --set-version-string \"{0}\" \"{1}\"", x.Key, x.Value); return acc; });
-            args.AppendFormat(" --set-file-version {0} --set-product-version {0}", package.Version.ToString());
             if (iconPath != null) {
-                args.AppendFormat(" --set-icon \"{0}\"", Path.GetFullPath(iconPath));
+                args.Add("--set-icon");
+                args.Add(Path.GetFullPath(iconPath));
             }
 
-            // Try to find rcedit.exe
             string exe = Utility.FindHelperExecutable("rcedit.exe");
+            var processResult = await Utility.InvokeProcessAsync(exe, args, CancellationToken.None);
 
-            var processResult = await Utility.InvokeProcessAsync(exe, args.ToString(), CancellationToken.None);
-
-            if (processResult.Item1 != 0) {
+            if (processResult.ExitCode != 0) {
                 var msg = String.Format(
                     "Failed to modify resources, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
-                    exe, args, processResult.Item2);
+                    exe, args, processResult.StdOutput);
 
                 throw new Exception(msg);
             } else {
-                Console.WriteLine(processResult.Item2);
+                Console.WriteLine(processResult.StdOutput);
             }
         }
     }

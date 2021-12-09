@@ -164,13 +164,78 @@ namespace Squirrel
             }
         }
 
-        public static Task<Tuple<int, string>> InvokeProcessAsync(string fileName, string arguments, CancellationToken ct, string workingDirectory = "")
+        /*
+         * caesay — 09/12/2021 at 12:10 PM
+         * yeah
+         * can I steal this for squirrel? 
+         * Roman — 09/12/2021 at 12:10 PM
+         * sure :)
+         * reference CommandRunner.cs on the github url as source? :)
+         * https://github.com/RT-Projects/RT.Util/blob/ef660cd693f66bc946da3aaa368893b03b74eed7/RT.Util.Core/CommandRunner.cs#L327
+         */
+
+        /// <summary>
+        ///     Given a number of argument strings, constructs a single command line string with all the arguments escaped
+        ///     correctly so that a process using standard Windows API for parsing the command line will receive exactly the
+        ///     strings passed in here. See Remarks.</summary>
+        /// <remarks>
+        ///     The string is only valid for passing directly to a process. If the target process is invoked by passing the
+        ///     process name + arguments to cmd.exe then further escaping is required, to counteract cmd.exe's interpretation
+        ///     of additional special characters. See <see cref="EscapeCmdExeMetachars"/>.</remarks>
+        public static string ArgsToCommandLine(IEnumerable<string> args)
+        {
+            var sb = new StringBuilder();
+            foreach (var arg in args) {
+                if (arg == null)
+                    continue;
+                if (sb.Length != 0)
+                    sb.Append(' ');
+                // For details, see https://web.archive.org/web/20150318010344/http://blogs.msdn.com/b/twistylittlepassagesallalike/archive/2011/04/23/everyone-quotes-arguments-the-wrong-way.aspx
+                // or https://devblogs.microsoft.com/oldnewthing/?p=12833
+                if (arg.Length != 0 && arg.IndexOfAny(_cmdChars) < 0)
+                    sb.Append(arg);
+                else {
+                    sb.Append('"');
+                    for (int c = 0; c < arg.Length; c++) {
+                        int backslashes = 0;
+                        while (c < arg.Length && arg[c] == '\\') {
+                            c++;
+                            backslashes++;
+                        }
+                        if (c == arg.Length) {
+                            sb.Append('\\', backslashes * 2);
+                            break;
+                        } else if (arg[c] == '"') {
+                            sb.Append('\\', backslashes * 2 + 1);
+                            sb.Append('"');
+                        } else {
+                            sb.Append('\\', backslashes);
+                            sb.Append(arg[c]);
+                        }
+                    }
+                    sb.Append('"');
+                }
+            }
+            return sb.ToString();
+        }
+        private static readonly char[] _cmdChars = new[] { ' ', '"', '\n', '\t', '\v' };
+
+        /// <summary>
+        /// This function will escape command line arguments such that CommandLineToArgvW is guarenteed to produce the same output as the 'args' parameter. 
+        /// It also will automatically execute wine if trying to run an exe while not on windows.
+        /// </summary>
+        public static Task<(int ExitCode, string StdOutput)> InvokeProcessAsync(string fileName, IEnumerable<string> args, CancellationToken ct)
+        {
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT && fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) {
+                return InvokeProcessUnsafeAsync(CreateProcessStartInfo("wine", ArgsToCommandLine(new string[] { fileName }.Concat(args))), ct);
+            } else {
+                return InvokeProcessUnsafeAsync(CreateProcessStartInfo(fileName, ArgsToCommandLine(args)), ct);
+            }
+        }
+
+        private static ProcessStartInfo CreateProcessStartInfo(string fileName, string arguments, string workingDirectory = "")
         {
             var psi = new ProcessStartInfo(fileName, arguments);
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT && fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) {
-                psi = new ProcessStartInfo("wine", fileName + " " + arguments);
-            }
-
             psi.UseShellExecute = false;
             psi.WindowStyle = ProcessWindowStyle.Hidden;
             psi.ErrorDialog = false;
@@ -178,11 +243,10 @@ namespace Squirrel
             psi.RedirectStandardOutput = true;
             psi.RedirectStandardError = true;
             psi.WorkingDirectory = workingDirectory;
-
-            return InvokeProcessAsync(psi, ct);
+            return psi;
         }
 
-        public static async Task<Tuple<int, string>> InvokeProcessAsync(ProcessStartInfo psi, CancellationToken ct)
+        private static async Task<(int ExitCode, string StdOutput)> InvokeProcessUnsafeAsync(ProcessStartInfo psi, CancellationToken ct)
         {
             var pi = Process.Start(psi);
             await Task.Run(() => {
@@ -205,7 +269,7 @@ namespace Squirrel
                 }
             }
 
-            return Tuple.Create(pi.ExitCode, textResult.Trim());
+            return (pi.ExitCode, textResult.Trim());
         }
 
         public static Task ForEachAsync<T>(this IEnumerable<T> source, Action<T> body, int degreeOfParallelism = 4)
@@ -378,18 +442,21 @@ namespace Squirrel
         public static async Task ExtractZipToDirectory(string zipFilePath, string outFolder)
         {
             var sevenZip = find7Zip();
-            var result = default(Tuple<int, string>);
 
             try {
                 var cmd = sevenZip;
                 var args = String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder);
+
+                // TODO this should probably fall back to SharpCompress if not on windows
                 if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
                     cmd = "wine";
                     args = sevenZip + " " + args;
                 }
 
-                result = await Utility.InvokeProcessAsync(cmd, args, CancellationToken.None);
-                if (result.Item1 != 0) throw new Exception(result.Item2);
+                var psi = CreateProcessStartInfo(cmd, args);
+
+                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None);
+                if (result.ExitCode != 0) throw new Exception(result.StdOutput);
             } catch (Exception ex) {
                 Log().Error($"Failed to extract file {zipFilePath} to {outFolder}\n{ex.Message}");
                 throw;
@@ -399,18 +466,21 @@ namespace Squirrel
         public static async Task CreateZipFromDirectory(string zipFilePath, string inFolder)
         {
             var sevenZip = find7Zip();
-            var result = default(Tuple<int, string>);
 
             try {
                 var cmd = sevenZip;
                 var args = String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath);
+
+                // TODO this should probably fall back to SharpCompress if not on windows
                 if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
                     cmd = "wine";
                     args = sevenZip + " " + args;
                 }
 
-                result = await Utility.InvokeProcessAsync(cmd, args, CancellationToken.None, inFolder);
-                if (result.Item1 != 0) throw new Exception(result.Item2);
+                var psi = CreateProcessStartInfo(cmd, args, inFolder);
+
+                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None);
+                if (result.ExitCode != 0) throw new Exception(result.StdOutput);
             } catch (Exception ex) {
                 Log().Error($"Failed to extract file {zipFilePath} to {inFolder}\n{ex.Message}");
                 throw;
