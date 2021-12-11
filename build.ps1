@@ -41,6 +41,7 @@ Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$Out" -Recurse
 Copy-Item "$PSScriptRoot\vendor\NuGet.exe" -Destination "$Out"
 Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$Out"
 Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$Out"
+Copy-Item "$PSScriptRoot\vendor\singlefilehost.exe" -Destination "$Out"
 
 Remove-Item "$Out\*.pdb"
 

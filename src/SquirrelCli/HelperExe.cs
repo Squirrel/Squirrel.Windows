@@ -17,6 +17,7 @@ namespace SquirrelCli
         public static string SetupPath => FindHelperExecutable("Setup.exe", _searchPaths);
         public static string UpdatePath => FindHelperExecutable("Update.exe", _searchPaths);
         public static string StubExecutablePath => FindHelperExecutable("StubExecutable.exe", _searchPaths);
+        public static string SingleFileHostPath => FindHelperExecutable("singlefilehost.exe", _searchPaths);
 
         // private so we don't expose paths to internal tools. these should be exposed as a helper function
         private static string NugetPath => FindHelperExecutable("NuGet.exe", _searchPaths);

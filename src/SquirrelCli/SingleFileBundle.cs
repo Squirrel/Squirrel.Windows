@@ -28,14 +28,7 @@ namespace SquirrelCli
         public static async Task UpdateSingleFileIcon(string sourceFile, string destinationFile, string iconPath)
         {
             using var d = Utility.WithTempDirectory(out var tmpdir);
-            var hostPath = Path.Combine(tmpdir, "singlefilehost.exe");
             var sourceName = Path.GetFileNameWithoutExtension(sourceFile);
-
-            // extract bundled host to file
-            using (var hostStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("SquirrelCli.singlefilehost.exe"))
-            using (var file = new FileStream(hostPath, FileMode.Create, FileAccess.Write)) {
-                hostStream.CopyTo(file);
-            }
 
             // extract Update.exe to tmp dir
             Log.Info("Extracting Update.exe resources to temp directory");
@@ -44,13 +37,12 @@ namespace SquirrelCli
             // create new app host
             var newAppHost = Path.Combine(tmpdir, sourceName + ".exe");
             HostWriter.CreateAppHost(
-                hostPath, // input file
+                HelperExe.SingleFileHostPath, // input file
                 newAppHost, // output file
                 sourceName + ".dll", // entry point, relative to apphost
                 true, // isGui?
                 Path.Combine(tmpdir, sourceName + ".dll") // copy exe resources from?
             );
-            File.Delete(hostPath);
 
             // set new icon
             Log.Info("Patching Update.exe icon");
