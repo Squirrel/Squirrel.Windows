@@ -123,11 +123,17 @@ namespace SquirrelCli
             var backgroundGif = options.splashImage;
             var setupIcon = options.setupIcon;
 
-            var updatePath = HelperExe.UpdatePath;
-
             // validate that the provided "frameworkVersion" is supported by Setup.exe
             if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
                 HelperExe.ValidateFrameworkVersion(frameworkVersion).Wait();
+            }
+
+            // update icon for Update.exe if requested
+            var updatePath = HelperExe.UpdatePath;
+            using var ud = Utility.WithTempDirectory(out var updateDir);
+            if (options.updateIcon != null) {
+                updatePath = Path.Combine(updateDir, "Update.exe");
+                SingleFileBundle.UpdateSingleFileIcon(HelperExe.UpdatePath, updatePath, options.updateIcon).Wait();
             }
 
             // copy input package to target output directory

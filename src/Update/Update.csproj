@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -6,7 +6,6 @@
     <LangVersion>9</LangVersion>
     <RootNamespace>Squirrel.Update</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>..\..\squirrel.ico</ApplicationIcon>
     <NoWarn>CA1416</NoWarn>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <SignAssembly>True</SignAssembly>
@@ -14,11 +13,6 @@
     <PublishSingleFile>true</PublishSingleFile>
     <PublishTrimmed>true</PublishTrimmed>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-  </PropertyGroup>
-
-  <!-- If update.ico exists in project directory it will be used instead of the squirrel icon -->
-  <PropertyGroup Condition="Exists('update.ico')">
-    <ApplicationIcon>update.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

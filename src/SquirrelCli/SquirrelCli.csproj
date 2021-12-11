@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -27,6 +27,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Requires SDK 6.0.100, used for re-compiling Update.exe with a new icon. I think it's important to take this from the SDK -->
+    <!-- during build, so the bundled version of the singlefilehost matches the one used by msbuild when it first created Update.exe -->
+    <Reference Include="C:\Program Files\dotnet\sdk\6.0.100\Microsoft.NET.HostModel.dll" />
+    <EmbeddedResource Include="C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x86\6.0.0\runtimes\win-x86\native\singlefilehost.exe" />
   </ItemGroup>
 
 </Project>
