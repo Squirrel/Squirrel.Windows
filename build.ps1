@@ -19,8 +19,8 @@ foreach ($Folder in $Folders) {
 &"$MSBuildPath" /verbosity:minimal /restore /p:Configuration=Release
 
 # Build single-exe packaged projects
-dotnet publish -v minimal -c Release "$PSScriptRoot\src\Update\Update.csproj" -o "$Out"
-dotnet publish -v minimal -c Release "$PSScriptRoot\src\SquirrelCli\SquirrelCli.csproj" -o "$Out"
+dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\Update\Update.csproj" -o "$Out"
+dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\SquirrelCli\SquirrelCli.csproj" -o "$Out"
 
 # Copy over all files we need
 # Move-Item "$Out\Update.exe" -Destination "$Out\Squirrel.exe"
