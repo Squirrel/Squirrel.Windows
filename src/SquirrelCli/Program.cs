@@ -90,7 +90,7 @@ namespace SquirrelCli
     <version>{options.packVersion}</version>
   </metadata>
   <files>
-    <file src=""**"" target=""lib\app\"" exclude=""{(options.includePdb ? "" : "*.pdb;")}*.nupkg;*.vshost.*""/>
+    <file src=""**"" target=""lib\native\"" exclude=""{(options.includePdb ? "" : "*.pdb;")}*.nupkg;*.vshost.*""/>
   </files>
 </package>
 ".Trim();
