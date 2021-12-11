@@ -20,7 +20,7 @@ using Squirrel.NuGet;
 
 namespace Squirrel
 {
-    static class Utility
+    internal static class Utility
     {
         public static string RemoveByteOrderMarkerIfPresent(string content)
         {
@@ -233,7 +233,7 @@ namespace Squirrel
             }
         }
 
-        private static ProcessStartInfo CreateProcessStartInfo(string fileName, string arguments, string workingDirectory = "")
+        public static ProcessStartInfo CreateProcessStartInfo(string fileName, string arguments, string workingDirectory = "")
         {
             var psi = new ProcessStartInfo(fileName, arguments);
             psi.UseShellExecute = false;
@@ -246,7 +246,7 @@ namespace Squirrel
             return psi;
         }
 
-        private static async Task<(int ExitCode, string StdOutput)> InvokeProcessUnsafeAsync(ProcessStartInfo psi, CancellationToken ct)
+        public static async Task<(int ExitCode, string StdOutput)> InvokeProcessUnsafeAsync(ProcessStartInfo psi, CancellationToken ct)
         {
             var pi = Process.Start(psi);
             await Task.Run(() => {
@@ -402,88 +402,6 @@ namespace Squirrel
             } catch (Exception ex) {
                 var message = String.Format("DeleteDirectory: could not delete - {0}", directoryPath);
                 Log().ErrorException(message, ex);
-            }
-        }
-
-        public static string FindHelperExecutable(string toFind, IEnumerable<string> additionalDirs = null, bool throwWhenNotFound = false)
-        {
-            if (File.Exists(toFind))
-                return Path.GetFullPath(toFind);
-
-            additionalDirs = additionalDirs ?? Enumerable.Empty<string>();
-            var dirs = (new[] { AppContext.BaseDirectory, Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
-                .Concat(additionalDirs ?? Enumerable.Empty<string>()).Select(Path.GetFullPath);
-
-            var exe = @".\" + toFind;
-            var result = dirs
-                .Select(x => Path.Combine(x, toFind))
-                .FirstOrDefault(x => File.Exists(x));
-
-            if (result == null && throwWhenNotFound)
-                throw new Exception($"Could not find helper '{exe}'.");
-
-            return result ?? exe;
-        }
-
-        static string find7Zip()
-        {
-            if (ModeDetector.InUnitTestRunner()) {
-                var vendorDir = Path.Combine(
-                    Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase.Replace("file:///", "")),
-                    "..", "..", "..", "..",
-                    "vendor", "7zip"
-                );
-                return FindHelperExecutable("7z.exe", new[] { vendorDir });
-            } else {
-                return FindHelperExecutable("7z.exe");
-            }
-        }
-
-        public static async Task ExtractZipToDirectory(string zipFilePath, string outFolder)
-        {
-            var sevenZip = find7Zip();
-
-            try {
-                var cmd = sevenZip;
-                var args = String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder);
-
-                // TODO this should probably fall back to SharpCompress if not on windows
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
-                    cmd = "wine";
-                    args = sevenZip + " " + args;
-                }
-
-                var psi = CreateProcessStartInfo(cmd, args);
-
-                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None);
-                if (result.ExitCode != 0) throw new Exception(result.StdOutput);
-            } catch (Exception ex) {
-                Log().Error($"Failed to extract file {zipFilePath} to {outFolder}\n{ex.Message}");
-                throw;
-            }
-        }
-
-        public static async Task CreateZipFromDirectory(string zipFilePath, string inFolder)
-        {
-            var sevenZip = find7Zip();
-
-            try {
-                var cmd = sevenZip;
-                var args = String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath);
-
-                // TODO this should probably fall back to SharpCompress if not on windows
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
-                    cmd = "wine";
-                    args = sevenZip + " " + args;
-                }
-
-                var psi = CreateProcessStartInfo(cmd, args, inFolder);
-
-                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None);
-                if (result.ExitCode != 0) throw new Exception(result.StdOutput);
-            } catch (Exception ex) {
-                Log().Error($"Failed to extract file {zipFilePath} to {inFolder}\n{ex.Message}");
-                throw;
             }
         }
 
@@ -790,8 +708,7 @@ namespace Squirrel
         static IFullLogger logger;
         static IFullLogger Log()
         {
-            return logger ??
-                (logger = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(Utility)));
+            return logger ?? (logger = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(Utility)));
         }
 
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]

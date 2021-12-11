@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -76,13 +76,6 @@ namespace SquirrelCli
 
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
-        static string[] VendorDirs => new string[] {
-            Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor")
-        };
-        static string BootstrapperPath = Utility.FindHelperExecutable("Setup.exe", throwWhenNotFound: true);
-        static string UpdatePath = Utility.FindHelperExecutable("Update.exe", throwWhenNotFound: true);
-        static string NugetPath = Utility.FindHelperExecutable("NuGet.exe", VendorDirs, throwWhenNotFound: true);
-
         static void Pack(PackOptions options)
         {
             using (Utility.WithTempDirectory(out var tmpDir)) {
@@ -104,13 +97,7 @@ namespace SquirrelCli
                 var nuspecPath = Path.Combine(tmpDir, options.packName + ".nuspec");
                 File.WriteAllText(nuspecPath, nuspec);
 
-                var args = new string[] { "pack", nuspecPath, "-BasePath", options.packDirectory, "-OutputDirectory", tmpDir };
-
-                Log.Info($"Packing '{options.packDirectory}' into nupkg.");
-                var res = Utility.InvokeProcessAsync(NugetPath, args, CancellationToken.None).Result;
-
-                if (res.ExitCode != 0)
-                    throw new Exception($"Failed nuget pack (exit {res.ExitCode}): \r\n " + res.StdOutput);
+                HelperExe.NugetPack(nuspecPath, options.packDirectory, tmpDir).Wait();
 
                 var nupkgPath = Directory.EnumerateFiles(tmpDir).Where(f => f.EndsWith(".nupkg")).FirstOrDefault();
                 if (nupkgPath == null)
@@ -136,12 +123,11 @@ namespace SquirrelCli
             var backgroundGif = options.splashImage;
             var setupIcon = options.setupIcon;
 
+            var updatePath = HelperExe.UpdatePath;
+
             // validate that the provided "frameworkVersion" is supported by Setup.exe
             if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
-                var chkFrameworkResult = Utility.InvokeProcessAsync(BootstrapperPath, new string[] { "--checkFramework ", frameworkVersion }, CancellationToken.None).Result;
-                if (chkFrameworkResult.ExitCode != 0) {
-                    throw new ArgumentException($"Unsupported FrameworkVersion: '{frameworkVersion}'. {chkFrameworkResult.StdOutput}");
-                }
+                HelperExe.ValidateFrameworkVersion(frameworkVersion).Wait();
             }
 
             // copy input package to target output directory
@@ -165,7 +151,7 @@ namespace SquirrelCli
             foreach (var file in toProcess) {
                 Log.Info("Creating release package: " + file.FullName);
 
-                var rp = new ReleasePackage(file.FullName);
+                var rp = new ReleasePackageBuilder(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: pkgPath => {
 
                     // create stub executable for all exe's in this package (except Squirrel!)
@@ -185,7 +171,7 @@ namespace SquirrelCli
                         .Where(d => re.IsMatch(d))
                         .OrderBy(d => d.Length)
                         .FirstOrDefault();
-                    File.Copy(UpdatePath, Path.Combine(libDir, "Squirrel.exe"));
+                    File.Copy(updatePath, Path.Combine(libDir, "Squirrel.exe"));
 
                     // sign all exe's in this package
                     if (signingOpts == null) return;
@@ -198,7 +184,7 @@ namespace SquirrelCli
                             }
 
                             Log.Info("About to sign {0}", x.FullName);
-                            await signPEFile(x.FullName, signingOpts);
+                            await HelperExe.SignPEFile(x.FullName, signingOpts);
                         }, 1)
                         .Wait();
                 });
@@ -207,8 +193,7 @@ namespace SquirrelCli
 
                 var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
                 if (prev != null && generateDeltas) {
-                    var deltaBuilder = new DeltaPackageBuilder(null);
-
+                    var deltaBuilder = new DeltaPackageBuilder();
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
                         Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
                     processed.Insert(0, dp.InputPackageFile);
@@ -229,27 +214,11 @@ namespace SquirrelCli
             var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
             var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
 
-            File.Copy(BootstrapperPath, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, signingOpts, setupIcon).Result;
-
-            var writeZipToSetup = Utility.FindHelperExecutable("WriteZipToSetup.exe");
+            File.Copy(HelperExe.SetupPath, targetSetupExe, true);
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, signingOpts, setupIcon, updatePath).Result;
 
             try {
-                List<string> arguments = new List<string>() {
-                    targetSetupExe,
-                    zipPath
-                };
-                if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
-                    arguments.Add("--set-required-framework");
-                    arguments.Add(frameworkVersion);
-                }
-                if (!String.IsNullOrWhiteSpace(backgroundGif)) {
-                    arguments.Add("--set-splash");
-                    arguments.Add(Path.GetFullPath(backgroundGif));
-                }
-
-                var result = Utility.InvokeProcessAsync(writeZipToSetup, arguments, CancellationToken.None).Result;
-                if (result.ExitCode != 0) throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.StdOutput);
+                HelperExe.BundleZipIntoTargetSetupExe(targetSetupExe, zipPath, frameworkVersion, backgroundGif).Wait();
             } catch (Exception ex) {
                 Log.ErrorException("Failed to update Setup.exe with new Zip file", ex);
                 throw;
@@ -258,10 +227,10 @@ namespace SquirrelCli
             }
 
             Utility.Retry(() =>
-                setPEVersionInfoAndIcon(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
+                HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
             if (signingOpts != null) {
-                signPEFile(targetSetupExe, signingOpts).Wait();
+                HelperExe.SignPEFile(targetSetupExe, signingOpts).Wait();
             }
 
             //if (generateMsi) {
@@ -273,14 +242,14 @@ namespace SquirrelCli
             //}
         }
 
-        static async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string signingOpts, string setupIcon)
+        static async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string signingOpts, string setupIcon, string updatePath)
         {
             string tempPath;
 
             Log.Info("Building embedded zip file for Setup.exe");
             using (Utility.WithTempDirectory(out tempPath, null)) {
                 Log.ErrorIfThrows(() => {
-                    File.Copy(UpdatePath, Path.Combine(tempPath, "Update.exe"));
+                    File.Copy(updatePath, Path.Combine(tempPath, "Update.exe"));
                     File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
                 }, "Failed to write package files to temp dir: " + tempPath);
 
@@ -305,7 +274,7 @@ namespace SquirrelCli
                         .Where(x => x.Name.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                         .Select(x => x.FullName);
 
-                    await files.ForEachAsync(x => signPEFile(x, signingOpts));
+                    await files.ForEachAsync(x => HelperExe.SignPEFile(x, signingOpts));
                 }
 
                 Log.ErrorIfThrows(() =>
@@ -316,31 +285,6 @@ namespace SquirrelCli
             }
         }
 
-        static async Task signPEFile(string exePath, string signingOpts)
-        {
-            // Try to find SignTool.exe
-            var exe = @".\signtool.exe";
-            if (!File.Exists(exe)) {
-                exe = Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "signtool.exe");
-
-                // Run down PATH and hope for the best
-                if (!File.Exists(exe)) exe = "signtool.exe";
-            }
-
-            var processResult = await Utility.InvokeProcessAsync(exe,
-                new string[] { "sign", signingOpts, exePath },
-                CancellationToken.None);
-
-            if (processResult.ExitCode != 0) {
-                var optsWithPasswordHidden = new Regex(@"/p\s+\w+").Replace(signingOpts, "/p ********");
-                var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}'",
-                    exe, optsWithPasswordHidden, exePath);
-
-                throw new Exception(msg);
-            } else {
-                Console.WriteLine(processResult.StdOutput);
-            }
-        }
         static bool isPEFileSigned(string path)
         {
             try {
@@ -351,54 +295,14 @@ namespace SquirrelCli
             }
         }
 
-        static async Task createExecutableStubForExe(string fullName)
+        static async Task createExecutableStubForExe(string exeToCopy)
         {
-            var exe = Utility.FindHelperExecutable(@"StubExecutable.exe");
-
             var target = Path.Combine(
-                Path.GetDirectoryName(fullName),
-                Path.GetFileNameWithoutExtension(fullName) + "_ExecutionStub.exe");
+                Path.GetDirectoryName(exeToCopy),
+                Path.GetFileNameWithoutExtension(exeToCopy) + "_ExecutionStub.exe");
 
-            await Utility.CopyToAsync(exe, target);
-
-            await Utility.InvokeProcessAsync(
-                Utility.FindHelperExecutable("WriteZipToSetup.exe"),
-                new string[] { "--copy-stub-resources", fullName, target },
-                CancellationToken.None);
-        }
-
-        static async Task setPEVersionInfoAndIcon(string exePath, IPackage package, string iconPath = null)
-        {
-            var realExePath = Path.GetFullPath(exePath);
-            var company = String.Join(",", package.Authors);
-
-            List<string> args = new List<string>() {
-                realExePath,
-                "--set-version-string", "CompanyName", company,
-                "--set-version-string", "LegalCopyright", package.Copyright ?? "Copyright © " + DateTime.Now.Year.ToString() + " " + company,
-                "--set-version-string", "FileDescription", package.Summary ?? package.Description ?? "Installer for " + package.Id,
-                "--set-version-string", "ProductName", package.Description ?? package.Summary ?? package.Id,
-                "--set-file-version", package.Version.ToString(),
-                "--set-product-version", package.Version.ToString(),
-            };
-
-            if (iconPath != null) {
-                args.Add("--set-icon");
-                args.Add(Path.GetFullPath(iconPath));
-            }
-
-            string exe = Utility.FindHelperExecutable("rcedit.exe");
-            var processResult = await Utility.InvokeProcessAsync(exe, args, CancellationToken.None);
-
-            if (processResult.ExitCode != 0) {
-                var msg = String.Format(
-                    "Failed to modify resources, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
-                    exe, args, processResult.StdOutput);
-
-                throw new Exception(msg);
-            } else {
-                Console.WriteLine(processResult.StdOutput);
-            }
+            await Utility.CopyToAsync(HelperExe.StubExecutablePath, target);
+            await HelperExe.CopyResourcesToTargetStubExe(exeToCopy, target);
         }
     }
 
@@ -416,8 +320,10 @@ namespace SquirrelCli
                 string lvl = logLevel.ToString().Substring(0, 4).ToUpper();
                 if (logLevel == LogLevel.Error || logLevel == LogLevel.Fatal) {
                     Utility.ConsoleWriteWithColor($"[{lvl}] {message}\r\n", ConsoleColor.Red);
+                    Console.WriteLine();
                 } else if (logLevel == LogLevel.Warn) {
                     Utility.ConsoleWriteWithColor($"[{lvl}] {message}\r\n", ConsoleColor.Yellow);
+                    Console.WriteLine();
                 } else {
                     Console.WriteLine($"[{lvl}] {message}");
                 }

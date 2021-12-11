@@ -37,6 +37,7 @@ namespace SquirrelCli
             Add("f=|framework=", "Set the required .NET framework version, e.g. net461", v => framework = v);
             Add("no-delta", "Don't generate delta packages to save time", v => noDelta = true);
             Add("b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true);
+            Add("addSearchPath=", "Add additional search directories when looking for helper exe's such as Setup.exe, Update.exe, etc", v => HelperExe.AddSearchPath(v));
         }
 
         public override void Validate()
