@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -28,7 +28,9 @@ namespace SquirrelCli
             var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
             var commands = new CommandSet {
                 "",
+#pragma warning disable CS0436 // Type conflicts with imported type
                 $"Squirrel ({ThisAssembly.AssemblyInformationalVersion}) command line tool for creating and deploying Squirrel releases",
+#pragma warning restore CS0436 // Type conflicts with imported type
                 $"Usage: {exeName} [verb] [--option:value]",
                 "",
                 "Package Authoring:",
