@@ -61,14 +61,16 @@ namespace Squirrel
 
         static string LookForNetCoreDll(string fullname)
         {
-            var exeFileVersionInfo = FileVersionInfo.GetVersionInfo(fullname);
-            var originalFilename = exeFileVersionInfo.OriginalFilename;
+            try {
+                var exeFileVersionInfo = FileVersionInfo.GetVersionInfo(fullname);
+                var originalFilename = exeFileVersionInfo.OriginalFilename;
 
-            var backingDll = originalFilename == null ? null
-                : Path.Combine(Path.GetDirectoryName(fullname), originalFilename);
+                var backingDll = originalFilename == null ? null
+                    : Path.Combine(Path.GetDirectoryName(fullname), originalFilename);
 
-            if (backingDll.EndsWith("dll", StringComparison.InvariantCultureIgnoreCase))
-                return backingDll;
+                if (backingDll.EndsWith("dll", StringComparison.InvariantCultureIgnoreCase))
+                    return backingDll;
+            } catch { }
 
             return null;
         }
