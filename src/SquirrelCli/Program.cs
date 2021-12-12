@@ -132,22 +132,28 @@ namespace SquirrelCli
             var backgroundGif = options.splashImage;
             var setupIcon = options.setupIcon;
 
+            if (!package.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase))
+                throw new ArgumentException("package must be packed with nuget and end in '.nupkg'");
+
             // validate that the provided "frameworkVersion" is supported by Setup.exe
             if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
                 HelperExe.ValidateFrameworkVersion(frameworkVersion).Wait();
             }
 
+            using var ud = Utility.WithTempDirectory(out var tempDir);
+
             // update icon for Update.exe if requested
-            var updatePath = HelperExe.UpdatePath;
-            using var ud = Utility.WithTempDirectory(out var updateDir);
+            var updatePath = Path.Combine(tempDir, "Update.exe");
             if (options.updateIcon != null) {
-                updatePath = Path.Combine(updateDir, "Update.exe");
                 SingleFileBundle.UpdateSingleFileIcon(HelperExe.UpdatePath, updatePath, options.updateIcon).Wait();
+            } else {
+                File.Copy(HelperExe.UpdatePath, updatePath, true);
             }
 
+            // Sign Update.exe so that virus scanners don't think we're pulling one over on them
+            HelperExe.SignPEFile(updatePath, signingOpts).Wait();
+
             // copy input package to target output directory
-            if (!package.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase))
-                throw new ArgumentException("package must be packed with nuget and end in '.nupkg'");
             var di = new DirectoryInfo(targetDir);
             File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
 
@@ -178,23 +184,14 @@ namespace SquirrelCli
                         .ForEachAsync(x => createExecutableStubForExe(x.FullName))
                         .Wait();
 
-                    // copy Update.exe into package, so it can also be updated in both full/delta packages
-                    File.Copy(updatePath, Path.Combine(pkgPath, "lib", frameworkName, "Squirrel.exe"), true);
-
                     // sign all exe's in this package
-                    if (signingOpts == null) return;
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
-                        .ForEachAsync(async x => {
-                            if (isPEFileSigned(x.FullName)) {
-                                Log.Info("{0} is already signed, skipping", x.FullName);
-                                return;
-                            }
-
-                            Log.Info("About to sign {0}", x.FullName);
-                            await HelperExe.SignPEFile(x.FullName, signingOpts);
-                        }, 1)
+                        .ForEachAsync(x => HelperExe.SignPEFile(x.FullName, signingOpts))
                         .Wait();
+
+                    // copy Update.exe into package, so it can also be updated in both full/delta packages
+                    File.Copy(updatePath, Path.Combine(pkgPath, "lib", frameworkName, "Squirrel.exe"), true);
                 });
 
                 processed.Add(rp.ReleasePackageFile);
@@ -208,7 +205,9 @@ namespace SquirrelCli
                 }
             }
 
-            foreach (var file in toProcess) { File.Delete(file.FullName); }
+            foreach (var file in toProcess) {
+                File.Delete(file.FullName);
+            }
 
             var newReleaseEntries = processed
                 .Select(packageFilename => ReleaseEntry.GenerateFromFile(packageFilename, baseUrl))
@@ -223,7 +222,7 @@ namespace SquirrelCli
             var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
 
             File.Copy(HelperExe.SetupPath, targetSetupExe, true);
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), di.FullName, signingOpts, setupIcon, updatePath).Result;
+            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), updatePath);
 
             try {
                 HelperExe.BundleZipIntoTargetSetupExe(targetSetupExe, zipPath, frameworkVersion, backgroundGif).Wait();
@@ -237,9 +236,7 @@ namespace SquirrelCli
             Utility.Retry(() =>
                 HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
-            if (signingOpts != null) {
-                HelperExe.SignPEFile(targetSetupExe, signingOpts).Wait();
-            }
+            HelperExe.SignPEFile(targetSetupExe, signingOpts).Wait();
 
             //if (generateMsi) {
             //    createMsiPackage(targetSetupExe, new ZipPackage(package), packageAs64Bit).Wait();
@@ -250,23 +247,19 @@ namespace SquirrelCli
             //}
         }
 
-        static async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string signingOpts, string setupIcon, string updatePath)
+        static string createSetupEmbeddedZip(string fullPackage, string updatePath)
         {
             string tempPath;
 
             Log.Info("Start building embedded zip file for Setup.exe");
             using (Utility.WithTempDirectory(out tempPath, null)) {
+
+                // copy package and Update.exe into temporary directory
                 var tmpPackagePath = Path.Combine(tempPath, Path.GetFileName(fullPackage));
                 Log.ErrorIfThrows(() => {
                     File.Copy(updatePath, Path.Combine(tempPath, "Update.exe"));
                     File.Copy(fullPackage, tmpPackagePath);
                 }, "Failed to write package files to temp dir: " + tempPath);
-
-                if (!String.IsNullOrWhiteSpace(setupIcon)) {
-                    Log.ErrorIfThrows(() => {
-                        File.Copy(setupIcon, Path.Combine(tempPath, "setupIcon.ico"));
-                    }, "Failed to write icon to temp dir: " + tempPath);
-                }
 
                 // remove Squirrel.exe from the setup package to save space in the installer
                 Log.Info("Optimizing setup package for space savings");
@@ -279,40 +272,19 @@ namespace SquirrelCli
                     }
                 }
 
+                // generate RELEASES file with only this current release
                 var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
                 ReleaseEntry.WriteReleaseFile(releases, Path.Combine(tempPath, "RELEASES"));
 
+                // create zip bundle from temp directory
+                Log.Info("Compressing Setup.exe bundle");
                 var target = Path.GetTempFileName();
                 File.Delete(target);
-
-                // Sign Update.exe so that virus scanners don't think we're
-                // pulling one over on them
-                if (signingOpts != null) {
-                    var di = new DirectoryInfo(tempPath);
-
-                    var files = di.EnumerateFiles()
-                        .Where(x => x.Name.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                        .Select(x => x.FullName);
-
-                    await files.ForEachAsync(x => HelperExe.SignPEFile(x, signingOpts));
-                }
-
-                Log.Info("Compressing Setup.exe bundle");
                 Log.ErrorIfThrows(() =>
                     ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
                     "Failed to create Zip file from directory: " + tempPath);
 
                 return target;
-            }
-        }
-
-        static bool isPEFileSigned(string path)
-        {
-            try {
-                return AuthenticodeTools.IsTrusted(path);
-            } catch (Exception ex) {
-                Log.ErrorException("Failed to determine signing status for " + path, ex);
-                return false;
             }
         }
 

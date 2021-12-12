@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Squirrel;
+using Squirrel.Lib;
 using Squirrel.SimpleSplat;
 
 namespace Squirrel
@@ -123,6 +124,22 @@ namespace Squirrel
 
         public static async Task SignPEFile(string exePath, string signingOpts)
         {
+            if (String.IsNullOrEmpty(signingOpts)) {
+                Log.Debug("{0} was not signed.", exePath);
+                return;
+            }
+
+            try {
+                if (AuthenticodeTools.IsTrusted(exePath)) {
+                    Log.Info("{0} is already signed, skipping...", exePath);
+                    return;
+                }
+            } catch (Exception ex) {
+                Log.ErrorException("Failed to determine signing status for " + exePath, ex);
+            }
+
+            Log.Info("About to sign {0}", exePath);
+
             var psi = Utility.CreateProcessStartInfo(SignToolPath, $"sign {signingOpts} \"{exePath}\"");
             var processResult = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None);
 
