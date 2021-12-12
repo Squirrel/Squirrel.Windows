@@ -24,7 +24,7 @@ namespace Squirrel
         string ReleasePackageFile { get; }
         string SuggestedReleaseFileName { get; }
 
-        string CreateReleasePackage(string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string> contentsPostProcessHook = null);
+        string CreateReleasePackage(string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, string> contentsPostProcessHook = null);
     }
 
     public class ReleasePackage : IEnableLogger, IReleasePackage
@@ -50,7 +50,7 @@ namespace Squirrel
 
         public SemanticVersion Version { get { return InputPackageFile.ToSemanticVersion(); } }
 
-        public string CreateReleasePackage(string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string> contentsPostProcessHook = null)
+        public string CreateReleasePackage(string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, string> contentsPostProcessHook = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(outputFile));
             releaseNotesProcessor = releaseNotesProcessor ?? (x => (new Markdown()).Transform(x));
@@ -116,7 +116,7 @@ namespace Squirrel
 
                 addDeltaFilesToContentTypes(tempDir.FullName);
 
-                contentsPostProcessHook?.Invoke(tempPath);
+                contentsPostProcessHook?.Invoke(tempPath, targetFramework.Identifier);
 
                 HelperExe.CreateZipFromDirectory(outputFile, tempPath).Wait();
 

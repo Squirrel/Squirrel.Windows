@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -158,7 +158,7 @@ namespace SquirrelCli
                 Log.Info("Creating release package: " + file.FullName);
 
                 var rp = new ReleasePackage(file.FullName);
-                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: pkgPath => {
+                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, frameworkName) => {
 
                     // create stub executable for all exe's in this package (except Squirrel!)
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
@@ -169,15 +169,8 @@ namespace SquirrelCli
                         .ForEachAsync(x => createExecutableStubForExe(x.FullName))
                         .Wait();
 
-                    // copy myself into the package so Squirrel can also be updated
-                    // how we find the lib dir is a huge hack here, but 'ReleasePackage' verifies there can only be one of these so it should be fine.
-                    var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]?", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
-                    var libDir = Directory
-                        .EnumerateDirectories(pkgPath, "*", SearchOption.AllDirectories)
-                        .Where(d => re.IsMatch(d))
-                        .OrderBy(d => d.Length)
-                        .FirstOrDefault();
-                    File.Copy(updatePath, Path.Combine(libDir, "Squirrel.exe"));
+                    // copy Update.exe into package, so it can also be updated in both full/delta packages
+                    File.Copy(updatePath, Path.Combine(pkgPath, "lib", frameworkName, "Squirrel.exe"), true);
 
                     // sign all exe's in this package
                     if (signingOpts == null) return;
@@ -252,17 +245,29 @@ namespace SquirrelCli
         {
             string tempPath;
 
-            Log.Info("Building embedded zip file for Setup.exe");
+            Log.Info("Start building embedded zip file for Setup.exe");
             using (Utility.WithTempDirectory(out tempPath, null)) {
+                var tmpPackagePath = Path.Combine(tempPath, Path.GetFileName(fullPackage));
                 Log.ErrorIfThrows(() => {
                     File.Copy(updatePath, Path.Combine(tempPath, "Update.exe"));
-                    File.Copy(fullPackage, Path.Combine(tempPath, Path.GetFileName(fullPackage)));
+                    File.Copy(fullPackage, tmpPackagePath);
                 }, "Failed to write package files to temp dir: " + tempPath);
 
                 if (!String.IsNullOrWhiteSpace(setupIcon)) {
                     Log.ErrorIfThrows(() => {
                         File.Copy(setupIcon, Path.Combine(tempPath, "setupIcon.ico"));
                     }, "Failed to write icon to temp dir: " + tempPath);
+                }
+
+                // remove Squirrel.exe from the setup package to save space in the installer
+                Log.Info("Optimizing setup package for space savings");
+                using (var stream = File.Open(tmpPackagePath, FileMode.Open, FileAccess.ReadWrite))
+                using (var package = System.IO.Packaging.Package.Open(stream, FileMode.Open, FileAccess.ReadWrite)) {
+                    var parts = package.GetParts();
+                    var toDelete = parts.FirstOrDefault(p => p.Uri.ToString().EndsWith("Squirrel.exe", StringComparison.InvariantCultureIgnoreCase));
+                    if (toDelete != null) {
+                        package.DeletePart(toDelete.Uri);
+                    }
                 }
 
                 var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
@@ -283,6 +288,7 @@ namespace SquirrelCli
                     await files.ForEachAsync(x => HelperExe.SignPEFile(x, signingOpts));
                 }
 
+                Log.Info("Compressing Setup.exe bundle");
                 Log.ErrorIfThrows(() =>
                     ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
                     "Failed to create Zip file from directory: " + tempPath);
