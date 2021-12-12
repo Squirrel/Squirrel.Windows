@@ -53,9 +53,18 @@ namespace SquirrelCli
             var logger = new ConsoleLogger();
 
             try {
-                // check for help argument
+                // check for help/verbose argument
                 bool help = false;
-                new OptionSet() { { "h|?|help", _ => help = true }, }.Parse(args);
+                bool verbose = false;
+                new OptionSet() {
+                    { "h|?|help", _ => help = true },
+                    { "v|verbose", _ => verbose = true },
+                }.Parse(args);
+
+                if (verbose) {
+                    logger.Level = LogLevel.Debug;
+                }
+
                 if (help) {
                     commands.WriteHelp();
                     return -1;
