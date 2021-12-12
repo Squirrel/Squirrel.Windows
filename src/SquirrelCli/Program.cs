@@ -245,6 +245,8 @@ namespace SquirrelCli
             //        signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
             //    }
             //}
+
+            Log.Info("Done");
         }
 
         static string createSetupEmbeddedZip(string fullPackage, string updatePath)
@@ -273,7 +275,7 @@ namespace SquirrelCli
                 }
 
                 // generate RELEASES file with only this current release
-                var releases = new[] { ReleaseEntry.GenerateFromFile(fullPackage) };
+                var releases = new[] { ReleaseEntry.GenerateFromFile(tmpPackagePath) };
                 ReleaseEntry.WriteReleaseFile(releases, Path.Combine(tempPath, "RELEASES"));
 
                 // create zip bundle from temp directory
