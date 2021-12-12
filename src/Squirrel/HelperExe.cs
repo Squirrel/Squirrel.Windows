@@ -165,7 +165,7 @@ namespace Squirrel
             }
         }
 
-        public static async Task CopyResourcesToTargetStubExe(string targetStubExe, string copyResourcesFromExe)
+        public static async Task CopyResourcesToTargetStubExe(string copyResourcesFromExe, string targetStubExe)
         {
             var processResult = await Utility.InvokeProcessAsync(
                 SetupZipBuilderPath,
