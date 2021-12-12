@@ -157,7 +157,7 @@ namespace SquirrelCli
             foreach (var file in toProcess) {
                 Log.Info("Creating release package: " + file.FullName);
 
-                var rp = new ReleasePackageBuilder(file.FullName);
+                var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: pkgPath => {
 
                     // create stub executable for all exe's in this package (except Squirrel!)

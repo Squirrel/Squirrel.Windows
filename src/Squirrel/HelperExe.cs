@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using Squirrel;
 using Squirrel.SimpleSplat;
 
-namespace SquirrelCli
+namespace Squirrel
 {
     internal static class HelperExe
     {
