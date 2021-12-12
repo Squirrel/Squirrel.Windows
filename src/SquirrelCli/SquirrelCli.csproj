@@ -26,8 +26,4 @@
     <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Reference Include="..\..\vendor\Microsoft.NET.HostModel.dll" />
-  </ItemGroup>
-
 </Project>

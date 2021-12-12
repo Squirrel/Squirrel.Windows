@@ -1,11 +1,11 @@
 # Vendor Binaries
 This folder contains pre-compiled binaries from a variety of sources. These should be updated periodically.
 
-### Microsoft.NET.HostModel.dll
+<!-- ### Microsoft.NET.HostModel.dll
 - This is a .NET SDK 6.0.100 binary. 
 - It's purpose is to allow us to re-pack the `Update.exe` single file bundle with a new exe icon.
 - Can be found in the dotnet SDK at "C:\Program Files\dotnet\sdk\6.0.100\Microsoft.NET.HostModel.dll".
-- MIT License: https://github.com/dotnet/runtime/blob/main/LICENSE.TXT
+- MIT License: https://github.com/dotnet/runtime/blob/main/LICENSE.TXT -->
 
 ### singlefilehost.exe
 - This is the native exe that has the .net native runtime linked in. 
