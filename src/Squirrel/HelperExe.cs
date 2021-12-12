@@ -159,7 +159,7 @@ namespace Squirrel
                 return;
             }
 
-            var chkFrameworkResult = await Utility.InvokeProcessAsync(SetupPath, new string[] { "--checkFramework ", frameworkVersion }, CancellationToken.None);
+            var chkFrameworkResult = await Utility.InvokeProcessAsync(SetupPath, new string[] { "--checkFramework", frameworkVersion }, CancellationToken.None);
             if (chkFrameworkResult.ExitCode != 0) {
                 throw new ArgumentException($"Unsupported FrameworkVersion: '{frameworkVersion}'. {chkFrameworkResult.StdOutput}");
             }
