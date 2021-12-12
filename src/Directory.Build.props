@@ -2,25 +2,20 @@
 <Project>
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <EnableSourceLink Condition=" '$(NCrunch)' == '1' ">false</EnableSourceLink>
-
     <ProjectName Condition=" '$(ProjectName)' == '' ">$(MSBuildProjectName)</ProjectName>
     <BaseOutputPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\build\))</BaseOutputPath>
     <BaseIntermediateOutputPath>$(BaseOutputPath)obj\$(ProjectName)\</BaseIntermediateOutputPath>
     <OutputPath>$(BaseOutputPath)$(Configuration)\</OutputPath>
 
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>9</LangVersion>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\Squirrel.snk</AssemblyOriginatorKeyFile>
     <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-
-    <Company>GitHub</Company>
-    <Copyright>Copyright © GitHub 2013-2015</Copyright>
-    <PackageLicenseExpression>MS-RL</PackageLicenseExpression>
     <Product>Squirrel</Product>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(MSBuildProjectExtension)'=='.csproj' ">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.4.244" PrivateAssets="All" />
   </ItemGroup>
 

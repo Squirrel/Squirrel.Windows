@@ -23,22 +23,15 @@ dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScript
 dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\SquirrelCli\SquirrelCli.csproj" -o "$Out"
 
 # Copy over all files we need
-# Move-Item "$Out\Update.exe" -Destination "$Out\Squirrel.exe"
-# Move-Item "$Out\Update.com" -Destination "$Out\Squirrel.com"
-
-# Move-Item "$Out\Update.pdb" -Destination "$Out\Squirrel.pdb"
-# New-Item -Path "$Out\lib" -ItemType "directory" | Out-Null
-# Copy-Item -Path "$In\netstandard2.0\*" -Destination "$Out\lib" -Recurse
-
 Copy-Item "$In\Win32\Setup.exe" -Destination "$Out"
-Copy-Item "$In\Win32\Setup.pdb" -Destination "$Out"
+# Copy-Item "$In\Win32\Setup.pdb" -Destination "$Out"
 Copy-Item "$In\Win32\StubExecutable.exe" -Destination "$Out"
 Copy-Item "$In\Win32\WriteZipToSetup.exe" -Destination "$Out"
-Copy-Item "$In\Win32\WriteZipToSetup.pdb" -Destination "$Out"
+# Copy-Item "$In\Win32\WriteZipToSetup.pdb" -Destination "$Out"
 
 Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$Out" -Recurse
 # Copy-Item -Path "$PSScriptRoot\vendor\wix\*" -Destination "$Out" -Recurse
-Copy-Item "$PSScriptRoot\vendor\NuGet.exe" -Destination "$Out"
+Copy-Item "$PSScriptRoot\vendor\nuget.exe" -Destination "$Out"
 Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$Out"
 Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$Out"
 Copy-Item "$PSScriptRoot\vendor\singlefilehost.exe" -Destination "$Out"
