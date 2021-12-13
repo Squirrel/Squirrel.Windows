@@ -155,20 +155,18 @@ namespace SquirrelCli
             if (args.Length == 0)
                 throw new OptionValidationException("Must specify a command to execute.");
 
-            var combined = String.Join(" ", args);
             CommandAction cmd = null;
-
             foreach (var k in this.Where(k => !String.IsNullOrWhiteSpace(k.Command)).OrderByDescending(k => k.Command.Length)) {
-                if (combined.StartsWith(k.Command, StringComparison.InvariantCultureIgnoreCase)) {
+                if (args[0].Equals(k.Command, StringComparison.InvariantCultureIgnoreCase)) {
                     cmd = k;
                     break;
                 }
             }
 
             if (cmd == null)
-                throw new OptionValidationException($"Command was not specified or does not exist.");
+                throw new OptionValidationException($"Command '{args[0]}' does not exist.");
 
-            cmd.Execute(combined.Substring(cmd.Command.Length).Split(' '));
+            cmd.Execute(args.Skip(1));
         }
 
         public virtual void WriteHelp()
