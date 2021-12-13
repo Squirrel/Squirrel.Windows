@@ -219,7 +219,7 @@ namespace SquirrelCli
 
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
-            var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
+            var targetSetupExe = Path.Combine(di.FullName, options.setupName + ".exe");
             File.Copy(HelperExe.SetupPath, targetSetupExe, true);
             Utility.Retry(() => HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
