@@ -25,7 +25,6 @@ namespace Squirrel
         private static string RceditPath => FindHelperExecutable("rcedit.exe", _searchPaths);
         private static string SevenZipPath => FindHelperExecutable("7z.exe", _searchPaths);
         private static string SignToolPath => FindHelperExecutable("signtool.exe", _searchPaths);
-        private static string SetupZipBuilderPath => FindHelperExecutable("WriteZipToSetup.exe", _searchPaths);
 
         private static List<string> _searchPaths = new List<string>();
         private static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(HelperExe));
@@ -163,38 +162,6 @@ namespace Squirrel
             if (chkFrameworkResult.ExitCode != 0) {
                 throw new ArgumentException($"Unsupported FrameworkVersion: '{frameworkVersion}'. {chkFrameworkResult.StdOutput}");
             }
-        }
-
-        public static async Task CopyResourcesToTargetStubExe(string copyResourcesFromExe, string targetStubExe)
-        {
-            var processResult = await Utility.InvokeProcessAsync(
-                SetupZipBuilderPath,
-                new string[] { "--copy-stub-resources", copyResourcesFromExe, targetStubExe },
-                CancellationToken.None);
-
-            if (processResult.ExitCode != 0) {
-                throw new Exception("Unable to copy resources to stub exe: " + processResult.StdOutput);
-            }
-        }
-
-        public static async Task BundleZipIntoTargetSetupExe(string targetSetupExe, string zipPath, string frameworkVersion, string backgroundGif)
-        {
-            List<string> arguments = new List<string>() {
-                targetSetupExe,
-                zipPath
-            };
-            if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
-                arguments.Add("--set-required-framework");
-                arguments.Add(frameworkVersion);
-            }
-            if (!String.IsNullOrWhiteSpace(backgroundGif)) {
-                arguments.Add("--set-splash");
-                arguments.Add(Path.GetFullPath(backgroundGif));
-            }
-
-            var result = await Utility.InvokeProcessAsync(SetupZipBuilderPath, arguments, CancellationToken.None);
-            if (result.ExitCode != 0)
-                throw new Exception("Failed to write Zip to Setup.exe!\n\n" + result.StdOutput);
         }
 
         public static async Task NugetPack(string nuspecPath, string baseDirectory, string outputDirectory)

@@ -26,7 +26,7 @@ dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScript
 Copy-Item "$In\Win32\Setup.exe" -Destination "$Out"
 # Copy-Item "$In\Win32\Setup.pdb" -Destination "$Out"
 Copy-Item "$In\Win32\StubExecutable.exe" -Destination "$Out"
-Copy-Item "$In\Win32\WriteZipToSetup.exe" -Destination "$Out"
+# Copy-Item "$In\Win32\WriteZipToSetup.exe" -Destination "$Out"
 # Copy-Item "$In\Win32\WriteZipToSetup.pdb" -Destination "$Out"
 
 Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$Out" -Recurse

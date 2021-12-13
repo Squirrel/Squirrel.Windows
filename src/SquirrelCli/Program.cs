@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -220,22 +220,18 @@ namespace SquirrelCli
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
             var targetSetupExe = Path.Combine(di.FullName, "Setup.exe");
-            var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
-
             File.Copy(HelperExe.SetupPath, targetSetupExe, true);
+            Utility.Retry(() => HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
+
+            var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
             var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), updatePath);
+            //File.Copy(zipPath, Path.Combine(di.FullName, "Setup.zip"), true);
 
             try {
-                HelperExe.BundleZipIntoTargetSetupExe(targetSetupExe, zipPath, frameworkVersion, backgroundGif).Wait();
-            } catch (Exception ex) {
-                Log.ErrorException("Failed to update Setup.exe with new Zip file", ex);
-                throw;
+                SetupResourceWriter.WriteZipToSetup(targetSetupExe, zipPath, frameworkVersion, backgroundGif);
             } finally {
                 File.Delete(zipPath);
             }
-
-            Utility.Retry(() =>
-                HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
             HelperExe.SignPEFile(targetSetupExe, signingOpts).Wait();
 
@@ -298,7 +294,7 @@ namespace SquirrelCli
                 Path.GetFileNameWithoutExtension(exeToCopy) + "_ExecutionStub.exe");
 
             await Utility.CopyToAsync(HelperExe.StubExecutablePath, target);
-            await HelperExe.CopyResourcesToTargetStubExe(exeToCopy, target);
+            SetupResourceWriter.CopyStubExecutableResources(exeToCopy, target);
         }
     }
 
