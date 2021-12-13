@@ -173,7 +173,7 @@ namespace SquirrelCli
                 Log.Info("Creating release package: " + file.FullName);
 
                 var rp = new ReleasePackage(file.FullName);
-                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, frameworkName) => {
+                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath) => {
 
                     // create stub executable for all exe's in this package (except Squirrel!)
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
@@ -191,7 +191,8 @@ namespace SquirrelCli
                         .Wait();
 
                     // copy Update.exe into package, so it can also be updated in both full/delta packages
-                    File.Copy(updatePath, Path.Combine(pkgPath, "lib", frameworkName, "Squirrel.exe"), true);
+                    var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib")).First();
+                    File.Copy(updatePath, Path.Combine(libDir, "Squirrel.exe"), true);
                 });
 
                 processed.Add(rp.ReleasePackageFile);
