@@ -20,24 +20,24 @@ namespace SquirrelCli
     internal class ReleasifyOptions : BaseOptions
     {
         public string package { get; set; }
-        public string splashImage { get; private set; }
-        public string setupIcon { get; private set; }
-        public string updateIcon { get; private set; }
+        public string baseUrl { get; private set; }
         public string signParams { get; private set; }
         public string framework { get; private set; }
+        public string splashImage { get; private set; }
+        public string updateIcon { get; private set; }
+        public string setupIcon { get; private set; }
         public bool noDelta { get; private set; }
-        public string baseUrl { get; private set; }
 
         public ReleasifyOptions()
         {
             Add("p=|package=", "Path to a nuget package to releasify", v => package = v);
             Add("b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true);
-            Add("s=|splashImage=", "Image to be displayed during installation (can be jpg, png, gif, etc)", v => splashImage = v);
             Add("n=|signParams=", "Sign the installer via SignTool.exe with the parameters given", v => signParams = v);
             Add("f=|framework=", "Set the required .NET framework version, e.g. net461", v => framework = v);
-            Add("setupIcon=", "ICO file that will be used for Setup.exe", v => setupIcon = v);
+            Add("splashImage=", "Image to be displayed during installation (can be jpg, png, gif, etc)", v => splashImage = v);
             Add("updateIcon=", "ICO file that will be used for Update.exe", v => updateIcon = v);
-            Add("no-delta", "Don't generate delta packages to save time", v => noDelta = true);
+            Add("setupIcon=", "ICO file that will be used for Setup.exe", v => setupIcon = v);
+            Add("noDelta", "Skip the generation of delta packages to save time", v => noDelta = true);
             Add("addSearchPath=", "Add additional search directories when looking for helper exe's such as Setup.exe, Update.exe, etc", v => HelperExe.AddSearchPath(v));
         }
 
