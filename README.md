@@ -34,7 +34,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    ```xml
    <?xml version="1.0" encoding="utf-8"?>
    <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-     <SquirrelAwareVersion>1</SquirrelAwareVersion>
+     <SquirrelAwareVersion xmlns="urn:schema-squirrel-com:asm.v1">1</SquirrelAwareVersion>
    </assembly>
    ```
    There are also [some](https://github.com/clowd/Clowd.Squirrel/blob/develop/docs/using/custom-squirrel-events.md) more [legacy](https://github.com/clowd/Clowd.Squirrel/blob/develop/docs/using/custom-squirrel-events-non-cs.md) ways to assign a binary SquirrelAwareVersion if you cannot edit your assembly manifest.
