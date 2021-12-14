@@ -156,15 +156,15 @@ bool IsFullNetFrameworkInstalled(DWORD requiredVersion)
 }
 
 // TODO this is extremely messy, it should certainly be re-written.
-wstring exec(const char* cmd)
+wstring execw(const wchar_t* cmd)
 {
-    char buffer[128];
-    string result = "";
-    FILE* pipe = _popen(cmd, "r");
-    if (!pipe)
-        return L"";
+    wchar_t buffer[1024];
+    wstring result = L"";
+    FILE* pipe = _wpopen(cmd, L"r");
+    if (!pipe) return L"";
+
     try {
-        while (fgets(buffer, sizeof buffer, pipe) != NULL) {
+        while (fgetws(buffer, 1024, pipe) != NULL) {
             result += buffer;
         }
     }
@@ -174,9 +174,7 @@ wstring exec(const char* cmd)
     }
     _pclose(pipe);
 
-    // https://stackoverflow.com/a/8969776/184746
-    std::wstring wsTmp(result.begin(), result.end());
-    return wsTmp;
+    return result;
 }
 
 bool IsDotNetCoreInstalled(wstring searchString)
@@ -188,7 +186,8 @@ bool IsDotNetCoreInstalled(wstring searchString)
 
     // note, dotnet cli will only return x64 results.
     //auto runtimes = exec("dotnet --list-runtimes");
-    auto runtimes = exec("dotnet --info");
+
+    auto runtimes = execw(L"dotnet --info");
     return runtimes.find(searchString) != std::wstring::npos;
 }
 
