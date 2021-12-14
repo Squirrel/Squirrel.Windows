@@ -9,19 +9,6 @@ using System.Xml.Linq;
 
 namespace Squirrel.NuGet
 {
-    internal interface IFrameworkTargetable
-    {
-        IEnumerable<FrameworkName> SupportedFrameworks { get; }
-    }
-
-    internal interface IPackageFile : IFrameworkTargetable
-    {
-        string Path { get; }
-        string EffectivePath { get; }
-        FrameworkName TargetFramework { get; }
-        Stream GetStream();
-    }
-
     internal interface IPackage
     {
         string Id { get; }
@@ -37,7 +24,7 @@ namespace Squirrel.NuGet
         IEnumerable<FrameworkAssemblyReference> FrameworkAssemblies { get; }
         IEnumerable<PackageDependencySet> DependencySets { get; }
         SemanticVersion Version { get; }
-        IEnumerable<FrameworkName> GetSupportedFrameworks();
+        IEnumerable<string> GetSupportedFrameworks();
         IEnumerable<IPackageFile> GetLibFiles();
         string GetFullName();
     }
@@ -72,9 +59,9 @@ namespace Squirrel.NuGet
             EnsureManifest();
         }
 
-        public IEnumerable<FrameworkName> GetSupportedFrameworks()
+        public IEnumerable<string> GetSupportedFrameworks()
         {
-            IEnumerable<FrameworkName> fileFrameworks;
+            IEnumerable<string> fileFrameworks;
 
             using (Stream stream = _streamFactory()) {
                 var package = Package.Open(stream);
@@ -293,10 +280,10 @@ namespace Squirrel.NuGet
                     )).ToList();
         }
 
-        private IEnumerable<FrameworkName> ParseFrameworkNames(string frameworkNames)
+        private IEnumerable<string> ParseFrameworkNames(string frameworkNames)
         {
             if (String.IsNullOrEmpty(frameworkNames)) {
-                return Enumerable.Empty<FrameworkName>();
+                return Enumerable.Empty<string>();
             }
 
             return frameworkNames.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)

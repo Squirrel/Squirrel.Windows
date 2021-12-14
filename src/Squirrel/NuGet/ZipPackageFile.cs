@@ -6,10 +6,18 @@ using System.Runtime.Versioning;
 
 namespace Squirrel.NuGet
 {
+    internal interface IPackageFile : IFrameworkTargetable
+    {
+        string Path { get; }
+        string EffectivePath { get; }
+        string TargetFramework { get; }
+        Stream GetStream();
+    }
+
     internal class ZipPackageFile : IPackageFile
     {
         private readonly Func<Stream> _streamFactory;
-        private readonly FrameworkName _targetFramework;
+        private readonly string _targetFramework;
 
         public ZipPackageFile(PackagePart part)
             : this(UriUtility.GetPath(part.Uri), part.GetStream().ToStreamFactory())
@@ -41,13 +49,13 @@ namespace Squirrel.NuGet
             private set;
         }
 
-        public FrameworkName TargetFramework {
+        public string TargetFramework {
             get {
                 return _targetFramework;
             }
         }
 
-        IEnumerable<FrameworkName> IFrameworkTargetable.SupportedFrameworks {
+        IEnumerable<string> IFrameworkTargetable.SupportedFrameworks {
             get {
                 if (TargetFramework != null) {
                     yield return TargetFramework;
