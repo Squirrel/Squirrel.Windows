@@ -1,4 +1,4 @@
-﻿<?xml version="1.0"?>
+<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <version>0.0.0</version> <!-- should be set on the command line -->
@@ -10,7 +10,6 @@
 
     <dependencies>
       <group targetFramework="netstandard2.0">
-        <dependency id="Mono.Cecil" version="0.11.4" />
         <dependency id="SharpCompress" version="0.30.1" />
         <dependency id="System.Drawing.Common" version="6.0.0" />
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" />

@@ -8,7 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
-using Mono.Cecil;
 using Squirrel.NuGet;
 using static Squirrel.NativeMethods;
 
@@ -35,69 +34,25 @@ namespace Squirrel
             if (!File.Exists(exePath)) return null;
             var fullname = Path.GetFullPath(exePath);
 
-            var backingDll = LookForNetCoreDll(fullname);
-
-            return Utility.Retry<int?>(() => {
-                var assemblySquirrelAwareVersion = GetAssemblySquirrelAwareVersion(fullname);
-                if (assemblySquirrelAwareVersion != null) {
-                    return assemblySquirrelAwareVersion;
-                }
-
-                if (backingDll != null && File.Exists(backingDll)) {
-                    var assemblyDllSquirrelAwareVersion = GetAssemblySquirrelAwareVersion(backingDll);
-                    if (assemblyDllSquirrelAwareVersion != null) {
-                        return assemblyDllSquirrelAwareVersion;
-                    }
-                }
-
-                var versionBlock = GetVersionBlockSquirrelAwareValue(fullname);
-                if (versionBlock != null) {
-                    return versionBlock;
-                }
-
-                return GetManifestSquirrelAwareValue(fullname);
-            });
-        }
-
-        static string LookForNetCoreDll(string fullname)
-        {
             try {
-                var exeFileVersionInfo = FileVersionInfo.GetVersionInfo(fullname);
-                var originalFilename = exeFileVersionInfo.OriginalFilename;
+                return Utility.Retry<int?>(() => {
+                    try {
+                        var maniVer = GetManifestSquirrelAwareValue(exePath);
+                        if (maniVer != null)
+                            return GetManifestSquirrelAwareValue(exePath);
+                    } catch { }
 
-                var backingDll = originalFilename == null ? null
-                    : Path.Combine(Path.GetDirectoryName(fullname), originalFilename);
+                    try {
+                        var vblockVer = GetVersionBlockSquirrelAwareValue(exePath);
+                        if (vblockVer != null)
+                            return GetVersionBlockSquirrelAwareValue(exePath);
+                    } catch { }
 
-                if (backingDll.EndsWith("dll", StringComparison.InvariantCultureIgnoreCase))
-                    return backingDll;
-            } catch { }
-
-            return null;
-        }
-
-        static int? GetAssemblySquirrelAwareVersion(string executable)
-        {
-            try {
-                using (var assembly = AssemblyDefinition.ReadAssembly(executable)) {
-                    if (!assembly.HasCustomAttributes) return null;
-
-                    var attrs = assembly.CustomAttributes;
-                    var attribute = attrs.FirstOrDefault(x => {
-                        if (x.AttributeType.FullName != typeof(AssemblyMetadataAttribute).FullName) return false;
-                        if (x.ConstructorArguments.Count != 2) return false;
-                        return x.ConstructorArguments[0].Value.ToString() == "SquirrelAwareVersion";
-                    });
-
-                    if (attribute == null) return null;
-
-                    int result;
-                    if (!Int32.TryParse(attribute.ConstructorArguments[1].Value.ToString(), NumberStyles.Integer, CultureInfo.CurrentCulture, out result)) {
-                        return null;
-                    }
-
-                    return result;
-                }
-            } catch (FileLoadException) { return null; } catch (BadImageFormatException) { return null; }
+                    throw new Exception("Unable to determine Squirrel version"); // triggers a retry
+                });
+            } catch {
+                return null;
+            }
         }
 
         static int? GetVersionBlockSquirrelAwareValue(string executable)
