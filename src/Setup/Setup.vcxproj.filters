@@ -101,5 +101,8 @@
     <None Include="flags1.bin">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="bin00001.bin">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

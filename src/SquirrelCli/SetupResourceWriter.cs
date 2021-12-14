@@ -11,11 +11,12 @@ namespace SquirrelCli
 {
     internal class SetupResourceWriter
     {
-        // these values come from Setup.rc
+        // these values come from Setup.rc / resource.h
         private static readonly ushort RESOURCE_LANG = 0x0409;
         private static readonly IntPtr IDR_UPDATE_ZIP = new IntPtr(131);
         private static readonly IntPtr IDR_FX_VERSION_FLAG = new IntPtr(132);
         private static readonly IntPtr IDR_SPLASH_IMG = new IntPtr(138);
+        private static readonly IntPtr IDR_PACKAGE_NAME = new IntPtr(139);
 
         public static void WriteZipToSetup(string targetSetupExe, string zipFile, string targetFramework, string splashImage)
         {
@@ -24,6 +25,9 @@ namespace SquirrelCli
 
                 var zipBytes = File.ReadAllBytes(zipFile);
                 writer.AddResource(zipBytes, "DATA", IDR_UPDATE_ZIP, RESOURCE_LANG);
+
+                var packageNameBytes = Encoding.Unicode.GetBytes(String.Concat(Path.GetFileName(zipFile), "\0\0"));
+                writer.AddResource(packageNameBytes, "FLAGS", IDR_PACKAGE_NAME, RESOURCE_LANG);
 
                 if (!String.IsNullOrWhiteSpace(targetFramework)) {
                     var stringBytes = Encoding.Unicode.GetBytes(String.Concat(targetFramework, "\0\0"));

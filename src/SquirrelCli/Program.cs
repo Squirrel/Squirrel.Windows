@@ -224,14 +224,8 @@ namespace SquirrelCli
             Utility.Retry(() => HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
 
             var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
-            var zipPath = createSetupEmbeddedZip(Path.Combine(di.FullName, newestFullRelease.Filename), updatePath);
-            //File.Copy(zipPath, Path.Combine(di.FullName, "Setup.zip"), true);
-
-            try {
-                SetupResourceWriter.WriteZipToSetup(targetSetupExe, zipPath, frameworkVersion, backgroundGif);
-            } finally {
-                File.Delete(zipPath);
-            }
+            var newestReleasePath = Path.Combine(di.FullName, newestFullRelease.Filename);
+            SetupResourceWriter.WriteZipToSetup(targetSetupExe, newestReleasePath, frameworkVersion, backgroundGif);
 
             HelperExe.SignPEFile(targetSetupExe, signingOpts).Wait();
 
@@ -244,47 +238,6 @@ namespace SquirrelCli
             //}
 
             Log.Info("Done");
-        }
-
-        static string createSetupEmbeddedZip(string fullPackage, string updatePath)
-        {
-            string tempPath;
-
-            Log.Info("Start building embedded zip file for Setup.exe");
-            using (Utility.WithTempDirectory(out tempPath, null)) {
-
-                // copy package and Update.exe into temporary directory
-                var tmpPackagePath = Path.Combine(tempPath, Path.GetFileName(fullPackage));
-                Log.ErrorIfThrows(() => {
-                    File.Copy(updatePath, Path.Combine(tempPath, "Update.exe"));
-                    File.Copy(fullPackage, tmpPackagePath);
-                }, "Failed to write package files to temp dir: " + tempPath);
-
-                // remove Squirrel.exe from the setup package to save space in the installer
-                Log.Info("Optimizing setup package for space savings");
-                using (var stream = File.Open(tmpPackagePath, FileMode.Open, FileAccess.ReadWrite))
-                using (var package = System.IO.Packaging.Package.Open(stream, FileMode.Open, FileAccess.ReadWrite)) {
-                    var parts = package.GetParts();
-                    var toDelete = parts.FirstOrDefault(p => p.Uri.ToString().EndsWith("Squirrel.exe", StringComparison.InvariantCultureIgnoreCase));
-                    if (toDelete != null) {
-                        package.DeletePart(toDelete.Uri);
-                    }
-                }
-
-                // generate RELEASES file with only this current release
-                var releases = new[] { ReleaseEntry.GenerateFromFile(tmpPackagePath) };
-                ReleaseEntry.WriteReleaseFile(releases, Path.Combine(tempPath, "RELEASES"));
-
-                // create zip bundle from temp directory
-                Log.Info("Compressing Setup.exe bundle");
-                var target = Path.GetTempFileName();
-                File.Delete(target);
-                Log.ErrorIfThrows(() =>
-                    ZipFile.CreateFromDirectory(tempPath, target, CompressionLevel.Optimal, false),
-                    "Failed to create Zip file from directory: " + tempPath);
-
-                return target;
-            }
         }
 
         static async Task createExecutableStubForExe(string exeToCopy)

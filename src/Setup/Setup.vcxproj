@@ -136,6 +136,7 @@
     <Image Include="installdisk.gif" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="bin00001.bin" />
     <None Include="flags1.bin" />
     <None Include="update.zip" />
   </ItemGroup>

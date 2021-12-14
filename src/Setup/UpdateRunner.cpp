@@ -3,6 +3,7 @@
 #include "Resource.h"
 #include "UpdateRunner.h"
 #include <vector>
+#include <string>
 
 void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 {
@@ -148,6 +149,17 @@ bool CUpdateRunner::DirectoryIsWritable(wchar_t* szPath)
     return true;
 }
 
+// https://stackoverflow.com/a/874160/184746
+bool hasEnding(std::wstring const& fullString, std::wstring const& ending)
+{
+    if (fullString.length() >= ending.length()) {
+        return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
+    }
+    else {
+        return false;
+    }
+}
+
 int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallbackDir, std::function<void()>& callback)
 {
     PROCESS_INFORMATION pi = { 0 };
@@ -208,16 +220,38 @@ gotADir:
 
     swprintf_s(logFile, L"%s\\SquirrelSetup.log", targetDir);
 
+    // updater will create this file, lets clean it up if we can
+    wchar_t releasesPath[MAX_PATH];
+    _swprintf_c(releasesPath, _countof(releasesPath), L"%s\\%s", targetDir, L"RELEASES");
+    to_delete.push_back(CString(releasesPath));
+
+    // load embedded package zip
     if (!zipResource.Load(L"DATA", IDR_UPDATE_ZIP)) {
         goto failedExtract;
     }
-
     DWORD dwSize = zipResource.GetSize();
     if (dwSize < 0x100) {
         goto failedExtract;
     }
-
     BYTE* pData = (BYTE*)zipResource.Lock();
+
+    // write whole embedded package to disk in the target directory
+    wchar_t* packageName = (wchar_t*)LoadResource(NULL, FindResource(NULL, (LPCWSTR)IDR_PACKAGE_NAME, L"FLAGS"));
+    wchar_t packagePathFull[MAX_PATH];
+    _swprintf_c(packagePathFull, _countof(packagePathFull), L"%s\\%s", targetDir, packageName);
+
+    FILE* fileToWrite = NULL;
+    if ((fileToWrite = _wfopen(packagePathFull, L"wb+")) != NULL) {
+        fwrite(pData, 1, dwSize, fileToWrite);
+        fclose(fileToWrite);
+        fileToWrite = NULL;
+    }
+    else {
+        goto failedExtract;
+    }
+    to_delete.push_back(CString(packagePathFull));
+
+    // unzip only the updater
     HZIP zipFile = OpenZip(pData, dwSize, NULL);
     SetUnzipBaseDir(zipFile, targetDir);
 
@@ -233,12 +267,15 @@ gotADir:
             break;
         }
 
-        // NB: UnzipItem won't overwrite data, we need to do it ourselves
-        swprintf_s(targetFile, L"%s\\%s", targetDir, zentry.name);
-        DeleteFile(targetFile);
+        if (hasEnding(std::wstring(zentry.name), L"Squirrel.exe")) {
+            // NB: UnzipItem won't overwrite data, we need to do it ourselves
+            swprintf_s(targetFile, L"%s\\%s", targetDir, L"Update.exe");
+            DeleteFile(targetFile);
 
-        if (UnzipItem(zipFile, index, zentry.name) != ZR_OK) break;
-        to_delete.push_back(CString(targetFile));
+            if (UnzipItem(zipFile, index, L"Update.exe") != ZR_OK) break;
+            to_delete.push_back(CString(targetFile));
+        }
+
         index++;
     } while (zr == ZR_MORE || zr == ZR_OK);
 
