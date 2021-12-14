@@ -220,10 +220,11 @@ gotADir:
 
     swprintf_s(logFile, L"%s\\SquirrelSetup.log", targetDir);
 
-    // updater will create this file, lets clean it up if we can
+    // updater will create this file, lets clean it up before & after if we can
     wchar_t releasesPath[MAX_PATH];
     _swprintf_c(releasesPath, _countof(releasesPath), L"%s\\%s", targetDir, L"RELEASES");
     to_delete.push_back(CString(releasesPath));
+    DeleteFile(releasesPath);
 
     // load embedded package zip
     if (!zipResource.Load(L"DATA", IDR_UPDATE_ZIP)) {
