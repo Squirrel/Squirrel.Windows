@@ -175,6 +175,18 @@ namespace SquirrelCli
 
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
+                    var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib")).First();
+
+                    // unless the validation has been disabled, do not allow the creation of packages without a SquirrelAwareApp inside
+                    if (!options.allowUnaware) {
+                        var awareExes = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(libDir);
+                        if (!awareExes.Any()) {
+                            throw new ArgumentException(
+                                "There are no SquirreAwareApp's in the provided package. Please mark an exe " +
+                                "as aware using the assembly manifest, or use the '--allowUnaware' argument " +
+                                "to skip this validation and create a package anyway (at your own risk).");
+                        }
+                    }
 
                     // create stub executable for all exe's in this package (except Squirrel!)
                     Log.Info("Creating stub executables");
@@ -194,7 +206,6 @@ namespace SquirrelCli
                         .Wait();
 
                     // copy Update.exe into package, so it can also be updated in both full/delta packages
-                    var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib")).First();
                     File.Copy(updatePath, Path.Combine(libDir, "Squirrel.exe"), true);
 
                     // copy app icon to 'lib/fx/app.ico'

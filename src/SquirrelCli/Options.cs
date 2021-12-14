@@ -29,11 +29,16 @@ namespace SquirrelCli
         public string setupIcon { get; private set; }
         public string setupName { get; private set; } = "Setup";
         public bool noDelta { get; private set; }
+        public bool allowUnaware { get; private set; }
 
         public ReleasifyOptions()
         {
-            Add("p=|package=", "Path to a nuget package to releasify", v => package = v);
+            // hidden arguments
             Add("b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true);
+            Add("allowUnaware", "Allows building packages without a SquirrelAwareApp (disabled by default)", v => allowUnaware = true, true);
+
+            // public arguments
+            Add("p=|package=", "Path to a nuget package to releasify", v => package = v);
             Add("n=|signParams=", "Sign the installer via SignTool.exe with the parameters given", v => signParams = v);
             Add("f=|framework=", "Set the required .NET framework version, e.g. net461", v => framework = v);
             Add("i=|icon=", "Sets all the icons (update, app, setup). Can be used with another icon property, later arguments will take precedence.",
