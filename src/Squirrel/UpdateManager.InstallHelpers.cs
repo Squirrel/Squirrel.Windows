@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -79,8 +79,15 @@ namespace Squirrel
                     new { Key = "URLUpdateInfo", Value = zp.ProjectUrl != null ? zp.ProjectUrl.ToString() : "", }
                 };
 
+                // CS: very rough estimate of installed size. based on a few assumptions:
+                // - zip generally achieves a ~62% compression ratio on this kind of data
+                // - we usually keep 2 copies of the extracted app (the current, and previous version)
+                // - we keep a copy of the compressed package, as well as the extracted package on disk for the latest version
+                var compressedSizeInKb = new FileInfo(pkgPath).Length / 1024;
+                var estimatedInstallInKb = compressedSizeInKb + (compressedSizeInKb / 0.38d * 2);
+
                 var dwordsToWrite = new[] {
-                    new { Key = "EstimatedSize", Value = (int)((new FileInfo(pkgPath)).Length / 1024) },
+                    new { Key = "EstimatedSize", Value = (int)estimatedInstallInKb },
                     new { Key = "NoModify", Value = 1 },
                     new { Key = "NoRepair", Value = 1 },
                     new { Key = "Language", Value = 0x0409 },
