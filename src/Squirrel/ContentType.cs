@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Xml;
 
@@ -29,6 +29,7 @@ namespace Squirrel
                 Tuple.Create("Default", "bsdiff", "application/octet" ),
                 Tuple.Create("Default", "exe", "application/octet" ),
                 Tuple.Create("Default", "dll", "application/octet" ),
+                Tuple.Create("Default", "ico", "application/octet" ),
                 Tuple.Create("Default", "shasum", "text/plain" ),
             };
 

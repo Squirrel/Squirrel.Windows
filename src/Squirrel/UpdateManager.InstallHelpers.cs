@@ -30,6 +30,7 @@ namespace Squirrel
             const string uninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
             public async Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
             {
+                this.Log().Info($"Writing uninstaller registry entry");
                 var releaseContent = File.ReadAllText(Path.Combine(rootAppDirectory, "packages", "RELEASES"), Encoding.UTF8);
                 var releases = ReleaseEntry.ParseReleaseFile(releaseContent);
                 var latest = releases.Where(x => !x.IsDelta).OrderByDescending(x => x.Version).First();
@@ -54,6 +55,7 @@ namespace Squirrel
                         using (var iconStream = iconFile.GetStream())
                         using (var targetStream = File.Open(targetIco, FileMode.Create, FileAccess.Write))
                             await iconStream.CopyToAsync(targetStream);
+                        this.Log().Info($"File '{targetIco}' is being used for uninstall icon.");
                         key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
                     } catch (Exception ex) {
                         this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
@@ -64,6 +66,7 @@ namespace Squirrel
                     var appIconExe = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(appDir.FullName).FirstOrDefault()
                         ?? appDir.GetFiles("*.exe").Select(x => x.FullName).FirstOrDefault();
                     if (appIconExe != null) {
+                        this.Log().Info($"There was no icon found, will use '{appIconExe}' for uninstall icon.");
                         key.SetValue("DisplayIcon", appIconExe, RegistryValueKind.String);
                     }
                 }
