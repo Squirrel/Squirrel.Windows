@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -34,12 +34,8 @@ namespace Squirrel
                 var releases = ReleaseEntry.ParseReleaseFile(releaseContent);
                 var latest = releases.Where(x => !x.IsDelta).OrderByDescending(x => x.Version).First();
 
-                // Download the icon and PNG => ICO it. If this doesn't work, who cares
                 var pkgPath = Path.Combine(rootAppDirectory, "packages", latest.Filename);
                 var zp = new ZipPackage(pkgPath);
-
-                var targetPng = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".png");
-                var targetIco = Path.Combine(rootAppDirectory, "app.ico");
 
                 // NB: Sometimes the Uninstall key doesn't exist
                 using (var parentKey =
@@ -49,35 +45,27 @@ namespace Squirrel
                 var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
                     .CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
 
-                if (zp.IconUrl != null && !File.Exists(targetIco)) {
+                // we will try to find an "app.ico" from the package, write it to the local app dir, and then 
+                // use it for the uninstaller icon. If an app.ico does not exist, it will use a SquirrelAwareApp exe icon instead.
+                var iconFile = zp.GetLibFiles().FirstOrDefault(f => f.Path.EndsWith("app.ico", StringComparison.InvariantCultureIgnoreCase));
+                if (iconFile != null) {
                     try {
-                        using (var wc = Utility.CreateWebClient()) {
-                            await wc.DownloadFileTaskAsync(zp.IconUrl, targetPng);
-                            using (var fs = new FileStream(targetIco, FileMode.Create)) {
-                                if (zp.IconUrl.AbsolutePath.EndsWith("ico")) {
-                                    var bytes = File.ReadAllBytes(targetPng);
-                                    fs.Write(bytes, 0, bytes.Length);
-                                } else {
-                                    using (var bmp = (Bitmap) Image.FromFile(targetPng))
-                                    using (var ico = Icon.FromHandle(bmp.GetHicon())) {
-                                        ico.Save(fs);
-                                    }
-                                }
-
-                                key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
-                            }
-                        }
+                        var targetIco = Path.Combine(rootAppDirectory, "app.ico");
+                        using (var iconStream = iconFile.GetStream())
+                        using (var targetStream = File.Open(targetIco, FileMode.Create, FileAccess.Write))
+                            await iconStream.CopyToAsync(targetStream);
+                        key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
                     } catch (Exception ex) {
                         this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
-                    } finally {
-                        File.Delete(targetPng);
                     }
                 } else {
-                    // DisplayIcon can be a path to an exe instead of an ico.
+                    // DisplayIcon can be a path to an exe instead of an ico if an icon was not provided.
                     var appDir = new DirectoryInfo(Utility.AppDirForRelease(rootAppDirectory, latest));
                     var appIconExe = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(appDir.FullName).FirstOrDefault()
                         ?? appDir.GetFiles("*.exe").Select(x => x.FullName).FirstOrDefault();
-                    key.SetValue("DisplayIcon", appIconExe, RegistryValueKind.String);
+                    if (appIconExe != null) {
+                        key.SetValue("DisplayIcon", appIconExe, RegistryValueKind.String);
+                    }
                 }
 
                 var stringsToWrite = new[] {

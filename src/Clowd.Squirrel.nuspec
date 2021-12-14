@@ -1,8 +1,8 @@
-<?xml version="1.0"?>
+﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <version>0.0.0</version> <!-- should be set on the command line -->
-    <authors>GitHub, Anaïs Betts, Caelan Sayler, others</authors>
+    <authors>Anaïs Betts, Caelan Sayler, GitHub, others</authors>
     <owners>Caelan Sayler</owners>
     <licenseUrl>https://github.com/clowd/Clowd.Squirrel/blob/master/COPYING</licenseUrl>
     <projectUrl>https://github.com/clowd/Clowd.Squirrel</projectUrl>
@@ -11,9 +11,8 @@
     <dependencies>
       <group targetFramework="netstandard2.0">
         <dependency id="SharpCompress" version="0.30.1" />
-        <dependency id="System.Drawing.Common" version="6.0.0" />
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
-        <dependency id="System.IO.Packaging" version="6.0.0" />
+        <dependency id="System.IO.Packaging" version="5.0.0" />
       </group>
     </dependencies>
 
@@ -21,7 +20,7 @@
     <title>Squirrel for Windows</title>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An installation and update framework for Windows applications</description>
-    <copyright>Copyright © GitHub 2017, Caelan Sayler 2021</copyright>
+    <copyright>Copyright © Caelan Sayler 2021</copyright>
   </metadata>
   <files>
     <file src="..\build\Release\netstandard2.0\*" target="lib\netstandard2.0" />

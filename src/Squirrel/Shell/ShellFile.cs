@@ -529,18 +529,10 @@ namespace Squirrel.Shell
         }
 
         /// <summary>
-        /// Gets a System.Drawing.Icon containing the icon for this
-        /// ShellLink object.
+        /// This pointer must be destroyed with DistroyIcon when you are done with it.
         /// </summary>
-        public Icon LargeIcon {
-            get { return getIcon(true); }
-        }
-
-        public Icon SmallIcon {
-            get { return getIcon(false); }
-        }
-
-        Icon getIcon(bool large)
+        /// <param name="large">Whether to return the small or large icon</param>
+        public IntPtr GetIcon(bool large)
         {
             // Get icon index and path:
             int iconIndex = 0;
@@ -585,13 +577,8 @@ namespace Squirrel.Shell
                         hIconEx,
                         1);
                 }
-                // If success then return as a GDI+ object
-                Icon icon = null;
-                if (hIconEx[0] != IntPtr.Zero) {
-                    icon = Icon.FromHandle(hIconEx[0]);
-                    //UnManagedMethods.DestroyIcon(hIconEx[0]);
-                }
-                return icon;
+
+                return hIconEx[0];
             }
         }
 
@@ -996,7 +983,7 @@ namespace Squirrel.Shell
         string displayName;
         string typeName;
         SHGetFileInfoConstants flags;
-        Icon fileIcon;
+        IntPtr fileIcon;
 
         [Flags]
         public enum SHGetFileInfoConstants : int
@@ -1040,7 +1027,7 @@ namespace Squirrel.Shell
         /// <summary>
         /// Gets the icon for the chosen file
         /// </summary>
-        public Icon ShellIcon {
+        public IntPtr ShellIcon {
             get { return fileIcon; }
         }
 
@@ -1064,9 +1051,9 @@ namespace Squirrel.Shell
         ///  Gets the information for the specified 
         ///  file name and flags.
         /// </summary>
-        public void GetInfo()
+        private void GetInfo()
         {
-            fileIcon = null;
+            fileIcon = IntPtr.Zero;
             typeName = "";
             displayName = "";
 
@@ -1077,9 +1064,7 @@ namespace Squirrel.Shell
                 fileName, 0, ref shfi, shfiSize, (uint) (flags));
             if (ret != IntPtr.Zero) {
                 if (shfi.hIcon != IntPtr.Zero) {
-                    fileIcon = System.Drawing.Icon.FromHandle(shfi.hIcon);
-                    // Now owned by the GDI+ object
-                    //DestroyIcon(shfi.hIcon);
+                    fileIcon = shfi.hIcon; // need to dispose this
                 }
                 typeName = shfi.szTypeName;
                 displayName = shfi.szDisplayName;

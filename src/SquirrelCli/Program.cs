@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -173,9 +174,10 @@ namespace SquirrelCli
                 Log.Info("Creating release package: " + file.FullName);
 
                 var rp = new ReleasePackage(file.FullName);
-                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath) => {
+                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
 
                     // create stub executable for all exe's in this package (except Squirrel!)
+                    Log.Info("Creating stub executables");
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                         .Where(x => !x.Name.Contains("squirrel.exe", StringComparison.InvariantCultureIgnoreCase))
@@ -185,6 +187,7 @@ namespace SquirrelCli
                         .Wait();
 
                     // sign all exe's in this package
+                    Log.Info("Signing package files");
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
                         .ForEachAsync(x => HelperExe.SignPEFile(x.FullName, signingOpts))
@@ -193,6 +196,31 @@ namespace SquirrelCli
                     // copy Update.exe into package, so it can also be updated in both full/delta packages
                     var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib")).First();
                     File.Copy(updatePath, Path.Combine(libDir, "Squirrel.exe"), true);
+
+                    // copy app icon to 'lib/fx/app.ico'
+                    var iconTarget = Path.Combine(libDir, "app.ico");
+                    if (options.appIcon != null) {
+
+                        // icon was specified on the command line
+                        Log.Info("Using app icon from command line arguments");
+                        File.Copy(options.appIcon, iconTarget, true);
+
+                    } else if (!File.Exists(iconTarget) && zpkg.IconUrl != null) {
+
+                        // icon was provided in the nuspec. download it and possibly convert it from a different image format
+                        Log.Info($"Downloading app icon from '{zpkg.IconUrl}'.");
+                        using var wc = Utility.CreateWebClient();
+                        var imgBytes = wc.DownloadData(zpkg.IconUrl);
+                        if (zpkg.IconUrl.AbsolutePath.EndsWith(".ico")) {
+                            File.WriteAllBytes(iconTarget, imgBytes);
+                        } else {
+                            using var imgStream = new MemoryStream(imgBytes);
+                            using var bmp = (Bitmap) Image.FromStream(imgStream);
+                            using var ico = Icon.FromHandle(bmp.GetHicon());
+                            using var fs = File.Open(iconTarget, FileMode.Create, FileAccess.Write);
+                            ico.Save(fs);
+                        }
+                    }
                 });
 
                 processed.Add(rp.ReleasePackageFile);

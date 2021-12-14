@@ -25,6 +25,7 @@ namespace SquirrelCli
         public string framework { get; private set; }
         public string splashImage { get; private set; }
         public string updateIcon { get; private set; }
+        public string appIcon { get; private set; }
         public string setupIcon { get; private set; }
         public string setupName { get; private set; } = "Setup";
         public bool noDelta { get; private set; }
@@ -35,16 +36,20 @@ namespace SquirrelCli
             Add("b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true);
             Add("n=|signParams=", "Sign the installer via SignTool.exe with the parameters given", v => signParams = v);
             Add("f=|framework=", "Set the required .NET framework version, e.g. net461", v => framework = v);
-            Add("splashImage=", "Image to be displayed during installation (can be jpg, png, gif, etc)", v => splashImage = v);
+            Add("i=|icon=", "Sets all the icons (update, app, setup). Can be used with another icon property, later arguments will take precedence.",
+                (v) => { updateIcon = v; appIcon = v; setupIcon = v; });
             Add("updateIcon=", "ICO file that will be used for Update.exe", v => updateIcon = v);
+            Add("appIcon=", "ICO file that will be used in the 'Apps and Features' list.", v => appIcon = v);
             Add("setupIcon=", "ICO file that will be used for Setup.exe", v => setupIcon = v);
             Add("setupName=", "The name of the app installer exe without the extension (default: 'Setup')", v => setupName = v);
+            Add("splashImage=", "Image to be displayed during installation (can be jpg, png, gif, etc)", v => splashImage = v);
             Add("noDelta", "Skip the generation of delta packages to save time", v => noDelta = true);
             Add("addSearchPath=", "Add additional search directories when looking for helper exe's such as Setup.exe, Update.exe, etc", v => HelperExe.AddSearchPath(v));
         }
 
         public override void Validate()
         {
+            IsValidFile(nameof(appIcon), ".ico");
             IsValidFile(nameof(setupIcon), ".ico");
             IsValidFile(nameof(updateIcon), ".ico");
             IsValidFile(nameof(splashImage));
