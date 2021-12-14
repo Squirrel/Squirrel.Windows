@@ -155,26 +155,73 @@ bool IsFullNetFrameworkInstalled(DWORD requiredVersion)
     return true;
 }
 
-// TODO this is extremely messy, it should certainly be re-written.
-wstring execw(const wchar_t* cmd)
+// https://stackoverflow.com/a/59523254/184746
+int runCmd(wchar_t* cmd, std::string& outOutput)
 {
-    wchar_t buffer[1024];
-    wstring result = L"";
-    FILE* pipe = _wpopen(cmd, L"r");
-    if (!pipe) return L"";
+    HANDLE g_hChildStd_OUT_Rd = NULL;
+    HANDLE g_hChildStd_OUT_Wr = NULL;
+    HANDLE g_hChildStd_ERR_Rd = NULL;
+    HANDLE g_hChildStd_ERR_Wr = NULL;
 
-    try {
-        while (fgetws(buffer, 1024, pipe) != NULL) {
-            result += buffer;
-        }
-    }
-    catch (...) {
-        _pclose(pipe);
-        return L"";
-    }
-    _pclose(pipe);
+    SECURITY_ATTRIBUTES sa;
+    // Set the bInheritHandle flag so pipe handles are inherited.
+    sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = NULL;
+    if (!CreatePipe(&g_hChildStd_ERR_Rd, &g_hChildStd_ERR_Wr, &sa, 0)) { return 1; } // Create a pipe for the child process's STDERR.
+    if (!SetHandleInformation(g_hChildStd_ERR_Rd, HANDLE_FLAG_INHERIT, 0)) { return 1; } // Ensure the read handle to the pipe for STDERR is not inherited.
+    if (!CreatePipe(&g_hChildStd_OUT_Rd, &g_hChildStd_OUT_Wr, &sa, 0)) { return 1; } // Create a pipe for the child process's STDOUT.
+    if (!SetHandleInformation(g_hChildStd_OUT_Rd, HANDLE_FLAG_INHERIT, 0)) { return 1; } // Ensure the read handle to the pipe for STDOUT is not inherited
 
-    return result;
+    PROCESS_INFORMATION piProcInfo;
+    STARTUPINFO siStartInfo;
+    bool bSuccess = FALSE;
+
+    // Set up members of the PROCESS_INFORMATION structure.
+    ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
+
+    // Set up members of the STARTUPINFO structure.
+    // This structure specifies the STDERR and STDOUT handles for redirection.
+    ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
+    siStartInfo.cb = sizeof(STARTUPINFO);
+    siStartInfo.hStdError = g_hChildStd_ERR_Wr;
+    siStartInfo.hStdOutput = g_hChildStd_OUT_Wr;
+    siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
+
+    // Create the child process.
+    LPTSTR szCmdline = _tcsdup(cmd); // https://stackoverflow.com/a/10044348/184746
+    bSuccess = CreateProcess(
+        NULL,             // program name
+        szCmdline,        // command line
+        NULL,             // process security attributes
+        NULL,             // primary thread security attributes
+        TRUE,             // handles are inherited
+        CREATE_NO_WINDOW, // creation flags (this is what hides the window)
+        NULL,             // use parent's environment
+        NULL,             // use parent's current directory
+        &siStartInfo,     // STARTUPINFO pointer
+        &piProcInfo       // receives PROCESS_INFORMATION
+    );
+
+    CloseHandle(g_hChildStd_ERR_Wr);
+    CloseHandle(g_hChildStd_OUT_Wr);
+
+    // read output
+#define BUFSIZE 4096
+    DWORD dwRead;
+    CHAR chBuf[BUFSIZE];
+    bool bSuccess2 = FALSE;
+    for (;;) { // read stdout
+        bSuccess2 = ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
+        if (!bSuccess2 || dwRead == 0) break;
+        std::string s(chBuf, dwRead);
+        outOutput += s;
+    }
+
+    // The remaining open handles are cleaned up when this process terminates.
+    // To avoid resource leaks in a larger application,
+    // close handles explicitly.
+    return 0;
 }
 
 bool IsDotNetCoreInstalled(wstring searchString)
@@ -187,8 +234,15 @@ bool IsDotNetCoreInstalled(wstring searchString)
     // note, dotnet cli will only return x64 results.
     //auto runtimes = exec("dotnet --list-runtimes");
 
-    auto runtimes = execw(L"dotnet --info");
-    return runtimes.find(searchString) != std::wstring::npos;
+    std::string output;
+    if (runCmd(L"dotnet --info", output) == 0) {
+        wchar_t buf[6144];
+        int cbuf = MultiByteToWideChar(CP_ACP, 0, output.c_str(), output.length(), buf, 6144);
+        wstring s(buf, cbuf);
+        return s.find(searchString) != std::wstring::npos;
+    }
+
+    return false;
 }
 
 bool IsRuntimeInstalled(const RUNTIMEINFO* runtime)
