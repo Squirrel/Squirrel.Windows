@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-#include "Setup.h"
 #include "FxHelper.h"
 #include "UpdateRunner.h"
 #include "MachineInstaller.h"

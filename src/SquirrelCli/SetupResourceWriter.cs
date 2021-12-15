@@ -39,7 +39,7 @@ namespace SquirrelCli
                     writer.AddResource(splashBytes, "DATA", IDR_SPLASH_IMG, RESOURCE_LANG);
                 } else {
                     // the template Setup.exe has a built-in splash image used for testing. we need to remove it
-                    writer.ClearResource("DATA", IDR_SPLASH_IMG, RESOURCE_LANG);
+                    //writer.ClearResource("DATA", IDR_SPLASH_IMG, RESOURCE_LANG);
                 }
 
                 writer.Update();

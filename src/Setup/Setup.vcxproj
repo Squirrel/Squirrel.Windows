@@ -105,9 +105,8 @@
     <ClInclude Include="FxHelper.h" />
     <ClInclude Include="ImageEx.h" />
     <ClInclude Include="MachineInstaller.h" />
-    <ClInclude Include="Resource.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="RuntimeInfo.h" />
-    <ClInclude Include="Setup.h" />
     <ClInclude Include="SplashWnd.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -126,19 +125,6 @@
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Setup.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="Setup.ico" />
-    <Image Include="small.ico" />
-    <Image Include="installdisk.gif" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="bin00001.bin" />
-    <None Include="flags1.bin" />
-    <None Include="update.zip" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
