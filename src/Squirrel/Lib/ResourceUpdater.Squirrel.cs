@@ -4,7 +4,7 @@ using System;
 
 namespace Microsoft.NET.HostModel
 {
-    public partial class ResourceUpdater
+    internal partial class ResourceUpdater
     {
         public ResourceUpdater(string peFile, bool bDeleteExistingResources)
         {

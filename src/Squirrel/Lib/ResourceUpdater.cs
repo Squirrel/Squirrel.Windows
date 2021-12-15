@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -12,7 +13,7 @@ namespace Microsoft.NET.HostModel
     /// in a PE image. It currently only works on Windows, because it
     /// requires various kernel32 APIs.
     /// </summary>
-    public partial class ResourceUpdater : IDisposable
+    internal partial class ResourceUpdater : IDisposable
     {
         private sealed class Kernel32
         {
@@ -442,7 +443,7 @@ namespace Microsoft.NET.HostModel
                 }
 
                 Debug.Assert(hResult != 0);
-                throw new HResultException(hResult);
+                throw new Win32Exception(hResult);
             }
         }
 
@@ -466,7 +467,7 @@ namespace Microsoft.NET.HostModel
 
         private static void ThrowExceptionForLastWin32Error()
         {
-            throw new HResultException(Marshal.GetHRForLastWin32Error());
+            throw new Win32Exception(Marshal.GetHRForLastWin32Error());
         }
 
         private static void ThrowExceptionForInvalidUpdate()
