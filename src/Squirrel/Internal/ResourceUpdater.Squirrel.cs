@@ -31,21 +31,21 @@ namespace Microsoft.NET.HostModel
             return this;
         }
 
-        public ResourceUpdater ClearResource(string lpType, IntPtr lpName, ushort langId)
-        {
-            if (hUpdate.IsInvalid) {
-                ThrowExceptionForInvalidUpdate();
-            }
+        //public ResourceUpdater ClearResource(string lpType, IntPtr lpName, ushort langId)
+        //{
+        //    if (hUpdate.IsInvalid) {
+        //        ThrowExceptionForInvalidUpdate();
+        //    }
 
-            if (!IsIntResource(lpName)) {
-                throw new ArgumentException("AddResource can only be used with integer resource names");
-            }
+        //    if (!IsIntResource(lpName)) {
+        //        throw new ArgumentException("AddResource can only be used with integer resource names");
+        //    }
 
-            if (!Kernel32.UpdateResource(hUpdate, lpType, lpName, langId, null, 0)) {
-                ThrowExceptionForLastWin32Error();
-            }
+        //    if (!Kernel32.UpdateResource(hUpdate, lpType, lpName, langId, null, 0)) {
+        //        ThrowExceptionForLastWin32Error();
+        //    }
 
-            return this;
-        }
+        //    return this;
+        //}
     }
 }

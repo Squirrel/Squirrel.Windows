@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Squirrel.NuGet;
 using Squirrel.Lib;
+using System.Drawing;
 
 namespace Squirrel.Update
 {
@@ -22,6 +23,7 @@ namespace Squirrel.Update
         static StartupOption opt;
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
+        [STAThread]
         public static int Main(string[] args)
         {
             try {
@@ -112,6 +114,127 @@ namespace Squirrel.Update
             return 0;
         }
 
+        static async Task<int> Setup(string setupPath, bool silentInstall)
+        {
+            // mocked values.. will come from Setup.exe
+            string appName = "Clowd";
+            byte[] splashImage = File.ReadAllBytes(@"C:\Source\Clowd\clowd-windows\splash.gif");
+            string[] requiredFrameworks = new[] { "net6" };
+            string packageName = "Clowd-3.4.111-full.nupkg";
+            byte[] packageBytes = File.ReadAllBytes(@"C:\Source\Clowd\clowd-windows\releases\Clowd-3.4.111-full.nupkg");
+            byte[] setupIcon = File.ReadAllBytes(@"C:\Source\Clowd\clowd-windows\default-setup.ico");
+            //string onlineSource = "https://caesay.com/clowd-updates";
+            //byte[] offlineSourcesZip = new byte[0];
+
+            using var _t = Utility.WithTempDirectory(out var tempFolder);
+
+            // show splash screen
+            SplashWindow splash = null;
+            if (!silentInstall) {
+                splash = new SplashWindow(new Icon(new MemoryStream(setupIcon)), (Bitmap) Image.FromStream(new MemoryStream(splashImage)));
+                splash.Show();
+            }
+
+            var missingFrameworks = requiredFrameworks
+                .Select(f => RuntimeInstaller.GetRuntimeInfoByName(f))
+                .Where(f => f != null)
+                .Where(f => !f.CheckIsInstalled().Result)
+                .ToArray();
+
+            // prompt user to install missing dependency
+            if (missingFrameworks.Any()) {
+                string message = missingFrameworks.Length > 1
+                    ? $"{appName} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
+                      $"Would you like to install these now?"
+                    : $"{appName} requires {missingFrameworks.First().DisplayName} to continue, would you like to install it now?";
+
+                // if running in attended mode, ask the user if they want to continue. otherwise, proceed
+                if (splash != null) {
+                    var result = User32MessageBox.Show(
+                        splash.Handle,
+                        message,
+                        "Missing System Components",
+                        User32MessageBox.MessageBoxButtons.OKCancel,
+                        User32MessageBox.MessageBoxIcon.Question,
+                        User32MessageBox.MessageBoxResult.Cancel);
+
+                    if (result != User32MessageBox.MessageBoxResult.OK) {
+                        // user does not want to proceed
+                        return -1;
+                    }
+                }
+
+                bool rebootRequired = false;
+
+                foreach (var f in missingFrameworks) {
+                    var url = await f.GetDownloadUrl();
+                    var localPath = Path.Combine(tempFolder, f.Id + ".exe");
+
+                    splash?.SetProgressIndeterminate();
+
+                    using var wc = Utility.CreateWebClient();
+                    await wc.DownloadFileTaskAsync(url, localPath);
+
+                    splash?.SetNoProgress();
+
+                    // hide splash screen while the runtime installer is running
+                    splash?.Hide();
+                    var exitcode = await RuntimeInstaller.InvokeInstaller(localPath, silentInstall);
+                    splash?.Show();
+
+                    if (exitcode == 1641 || exitcode == 3010) {
+                        rebootRequired = true;
+                        continue;
+                    }
+
+                    if (exitcode != 0) {
+                        if (splash != null) {
+                            User32MessageBox.Show(
+                                splash.Handle,
+                                $"Failed to install {f.DisplayName}, you can try installing it manually and then re-running Setup.",
+                                $"Error installing {f.DisplayName}",
+                                User32MessageBox.MessageBoxButtons.OK,
+                                User32MessageBox.MessageBoxIcon.Error);
+                        }
+                        return -1;
+                    }
+                }
+
+                if (rebootRequired) {
+                    if (splash != null) {
+                        User32MessageBox.Show(
+                            splash.Handle,
+                            $"A restart is required before Setup can continue.",
+                            $"Restart system",
+                            User32MessageBox.MessageBoxButtons.OK,
+                            User32MessageBox.MessageBoxIcon.Information);
+                    }
+
+                    // TODO: automatic restart setup after reboot
+
+                    return -1;
+                }
+            }
+
+            // setup package source directory
+            splash?.SetProgressIndeterminate();
+            string packagePath = Path.Combine(tempFolder, packageName);
+            File.WriteAllBytes(packagePath, packageBytes);
+            var entry = ReleaseEntry.GenerateFromFile(packagePath);
+            ReleaseEntry.WriteReleaseFile(new[] { entry }, Path.Combine(tempFolder, "RELEASES"));
+
+            var progressSource = new ProgressSource();
+            progressSource.Progress += (e, p) => {
+                // post install hooks are about to be run (app will start)
+                if (p >= 90) splash?.Close();
+                else splash?.SetProgress((ulong) p, 90);
+            };
+
+            await Install(silentInstall, progressSource, tempFolder);
+            splash?.Close();
+            return 0;
+        }
+
         static async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
         {
             sourceDirectory = sourceDirectory ?? AssemblyRuntimeInfo.BaseDirectory;
@@ -146,7 +269,7 @@ namespace Squirrel.Update
                     mgr.KillAllExecutablesBelongingToPackage();
                     await Task.Delay(500);
 
-                    await Log.ErrorIfThrows(() => Utility.DeleteDirectory(mgr.RootAppDirectory),
+                    await Log.ErrorIfThrows(() => Utility.Retry(() => Utility.DeleteDirectory(mgr.RootAppDirectory)),
                         "Failed to remove existing directory on full install, is the app still running???");
 
                     Log.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.RootAppDirectory), 3),

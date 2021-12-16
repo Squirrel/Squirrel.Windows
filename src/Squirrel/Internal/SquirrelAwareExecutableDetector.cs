@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
+using Squirrel.Lib;
 using Squirrel.NuGet;
 using static Squirrel.NativeMethods;
 
@@ -16,7 +17,6 @@ namespace Squirrel
     static class SquirrelAwareExecutableDetector
     {
         const string SQUIRREL_AWARE_KEY = "SquirrelAwareVersion";
-        const uint LOAD_LIBRARY_AS_DATAFILE = 2;
 
         public static List<string> GetAllSquirrelAwareApps(string directory, int minimumVersion = 1)
         {
@@ -100,7 +100,10 @@ namespace Squirrel
 
         static int? GetManifestSquirrelAwareValue(string executable)
         {
-            var buffer = GetManifestFromPEResources(executable);
+            byte[] buffer = null;
+            using (var rr = new ResourceReader(executable))
+                buffer = rr.ReadAssemblyManifest();
+
             if (buffer == null)
                 return null;
 
@@ -111,38 +114,6 @@ namespace Squirrel
             }
 
             return null;
-        }
-
-        static byte[] GetManifestFromPEResources(string filePath)
-        {
-            var hModule = LoadLibraryEx(filePath, IntPtr.Zero, LOAD_LIBRARY_AS_DATAFILE);
-            if (hModule == IntPtr.Zero) {
-                throw new Win32Exception();
-            }
-
-            try {
-                var hResource = FindResource(hModule, "#1", "#24");
-                if (hResource == IntPtr.Zero)
-                    return null;
-
-                uint size = SizeofResource(hModule, hResource);
-                if (size == 0)
-                    throw new Win32Exception();
-
-                var hGlobal = LoadResource(hModule, hResource);
-                if (hGlobal == IntPtr.Zero)
-                    throw new Win32Exception();
-
-                var data = LockResource(hGlobal);
-                if (data == IntPtr.Zero)
-                    throw new Win32Exception(0x21);
-
-                var buf = new byte[size];
-                Marshal.Copy(data, buf, 0, (int) size);
-                return buf;
-            } finally {
-                FreeLibrary(hModule);
-            }
         }
     }
 }

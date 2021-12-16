@@ -7,7 +7,7 @@ namespace Squirrel.Update
     enum UpdateAction
     {
         Unset = 0, Install, Uninstall, Download, Update, Shortcut,
-        Deshortcut, ProcessStart, UpdateSelf, CheckForUpdate
+        Deshortcut, ProcessStart, UpdateSelf, CheckForUpdate, Setup
     }
 
     internal class StartupOption
@@ -50,6 +50,7 @@ namespace Squirrel.Update
                 { "updateSelf=", "Copy the currently executing Update.exe into the default location", v => { updateAction =  UpdateAction.UpdateSelf; target = v; } },
                 { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; }, true},
                 { "processStartAndWait=", "Start an executable in the latest version of the app package", v => { updateAction =  UpdateAction.ProcessStart; processStart = v; shouldWait = true; }, true},
+                { "setup=", "Does an initial install with the help of the Setup.exe resources", v => target = v, true },
                 "",
                 "Options:",
                 { "h|?|help", "Display Help and exit", _ => {} },
