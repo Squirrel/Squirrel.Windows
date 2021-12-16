@@ -152,18 +152,6 @@ namespace Squirrel
             }
         }
 
-        public static async Task ValidateFrameworkVersion(string frameworkVersion)
-        {
-            if (String.IsNullOrWhiteSpace(frameworkVersion)) {
-                return;
-            }
-
-            var chkFrameworkResult = await Utility.InvokeProcessAsync(SetupPath, new string[] { "--checkFramework", frameworkVersion }, CancellationToken.None);
-            if (chkFrameworkResult.ExitCode != 0) {
-                throw new ArgumentException($"Unsupported FrameworkVersion: '{frameworkVersion}'. {chkFrameworkResult.StdOutput}");
-            }
-        }
-
         public static async Task NugetPack(string nuspecPath, string baseDirectory, string outputDirectory)
         {
             var args = new string[] { "pack", nuspecPath, "-BasePath", baseDirectory, "-OutputDirectory", outputDirectory };

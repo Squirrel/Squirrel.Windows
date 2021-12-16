@@ -125,7 +125,6 @@ namespace SquirrelCli
                 Directory.CreateDirectory(targetDir);
             }
 
-            var frameworkVersion = options.framework;
             var signingOpts = options.signParams;
             var package = options.package;
             var baseUrl = options.baseUrl;
@@ -136,9 +135,17 @@ namespace SquirrelCli
             if (!package.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase))
                 throw new ArgumentException("package must be packed with nuget and end in '.nupkg'");
 
-            // validate that the provided "frameworkVersion" is supported by Setup.exe
-            if (!String.IsNullOrWhiteSpace(frameworkVersion)) {
-                HelperExe.ValidateFrameworkVersion(frameworkVersion).Wait();
+            // normalize and validate that the provided frameworks are supported 
+            List<string> requiredFrameworks = new List<string>();
+            if (!String.IsNullOrWhiteSpace(options.framework)) {
+                var frameworks = options.framework.Split(",");
+                foreach (var f in frameworks) {
+                    var r = RuntimeInstaller.GetRuntimeInfoByName(f);
+                    if (r == null) {
+                        throw new Exception($"Runtime '{f}' is unsupported. Supported runtimes are: {String.Join(", ", RuntimeInstaller.All.Select(r => r.Id))}");
+                    }
+                    requiredFrameworks.Add(r.Id);
+                }
             }
 
             using var ud = Utility.WithTempDirectory(out var tempDir);
@@ -199,7 +206,6 @@ namespace SquirrelCli
                         .Wait();
 
                     // sign all exe's in this package
-                    Log.Info("Signing package files");
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
                         .ForEachAsync(x => HelperExe.SignPEFile(x.FullName, signingOpts))
@@ -258,15 +264,34 @@ namespace SquirrelCli
 
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
+            var bundledzp = new ZipPackage(package);
             var targetSetupExe = Path.Combine(di.FullName, options.setupName + ".exe");
             File.Copy(HelperExe.SetupPath, targetSetupExe, true);
-            Utility.Retry(() => HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, new ZipPackage(package), setupIcon).Wait());
+            Utility.Retry(() => HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, bundledzp, setupIcon).Wait());
 
             var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
             var newestReleasePath = Path.Combine(di.FullName, newestFullRelease.Filename);
-            SetupResourceWriter.WriteZipToSetup(targetSetupExe, newestReleasePath, frameworkVersion, backgroundGif);
+
+            Log.Info($"Creating Setup bundle");
+            var infosave = new BundledSetupInfo() {
+                AppName = bundledzp.Title ?? bundledzp.Id,
+                BundledPackageBytes = File.ReadAllBytes(newestReleasePath),
+                BundledPackageName = Path.GetFileName(newestReleasePath),
+                RequiredFrameworks = requiredFrameworks.ToArray(),
+            };
+
+            if (setupIcon != null) infosave.SetupIconBytes = File.ReadAllBytes(setupIcon);
+            if (backgroundGif != null) infosave.SplashImageBytes = File.ReadAllBytes(backgroundGif);
+
+            infosave.WriteToFile(targetSetupExe);
 
             HelperExe.SignPEFile(targetSetupExe, signingOpts).Wait();
+
+            //setupPath = @"C:\Source\Clowd\clowd-windows\modules\Clowd.Squirrel\build\Debug\Win32\Setup.exe";
+            //string onlineSource = "https://caesay.com/clowd-updates";
+            //byte[] offlineSourcesZip = new byte[0];
+
+            //SetupResourceWriter.WriteZipToSetup(targetSetupExe, newestReleasePath, frameworkVersion, backgroundGif);
 
             //if (generateMsi) {
             //    createMsiPackage(targetSetupExe, new ZipPackage(package), packageAs64Bit).Wait();
@@ -286,7 +311,10 @@ namespace SquirrelCli
                 Path.GetFileNameWithoutExtension(exeToCopy) + "_ExecutionStub.exe");
 
             await Utility.CopyToAsync(HelperExe.StubExecutablePath, target);
-            SetupResourceWriter.CopyStubExecutableResources(exeToCopy, target);
+
+            using var writer = new Microsoft.NET.HostModel.ResourceUpdater(target, true);
+            writer.AddResourcesFromPEImage(exeToCopy);
+            writer.Update();
         }
     }
 
