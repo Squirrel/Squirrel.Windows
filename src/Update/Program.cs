@@ -50,10 +50,10 @@ namespace Squirrel.Update
 
             // NB: Trying to delete the app directory while we have Setup.log
             // open will actually crash the uninstaller
-            bool isUninstalling = opt.updateAction == UpdateAction.Uninstall
+            bool logToTemp = opt.updateAction == UpdateAction.Uninstall
                 || opt.updateAction == UpdateAction.Setup;
 
-            using (var logger = new SetupLogLogger(isUninstalling, opt.updateAction.ToString()) { Level = LogLevel.Info }) {
+            using (var logger = new SetupLogLogger(logToTemp, opt.updateAction.ToString()) { Level = LogLevel.Info }) {
                 SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
 
                 try {
@@ -126,10 +126,10 @@ namespace Squirrel.Update
 
             // show splash screen
             SplashWindow splash = null;
-            if (!silentInstall) {
+            if (!silentInstall && info.SplashImageBytes?.Length > 0) {
                 Log.Info($"Showing splash window");
                 splash = new SplashWindow(
-                    new Icon(new MemoryStream(info.SetupIconBytes)),
+                    info.SetupIconBytes?.Length > 0 ? new Icon(new MemoryStream(info.SetupIconBytes)) : null,
                     (Bitmap) Image.FromStream(new MemoryStream(info.SplashImageBytes)));
                 splash.Show();
             }
@@ -175,6 +175,7 @@ namespace Squirrel.Update
 
                     Log.Info($"Downloading {f.Id} from {url}");
                     using var wc = Utility.CreateWebClient();
+                    wc.DownloadProgressChanged += (s, e) => { splash?.SetProgress((ulong) e.BytesReceived, (ulong) e.TotalBytesToReceive); };
                     await wc.DownloadFileTaskAsync(url, localPath);
 
                     splash?.SetNoProgress();

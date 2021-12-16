@@ -14,7 +14,7 @@ namespace Squirrel.Lib
         public byte[] SetupIconBytes { get; set; }
 
         private const string RESOURCE_TYPE = "DATA";
-        //private static readonly ushort RESOURCE_LANG = 0x0409;
+        private static readonly ushort RESOURCE_LANG = 0x0409;
 
         public static BundledSetupInfo ReadFromFile(string exePath)
         {
@@ -22,7 +22,7 @@ namespace Squirrel.Lib
             using var reader = new ResourceReader(exePath);
             bundle.AppName = ReadString(reader, 201);
             bundle.SplashImageBytes = ReadBytes(reader, 202);
-            bundle.RequiredFrameworks = ReadString(reader, 203)?.Split(',');
+            bundle.RequiredFrameworks = ReadString(reader, 203)?.Split(',') ?? new string[0];
             bundle.BundledPackageName = ReadString(reader, 204);
             bundle.BundledPackageBytes = ReadBytes(reader, 205);
             bundle.SetupIconBytes = ReadBytes(reader, 206);
@@ -32,7 +32,7 @@ namespace Squirrel.Lib
 
         private static byte[] ReadBytes(ResourceReader reader, int idx)
         {
-            return reader.ReadResource(RESOURCE_TYPE, new IntPtr(idx));
+            return reader.ReadResource(RESOURCE_TYPE, new IntPtr(idx), RESOURCE_LANG);
         }
 
         private static string ReadString(ResourceReader reader, int idx)
@@ -47,7 +47,7 @@ namespace Squirrel.Lib
             using var writer = new ResourceUpdater(exePath);
             WriteValue(writer, 201, AppName);
             WriteValue(writer, 202, SplashImageBytes);
-            WriteValue(writer, 203, String.Join(",", RequiredFrameworks));
+            WriteValue(writer, 203, String.Join(",", RequiredFrameworks ?? new string[0]));
             WriteValue(writer, 204, BundledPackageName);
             WriteValue(writer, 205, BundledPackageBytes);
             WriteValue(writer, 206, SetupIconBytes);
@@ -64,7 +64,7 @@ namespace Squirrel.Lib
         private void WriteValue(ResourceUpdater updater, int idx, byte[] buf)
         {
             if (buf == null || buf.Length == 0) return;
-            updater.AddResource(buf, RESOURCE_TYPE, new IntPtr(idx));
+            updater.AddResource(buf, RESOURCE_TYPE, new IntPtr(idx), RESOURCE_LANG);
         }
     }
 }

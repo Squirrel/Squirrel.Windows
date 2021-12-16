@@ -29,6 +29,7 @@ namespace Squirrel.Update
         private uint _threadId;
         private POINT _ptMouseDown;
         private ITaskbarList3 _taskbarList;
+        private double _progress;
 
         private readonly ManualResetEvent _signal;
         private readonly Bitmap _img;
@@ -75,6 +76,8 @@ namespace Squirrel.Update
             if (_thread == null) return;
             var h = _hwnd.DangerousGetHandle();
             _taskbarList.SetProgressState(h, ThumbnailProgressState.NoProgress);
+            _progress = 0;
+            InvalidateRect(_hwnd, null, false);
         }
 
         public void SetProgressIndeterminate()
@@ -82,6 +85,8 @@ namespace Squirrel.Update
             if (_thread == null) return;
             var h = _hwnd.DangerousGetHandle();
             _taskbarList.SetProgressState(h, ThumbnailProgressState.Indeterminate);
+            _progress = 0;
+            InvalidateRect(_hwnd, null, false);
         }
 
         public void SetProgress(ulong completed, ulong total)
@@ -90,6 +95,8 @@ namespace Squirrel.Update
             var h = _hwnd.DangerousGetHandle();
             _taskbarList.SetProgressState(h, ThumbnailProgressState.Normal);
             _taskbarList.SetProgressValue(h, completed, total);
+            _progress = completed / (double) total;
+            InvalidateRect(_hwnd, null, false);
         }
 
         public void Close()
@@ -226,9 +233,17 @@ namespace Squirrel.Update
             switch (uMsg) {
 
             case (uint) WM_PAINT:
-                using (var g = Graphics.FromHwnd(hwnd.DangerousGetHandle()))
-                    lock (_img)
-                        g.DrawImage(_img, 0, 0);
+                GetWindowRect(hwnd, out var r);
+                using (var buffer = new Bitmap(r.Width, r.Height))
+                using (var brush = new SolidBrush(Color.FromArgb(160, Color.LimeGreen)))
+                using (var g = Graphics.FromImage(buffer))
+                using (var wnd = Graphics.FromHwnd(hwnd.DangerousGetHandle())) {
+                    lock (_img) g.DrawImage(_img, 0, 0);
+                    if (_progress > 0) {
+                        g.FillRectangle(brush, new Rectangle(0, r.Height - 10, (int) (r.Width * _progress), 10));
+                    }
+                    wnd.DrawImage(buffer, 0, 0);
+                }
 
                 ValidateRect(hwnd, null);
                 return 0;
