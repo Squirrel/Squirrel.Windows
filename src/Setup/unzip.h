@@ -1,6 +1,8 @@
 #ifndef _unzip_H
 #define _unzip_H
 
+#include "windows.h"
+
 // UNZIPPING functions -- for unzipping.
 // This file is a repackaged form of extracts from the zlib code available
 // at www.gzip.org/zlib, by Jean-Loup Gailly and Mark Adler. The original

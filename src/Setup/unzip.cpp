@@ -1,6 +1,6 @@
-#include "stdafx.h"
 #include "unzip.h"
-
+#include <tchar.h>
+#define EOF    (-1)
 
 // THIS FILE is almost entirely based upon code by Jean-loup Gailly
 // and Mark Adler. It has been modified by Lucian Wischik.
