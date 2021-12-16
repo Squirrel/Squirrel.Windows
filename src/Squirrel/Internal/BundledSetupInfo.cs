@@ -14,6 +14,7 @@ namespace Squirrel.Lib
         public byte[] SetupIconBytes { get; set; }
 
         private const string RESOURCE_TYPE = "DATA";
+        //private static readonly ushort RESOURCE_LANG = 0x0409;
 
         public static BundledSetupInfo ReadFromFile(string exePath)
         {
@@ -25,19 +26,20 @@ namespace Squirrel.Lib
             bundle.BundledPackageName = ReadString(reader, 204);
             bundle.BundledPackageBytes = ReadBytes(reader, 205);
             bundle.SetupIconBytes = ReadBytes(reader, 206);
+
             return bundle;
         }
 
         private static byte[] ReadBytes(ResourceReader reader, int idx)
         {
-            return reader.ReadResource(new IntPtr(idx), RESOURCE_TYPE);
+            return reader.ReadResource(RESOURCE_TYPE, new IntPtr(idx));
         }
 
         private static string ReadString(ResourceReader reader, int idx)
         {
             var bytes = ReadBytes(reader, idx);
             if (bytes == null) return null;
-            return Encoding.Unicode.GetString(bytes);
+            return Encoding.Unicode.GetString(bytes).TrimEnd('\0');
         }
 
         public void WriteToFile(string exePath)
@@ -49,6 +51,7 @@ namespace Squirrel.Lib
             WriteValue(writer, 204, BundledPackageName);
             WriteValue(writer, 205, BundledPackageBytes);
             WriteValue(writer, 206, SetupIconBytes);
+            writer.Update();
         }
 
         private void WriteValue(ResourceUpdater updater, int idx, string str)

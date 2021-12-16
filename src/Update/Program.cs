@@ -1,4 +1,4 @@
-using Squirrel.SimpleSplat;
+﻿using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -50,7 +50,8 @@ namespace Squirrel.Update
 
             // NB: Trying to delete the app directory while we have Setup.log
             // open will actually crash the uninstaller
-            bool isUninstalling = opt.updateAction == UpdateAction.Uninstall;
+            bool isUninstalling = opt.updateAction == UpdateAction.Uninstall
+                || opt.updateAction == UpdateAction.Setup;
 
             using (var logger = new SetupLogLogger(isUninstalling, opt.updateAction.ToString()) { Level = LogLevel.Info }) {
                 SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
@@ -80,6 +81,8 @@ namespace Squirrel.Update
             }
 
             switch (opt.updateAction) {
+            case UpdateAction.Setup:
+                return Setup(opt.target, opt.silentInstall).Result;
             case UpdateAction.Install:
                 var progressSource = new ProgressSource();
                 Install(opt.silentInstall, progressSource, Path.GetFullPath(opt.target)).Wait();
@@ -116,26 +119,22 @@ namespace Squirrel.Update
 
         static async Task<int> Setup(string setupPath, bool silentInstall)
         {
-            // mocked values.. will come from Setup.exe
-            string appName = "Clowd";
-            byte[] splashImage = File.ReadAllBytes(@"C:\Source\Clowd\clowd-windows\splash.gif");
-            string[] requiredFrameworks = new[] { "net6" };
-            string packageName = "Clowd-3.4.111-full.nupkg";
-            byte[] packageBytes = File.ReadAllBytes(@"C:\Source\Clowd\clowd-windows\releases\Clowd-3.4.111-full.nupkg");
-            byte[] setupIcon = File.ReadAllBytes(@"C:\Source\Clowd\clowd-windows\default-setup.ico");
-            //string onlineSource = "https://caesay.com/clowd-updates";
-            //byte[] offlineSourcesZip = new byte[0];
+            Log.Info($"Extracting bundled app data from '{setupPath}'.");
+            var info = BundledSetupInfo.ReadFromFile(setupPath);
 
             using var _t = Utility.WithTempDirectory(out var tempFolder);
 
             // show splash screen
             SplashWindow splash = null;
             if (!silentInstall) {
-                splash = new SplashWindow(new Icon(new MemoryStream(setupIcon)), (Bitmap) Image.FromStream(new MemoryStream(splashImage)));
+                Log.Info($"Showing splash window");
+                splash = new SplashWindow(
+                    new Icon(new MemoryStream(info.SetupIconBytes)),
+                    (Bitmap) Image.FromStream(new MemoryStream(info.SplashImageBytes)));
                 splash.Show();
             }
 
-            var missingFrameworks = requiredFrameworks
+            var missingFrameworks = info.RequiredFrameworks
                 .Select(f => RuntimeInstaller.GetRuntimeInfoByName(f))
                 .Where(f => f != null)
                 .Where(f => !f.CheckIsInstalled().Result)
@@ -143,10 +142,11 @@ namespace Squirrel.Update
 
             // prompt user to install missing dependency
             if (missingFrameworks.Any()) {
+                Log.Info($"The following components are missing: " + String.Join(", ", missingFrameworks.Select(m => m.Id)));
                 string message = missingFrameworks.Length > 1
-                    ? $"{appName} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
+                    ? $"{info.AppName} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
                       $"Would you like to install these now?"
-                    : $"{appName} requires {missingFrameworks.First().DisplayName} to continue, would you like to install it now?";
+                    : $"{info.AppName} requires {missingFrameworks.First().DisplayName} to continue, would you like to install it now?";
 
                 // if running in attended mode, ask the user if they want to continue. otherwise, proceed
                 if (splash != null) {
@@ -160,6 +160,7 @@ namespace Squirrel.Update
 
                     if (result != User32MessageBox.MessageBoxResult.OK) {
                         // user does not want to proceed
+                        Log.Info($"User has cancelled setup");
                         return -1;
                     }
                 }
@@ -172,6 +173,7 @@ namespace Squirrel.Update
 
                     splash?.SetProgressIndeterminate();
 
+                    Log.Info($"Downloading {f.Id} from {url}");
                     using var wc = Utility.CreateWebClient();
                     await wc.DownloadFileTaskAsync(url, localPath);
 
@@ -179,6 +181,7 @@ namespace Squirrel.Update
 
                     // hide splash screen while the runtime installer is running
                     splash?.Hide();
+                    Log.Info($"Installing {f.Id} from {localPath}");
                     var exitcode = await RuntimeInstaller.InvokeInstaller(localPath, silentInstall);
                     splash?.Show();
 
@@ -188,6 +191,7 @@ namespace Squirrel.Update
                     }
 
                     if (exitcode != 0) {
+                        Log.Info($"{f.Id} installer exited with error code {exitcode}");
                         if (splash != null) {
                             User32MessageBox.Show(
                                 splash.Handle,
@@ -210,6 +214,7 @@ namespace Squirrel.Update
                             User32MessageBox.MessageBoxIcon.Information);
                     }
 
+                    Log.Info($"A restart is required, exiting...");
                     // TODO: automatic restart setup after reboot
 
                     return -1;
@@ -217,9 +222,10 @@ namespace Squirrel.Update
             }
 
             // setup package source directory
+            Log.Info($"Starting package install from directory " + tempFolder);
             splash?.SetProgressIndeterminate();
-            string packagePath = Path.Combine(tempFolder, packageName);
-            File.WriteAllBytes(packagePath, packageBytes);
+            string packagePath = Path.Combine(tempFolder, info.BundledPackageName);
+            File.WriteAllBytes(packagePath, info.BundledPackageBytes);
             var entry = ReleaseEntry.GenerateFromFile(packagePath);
             ReleaseEntry.WriteReleaseFile(new[] { entry }, Path.Combine(tempFolder, "RELEASES"));
 
@@ -242,12 +248,12 @@ namespace Squirrel.Update
 
             Log.Info("Starting install, writing to {0}", sourceDirectory);
 
-            if (!AssemblyRuntimeInfo.IsSingleFile) {
-                // when doing a standard build, our executable has multiple files/dependencies.
-                // we only get turned into a single exe upon publish - and this is required to install a package.
-                // in the future, we may consider searching for a pre-published version, or perhaps copy our dependencies.
-                throw new Exception("Cannot install a package from a debug build. Publish the Squirrel assembly and retrieve a single-file first.");
-            }
+            //if (!AssemblyRuntimeInfo.IsSingleFile) {
+            //    // when doing a standard build, our executable has multiple files/dependencies.
+            //    // we only get turned into a single exe upon publish - and this is required to install a package.
+            //    // in the future, we may consider searching for a pre-published version, or perhaps copy our dependencies.
+            //    throw new Exception("Cannot install a package from a debug build. Publish the Squirrel assembly and retrieve a single-file first.");
+            //}
 
             if (!File.Exists(releasesPath)) {
                 Log.Info("RELEASES doesn't exist, creating it at " + releasesPath);
