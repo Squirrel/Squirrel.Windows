@@ -2,8 +2,6 @@
 //
 
 #include "stdafx.h"
-#include "StubExecutable.h"
-
 #include "semver200.h"
 
 using namespace std;
