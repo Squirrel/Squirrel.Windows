@@ -79,7 +79,8 @@ namespace Squirrel.Update
 
             switch (opt.updateAction) {
             case UpdateAction.Setup:
-                return Setup(opt.target, opt.silentInstall).Result;
+                Setup(opt.target, opt.silentInstall).Wait();
+                break;
             case UpdateAction.Install:
                 var progressSource = new ProgressSource();
                 Install(opt.silentInstall, progressSource, Path.GetFullPath(opt.target)).Wait();
@@ -114,7 +115,7 @@ namespace Squirrel.Update
             return 0;
         }
 
-        static async Task<int> Setup(string setupPath, bool silentInstall)
+        static async Task Setup(string setupPath, bool silentInstall)
         {
             Log.Info($"Extracting bundled app data from '{setupPath}'.");
             var info = BundledSetupInfo.ReadFromFile(setupPath);
@@ -158,7 +159,7 @@ namespace Squirrel.Update
                     if (result != User32MessageBox.MessageBoxResult.OK) {
                         // user does not want to proceed
                         Log.Info($"User has cancelled setup");
-                        return -1;
+                        return;
                     }
                 }
 
@@ -198,11 +199,12 @@ namespace Squirrel.Update
                                 User32MessageBox.MessageBoxButtons.OK,
                                 User32MessageBox.MessageBoxIcon.Error);
                         }
-                        return -1;
+                        return;
                     }
                 }
 
                 if (rebootRequired) {
+                    Log.Info($"A restart is required, exiting...");
                     if (splash != null) {
                         User32MessageBox.Show(
                             splash.Handle,
@@ -212,10 +214,8 @@ namespace Squirrel.Update
                             User32MessageBox.MessageBoxIcon.Information);
                     }
 
-                    Log.Info($"A restart is required, exiting...");
                     // TODO: automatic restart setup after reboot
-
-                    return -1;
+                    return;
                 }
             }
 
@@ -236,7 +236,6 @@ namespace Squirrel.Update
 
             await Install(silentInstall, progressSource, tempFolder);
             splash?.Close();
-            return 0;
         }
 
         static async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
