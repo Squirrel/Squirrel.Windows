@@ -41,10 +41,8 @@ namespace Squirrel.Update
             try {
                 opt = new StartupOption(args);
             } catch (Exception ex) {
-                using (var logger = new SetupLogLogger(true, "OptionParsing") { Level = LogLevel.Info }) {
-                    SquirrelLocator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
-                    logger.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
-                }
+                var logp = new SetupLogLogger(true, UpdateAction.Unset) { Level = LogLevel.Info };
+                logp.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 throw;
             }
 
@@ -53,15 +51,14 @@ namespace Squirrel.Update
             bool logToTemp = opt.updateAction == UpdateAction.Uninstall
                 || opt.updateAction == UpdateAction.Setup;
 
-            using (var logger = new SetupLogLogger(logToTemp, opt.updateAction.ToString()) { Level = LogLevel.Info }) {
-                SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
+            var logger = new SetupLogLogger(logToTemp, opt.updateAction) { Level = LogLevel.Info };
+            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
 
-                try {
-                    return executeCommandLine(args);
-                } catch (Exception ex) {
-                    logger.Write("Finished with unhandled exception: " + ex, LogLevel.Fatal);
-                    throw;
-                }
+            try {
+                return executeCommandLine(args);
+            } catch (Exception ex) {
+                logger.Write("Finished with unhandled exception: " + ex, LogLevel.Fatal);
+                throw;
             }
         }
 
@@ -578,51 +575,6 @@ namespace Squirrel.Update
         {
             if (Progress != null)
                 Progress.Invoke(this, i);
-        }
-    }
-
-    class SetupLogLogger : SimpleSplat.ILogger, IDisposable
-    {
-        TextWriter inner;
-        readonly object gate = 42;
-        public SimpleSplat.LogLevel Level { get; set; }
-
-        public SetupLogLogger(bool saveInTemp, string commandSuffix = null)
-        {
-            for (int i = 0; i < 10; i++) {
-                try {
-                    var dir = saveInTemp ?
-                        Path.GetTempPath() :
-                        AssemblyRuntimeInfo.BaseDirectory;
-                    var fileName = commandSuffix == null ? String.Format($"Squirrel.{i}.log", i) : String.Format($"Squirrel-{commandSuffix}.{i}.log", i);
-                    var file = Path.Combine(dir, fileName.Replace(".0.log", ".log"));
-                    var str = File.Open(file, FileMode.Append, FileAccess.Write, FileShare.Read);
-                    inner = new StreamWriter(str, Encoding.UTF8, 4096, false) { AutoFlush = true };
-                    return;
-                } catch (Exception ex) {
-                    // Didn't work? Keep going
-                    Console.Error.WriteLine("Couldn't open log file, trying new file: " + ex.ToString());
-                }
-            }
-
-            inner = Console.Error;
-        }
-
-        public void Write(string message, LogLevel logLevel)
-        {
-            if (logLevel < Level) {
-                return;
-            }
-
-            lock (gate) inner.WriteLine($"[{DateTime.Now.ToString("dd/MM/yy HH:mm:ss")}] {logLevel.ToString().ToLower()}: {message}");
-        }
-
-        public void Dispose()
-        {
-            lock (gate) {
-                inner.Flush();
-                inner.Dispose();
-            }
         }
     }
 }
