@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Xml.Linq;
 using Squirrel.Lib;
 using Squirrel.NuGet;
@@ -14,7 +15,7 @@ using static Squirrel.NativeMethods;
 
 namespace Squirrel
 {
-    static class SquirrelAwareExecutableDetector
+    internal static class SquirrelAwareExecutableDetector
     {
         const string SQUIRREL_AWARE_KEY = "SquirrelAwareVersion";
 
@@ -34,25 +35,23 @@ namespace Squirrel
             if (!File.Exists(exePath)) return null;
             var fullname = Path.GetFullPath(exePath);
 
-            try {
-                return Utility.Retry<int?>(() => {
-                    try {
-                        var maniVer = GetManifestSquirrelAwareValue(exePath);
-                        if (maniVer != null)
-                            return GetManifestSquirrelAwareValue(exePath);
-                    } catch { }
+            for (int i = 0; i < 3; i++) {
+                try {
+                    var maniVer = GetManifestSquirrelAwareValue(exePath);
+                    if (maniVer != null)
+                        return GetManifestSquirrelAwareValue(exePath);
+                } catch { }
 
-                    try {
-                        var vblockVer = GetVersionBlockSquirrelAwareValue(exePath);
-                        if (vblockVer != null)
-                            return GetVersionBlockSquirrelAwareValue(exePath);
-                    } catch { }
+                try {
+                    var vblockVer = GetVersionBlockSquirrelAwareValue(exePath);
+                    if (vblockVer != null)
+                        return GetVersionBlockSquirrelAwareValue(exePath);
+                } catch { }
 
-                    throw new Exception("Unable to determine Squirrel version"); // triggers a retry
-                });
-            } catch {
-                return null;
+                Thread.Sleep(200);
             }
+
+            return null;
         }
 
         static int? GetVersionBlockSquirrelAwareValue(string executable)
