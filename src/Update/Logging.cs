@@ -21,10 +21,10 @@ namespace Squirrel.Update
             string name, archivename;
             if (saveInTemp || action == UpdateAction.Unset) {
                 name = "Squirrel.log";
-                archivename = "Squirrel.{###}.log";
+                archivename = "Squirrel.archive{###}.log";
             } else {
                 name = $"Squirrel-{action}.log";
-                archivename = $"Squirrel-{action}.{{###}}.log";
+                archivename = $"Squirrel-{action}.archive{{###}}.log";
             }
 
             // https://gist.github.com/chrisortman/1092889
