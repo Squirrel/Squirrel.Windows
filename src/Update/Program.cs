@@ -48,8 +48,10 @@ namespace Squirrel.Update
 
             // NB: Trying to delete the app directory while we have Setup.log
             // open will actually crash the uninstaller
-            bool logToTemp = opt.updateAction == UpdateAction.Uninstall
-                || opt.updateAction == UpdateAction.Setup;
+            bool logToTemp =
+                opt.updateAction == UpdateAction.Uninstall ||
+                opt.updateAction == UpdateAction.Setup ||
+                opt.updateAction == UpdateAction.Install;
 
             var logger = new SetupLogLogger(logToTemp, opt.updateAction) { Level = LogLevel.Info };
             SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
@@ -79,7 +81,7 @@ namespace Squirrel.Update
 
             switch (opt.updateAction) {
             case UpdateAction.Setup:
-                Setup(opt.target, opt.silentInstall).Wait();
+                Setup(opt.target, opt.silentInstall, opt.checkInstall).Wait();
                 break;
             case UpdateAction.Install:
                 var progressSource = new ProgressSource();
@@ -115,10 +117,41 @@ namespace Squirrel.Update
             return 0;
         }
 
-        static async Task Setup(string setupPath, bool silentInstall)
+        static async Task Setup(string setupPath, bool silentInstall, bool checkInstall)
         {
             Log.Info($"Extracting bundled app data from '{setupPath}'.");
             var info = BundledSetupInfo.ReadFromFile(setupPath);
+
+            if (checkInstall) {
+                // CS: migrated from MachineInstaller.cpp
+                // here we are being run by the MSI deployment tool. We should check if the app 
+                // is installed. if it is, we exit. If not, we install it silently. The goal is
+                // to ensure that all users of a system will always have this app installed.
+                Log.Info($"Has --checkInstall argument, verifying machine-wide installation");
+
+                // NB: Users often get into the sitch where they install the MSI, then try to
+                // install the standalone package on top of that. In previous versions we tried
+                // to detect if the app was properly installed, but now we're taking the much 
+                // more conservative approach, that if the package dir exists in any way, we're
+                // bailing out
+
+                // C:\Users\Username\AppData\Local\$pkgName
+                var localadinstall = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), info.AppId);
+                if (Directory.Exists(localadinstall)) {
+                    Log.Info($"App install detected at '{localadinstall}', exiting...");
+                    return;
+                }
+
+                // C:\ProgramData\$pkgName\$username
+                var programdatainstall = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), info.AppId, Environment.UserName);
+                if (Directory.Exists(programdatainstall)) {
+                    Log.Info($"App install detected at '{programdatainstall}', exiting...");
+                    return;
+                }
+
+                Log.Info("Installation for this user was not found. Beginning silent setup...");
+                silentInstall = true;
+            }
 
             using var _t = Utility.WithTempDirectory(out var tempFolder);
 
@@ -142,9 +175,9 @@ namespace Squirrel.Update
             if (missingFrameworks.Any()) {
                 Log.Info($"The following components are missing: " + String.Join(", ", missingFrameworks.Select(m => m.Id)));
                 string message = missingFrameworks.Length > 1
-                    ? $"{info.AppName} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
+                    ? $"{info.AppFriendlyName} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
                       $"Would you like to install these now?"
-                    : $"{info.AppName} requires {missingFrameworks.First().DisplayName} to continue, would you like to install it now?";
+                    : $"{info.AppFriendlyName} requires {missingFrameworks.First().DisplayName} to continue, would you like to install it now?";
 
                 // if running in attended mode, ask the user if they want to continue. otherwise, proceed
                 if (splash != null) {

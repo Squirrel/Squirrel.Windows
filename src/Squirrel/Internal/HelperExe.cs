@@ -19,12 +19,15 @@ namespace Squirrel
         public static string UpdatePath => FindHelperExecutable("Update.exe", _searchPaths);
         public static string StubExecutablePath => FindHelperExecutable("StubExecutable.exe", _searchPaths);
         public static string SingleFileHostPath => FindHelperExecutable("singlefilehost.exe", _searchPaths);
+        public static string WixTemplatePath => FindHelperExecutable("template.wxs", _searchPaths);
 
         // private so we don't expose paths to internal tools. these should be exposed as a helper function
         private static string NugetPath => FindHelperExecutable("NuGet.exe", _searchPaths);
         private static string RceditPath => FindHelperExecutable("rcedit.exe", _searchPaths);
         private static string SevenZipPath => FindHelperExecutable("7z.exe", _searchPaths);
         private static string SignToolPath => FindHelperExecutable("signtool.exe", _searchPaths);
+        private static string WixCandlePath => FindHelperExecutable("candle.exe", _searchPaths);
+        private static string WixLightPath => FindHelperExecutable("light.exe", _searchPaths);
 
         private static List<string> _searchPaths = new List<string>();
         private static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(HelperExe));
@@ -42,6 +45,8 @@ namespace Squirrel
                 AddSearchPath(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor"));
                 AddSearchPath(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "7zip"));
                 AddSearchPath(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix"));
+#else
+                AddSearchPath(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "bin"));
 #endif
             }
         }
@@ -59,7 +64,9 @@ namespace Squirrel
 
             additionalDirs = additionalDirs ?? Enumerable.Empty<string>();
             var dirs = (new[] { AppContext.BaseDirectory, Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
-                .Concat(additionalDirs ?? Enumerable.Empty<string>()).Select(Path.GetFullPath);
+                .Concat(additionalDirs ?? Enumerable.Empty<string>())
+                .Where(d => !String.IsNullOrEmpty(d))
+                .Select(Path.GetFullPath);
 
             var exe = @".\" + toFind;
             var result = dirs
@@ -70,6 +77,41 @@ namespace Squirrel
                 throw new Exception($"Could not find helper '{exe}'. If not in the default location, add additional search paths using command arguments.");
 
             return result ?? exe;
+        }
+
+        public static async Task CompileWixTemplateToMsi(string wxsTarget, string outputFile)
+        {
+            var workingDir = Path.GetDirectoryName(wxsTarget);
+            var targetName = Path.GetFileNameWithoutExtension(wxsTarget);
+            var objFile = Path.Combine(workingDir, targetName + ".wixobj");
+
+            try {
+                // Candle reprocesses and compiles WiX source files into object files (.wixobj).
+                var candleParams = new string[] { "-nologo", "-ext", "WixNetFxExtension", "-out", objFile, wxsTarget };
+                var processResult = await Utility.InvokeProcessAsync(WixCandlePath, candleParams, CancellationToken.None, workingDir);
+
+                if (processResult.Item1 != 0) {
+                    var msg = String.Format(
+                        "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
+                        "candle.exe", candleParams, processResult.Item2);
+
+                    throw new Exception(msg);
+                }
+
+                // Light links and binds one or more .wixobj files and creates a Windows Installer database (.msi or .msm). 
+                var lightParams = new string[] { "-ext", "WixNetFxExtension", "-spdb", "-sval", "-out", outputFile, objFile };
+                processResult = await Utility.InvokeProcessAsync(WixLightPath, lightParams, CancellationToken.None, workingDir);
+
+                if (processResult.Item1 != 0) {
+                    var msg = String.Format(
+                        "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
+                        "light.exe", lightParams, processResult.Item2);
+
+                    throw new Exception(msg);
+                }
+            } finally {
+                Utility.DeleteFileHarder(objFile);
+            }
         }
 
         public static async Task SetExeIcon(string exePath, string iconPath)

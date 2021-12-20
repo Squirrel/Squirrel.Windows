@@ -265,7 +265,7 @@ namespace SquirrelCli
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
             var bundledzp = new ZipPackage(package);
-            var targetSetupExe = Path.Combine(di.FullName, options.setupName + ".exe");
+            var targetSetupExe = Path.Combine(di.FullName, $"{bundledzp.Id}Setup.exe");
             File.Copy(HelperExe.SetupPath, targetSetupExe, true);
             Utility.Retry(() => HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, bundledzp, setupIcon).Wait());
 
@@ -274,7 +274,8 @@ namespace SquirrelCli
 
             Log.Info($"Creating Setup bundle");
             var infosave = new BundledSetupInfo() {
-                AppName = bundledzp.Title ?? bundledzp.Id,
+                AppId = bundledzp.Id,
+                AppFriendlyName = bundledzp.Title ?? bundledzp.Id,
                 BundledPackageBytes = File.ReadAllBytes(newestReleasePath),
                 BundledPackageName = Path.GetFileName(newestReleasePath),
                 RequiredFrameworks = requiredFrameworks.ToArray(),
@@ -287,21 +288,55 @@ namespace SquirrelCli
 
             HelperExe.SignPEFile(targetSetupExe, signingOpts).Wait();
 
-            //setupPath = @"C:\Source\Clowd\clowd-windows\modules\Clowd.Squirrel\build\Debug\Win32\Setup.exe";
-            //string onlineSource = "https://caesay.com/clowd-updates";
-            //byte[] offlineSourcesZip = new byte[0];
-
-            //SetupResourceWriter.WriteZipToSetup(targetSetupExe, newestReleasePath, frameworkVersion, backgroundGif);
-
-            //if (generateMsi) {
-            //    createMsiPackage(targetSetupExe, new ZipPackage(package), packageAs64Bit).Wait();
-
-            //    if (signingOpts != null) {
-            //        signPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
-            //    }
-            //}
+            if (!String.IsNullOrEmpty(options.msi)) {
+                bool x64 = options.msi.Equals("x64");
+                createMsiPackage(targetSetupExe, new ZipPackage(package), x64).Wait();
+                HelperExe.SignPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
+            }
 
             Log.Info("Done");
+        }
+
+        static async Task createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
+        {
+            Log.Info($"Compiling machine-wide msi deployment tool in {(packageAs64Bit ? "64-bit" : "32-bit")} mode");
+
+            var setupExeDir = Path.GetDirectoryName(setupExe);
+            var setupName = Path.GetFileNameWithoutExtension(setupExe);
+            var company = String.Join(",", package.Authors);
+            var culture = CultureInfo.GetCultureInfo(package.Language ?? "").TextInfo.ANSICodePage;
+
+            var templateText = File.ReadAllText(HelperExe.WixTemplatePath);
+            var templateData = new Dictionary<string, string> {
+                { "Id", package.Id },
+                { "Title", package.Title },
+                { "Author", company },
+                { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
+                { "Summary", package.Summary ?? package.Description ?? package.Id },
+                { "Codepage", $"{culture}" },
+                { "Platform", packageAs64Bit ? "x64" : "x86" },
+                { "ProgramFilesFolder", packageAs64Bit ? "ProgramFiles64Folder" : "ProgramFilesFolder" },
+                { "Win64YesNo", packageAs64Bit ? "yes" : "no" },
+                { "SetupName", setupName }
+            };
+
+            // NB: We need some GUIDs that are based on the package ID, but unique (i.e.
+            // "Unique but consistent").
+            for (int i = 1; i <= 10; i++) {
+                templateData[String.Format("IdAsGuid{0}", i)] = Utility.CreateGuidFromHash(String.Format("{0}:{1}", package.Id, i)).ToString();
+            }
+
+            var templateResult = CopStache.Render(templateText, templateData);
+
+            var wxsTarget = Path.Combine(setupExeDir, setupName + ".wxs");
+            File.WriteAllText(wxsTarget, templateResult, Encoding.UTF8);
+
+            try {
+                var msiTarget = Path.Combine(setupExeDir, setupName + "_DeploymentTool.msi");
+                await HelperExe.CompileWixTemplateToMsi(wxsTarget, msiTarget);
+            } finally {
+                File.Delete(wxsTarget);
+            }
         }
 
         static async Task createExecutableStubForExe(string exeToCopy)

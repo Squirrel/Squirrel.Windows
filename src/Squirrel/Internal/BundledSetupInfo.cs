@@ -6,7 +6,8 @@ namespace Squirrel.Lib
 {
     internal class BundledSetupInfo
     {
-        public string AppName { get; set; } = "This Application";
+        public string AppId { get; set; }
+        public string AppFriendlyName { get; set; } = "This Application";
         public string[] RequiredFrameworks { get; set; } = new string[0];
         public string BundledPackageName { get; set; }
         public byte[] BundledPackageBytes { get; set; }
@@ -20,7 +21,8 @@ namespace Squirrel.Lib
         {
             var bundle = new BundledSetupInfo();
             using var reader = new ResourceReader(exePath);
-            bundle.AppName = ReadString(reader, 201);
+            bundle.AppId = ReadString(reader, 200);
+            bundle.AppFriendlyName = ReadString(reader, 201);
             bundle.SplashImageBytes = ReadBytes(reader, 202);
             bundle.RequiredFrameworks = ReadString(reader, 203)?.Split(',') ?? new string[0];
             bundle.BundledPackageName = ReadString(reader, 204);
@@ -45,7 +47,8 @@ namespace Squirrel.Lib
         public void WriteToFile(string exePath)
         {
             using var writer = new ResourceUpdater(exePath);
-            WriteValue(writer, 201, AppName);
+            WriteValue(writer, 200, AppId);
+            WriteValue(writer, 201, AppFriendlyName);
             WriteValue(writer, 202, SplashImageBytes);
             WriteValue(writer, 203, String.Join(",", RequiredFrameworks ?? new string[0]));
             WriteValue(writer, 204, BundledPackageName);

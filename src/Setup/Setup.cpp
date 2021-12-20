@@ -84,7 +84,7 @@ void unzipSingleFile(BYTE* zipBuf, DWORD cZipBuf, wstring fileLocation, std::fun
 }
 
 // https://stackoverflow.com/a/17387176/184746
-void ThrowLastWin32Error()
+void throwLastWin32Error()
 {
     DWORD errorMessageID = ::GetLastError();
     if (errorMessageID == 0) {
@@ -110,7 +110,7 @@ void wexec(const wchar_t* cmd)
 
     PROCESS_INFORMATION pi = { 0 };
     if (!CreateProcess(NULL, szCmdline, NULL, NULL, false, 0, NULL, NULL, &si, &pi)) {
-        ThrowLastWin32Error();
+        throwLastWin32Error();
     }
 
     WaitForSingleObject(pi.hProcess, INFINITE);
@@ -143,18 +143,19 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         });
         unzipSingleFile(zipBuf, cZipBuf, updaterPath, endsWithSquirrel);
 
-        // run installer
-        wstring cmd = L"\"" + updaterPath + L"\" --setup \"" + myPath + L"\"";
+        // run installer and forward our command line arguments
+        wstring cmd = L"\"" + updaterPath + L"\" --setup \"" + myPath + L"\" " + pCmdLine;
         wexec(cmd.c_str());
     }
     catch (std::exception ex) {
         string msg = ex.what();
         // just use the _A function because std does not have a wexception
-        MessageBoxA(0, string("An error occurred preventing setup from starting: " + msg + ". Please contact the application author.").c_str(), "Setup Error", MB_OK | MB_ICONERROR);
+        MessageBoxA(0, string("An error occurred while running setup: " + msg + ". Please contact the application author.").c_str(), "Setup Error", MB_OK | MB_ICONERROR);
     }
     catch (...) {
-        MessageBox(0, L"An unknown error occurred while starting setup. Please contact the application author.", L"Setup Error", MB_OK | MB_ICONERROR);
+        MessageBox(0, L"An unknown error occurred while running setup. Please contact the application author.", L"Setup Error", MB_OK | MB_ICONERROR);
     }
 
+    // clean-up after ourselves
     DeleteFile(updaterPath.c_str());
 }

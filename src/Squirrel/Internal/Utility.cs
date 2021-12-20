@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
@@ -224,12 +224,12 @@ namespace Squirrel
         /// This function will escape command line arguments such that CommandLineToArgvW is guarenteed to produce the same output as the 'args' parameter. 
         /// It also will automatically execute wine if trying to run an exe while not on windows.
         /// </summary>
-        public static Task<(int ExitCode, string StdOutput)> InvokeProcessAsync(string fileName, IEnumerable<string> args, CancellationToken ct)
+        public static Task<(int ExitCode, string StdOutput)> InvokeProcessAsync(string fileName, IEnumerable<string> args, CancellationToken ct, string workingDirectory = "")
         {
             if (Environment.OSVersion.Platform != PlatformID.Win32NT && fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) {
-                return InvokeProcessUnsafeAsync(CreateProcessStartInfo("wine", ArgsToCommandLine(new string[] { fileName }.Concat(args))), ct);
+                return InvokeProcessUnsafeAsync(CreateProcessStartInfo("wine", ArgsToCommandLine(new string[] { fileName }.Concat(args)), workingDirectory), ct);
             } else {
-                return InvokeProcessUnsafeAsync(CreateProcessStartInfo(fileName, ArgsToCommandLine(args)), ct);
+                return InvokeProcessUnsafeAsync(CreateProcessStartInfo(fileName, ArgsToCommandLine(args), workingDirectory), ct);
             }
         }
 

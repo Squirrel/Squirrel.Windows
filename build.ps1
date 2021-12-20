@@ -19,23 +19,22 @@ foreach ($Folder in $Folders) {
 &"$MSBuildPath" /verbosity:minimal /restore /p:Configuration=Release
 
 # Build single-exe packaged projects
-dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\Update\Update.csproj" -o "$Out"
+# New-Item -Path "$Out" -Name "win-x86" -ItemType "directory"
+$BinOut = $Out
 dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\SquirrelCli\SquirrelCli.csproj" -o "$Out"
+dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\Update\Update.csproj" -o "$BinOut"
 
 # Copy over all files we need
-Copy-Item "$In\Win32\Setup.exe" -Destination "$Out"
-# Copy-Item "$In\Win32\Setup.pdb" -Destination "$Out"
-Copy-Item "$In\Win32\StubExecutable.exe" -Destination "$Out"
-# Copy-Item "$In\Win32\WriteZipToSetup.exe" -Destination "$Out"
-# Copy-Item "$In\Win32\WriteZipToSetup.pdb" -Destination "$Out"
-
-Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$Out" -Recurse
-# Copy-Item -Path "$PSScriptRoot\vendor\wix\*" -Destination "$Out" -Recurse
-Copy-Item "$PSScriptRoot\vendor\nuget.exe" -Destination "$Out"
-Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$Out"
-Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$Out"
-Copy-Item "$PSScriptRoot\vendor\singlefilehost.exe" -Destination "$Out"
+Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$BinOut" -Recurse
+Copy-Item -Path "$PSScriptRoot\vendor\wix\*" -Destination "$BinOut" -Recurse
+Copy-Item "$In\Win32\Setup.exe" -Destination "$BinOut"
+Copy-Item "$In\Win32\StubExecutable.exe" -Destination "$BinOut"
+Copy-Item "$PSScriptRoot\vendor\nuget.exe" -Destination "$BinOut"
+Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$BinOut"
+Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$BinOut"
+Copy-Item "$PSScriptRoot\vendor\singlefilehost.exe" -Destination "$BinOut"
 
 Remove-Item "$Out\*.pdb"
+Remove-Item "$BinOut\*.pdb"
 
 Write-Output "Successfully copied files to './build/publish'"

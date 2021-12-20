@@ -13,13 +13,13 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="{{ProgramFilesFolder}}">
-        <Directory Id="APPLICATIONROOTDIRECTORY" Name="{{Title}} Deployment" />
+        <Directory Id="APPLICATIONROOTDIRECTORY" Name="{{Title}} Deployment Tool" />
       </Directory>
     </Directory>
 
     <DirectoryRef Id="APPLICATIONROOTDIRECTORY">
       <Component Id="{{Id}}.exe" Guid="{{IdAsGuid2}}" Win64="{{Win64YesNo}}">
-        <File Id="{{Id}}.exe" Name="{{Id}}DeploymentTool.exe" Source="./Setup.exe" KeyPath="yes"/>
+        <File Id="{{Id}}.exe" Name="{{Id}}DeploymentTool.exe" Source="./{{SetupName}}.exe" KeyPath="yes"/>
       </Component>
     </DirectoryRef>
 

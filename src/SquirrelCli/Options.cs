@@ -27,9 +27,9 @@ namespace SquirrelCli
         public string updateIcon { get; private set; }
         public string appIcon { get; private set; }
         public string setupIcon { get; private set; }
-        public string setupName { get; private set; } = "Setup";
         public bool noDelta { get; private set; }
         public bool allowUnaware { get; private set; }
+        public string msi { get; private set; }
 
         public ReleasifyOptions()
         {
@@ -46,21 +46,34 @@ namespace SquirrelCli
             Add("updateIcon=", "ICO file that will be used for Update.exe", v => updateIcon = v);
             Add("appIcon=", "ICO file that will be used in the 'Apps and Features' list.", v => appIcon = v);
             Add("setupIcon=", "ICO file that will be used for Setup.exe", v => setupIcon = v);
-            Add("setupName=", "The name of the app installer exe without the extension (default: 'Setup')", v => setupName = v);
             Add("splashImage=", "Image to be displayed during installation (can be jpg, png, gif, etc)", v => splashImage = v);
             Add("noDelta", "Skip the generation of delta packages to save time", v => noDelta = true);
             Add("addSearchPath=", "Add additional search directories when looking for helper exe's such as Setup.exe, Update.exe, etc", v => HelperExe.AddSearchPath(v));
+            Add("msi=", "Will generate a .msi machine-wide deployment tool. If installed on a machine, this msi will silently install the releasified " +
+                "app each time a user signs in if it is not already installed. This value must be either 'x86' 'x64'.", v => msi = v.ToLower());
         }
 
         public override void Validate()
+        {
+            ValidateInternal(true);
+        }
+
+        protected virtual void ValidateInternal(bool checkPackage)
         {
             IsValidFile(nameof(appIcon), ".ico");
             IsValidFile(nameof(setupIcon), ".ico");
             IsValidFile(nameof(updateIcon), ".ico");
             IsValidFile(nameof(splashImage));
             IsValidUrl(nameof(baseUrl));
-            IsRequired(nameof(package));
-            IsValidFile(nameof(package), ".nupkg");
+
+            if (checkPackage) {
+                IsRequired(nameof(package));
+                IsValidFile(nameof(package), ".nupkg");
+            }
+
+            if (!String.IsNullOrEmpty(msi))
+                if (!msi.Equals("x86") && !msi.Equals("x64"))
+                    throw new OptionValidationException($"Argument 'msi': File must be either 'x86' or 'x64'. Actual value was '{msi}'.");
         }
     }
 
@@ -88,9 +101,7 @@ namespace SquirrelCli
         public override void Validate()
         {
             IsRequired(nameof(packName), nameof(packVersion), nameof(packAuthors), nameof(packDirectory));
-            IsValidFile(nameof(setupIcon), ".ico");
-            IsValidFile(nameof(splashImage));
-            IsValidUrl(nameof(baseUrl));
+            base.ValidateInternal(false);
         }
     }
 
