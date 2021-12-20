@@ -140,9 +140,9 @@ namespace SquirrelCli
             if (!String.IsNullOrWhiteSpace(options.framework)) {
                 var frameworks = options.framework.Split(",");
                 foreach (var f in frameworks) {
-                    var r = RuntimeInstaller.GetRuntimeInfoByName(f);
+                    var r = Runtimes.GetRuntimeByName(f);
                     if (r == null) {
-                        throw new Exception($"Runtime '{f}' is unsupported. Supported runtimes are: {String.Join(", ", RuntimeInstaller.All.Select(r => r.Id))}");
+                        throw new Exception($"Runtime '{f}' is unsupported. Supported runtimes are: {String.Join(", ", Runtimes.All.Select(r => r.Id))}");
                     }
                     requiredFrameworks.Add(r.Id);
                 }

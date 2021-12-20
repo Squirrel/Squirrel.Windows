@@ -163,91 +163,81 @@ namespace Squirrel.Update
                     info.SetupIconBytes?.Length > 0 ? new Icon(new MemoryStream(info.SetupIconBytes)) : null,
                     (Bitmap) Image.FromStream(new MemoryStream(info.SplashImageBytes)));
                 splash.Show();
+                splash.SetProgressIndeterminate();
+            }
+
+            void showUserMsg(bool error, string message, string title)
+            {
+                if (!silentInstall) {
+                    Log.Info("User shown message: " + message);
+                    User32MessageBox.Show(splash?.Handle ?? IntPtr.Zero, message, info.AppFriendlyName + " - " + title, User32MessageBox.MessageBoxButtons.OK,
+                        error ? User32MessageBox.MessageBoxIcon.Error : User32MessageBox.MessageBoxIcon.Information);
+                } else {
+                    Log.Info("User message suppressed (updater in silent mode): " + message);
+                }
+            }
+
+            bool askUserQuestion(string message, string title)
+            {
+                if (!silentInstall) {
+                    var result = User32MessageBox.Show(splash?.Handle ?? IntPtr.Zero, message, info.AppFriendlyName + " - " + title, User32MessageBox.MessageBoxButtons.OKCancel,
+                        User32MessageBox.MessageBoxIcon.Question, User32MessageBox.MessageBoxResult.Cancel);
+                    Log.Info("User prompted: '" + message + "' -- User answered " + result.ToString());
+                    return User32MessageBox.MessageBoxResult.OK == result;
+                } else {
+                    Log.Info("User prompt suppressed (updater in silent mode): '" + message + "' -- Automatically answering Cancel.");
+                    return false;
+                }
             }
 
             var missingFrameworks = info.RequiredFrameworks
-                .Select(f => RuntimeInstaller.GetRuntimeInfoByName(f))
+                .Select(f => Runtimes.GetRuntimeByName(f))
                 .Where(f => f != null)
                 .Where(f => !f.CheckIsInstalled().Result)
                 .ToArray();
 
-            // prompt user to install missing dependency
+            // prompt user to install missing dependencies
             if (missingFrameworks.Any()) {
-                Log.Info($"The following components are missing: " + String.Join(", ", missingFrameworks.Select(m => m.Id)));
                 string message = missingFrameworks.Length > 1
                     ? $"{info.AppFriendlyName} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
                       $"Would you like to install these now?"
-                    : $"{info.AppFriendlyName} requires {missingFrameworks.First().DisplayName} to continue, would you like to install it now?";
+                    : $"{info.AppFriendlyName} requires {missingFrameworks.First().DisplayName} installed to continue, would you like to install it now?";
 
-                // if running in attended mode, ask the user if they want to continue. otherwise, proceed
-                if (splash != null) {
-                    var result = User32MessageBox.Show(
-                        splash.Handle,
-                        message,
-                        "Missing System Components",
-                        User32MessageBox.MessageBoxButtons.OKCancel,
-                        User32MessageBox.MessageBoxIcon.Question,
-                        User32MessageBox.MessageBoxResult.Cancel);
-
-                    if (result != User32MessageBox.MessageBoxResult.OK) {
-                        // user does not want to proceed
-                        Log.Info($"User has cancelled setup");
-                        return;
-                    }
+                if (!askUserQuestion(message, "Missing System Components")) {
+                    return; // user cancelled install
                 }
 
                 bool rebootRequired = false;
 
+                // iterate through each missing dependency and download/run the installer.
                 foreach (var f in missingFrameworks) {
-                    var url = await f.GetDownloadUrl();
                     var localPath = Path.Combine(tempFolder, f.Id + ".exe");
-
+                    await f.DownloadToFile(localPath, e => splash?.SetProgress((ulong) e.BytesReceived, (ulong) e.TotalBytesToReceive));
                     splash?.SetProgressIndeterminate();
 
-                    Log.Info($"Downloading {f.Id} from {url}");
-                    using var wc = Utility.CreateWebClient();
-                    wc.DownloadProgressChanged += (s, e) => { splash?.SetProgress((ulong) e.BytesReceived, (ulong) e.TotalBytesToReceive); };
-                    await wc.DownloadFileTaskAsync(url, localPath);
-
-                    splash?.SetNoProgress();
-
-                    // hide splash screen while the runtime installer is running
+                    // hide splash screen while the runtime installer is running so the user can see progress
                     splash?.Hide();
-                    Log.Info($"Installing {f.Id} from {localPath}");
-                    var exitcode = await RuntimeInstaller.InvokeInstaller(localPath, silentInstall);
+                    var exitcode = await f.InvokeInstaller(localPath, silentInstall);
                     splash?.Show();
 
-                    if (exitcode == 1641 || exitcode == 3010) {
+                    if (exitcode == RuntimeInstallResult.RestartRequired) {
                         rebootRequired = true;
                         continue;
-                    }
-
-                    if (exitcode != 0) {
-                        Log.Info($"{f.Id} installer exited with error code {exitcode}");
-                        if (splash != null) {
-                            User32MessageBox.Show(
-                                splash.Handle,
-                                $"Failed to install {f.DisplayName}, you can try installing it manually and then re-running Setup.",
-                                $"Error installing {f.DisplayName}",
-                                User32MessageBox.MessageBoxButtons.OK,
-                                User32MessageBox.MessageBoxIcon.Error);
-                        }
+                    } else if (exitcode != RuntimeInstallResult.Success) {
+                        string rtmsg = exitcode switch {
+                            RuntimeInstallResult.UserCancelled => $"User cancelled install of {f.DisplayName}. Setup can not continue and will now exit.",
+                            RuntimeInstallResult.AnotherInstallInProgress => "Another installation is already in progress. Complete that installation before proceeding with this install.",
+                            RuntimeInstallResult.SystemDoesNotMeetRequirements => $"This computer does not meet the system requirements for {f.DisplayName}.",
+                            _ => $"{f.DisplayName} installer exited with error code '{exitcode}'.",
+                        };
+                        showUserMsg(true, rtmsg, $"Error installing {f.DisplayName}");
                         return;
                     }
                 }
 
                 if (rebootRequired) {
-                    Log.Info($"A restart is required, exiting...");
-                    if (splash != null) {
-                        User32MessageBox.Show(
-                            splash.Handle,
-                            $"A restart is required before Setup can continue.",
-                            $"Restart system",
-                            User32MessageBox.MessageBoxButtons.OK,
-                            User32MessageBox.MessageBoxIcon.Information);
-                    }
-
                     // TODO: automatic restart setup after reboot
+                    showUserMsg(false, $"A restart is required before Setup can continue.", "Restart required");
                     return;
                 }
             }
