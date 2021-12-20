@@ -148,7 +148,7 @@ namespace SquirrelCli.Sources
 
             private static string GetSHA1Checksum(byte[] bytes)
             {
-                var sha = new System.Security.Cryptography.SHA1Managed();
+                var sha = System.Security.Cryptography.SHA1.Create();
                 byte[] checksum = sha.ComputeHash(bytes);
                 return BitConverter.ToString(checksum).Replace("-", String.Empty);
             }

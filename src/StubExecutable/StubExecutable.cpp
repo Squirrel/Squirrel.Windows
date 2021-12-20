@@ -61,6 +61,8 @@ std::wstring FindLatestAppDir()
             continue;
         }
 
+        
+#pragma warning( disable : 4244 ) // warning - conversion from 'wchar_t' to 'const _Elem', possible loss of data
         std::string s(appVer.begin(), appVer.end());
 
         version::Semver200_version thisVer(s);

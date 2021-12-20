@@ -52,7 +52,6 @@ bool hasEnding(std::wstring const& fullString, std::wstring const& ending)
 void unzipSingleFile(BYTE* zipBuf, DWORD cZipBuf, wstring fileLocation, std::function<bool(ZIPENTRY&)>& predicate)
 {
     HZIP zipFile = OpenZip(zipBuf, cZipBuf, NULL);
-    //SetUnzipBaseDir(zipFile, targetDir);
 
     bool unzipSuccess = false;
 
@@ -60,8 +59,6 @@ void unzipSingleFile(BYTE* zipBuf, DWORD cZipBuf, wstring fileLocation, std::fun
     int index = 0;
     do {
         ZIPENTRY zentry;
-        wchar_t targetFile[MAX_PATH];
-
         zr = GetZipItem(zipFile, index, &zentry);
         if (zr != ZR_OK && zr != ZR_MORE) {
             break;
