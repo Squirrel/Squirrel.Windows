@@ -47,6 +47,3 @@
 *.fsproj text merge=union 
 *.dbproj text merge=union 
 *.sln text eol=crlf merge=union 
-
-src/Setup/resource.h binary
-src/Setup/Setup.rc binary
