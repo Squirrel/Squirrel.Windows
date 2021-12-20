@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
@@ -307,8 +307,16 @@ namespace Squirrel
 
         public static DirectoryInfo GetTempDirectory(string localAppDirectory)
         {
-            var tempDir = Environment.GetEnvironmentVariable("SQUIRREL_TEMP");
-            tempDir = tempDir ?? Path.Combine(localAppDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SquirrelTemp");
+#if DEBUG
+            const string TEMP_ENV_VAR = "CLOWD_SQUIRREL_TEMP_DEBUG";
+            const string TEMP_DIR_NAME = "SquirrelClowdTempDebug";
+#else
+            const string TEMP_ENV_VAR = "CLOWD_SQUIRREL_TEMP";
+            const string TEMP_DIR_NAME = "SquirrelClowdTemp";
+#endif
+
+            var tempDir = Environment.GetEnvironmentVariable(TEMP_ENV_VAR);
+            tempDir = tempDir ?? Path.Combine(localAppDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), TEMP_DIR_NAME);
 
             var di = new DirectoryInfo(tempDir);
             if (!di.Exists) di.Create();
