@@ -198,7 +198,7 @@ namespace Squirrel
             var newData = File.ReadAllBytes(targetFile.FullName);
 
             if (bytesAreIdentical(oldData, newData)) {
-                this.Log().Info("{0} hasn't changed, writing dummy file", relativePath);
+                this.Log().Debug("{0} hasn't changed, writing dummy file", relativePath);
 
                 File.Create(targetFile.FullName + ".diff").Dispose();
                 File.Create(targetFile.FullName + ".shasum").Dispose();
