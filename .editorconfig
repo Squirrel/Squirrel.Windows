@@ -195,3 +195,6 @@ cpp_wrap_preserve_blocks = one_liners
 
 [*.csproj] 
 indent_size = 2
+
+[*.manifest] 
+indent_size = 2

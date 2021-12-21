@@ -16,8 +16,8 @@
 
   <ItemGroup>
     <PackageReference Include="NLog" Version="5.0.0-preview.3" />
-    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
     <PackageReference Include="Vanara.PInvoke.User32" Version="3.3.14" />
+    <PackageReference Include="Vanara.PInvoke.SHCore" Version="3.3.14" />
   </ItemGroup>
 
   <ItemGroup>

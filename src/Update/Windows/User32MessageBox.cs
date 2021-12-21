@@ -4,7 +4,7 @@ using System.Text;
 
 // from clowd-windows/Clowd.PlatformUtil/Windows/User32MessageBox.cs
 
-namespace Squirrel.Update
+namespace Squirrel.Update.Windows
 {
     internal static class User32MessageBox
     {

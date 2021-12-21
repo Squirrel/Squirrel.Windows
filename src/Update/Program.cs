@@ -14,7 +14,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Squirrel.NuGet;
 using Squirrel.Lib;
-using System.Drawing;
 
 namespace Squirrel.Update
 {
@@ -154,41 +153,7 @@ namespace Squirrel.Update
             }
 
             using var _t = Utility.WithTempDirectory(out var tempFolder);
-
-            // show splash screen
-            SplashWindow splash = null;
-            if (!silentInstall && info.SplashImageBytes?.Length > 0) {
-                Log.Info($"Showing splash window");
-                splash = new SplashWindow(
-                    info.SetupIconBytes?.Length > 0 ? new Icon(new MemoryStream(info.SetupIconBytes)) : null,
-                    (Bitmap) Image.FromStream(new MemoryStream(info.SplashImageBytes)));
-                splash.Show();
-                splash.SetProgressIndeterminate();
-            }
-
-            void showUserMsg(bool error, string message, string title)
-            {
-                if (!silentInstall) {
-                    Log.Info("User shown message: " + message);
-                    User32MessageBox.Show(splash?.Handle ?? IntPtr.Zero, message, info.AppFriendlyName + " - " + title, User32MessageBox.MessageBoxButtons.OK,
-                        error ? User32MessageBox.MessageBoxIcon.Error : User32MessageBox.MessageBoxIcon.Information);
-                } else {
-                    Log.Info("User message suppressed (updater in silent mode): " + message);
-                }
-            }
-
-            bool askUserQuestion(string message, string title)
-            {
-                if (!silentInstall) {
-                    var result = User32MessageBox.Show(splash?.Handle ?? IntPtr.Zero, message, info.AppFriendlyName + " - " + title, User32MessageBox.MessageBoxButtons.OKCancel,
-                        User32MessageBox.MessageBoxIcon.Question, User32MessageBox.MessageBoxResult.Cancel);
-                    Log.Info("User prompted: '" + message + "' -- User answered " + result.ToString());
-                    return User32MessageBox.MessageBoxResult.OK == result;
-                } else {
-                    Log.Info("User prompt suppressed (updater in silent mode): '" + message + "' -- Automatically answering Cancel.");
-                    return false;
-                }
-            }
+            ISplashWindow splash = new Windows.User32SplashWindow(info.AppFriendlyName, silentInstall, info.SetupIconBytes, info.SplashImageBytes);
 
             var missingFrameworks = info.RequiredFrameworks
                 .Select(f => Runtimes.GetRuntimeByName(f))
@@ -203,7 +168,7 @@ namespace Squirrel.Update
                       $"Would you like to install these now?"
                     : $"{info.AppFriendlyName} requires {missingFrameworks.First().DisplayName} installed to continue, would you like to install it now?";
 
-                if (!askUserQuestion(message, "Missing System Components")) {
+                if (!splash.ShowQuestionDialog("Missing System Components", message)) {
                     return; // user cancelled install
                 }
 
@@ -212,13 +177,13 @@ namespace Squirrel.Update
                 // iterate through each missing dependency and download/run the installer.
                 foreach (var f in missingFrameworks) {
                     var localPath = Path.Combine(tempFolder, f.Id + ".exe");
-                    await f.DownloadToFile(localPath, e => splash?.SetProgress((ulong) e.BytesReceived, (ulong) e.TotalBytesToReceive));
-                    splash?.SetProgressIndeterminate();
+                    await f.DownloadToFile(localPath, e => splash.SetProgress((ulong) e.BytesReceived, (ulong) e.TotalBytesToReceive));
+                    splash.SetProgressIndeterminate();
 
                     // hide splash screen while the runtime installer is running so the user can see progress
-                    splash?.Hide();
+                    splash.Hide();
                     var exitcode = await f.InvokeInstaller(localPath, silentInstall);
-                    splash?.Show();
+                    splash.Show();
 
                     if (exitcode == RuntimeInstallResult.RestartRequired) {
                         rebootRequired = true;
@@ -230,21 +195,21 @@ namespace Squirrel.Update
                             RuntimeInstallResult.SystemDoesNotMeetRequirements => $"This computer does not meet the system requirements for {f.DisplayName}.",
                             _ => $"{f.DisplayName} installer exited with error code '{exitcode}'.",
                         };
-                        showUserMsg(true, rtmsg, $"Error installing {f.DisplayName}");
+                        splash.ShowErrorDialog($"Error installing {f.DisplayName}", rtmsg);
                         return;
                     }
                 }
 
                 if (rebootRequired) {
                     // TODO: automatic restart setup after reboot
-                    showUserMsg(false, $"A restart is required before Setup can continue.", "Restart required");
+                    splash.ShowInfoDialog("Restart required", $"A restart is required before Setup can continue.");
                     return;
                 }
             }
 
             // setup package source directory
             Log.Info($"Starting package install from directory " + tempFolder);
-            splash?.SetProgressIndeterminate();
+            splash.SetProgressIndeterminate();
             string packagePath = Path.Combine(tempFolder, info.BundledPackageName);
             File.WriteAllBytes(packagePath, info.BundledPackageBytes);
             var entry = ReleaseEntry.GenerateFromFile(packagePath);
@@ -253,12 +218,12 @@ namespace Squirrel.Update
             var progressSource = new ProgressSource();
             progressSource.Progress += (e, p) => {
                 // post install hooks are about to be run (app will start)
-                if (p >= 90) splash?.Close();
-                else splash?.SetProgress((ulong) p, 90);
+                if (p >= 90) splash.Hide();
+                else splash.SetProgress((ulong) p, 90);
             };
 
             await Install(silentInstall, progressSource, tempFolder);
-            splash?.Close();
+            splash.Dispose();
         }
 
         static async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
