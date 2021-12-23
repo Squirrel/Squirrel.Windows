@@ -2,11 +2,15 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Squirrel.SimpleSplat;
 using Vanara.PInvoke;
 using static Vanara.PInvoke.Kernel32;
+using static Vanara.PInvoke.Macros;
+using static Vanara.PInvoke.SHCore;
 using static Vanara.PInvoke.ShowWindowCommand;
 using static Vanara.PInvoke.User32;
 using static Vanara.PInvoke.User32.MonitorFlags;
@@ -16,9 +20,7 @@ using static Vanara.PInvoke.User32.WindowClassStyles;
 using static Vanara.PInvoke.User32.WindowMessage;
 using static Vanara.PInvoke.User32.WindowStyles;
 using static Vanara.PInvoke.User32.WindowStylesEx;
-using static Vanara.PInvoke.SHCore;
 using POINT = System.Drawing.Point;
-using System.IO;
 
 namespace Squirrel.Update.Windows
 {
@@ -36,6 +38,7 @@ namespace Squirrel.Update.Windows
         private POINT _ptMouseDown;
         private ITaskbarList3 _taskbarList3;
         private double _progress;
+        private double _uizoom = 1d;
 
         private readonly ManualResetEvent _signal;
         private readonly Bitmap _img;
@@ -45,6 +48,12 @@ namespace Squirrel.Update.Windows
 
         private const int OPERATION_TIMEOUT = 5000;
         private const string WINDOW_CLASS_NAME = "SquirrelSplashWindow";
+
+        // from gdiplusimaging.h
+        private const int PropertyTagFrameDelay = 0x5100;
+        private const int PropertyTagPixelUnit = 0x5110;
+        private const int PropertyTagPixelPerUnitX = 0x5111;
+        private const int PropertyTagPixelPerUnitY = 0x5112;
 
         public User32SplashWindow(string appName, bool silent, byte[] iconBytes, byte[] splashBytes)
         {
@@ -197,7 +206,7 @@ namespace Squirrel.Update.Windows
                 var frameCount = _img.GetFrameCount(frameDimension);
                 Log.Info($"There were {frameCount} frames detected in the splash image ({(frameCount > 1 ? "it's animated" : "it's not animated")}).");
                 if (frameCount > 1) {
-                    var delayProperty = _img.GetPropertyItem(0x5100 /*PropertyTagFrameDelay*/);
+                    var delayProperty = _img.GetPropertyItem(PropertyTagFrameDelay);
                     gif = new Thread(() => {
                         fixed (byte* frameDelayBytes = delayProperty.Value) {
                             int framePosition = 0;
@@ -268,23 +277,33 @@ namespace Squirrel.Update.Windows
                     throw clhr.GetException("Unable to register splash window class");
             }
 
-            // try to find monitor where mouse is
-            GetCursorPos(out var point);
-            var hMonitor = MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
-            MONITORINFO mi = new MONITORINFO { cbSize = 40 /*sizeof(MONITORINFO)*/ };
-
-            // calculate ideal window position, and adjust for image and screen DPI
             int x, y, w, h;
             try {
+                // try to find monitor where mouse is
+                GetCursorPos(out var point);
+                var hMonitor = MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+                MONITORINFO mi = new MONITORINFO { cbSize = 40 /*sizeof(MONITORINFO)*/ };
                 if (!GetMonitorInfo(hMonitor, ref mi)) throw new Win32Exception();
                 GetDpiForMonitor(hMonitor, MONITOR_DPI_TYPE.MDT_DEFAULT, out var dpiX, out var dpiY).ThrowIfFailed();
-                var dpiRatioX = _img.HorizontalResolution / dpiX;
-                var dpiRatioY = _img.VerticalResolution / dpiY;
-                w = (int) Math.Round(_img.Width / dpiRatioX);
-                h = (int) Math.Round(_img.Height / dpiRatioY);
+
+                // calculate scaling factor for image. If the image does not have embedded dpi information, we default to 96
+                double dpiRatioX = dpiX / 96d;
+                double dpiRatioY = dpiY / 96d;
+                var embeddedDpi = _img.PropertyIdList.Any(p => p == PropertyTagPixelPerUnitX || p == PropertyTagPixelPerUnitY);
+                if (embeddedDpi) {
+                    dpiRatioX = dpiX / _img.HorizontalResolution;
+                    dpiRatioY = dpiY / _img.VerticalResolution;
+                }
+                _uizoom = dpiX / 96d; // ui ignores image dpi, just takes screen dpi
+
+                // calculate ideal window position & size, adjusted for image DPI and screen DPI
+                w = (int) Math.Round(_img.Width * dpiRatioX);
+                h = (int) Math.Round(_img.Height * dpiRatioY);
                 x = (mi.rcWork.Width - w) / 2;
                 y = (mi.rcWork.Height - h) / 2;
-            } catch {
+                Log.Info($"Image dpi is {_img.HorizontalResolution} ({(embeddedDpi ? "embedded" : "default")}), screen dpi is {dpiX}. Rendering image at [{x},{y},{w},{h}]");
+            } catch (Exception ex) {
+                Log.WarnException("Unable to calculate splash dpi scaling", ex);
                 RECT rcArea = default;
                 SystemParametersInfo(SPI_GETWORKAREA, 0, new IntPtr(&rcArea), 0);
                 w = _img.Width;
@@ -334,6 +353,7 @@ namespace Squirrel.Update.Windows
             switch (uMsg) {
 
             case (uint) WM_DPICHANGED:
+                _uizoom = LOWORD(wParam) / 96d;
                 var suggestedRect = Marshal.PtrToStructure<RECT>(lParam);
                 SetWindowPos(hwnd, HWND.HWND_TOP,
                     suggestedRect.X, suggestedRect.Y, suggestedRect.Width, suggestedRect.Height,
@@ -343,14 +363,15 @@ namespace Squirrel.Update.Windows
             case (uint) WM_PAINT:
                 GetWindowRect(hwnd, out var r);
                 using (var buffer = new Bitmap(r.Width, r.Height))
-                using (var brush = new SolidBrush(Color.FromArgb(160, Color.LimeGreen)))
+                using (var brush = new SolidBrush(Color.FromArgb(190, Color.LimeGreen)))
                 using (var g = Graphics.FromImage(buffer))
                 using (var wnd = Graphics.FromHwnd(hwnd.DangerousGetHandle())) {
                     // draw to back buffer
                     g.FillRectangle(Brushes.Black, 0, 0, r.Width, r.Height);
                     lock (_img) g.DrawImage(_img, 0, 0, r.Width, r.Height);
                     if (_progress > 0) {
-                        g.FillRectangle(brush, new Rectangle(0, r.Height - 10, (int) (r.Width * _progress), 10));
+                        var progressHeight = (int) (8 * _uizoom);
+                        g.FillRectangle(brush, new Rectangle(0, r.Height - progressHeight, (int) (r.Width * _progress), progressHeight));
                     }
 
                     // only should do a single draw operation to the window front buffer to prevent flickering
