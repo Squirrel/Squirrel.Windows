@@ -15,13 +15,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="NLog" Version="5.0.0-preview.3" />
     <PackageReference Include="Vanara.PInvoke.User32" Version="3.3.14" />
     <PackageReference Include="Vanara.PInvoke.SHCore" Version="3.3.14" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
+    <TrimmableAssembly Include="Vanara.Core" />
+    <TrimmableAssembly Include="Vanara.PInvoke.Gdi32" />
+    <TrimmableAssembly Include="Vanara.PInvoke.Kernel32" />
+    <TrimmableAssembly Include="Vanara.PInvoke.Shared" />
+    <TrimmableAssembly Include="Vanara.PInvoke.SHCore" />
+    <TrimmableAssembly Include="Vanara.PInvoke.User32" />
   </ItemGroup>
 
 </Project>
