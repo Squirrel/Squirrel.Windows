@@ -1,4 +1,4 @@
-//
+﻿//
 // Options.cs
 //
 // Authors:
@@ -1165,9 +1165,10 @@ namespace Mono.Options
 			option.Invoke (c);
 		}
 
-		private const int OptionWidth = 29;
-		private const int Description_FirstWidth  = 80 - OptionWidth;
-		private const int Description_RemWidth    = 80 - OptionWidth - 2;
+        private const int LineWidth = 90;
+		private const int OptionWidth = 34;
+		private const int Description_FirstWidth  = LineWidth - OptionWidth;
+		private const int Description_RemWidth    = LineWidth - OptionWidth - 2;
 
 		public void WriteOptionDescriptions (TextWriter o)
 		{

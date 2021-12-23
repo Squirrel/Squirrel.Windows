@@ -26,6 +26,9 @@ namespace SquirrelCli
     {
         public static int Main(string[] args)
         {
+            var logger = new ConsoleLogger();
+            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
+
             var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
             var commands = new CommandSet {
                 "",
@@ -37,7 +40,7 @@ namespace SquirrelCli
                 "Package Authoring:",
                 { "releasify", "Take an existing nuget package and turn it into a Squirrel release", new ReleasifyOptions(), Releasify },
                 { "pack", "Creates a nuget package from a folder and releasifies it in a single step", new PackOptions(), Pack },
-
+                "",
                 "Package Deployment / Syncing:",
                 { "b2-down", "Download recent releases from BackBlaze B2", new SyncBackblazeOptions(), o => new BackblazeRepository(o).DownloadRecentPackages().Wait() },
                 { "b2-up", "Upload releases to BackBlaze B2", new SyncBackblazeOptions(), o => new BackblazeRepository(o).UploadMissingPackages().Wait() },
@@ -51,7 +54,6 @@ namespace SquirrelCli
                 //$"        ",
             };
 
-            var logger = new ConsoleLogger();
 
             try {
                 // check for help/verbose argument
@@ -71,7 +73,6 @@ namespace SquirrelCli
                     return -1;
                 } else {
                     // parse cli and run command
-                    SquirrelLocator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
                     commands.Execute(args);
                 }
                 return 0;
