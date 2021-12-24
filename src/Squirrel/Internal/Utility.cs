@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
@@ -111,10 +111,13 @@ namespace Squirrel
             }
         }
 
+        // https://source.dot.net/#System.Net.Primitives/Interop.SchProtocols.cs,acd9ff17ab451613
+        private const int SP_PROT_TLS1_3_SERVER = 0x00001000;
+        private const int SP_PROT_TLS1_3_CLIENT = 0x00002000;
+        private const int SP_PROT_TLS1_3 = (SP_PROT_TLS1_3_SERVER | SP_PROT_TLS1_3_CLIENT);
         public static WebClient CreateWebClient()
         {
-            // WHY DOESNT IT JUST DO THISSSSSSSS
-            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+            ServicePointManager.SecurityProtocol = (SecurityProtocolType) SP_PROT_TLS1_3 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 
             var ret = new WebClient();
             var wp = WebRequest.DefaultWebProxy;
