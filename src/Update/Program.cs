@@ -260,7 +260,7 @@ namespace Squirrel.Update
                     mgr.KillAllExecutablesBelongingToPackage();
                     await Task.Delay(500);
 
-                    await Log.ErrorIfThrows(() => Utility.Retry(() => Utility.DeleteDirectory(mgr.RootAppDirectory)),
+                    Log.ErrorIfThrows(() => Utility.Retry(() => Utility.DeleteFileOrDirectoryHard(mgr.RootAppDirectory)),
                         "Failed to remove existing directory on full install, is the app still running???");
 
                     Log.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.RootAppDirectory), 3),

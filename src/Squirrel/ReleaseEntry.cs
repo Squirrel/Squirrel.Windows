@@ -272,7 +272,7 @@ namespace Squirrel
 
                 File.Move(tempFile, target);
             } finally {
-                if (File.Exists(tempFile)) Utility.DeleteFileHarder(tempFile, true);
+                if (File.Exists(tempFile)) Utility.DeleteFileOrDirectoryHardOrGiveUp(tempFile);
             }
 
             return entries;

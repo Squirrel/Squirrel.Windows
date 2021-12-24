@@ -110,7 +110,7 @@ namespace Squirrel
                     throw new Exception(msg);
                 }
             } finally {
-                Utility.DeleteFileHarder(objFile);
+                Utility.DeleteFileOrDirectoryHardOrGiveUp(objFile);
             }
         }
 

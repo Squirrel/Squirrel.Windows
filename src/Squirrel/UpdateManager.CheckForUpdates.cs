@@ -45,7 +45,7 @@ namespace Squirrel
                     }
                 }
 
-                if (shouldInitialize) await initializeClientAppDirectory();
+                if (shouldInitialize) initializeClientAppDirectory();
 
                 string releaseFile;
 
@@ -135,12 +135,12 @@ namespace Squirrel
                 return ret;
             }
 
-            async Task initializeClientAppDirectory()
+            void initializeClientAppDirectory()
             {
                 // On bootstrap, we won't have any of our directories, create them
                 var pkgDir = Path.Combine(rootAppDirectory, "packages");
                 if (Directory.Exists(pkgDir)) {
-                    await Utility.DeleteDirectory(pkgDir);
+                    Utility.DeleteFileOrDirectoryHardOrGiveUp(pkgDir);
                 }
 
                 Directory.CreateDirectory(pkgDir);

@@ -145,7 +145,7 @@ namespace Squirrel
             await Task.Run(() => File.Copy(from, to, true));
         }
 
-        public static void Retry(this Action block, int retries = 2)
+        public static void Retry(this Action block, int retries = 2, int retryDelay = 250)
         {
             Contract.Requires(retries > 0);
 
@@ -154,10 +154,10 @@ namespace Squirrel
                 return null;
             };
 
-            thunk.Retry(retries);
+            thunk.Retry(retries, retryDelay);
         }
 
-        public static T Retry<T>(this Func<T> block, int retries = 2)
+        public static T Retry<T>(this Func<T> block, int retries = 2, int retryDelay = 250)
         {
             Contract.Requires(retries > 0);
 
@@ -171,7 +171,7 @@ namespace Squirrel
                     }
 
                     retries--;
-                    Thread.Sleep(250);
+                    Thread.Sleep(retryDelay);
                 }
             }
         }
@@ -355,7 +355,7 @@ namespace Squirrel
 
             path = tempDir.FullName;
 
-            return Disposable.Create(() => Task.Run(async () => await DeleteDirectory(tempDir.FullName)).Wait());
+            return Disposable.Create(() => DeleteFileOrDirectoryHardOrGiveUp(tempDir.FullName));
         }
 
         public static IDisposable WithTempFile(out string path, string localAppDirectory = null)
@@ -376,52 +376,77 @@ namespace Squirrel
             return Disposable.Create(() => File.Delete(thePath));
         }
 
-        public static async Task DeleteDirectory(string directoryPath)
+        public static void DeleteFileOrDirectoryHard(string path, bool throwOnFailure = true)
         {
-            Contract.Requires(!String.IsNullOrEmpty(directoryPath));
+            Contract.Requires(!String.IsNullOrEmpty(path));
+            Log().Debug("Starting to delete: {0}", path);
 
-            Log().Debug("Starting to delete folder: {0}", directoryPath);
+            try {
+                if (File.Exists(path)) {
+                    DeleteFsiVeryHard(new FileInfo(path));
+                } else if (Directory.Exists(path)) {
+                    DeleteFsiTree(new DirectoryInfo(path));
+                } else {
+                    Log().Warn($"Cannot delete '{path}' if it does not exist.");
+                }
+            } catch (Exception ex) {
+                Log().ErrorException($"Unable to delete '{path}'", ex);
+                if (throwOnFailure)
+                    throw;
+            }
+        }
 
-            if (!Directory.Exists(directoryPath)) {
-                Log().Warn("DeleteDirectory: does not exist - {0}", directoryPath);
+        public static void DeleteFileOrDirectoryHardOrGiveUp(string path) => DeleteFileOrDirectoryHard(path, false);
+        
+        private static void DeleteFsiTree(FileSystemInfo fileSystemInfo)
+        {
+            // if junction / symlink, don't iterate, just delete it.
+            if (fileSystemInfo.Attributes.HasFlag(FileAttributes.ReparsePoint)) {
+                DeleteFsiVeryHard(fileSystemInfo);
                 return;
             }
 
-            // From http://stackoverflow.com/questions/329355/cannot-delete-directory-with-directory-deletepath-true/329502#329502
-            var files = new string[0];
+            // recursively delete children
             try {
-                files = Directory.GetFiles(directoryPath);
-            } catch (UnauthorizedAccessException ex) {
-                var message = String.Format("The files inside {0} could not be read", directoryPath);
-                Log().Warn(message, ex);
-            }
-
-            var dirs = new string[0];
-            try {
-                dirs = Directory.GetDirectories(directoryPath);
-            } catch (UnauthorizedAccessException ex) {
-                var message = String.Format("The directories inside {0} could not be read", directoryPath);
-                Log().Warn(message, ex);
-            }
-
-            var fileOperations = files.ForEachAsync(file => {
-                File.SetAttributes(file, FileAttributes.Normal);
-                File.Delete(file);
-            });
-
-            var directoryOperations =
-                dirs.ForEachAsync(async dir => await DeleteDirectory(dir));
-
-            await Task.WhenAll(fileOperations, directoryOperations);
-
-            Log().Debug("Now deleting folder: {0}", directoryPath);
-            File.SetAttributes(directoryPath, FileAttributes.Normal);
-
-            try {
-                Directory.Delete(directoryPath, false);
+                var directoryInfo = fileSystemInfo as DirectoryInfo;
+                if (directoryInfo != null) {
+                    foreach (FileSystemInfo childInfo in directoryInfo.GetFileSystemInfos()) {
+                        DeleteFsiTree(childInfo);
+                    }
+                }
             } catch (Exception ex) {
-                var message = String.Format("DeleteDirectory: could not delete - {0}", directoryPath);
-                Log().ErrorException(message, ex);
+                Log().WarnException($"Unable to traverse children of '{fileSystemInfo.FullName}'", ex);
+            }
+
+            // finally, delete myself, we should try this even if deleting children failed
+            // because Directory.Delete can also be recursive
+            DeleteFsiVeryHard(fileSystemInfo);
+        }
+
+        private static void DeleteFsiVeryHard(FileSystemInfo fileSystemInfo)
+        {
+            // try to remove "ReadOnly" attributes
+            try { fileSystemInfo.Attributes = FileAttributes.Normal; } catch { }
+            try { fileSystemInfo.Refresh(); } catch { }
+
+            // use this instead of fsi.Delete() because it is more resilient/aggressive
+            Action deleteMe = fileSystemInfo is DirectoryInfo
+                  ? () => Directory.Delete(fileSystemInfo.FullName, true)
+                  : () => File.Delete(fileSystemInfo.FullName);
+
+            // retry a few times. if a directory in this tree is open in Windows Explorer,
+            // it might be locked for a little while WE cleans up handles
+            try {
+                Retry(() => {
+                    try {
+                        deleteMe();
+                    } catch (DirectoryNotFoundException) {
+                        return; // good!
+                    }
+                }, retries: 4, retryDelay: 50);
+            } catch (Exception ex) {
+                Log().WarnException($"Unable to delete child '{fileSystemInfo.FullName}'", ex);
+                throw;
             }
         }
 
@@ -513,27 +538,6 @@ namespace Squirrel
             builder.Query = query.ToString();
 
             return builder.Uri;
-        }
-
-        public static void DeleteFileHarder(string path, bool ignoreIfFails = false)
-        {
-            try {
-                Retry(() => File.Delete(path), 2);
-            } catch (Exception ex) {
-                if (ignoreIfFails) return;
-
-                LogHost.Default.ErrorException("Really couldn't delete file: " + path, ex);
-                throw;
-            }
-        }
-
-        public static async Task DeleteDirectoryOrJustGiveUp(string dir)
-        {
-            try {
-                await Utility.DeleteDirectory(dir);
-            } catch {
-                var message = String.Format("Uninstall failed to delete dir '{0}'", dir);
-            }
         }
 
         // http://stackoverflow.com/questions/3111669/how-can-i-determine-the-subsystem-used-by-a-given-net-assembly

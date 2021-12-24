@@ -232,9 +232,8 @@ namespace Squirrel
                 }
             } catch (Exception ex) {
                 this.Log().WarnException(String.Format("We really couldn't create a delta for {0}", targetFile.Name), ex);
-
-                Utility.DeleteFileHarder(targetFile.FullName + ".bsdiff", true);
-                Utility.DeleteFileHarder(targetFile.FullName + ".diff", true);
+                Utility.DeleteFileOrDirectoryHardOrGiveUp(targetFile.FullName + ".bsdiff");
+                Utility.DeleteFileOrDirectoryHardOrGiveUp(targetFile.FullName + ".diff");
                 return;
             }
 
@@ -290,7 +289,7 @@ namespace Squirrel
 
                 File.Move(tempTargetFile, finalTarget);
             } finally {
-                if (File.Exists(tempTargetFile)) Utility.DeleteFileHarder(tempTargetFile, true);
+                if (File.Exists(tempTargetFile)) Utility.DeleteFileOrDirectoryHardOrGiveUp(tempTargetFile);
             }
         }
 

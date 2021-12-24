@@ -149,7 +149,7 @@ namespace Squirrel
                     this.ErrorIfThrows(() => fixPinnedExecutables(new SemanticVersion(255, 255, 255, 255), true));
                 } catch { }
 
-                await this.ErrorIfThrows(() => Utility.DeleteDirectoryOrJustGiveUp(rootAppDirectory),
+                this.ErrorIfThrows(() => Utility.DeleteFileOrDirectoryHardOrGiveUp(rootAppDirectory),
                     "Failed to delete app directory: " + rootAppDirectory);
 
                 // NB: We drop this file here so that --checkInstall will ignore 
@@ -307,7 +307,7 @@ namespace Squirrel
                     // NB: This might happen if we got killed partially through applying the release
                     if (target.Exists) {
                         this.Log().Warn("Found partially applied release folder, killing it: " + target.FullName);
-                        await Utility.DeleteDirectory(target.FullName);
+                        Utility.DeleteFileOrDirectoryHardOrGiveUp(target.FullName);
                     }
 
                     target.Create();
@@ -488,7 +488,7 @@ namespace Squirrel
                         if (!Utility.IsFileInDirectory(shortcut.Target, rootAppDirectory)) continue;
 
                         if (removeAll) {
-                            Utility.DeleteFileHarder(shortcut.ShortCutFile);
+                            Utility.DeleteFileOrDirectoryHard(shortcut.ShortCutFile);
                         } else {
                             updateLink(shortcut, newAppPath);
                         }
@@ -635,7 +635,7 @@ namespace Squirrel
                 await toCleanup.ForEachAsync(async x => {
                     try {
                         if (runningProcesses.All(p => p.Item1 == null || !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
-                            await Utility.DeleteDirectoryOrJustGiveUp(x.FullName);
+                            Utility.DeleteFileOrDirectoryHardOrGiveUp(x.FullName);
                         }
 
                         if (Directory.Exists(x.FullName)) {
