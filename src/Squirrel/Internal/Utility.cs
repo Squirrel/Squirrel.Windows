@@ -489,17 +489,6 @@ namespace Squirrel
             return localReleases.OrderByDescending(x => x.Version).FirstOrDefault(x => !x.IsDelta);
         }
 
-        static TAcc scan<T, TAcc>(this IEnumerable<T> This, TAcc initialValue, Func<TAcc, T, TAcc> accFunc)
-        {
-            TAcc acc = initialValue;
-
-            foreach (var x in This) {
-                acc = accFunc(acc, x);
-            }
-
-            return acc;
-        }
-
         public static bool IsHttpUrl(string urlOrPath)
         {
             var uri = default(Uri);
@@ -733,20 +722,6 @@ namespace Squirrel
         static IFullLogger Log()
         {
             return logger ?? (logger = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(Utility)));
-        }
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        static extern bool MoveFileEx(string lpExistingFileName, string lpNewFileName, MoveFileFlags dwFlags);
-
-        [Flags]
-        enum MoveFileFlags
-        {
-            MOVEFILE_REPLACE_EXISTING = 0x00000001,
-            MOVEFILE_COPY_ALLOWED = 0x00000002,
-            MOVEFILE_DELAY_UNTIL_REBOOT = 0x00000004,
-            MOVEFILE_WRITE_THROUGH = 0x00000008,
-            MOVEFILE_CREATE_HARDLINK = 0x00000010,
-            MOVEFILE_FAIL_IF_NOT_TRACKABLE = 0x00000020
         }
 
         public static Guid CreateGuidFromHash(string text)
