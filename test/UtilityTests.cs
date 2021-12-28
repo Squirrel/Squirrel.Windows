@@ -113,7 +113,7 @@ namespace Squirrel.Tests.Core
 
                 var sw = new Stopwatch();
                 sw.Start();
-                Utility.DeleteDirectory(tempDir).Wait();
+                Utility.DeleteFileOrDirectoryHard(tempDir);
                 sw.Stop();
                 this.Log().Info("Delete took {0}ms", sw.ElapsedMilliseconds);
 

@@ -1180,7 +1180,7 @@ namespace Mono.Options
 
 				Category c = p as Category;
 				if (c != null) {
-					WriteDescription (o, p.Description, "", 80, 80);
+					WriteDescription (o, p.Description, "", LineWidth, LineWidth);
 					continue;
 				}
 

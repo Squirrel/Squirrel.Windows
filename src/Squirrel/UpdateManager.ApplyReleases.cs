@@ -632,7 +632,7 @@ namespace Squirrel
                 var runningProcesses = UnsafeUtility.EnumerateProcesses();
 
                 // Finally, clean up the app-X.Y.Z directories
-                await toCleanup.ForEachAsync(async x => {
+                await toCleanup.ForEachAsync(x => {
                     try {
                         if (runningProcesses.All(p => p.Item1 == null || !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
                             Utility.DeleteFileOrDirectoryHardOrGiveUp(x.FullName);
