@@ -9,7 +9,7 @@ Squirrel is both a set of tools and a library, to completely manage both install
 
 This project is a fork of the library [Squirrel.Windows](https://github.com/Squirrel/Squirrel.Windows). The main focus here has been to update to more modern tooling, such as upgrading the main libraries to `netstandard2.0`, upgrading the tools to `net6.0`, and adding lots of fixes for dotnet core support.
 
-This library will help you build a `Setup.exe`, integrated (or standalone `Update.exe`) application updater, and release updates to your users very quickly and easily. The `Setup.exe` and `Update.exe` produced by this library are completely dependency free, and can even help you bootstrap/install a runtime of your choice (such as dotnet 5, .net 4.8 or others).
+This library will help you build a `Setup.exe`, integrated (or standalone `Update.exe`) application updater, and release updates to your users very quickly and easily. The `Setup.exe` and `Update.exe` produced by this library are completely dependency free, and can even help you bootstrap/install any number of runtimes your app needs (such as dotnet 5/6, .net 4.8 or others).
 
 ---
 
@@ -37,7 +37,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
      <SquirrelAwareVersion xmlns="urn:schema-squirrel-com:asm.v1">1</SquirrelAwareVersion>
    </assembly>
    ```
-   There are also [some](https://github.com/clowd/Clowd.Squirrel/blob/develop/docs/using/custom-squirrel-events.md) more [legacy](https://github.com/clowd/Clowd.Squirrel/blob/develop/docs/using/custom-squirrel-events-non-cs.md) ways to assign a binary SquirrelAwareVersion if you cannot edit your assembly manifest.
+
 3. Handle Squirrel events somewhere very early in your application startup (such as the beginning of `main()` or `Application.OnStartup()` for WPF). 
 
    ```cs
@@ -89,7 +89,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    - Custom icons and splash art can be added to your installer using the options `--setupIcon` and `--splashImage`. Splash art can be any kind of image, but will appear animated if a `.gif` is supplied.
    - The same `--releaseDir` (default `.\Releases`) should be used each time, so delta updates can be generated.
    - The package version must comply to strict SemVer syntax. (eg. `1.0.0`, `1.0.1-pre`)
-   - A list of supported runtimes for the `--framework` argument is [available here](https://github.com/clowd/Clowd.Squirrel/blob/develop/src/Setup/RuntimeInfo.cpp)
+   - A list of supported runtimes for the `--framework` argument is [available here](https://github.com/clowd/Clowd.Squirrel/blob/develop/src/Squirrel/Runtimes.cs#L348)
    
 6. Distribute your entire `--releaseDir` folder online. This folder can be hosted on any static web/file server, [Amazon S3](docs/using/amazon-s3.md), BackBlaze B2, or even via [GitHub Releases](docs/using/github.md). 
    
@@ -106,13 +106,13 @@ Windows apps should be as fast and as easy to install and update as apps like Go
 
    # build new version and delta updates.
    Squirrel pack`
-    --framework net6`              # Install .NET 6.0 during setup, if required
-    --packName "YourApp"`          # Application / package name
-    --packVersion "1.0.0"`         # Version to build. Should be supplied by your CI
-    --packAuthors "YourCompany"`   # Your name, or your company name
-    --packDirectory ".\publish"`   # The directory the application was published to
-    --setupIcon "mySetupIcon.ico"` # Icon for Setup.exe
-    --splashImage "install.gif"    # The splash artwork (or animation) to be shown during install
+    --framework net6,vcredist143-x86`  # Install .NET 6.0 (x64) and vcredist143 (x86) during setup, if not installed
+    --packName "YourApp"`              # Application / package name
+    --packVersion "1.0.0"`             # Version to build. Should be supplied by your CI
+    --packAuthors "YourCompany"`       # Your name, or your company name
+    --packDirectory ".\publish"`       # The directory the application was published to
+    --setupIcon "mySetupIcon.ico"`     # Icon for Setup.exe
+    --splashImage "install.gif"        # The splash artwork (or animation) to be shown during install
    ```
 
 7. Update your app on startup / periodically with UpdateManager.
@@ -138,6 +138,8 @@ This quick start guide is coming soon. Refer to below for complete docs which co
 ---
 
 ## More Documentation
+
+**Note - most of the following documentation is now out of date and updates are also coming soon**
 
 See the documentation [Table of Contents](docs/readme.md) for an overview of the available documentation. 
 
