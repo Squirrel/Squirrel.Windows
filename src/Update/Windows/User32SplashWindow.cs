@@ -13,6 +13,7 @@ using static Vanara.PInvoke.Macros;
 using static Vanara.PInvoke.SHCore;
 using static Vanara.PInvoke.ShowWindowCommand;
 using static Vanara.PInvoke.User32;
+using static Vanara.PInvoke.User32.HitTestValues;
 using static Vanara.PInvoke.User32.MonitorFlags;
 using static Vanara.PInvoke.User32.SetWindowPosFlags;
 using static Vanara.PInvoke.User32.SPI;
@@ -20,11 +21,9 @@ using static Vanara.PInvoke.User32.WindowClassStyles;
 using static Vanara.PInvoke.User32.WindowMessage;
 using static Vanara.PInvoke.User32.WindowStyles;
 using static Vanara.PInvoke.User32.WindowStylesEx;
-using POINT = System.Drawing.Point;
 
 namespace Squirrel.Update.Windows
 {
-
     internal unsafe class User32SplashWindow : ISplashWindow
     {
         public IntPtr Handle => _hwnd != null ? _hwnd.DangerousGetHandle() : IntPtr.Zero;
@@ -35,7 +34,6 @@ namespace Squirrel.Update.Windows
         private Exception _error;
         private Thread _thread;
         private uint _threadId;
-        private POINT _ptMouseDown;
         private ITaskbarList3 _taskbarList3;
         private double _progress;
         private double _uizoom = 1d;
@@ -68,6 +66,11 @@ namespace Squirrel.Update.Windows
                 Log.WarnException("Unable to load splash image", ex);
             }
 
+            if (_silent || _img == null) {
+                // can not show splash window without an image
+                return;
+            }
+
             try {
                 var tbl = (ITaskbarList3) new CTaskbarList();
                 tbl.HrInit();
@@ -75,11 +78,6 @@ namespace Squirrel.Update.Windows
             } catch (Exception ex) {
                 // failure to load the COM taskbar progress feature should not break this entire window
                 Log.WarnException("Unable to load ITaskbarList3, progress will not be shown in taskbar", ex);
-            }
-
-            if (_silent || _img == null) {
-                // can not show splash window without an image
-                return;
             }
 
             _thread = new Thread(ThreadProc);
@@ -192,6 +190,8 @@ namespace Squirrel.Update.Windows
             _threadId = 0;
             _hwnd = null;
             _signal.Reset();
+            _icon.Dispose();
+            _img.Dispose();
         }
 
         private IDisposable StartGifAnimation()
@@ -352,22 +352,13 @@ namespace Squirrel.Update.Windows
         {
             switch (uMsg) {
 
-            case (uint) WM_DPICHANGED:
-                _uizoom = LOWORD(wParam) / 96d;
-                var suggestedRect = Marshal.PtrToStructure<RECT>(lParam);
-                SetWindowPos(hwnd, HWND.HWND_TOP,
-                    suggestedRect.X, suggestedRect.Y, suggestedRect.Width, suggestedRect.Height,
-                    SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
-                return 0;
-
             case (uint) WM_PAINT:
                 GetWindowRect(hwnd, out var r);
                 using (var buffer = new Bitmap(r.Width, r.Height))
                 using (var brush = new SolidBrush(Color.FromArgb(190, Color.LimeGreen)))
                 using (var g = Graphics.FromImage(buffer))
                 using (var wnd = Graphics.FromHwnd(hwnd.DangerousGetHandle())) {
-                    // draw to back buffer
-                    g.FillRectangle(Brushes.Black, 0, 0, r.Width, r.Height);
+                    // draw image to back buffer
                     lock (_img) g.DrawImage(_img, 0, 0, r.Width, r.Height);
                     if (_progress > 0) {
                         var progressHeight = (int) (8 * _uizoom);
@@ -381,40 +372,33 @@ namespace Squirrel.Update.Windows
                 ValidateRect(hwnd, null);
                 return 0;
 
-            case (uint) WM_LBUTTONDOWN:
-                GetCursorPos(out _ptMouseDown);
-                SetCapture(hwnd);
+            case (uint) WM_DPICHANGED:
+                // the window DPI has changed, either because the user has changed their display 
+                // settings, or the window is being dragged to a new monitor
+                _uizoom = LOWORD(wParam) / 96d;
+                var suggestedRect = Marshal.PtrToStructure<RECT>(lParam);
+                SetWindowPos(hwnd, HWND.HWND_TOP,
+                    suggestedRect.X, suggestedRect.Y, suggestedRect.Width, suggestedRect.Height,
+                    SWP_NOACTIVATE | SWP_NOZORDER);
                 return 0;
 
-            case (uint) WM_MOUSEMOVE:
-                if (GetCapture() == hwnd) {
-                    GetWindowRect(hwnd, out var rcWnd);
-                    GetCursorPos(out var pt);
-
-                    POINT ptDown = _ptMouseDown;
-                    var xdiff = ptDown.X - pt.X;
-                    var ydiff = ptDown.Y - pt.Y;
-
-                    SetWindowPos(hwnd, HWND.HWND_TOP, rcWnd.left - xdiff, rcWnd.top - ydiff, 0, 0,
-                        SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
-
-                    _ptMouseDown = pt;
-                }
-                return 0;
-
-            case (uint) WM_LBUTTONUP:
-                ReleaseCapture();
-                return 0;
+            case (uint) WM_NCHITTEST:
+                // any clicks in the client area should register as a click on the title bar so that the 
+                // user can drag the window, and it will be properly rescaled when dragged between monitors
+                nint hit = DefWindowProc(hwnd, uMsg, wParam, lParam);
+                if (hit == (ushort) HTCLIENT)
+                    return (ushort) HTCAPTION;
+                return hit;
 
             }
 
             return DefWindowProc(hwnd, uMsg, wParam, lParam);
         }
 
-        [ComImport()]
+        [ComImport]
         [Guid("ea1afb91-9e28-4b86-90e9-9e9f8a5eefaf")]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        internal interface ITaskbarList3
+        private interface ITaskbarList3
         {
             // ITaskbarList
             [PreserveSig]
@@ -430,41 +414,29 @@ namespace Squirrel.Update.Windows
 
             // ITaskbarList2
             [PreserveSig]
-            void MarkFullscreenWindow(
-              IntPtr hwnd,
-              [MarshalAs(UnmanagedType.Bool)] bool fFullscreen);
+            void MarkFullscreenWindow(IntPtr hwnd, [MarshalAs(UnmanagedType.Bool)] bool fFullscreen);
 
             // ITaskbarList3
             void SetProgressValue(IntPtr hwnd, UInt64 ullCompleted, UInt64 ullTotal);
             void SetProgressState(IntPtr hwnd, ThumbnailProgressState tbpFlags);
         }
 
+        [ComImport]
         [Guid("56FDF344-FD6D-11d0-958A-006097C9A090")]
         [ClassInterface(ClassInterfaceType.None)]
-        [ComImport()]
-        internal class CTaskbarList { }
+        private class CTaskbarList { }
 
-        public enum ThumbnailProgressState
+        private enum ThumbnailProgressState
         {
-            /// <summary>
-            /// No progress is displayed.
-            /// </summary>
+            /// <summary> No progress is displayed. </summary>
             NoProgress = 0,
-            /// <summary>
-            /// The progress is indeterminate (marquee).
-            /// </summary>
+            /// <summary> The progress is indeterminate (marquee). </summary>
             Indeterminate = 0x1,
-            /// <summary>
-            /// Normal progress is displayed.
-            /// </summary>
+            /// <summary> Normal progress is displayed. </summary>
             Normal = 0x2,
-            /// <summary>
-            /// An error occurred (red).
-            /// </summary>
+            /// <summary> An error occurred (red). </summary>
             Error = 0x4,
-            /// <summary>
-            /// The operation is paused (yellow).
-            /// </summary>
+            /// <summary> The operation is paused (yellow). </summary>
             Paused = 0x8
         }
     }
