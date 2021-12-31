@@ -143,8 +143,7 @@ namespace Squirrel
         /// <inheritdoc/>
         public SemanticVersion CurrentlyInstalledVersion(string executable = null)
         {
-            executable = executable ??
-                Path.GetDirectoryName(typeof(UpdateManager).Assembly.Location);
+            executable = executable ?? AssemblyRuntimeInfo.EntryExePath;
 
             if (!executable.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) {
                 return null;
