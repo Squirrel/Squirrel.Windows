@@ -13,6 +13,9 @@ using System.Threading.Tasks;
 
 namespace Squirrel.Shell
 {
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public class TrayStateChanger : IEnableLogger
     {
         public List<NOTIFYITEM> GetTrayItems()

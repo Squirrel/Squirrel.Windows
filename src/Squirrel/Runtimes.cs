@@ -114,6 +114,9 @@ namespace Squirrel
     }
 
     /// <summary> Represents a full .NET Framework runtime, usually included in Windows automatically through Windows Update </summary>
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public class FxRuntimeInfo : RuntimeInfo
     {
         /// <summary> Permalink to the runtime installer for this runtime </summary>
@@ -310,6 +313,9 @@ namespace Squirrel
     }
 
     /// <summary> Represents a VC++ 2015-2022 redistributable, to support native applications </summary>
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public class VCredistRuntimeInfo : RuntimeInfo
     {
         /// <summary> The minimum compatible version that must be installed </summary>
@@ -400,6 +406,9 @@ namespace Squirrel
     /// <summary>
     /// Contains static properties to access common supported runtimes, and a function to search for a runtime by name
     /// </summary>
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public static class Runtimes
     {
         /// <summary> Runtime for .NET Framework 4.5 </summary>

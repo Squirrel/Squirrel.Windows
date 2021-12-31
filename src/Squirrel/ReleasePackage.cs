@@ -48,6 +48,9 @@ namespace Squirrel
 
         public SemanticVersion Version { get { return InputPackageFile.ToSemanticVersion(); } }
 
+#if NET5_0_OR_GREATER
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
         internal string CreateReleasePackage(string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, ZipPackage> contentsPostProcessHook = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(outputFile));

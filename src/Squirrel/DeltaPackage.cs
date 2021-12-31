@@ -23,6 +23,9 @@ namespace Squirrel
         ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile);
     }
 
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public class DeltaPackageBuilder : IEnableLogger, IDeltaPackageBuilder
     {
         readonly string localAppDirectory;

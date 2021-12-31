@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Squirrel.Lib
 {
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     internal static class AuthenticodeTools
     {
         [DllImport("Wintrust.dll", PreserveSig = true, SetLastError = false)]

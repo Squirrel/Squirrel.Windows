@@ -180,6 +180,9 @@ namespace Squirrel
     /// <summary>
     /// Contains extension methods for <see cref="IUpdateManager"/> which provide simplified functionality
     /// </summary>
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public static class EasyModeMixin
     {
         /// <summary>

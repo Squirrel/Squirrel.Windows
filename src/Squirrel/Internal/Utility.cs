@@ -805,6 +805,9 @@ namespace Squirrel
         }
     }
 
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     static unsafe class UnsafeUtility
     {
         public static List<Tuple<string, int>> EnumerateProcesses()

@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace Squirrel
 {
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     internal static class NativeMethods
     {
         public static int GetParentProcessId()

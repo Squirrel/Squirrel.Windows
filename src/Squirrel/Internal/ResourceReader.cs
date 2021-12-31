@@ -7,6 +7,9 @@ using static Squirrel.NativeMethods;
 
 namespace Squirrel.Lib
 {
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     internal class ResourceReader : IDisposable
     {
         private IntPtr hModule;

@@ -21,6 +21,9 @@ using Squirrel.Shell;
 namespace Squirrel
 {
     /// <inheritdoc cref="IUpdateManager"/>
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public sealed partial class UpdateManager : IUpdateManager, IEnableLogger
     {
         readonly string rootAppDirectory;

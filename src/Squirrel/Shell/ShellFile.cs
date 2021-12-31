@@ -12,6 +12,9 @@ namespace Squirrel.Shell
     /// <summary>
     /// Summary description for ShellLink.
     /// </summary>
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public class ShellLink : IDisposable
     {
         [ComImport()]
@@ -931,6 +934,9 @@ namespace Squirrel.Shell
     /// Enables extraction of icons for any file type from
     /// the Shell.
     /// </summary>
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public class FileIcon
     {
         const int MAX_PATH = 260;

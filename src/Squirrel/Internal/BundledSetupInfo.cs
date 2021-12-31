@@ -4,6 +4,9 @@ using Microsoft.NET.HostModel;
 
 namespace Squirrel.Lib
 {
+#if NET5_0_OR_GREATER
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     internal class BundledSetupInfo
     {
         public string AppId { get; set; }
