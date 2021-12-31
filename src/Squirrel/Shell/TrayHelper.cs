@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+﻿#pragma warning disable CS1591
+
+using Microsoft.Win32;
 using Squirrel.SimpleSplat;
 using System;
 using System.Collections.Generic;

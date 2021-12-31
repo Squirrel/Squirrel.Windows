@@ -195,7 +195,7 @@ namespace Squirrel
     }
 
     [Flags]
-    public enum ProcessAccess : uint
+    internal enum ProcessAccess : uint
     {
         All = 0x001F0FFF,
         Terminate = 0x00000001,
@@ -212,7 +212,7 @@ namespace Squirrel
         Synchronize = 0x00100000
     }
 
-    public enum PROCESSINFOCLASS : int
+    internal enum PROCESSINFOCLASS : int
     {
         ProcessBasicInformation = 0, // 0, q: PROCESS_BASIC_INFORMATION, PROCESS_EXTENDED_BASIC_INFORMATION
         ProcessQuotaLimits, // qs: QUOTA_LIMITS, QUOTA_LIMITS_EX
@@ -275,7 +275,7 @@ namespace Squirrel
     };
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct PROCESS_BASIC_INFORMATION
+    internal struct PROCESS_BASIC_INFORMATION
     {
         public IntPtr ExitStatus;
         public IntPtr PebBaseAddress;
@@ -289,7 +289,7 @@ namespace Squirrel
         }
     }
 
-    public enum StandardHandles : int
+    internal enum StandardHandles : int
     {
         STD_INPUT_HANDLE = -10,
         STD_OUTPUT_HANDLE = -11,

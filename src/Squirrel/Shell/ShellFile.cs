@@ -1,4 +1,6 @@
-﻿using System;
+﻿#pragma warning disable CS1591
+
+using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;

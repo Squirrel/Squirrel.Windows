@@ -1,4 +1,6 @@
-﻿//
+﻿#pragma warning disable CS1591
+
+//
 // Options.cs
 //
 // Authors:

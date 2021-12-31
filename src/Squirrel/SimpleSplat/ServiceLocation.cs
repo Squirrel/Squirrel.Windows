@@ -1,4 +1,5 @@
-﻿using System;
+﻿#pragma warning disable CS1591,CS1572,CS1573,CS1734
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;

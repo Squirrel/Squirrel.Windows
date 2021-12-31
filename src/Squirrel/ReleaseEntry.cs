@@ -13,32 +13,66 @@ using System.Collections.Concurrent;
 
 namespace Squirrel
 {
+    /// <summary>
+    /// Represents a Squirrel release, as described in a RELEASES file - usually also with an 
+    /// accompanying package containing the files needed to apply the release.
+    /// </summary>
     public interface IReleaseEntry
     {
+        /// <summary> The SHA1 checksum of the update package containing this release. </summary>
         string SHA1 { get; }
+
+        /// <summary> The filename of the update package containing this release. </summary>
         string Filename { get; }
+
+        /// <summary> The size in bytes of the update package containing this release. </summary>
         long Filesize { get; }
+
+        /// <summary> Whether this package represents a full update, or a delta update. </summary>
         bool IsDelta { get; }
+
+        /// <summary> The unparsed text used to construct this release. </summary>
         string EntryAsString { get; }
+
+        /// <summary> The version of this release. </summary>
         SemanticVersion Version { get; }
+
+        /// <summary> The name or Id of the package containing this release. </summary>
         string PackageName { get; }
+
+        /// <summary> 
+        /// The percentage of users this package has been released to. This release
+        /// may or may not be applied if the current user is not in the staging group.
+        /// </summary>
         float? StagingPercentage { get; }
 
         string GetReleaseNotes(string packageDirectory);
+
         Uri GetIconUrl(string packageDirectory);
     }
 
+    /// <inheritdoc cref="IReleaseEntry" />
     [DataContract]
     public class ReleaseEntry : IEnableLogger, IReleaseEntry
     {
+        /// <inheritdoc />
         [DataMember] public string SHA1 { get; protected set; }
+        /// <inheritdoc />
         [DataMember] public string BaseUrl { get; protected set; }
+        /// <inheritdoc />
         [DataMember] public string Filename { get; protected set; }
+        /// <inheritdoc />
         [DataMember] public string Query { get; protected set; }
+        /// <inheritdoc />
         [DataMember] public long Filesize { get; protected set; }
+        /// <inheritdoc />
         [DataMember] public bool IsDelta { get; protected set; }
+        /// <inheritdoc />
         [DataMember] public float? StagingPercentage { get; protected set; }
 
+        /// <summary>
+        /// Create a new instance of <see cref="ReleaseEntry"/>.
+        /// </summary>
         protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null, string query = null, float? stagingPercentage = null)
         {
             Contract.Requires(sha1 != null && sha1.Length == 40);
@@ -49,6 +83,7 @@ namespace Squirrel
             SHA1 = sha1; BaseUrl = baseUrl; Filename = filename; Query = query; Filesize = filesize; IsDelta = isDelta; StagingPercentage = stagingPercentage;
         }
 
+        /// <inheritdoc />
         [IgnoreDataMember]
         public string EntryAsString {
             get {
@@ -60,10 +95,13 @@ namespace Squirrel
             }
         }
 
+        /// <inheritdoc />
         [IgnoreDataMember]
         public SemanticVersion Version { get { return Filename.ToSemanticVersion(); } }
 
         static readonly Regex packageNameRegex = new Regex(@"^([\w-]+)-\d+\..+\.nupkg$");
+
+        /// <inheritdoc />
         [IgnoreDataMember]
         public string PackageName {
             get {
@@ -95,6 +133,10 @@ namespace Squirrel
         static readonly Regex entryRegex = new Regex(@"^([0-9a-fA-F]{40})\s+(\S+)\s+(\d+)[\r]*$");
         static readonly Regex commentRegex = new Regex(@"\s*#.*$");
         static readonly Regex stagingRegex = new Regex(@"#\s+(\d{1,3})%$");
+
+        /// <summary>
+        /// Parses an string entry from a RELEASES file and returns a <see cref="ReleaseEntry"/>.
+        /// </summary>
         public static ReleaseEntry ParseReleaseEntry(string entry)
         {
             Contract.Requires(entry != null);
@@ -154,6 +196,9 @@ namespace Squirrel
             return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl, query, stagingPercentage);
         }
 
+        /// <summary>
+        /// Checks if the current user is eligible for the current staging percentage.
+        /// </summary>
         public bool IsStagingMatch(Guid? userId)
         {
             // A "Staging match" is when a user falls into the affirmative
@@ -168,6 +213,9 @@ namespace Squirrel
             return percentage < StagingPercentage.Value;
         }
 
+        /// <summary>
+        /// Parse the contents of a RELEASES file into a list of <see cref="ReleaseEntry"/>'s.
+        /// </summary>
         public static IEnumerable<ReleaseEntry> ParseReleaseFile(string fileContents)
         {
             if (String.IsNullOrEmpty(fileContents)) {
@@ -185,6 +233,10 @@ namespace Squirrel
             return ret.Any(x => x == null) ? null : ret;
         }
 
+        /// <summary>
+        /// Parse the contents of a RELEASES file into a list of <see cref="ReleaseEntry"/>'s,
+        /// with any staging-uneligible releases removed.
+        /// </summary>
         public static IEnumerable<ReleaseEntry> ParseReleaseFileAndApplyStaging(string fileContents, Guid? userToken)
         {
             if (String.IsNullOrEmpty(fileContents)) {
@@ -202,7 +254,9 @@ namespace Squirrel
             return ret.Any(x => x == null) ? null : ret;
         }
 
-
+        /// <summary>
+        /// Write a list of <see cref="ReleaseEntry"/>'s to a stream
+        /// </summary>
         public static void WriteReleaseFile(IEnumerable<ReleaseEntry> releaseEntries, Stream stream)
         {
             Contract.Requires(releaseEntries != null && releaseEntries.Any());
@@ -216,6 +270,9 @@ namespace Squirrel
             }
         }
 
+        /// <summary>
+        /// Write a list of <see cref="ReleaseEntry"/>'s to a local file
+        /// </summary>
         public static void WriteReleaseFile(IEnumerable<ReleaseEntry> releaseEntries, string path)
         {
             Contract.Requires(releaseEntries != null && releaseEntries.Any());
@@ -226,6 +283,9 @@ namespace Squirrel
             }
         }
 
+        /// <summary>
+        /// Generates a <see cref="ReleaseEntry"/> from a local update package file (such as a nupkg).
+        /// </summary>
         public static ReleaseEntry GenerateFromFile(Stream file, string filename, string baseUrl = null)
         {
             Contract.Requires(file != null && file.CanRead);
@@ -235,6 +295,9 @@ namespace Squirrel
             return new ReleaseEntry(hash, filename, file.Length, filenameIsDeltaFile(filename), baseUrl);
         }
 
+        /// <summary>
+        /// Generates a <see cref="ReleaseEntry"/> from a local update package file (such as a nupkg).
+        /// </summary>
         public static ReleaseEntry GenerateFromFile(string path, string baseUrl = null)
         {
             using (var inf = File.OpenRead(path)) {
@@ -242,6 +305,13 @@ namespace Squirrel
             }
         }
 
+        /// <summary>
+        /// Generates a list of <see cref="ReleaseEntry"/>'s from a local directory containing
+        /// package files. Also writes/updates a RELEASES file in the specified directory
+        /// to match the packages the are currently present.
+        /// </summary>
+        /// <param name="releasePackagesDir">The local directory to read and update</param>
+        /// <returns>The list of packages in the directory</returns>
         public static List<ReleaseEntry> BuildReleasesFile(string releasePackagesDir)
         {
             var packagesDir = new DirectoryInfo(releasePackagesDir);
@@ -288,6 +358,10 @@ namespace Squirrel
             return filename.EndsWith("-delta.nupkg", StringComparison.InvariantCultureIgnoreCase);
         }
 
+        /// <summary>
+        /// Given a list of releases and a specified release package, returns the release package
+        /// directly previous to the specified version.
+        /// </summary>
         public static ReleasePackage GetPreviousRelease(IEnumerable<ReleaseEntry> releaseEntries, IReleasePackage package, string targetDir)
         {
             if (releaseEntries == null || !releaseEntries.Any()) return null;

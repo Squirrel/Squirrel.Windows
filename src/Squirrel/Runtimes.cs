@@ -11,49 +11,73 @@ using Squirrel.SimpleSplat;
 
 namespace Squirrel
 {
+    /// <summary> Dotnet Runtime SKU </summary>
     public enum DotnetRuntimeType
     {
+        /// <summary> The .NET Runtime contains just the components needed to run a console app </summary>
         DotNet = 1,
+        /// <summary> The The ASP.NET Core Runtime enables you to run existing web/server applications </summary>
         AspNetCore,
+        /// <summary> The .NET Desktop Runtime enables you to run existing Windows desktop applications </summary>
         WindowsDesktop,
+        /// <summary> The .NET SDK enables you to compile dotnet applications you intend to run on other systems </summary>
         SDK,
     }
 
+    /// <summary> The Runtime CPU Architecture </summary>
     public enum RuntimeCpu
     {
+        /// <summary> Unknown / Unspecified </summary>
         Unknown = 0,
+        /// <summary> Intel x86 </summary>
         X86 = 1,
+        /// <summary> x64 / amd64 </summary>
         X64 = 2,
     }
 
+    /// <summary> Runtime installation result code </summary>
     public enum RuntimeInstallResult
     {
+        /// <summary> The install was successful </summary>
         Success = 0,
+        /// <summary> The install failed because it was cancelled by the user </summary>
         UserCancelled = 1602,
+        /// <summary> The install failed because another install is in progress, try again later </summary>
         AnotherInstallInProgress = 1618,
+        /// <summary> The install failed because a system restart is required before continuing </summary>
         RestartRequired = 3010,
+        /// <summary> The install failed because the current system does not support this runtime (outdated/unsupported) </summary>
         SystemDoesNotMeetRequirements = 5100,
     }
 
+    /// <summary> Base type containing information about a runtime in relation to the current operating system </summary>
     public abstract class RuntimeInfo
     {
+        /// <summary> The unique Id of this runtime. Can be used to retrieve a runtime instance with <see cref="Runtimes.GetRuntimeByName(string)"/> </summary>
         public string Id { get; }
+
+        /// <summary> The human-friendly name of this runtime - for displaying to users </summary>
         public string DisplayName { get; }
 
-        static IFullLogger Log = SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(RuntimeInfo));
+        internal readonly static IFullLogger Log = SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(RuntimeInfo));
 
+        /// <summary> Creates a new instance with the specified properties </summary>
         protected RuntimeInfo(string id, string displayName)
         {
             Id = id;
             DisplayName = displayName;
         }
 
+        /// <summary> Retrieves the web url to the latest compatible runtime installer exe </summary>
         public abstract Task<string> GetDownloadUrl();
 
+        /// <summary> Check if a runtime compatible with the current instance is installed on this system </summary>
         public abstract Task<bool> CheckIsInstalled();
 
+        /// <summary> Check if this runtime is supported on the current system </summary>
         public abstract Task<bool> CheckIsSupported();
 
+        /// <summary> Download the latest installer for this runtime to the specified file </summary>
         public virtual async Task DownloadToFile(string localPath, Action<DownloadProgressChangedEventArgs> progress = null)
         {
             var url = await GetDownloadUrl();
@@ -63,6 +87,7 @@ namespace Squirrel
             await wc.DownloadFileTaskAsync(url, localPath);
         }
 
+        /// <summary> Execute a runtime installer at a local file path. Typically used after <see cref="DownloadToFile"/> </summary>
         public virtual async Task<RuntimeInstallResult> InvokeInstaller(string pathToInstaller, bool isQuiet)
         {
             var args = new string[] { "/passive", "/norestart", "/showrmui" };
@@ -81,35 +106,45 @@ namespace Squirrel
             return (RuntimeInstallResult) p.ExitCode;
         }
 
+        /// <summary> The unique string representation of this runtime </summary>
         public override string ToString() => $"[{Id}] {DisplayName}";
 
+        /// <summary> The unique hash code of this runtime </summary>
         public override int GetHashCode() => Id.GetHashCode();
     }
 
+    /// <summary> Represents a full .NET Framework runtime, usually included in Windows automatically through Windows Update </summary>
     public class FxRuntimeInfo : RuntimeInfo
     {
+        /// <summary> Permalink to the runtime installer for this runtime </summary>
         public string DownloadUrl { get; }
+
+        /// <summary> The minimum compatible release version for this runtime </summary>
         public int ReleaseVersion { get; }
 
         private const string ndpPath = "SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full";
 
+        /// <inheritdoc/>
         public FxRuntimeInfo(string id, string displayName, string downloadUrl, int releaseVersion) : base(id, displayName)
         {
             DownloadUrl = downloadUrl;
             ReleaseVersion = releaseVersion;
         }
 
+        /// <inheritdoc/>
         public override Task<string> GetDownloadUrl()
         {
             return Task.FromResult(DownloadUrl);
         }
 
+        /// <inheritdoc/>
         public override Task<bool> CheckIsSupported()
         {
             // TODO use IsWindowsVersionOrGreater function to verify it can be installed on this machine
             return Task.FromResult(true);
         }
 
+        /// <inheritdoc/>
         public override Task<bool> CheckIsInstalled()
         {
             using var view = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default);
@@ -123,11 +158,17 @@ namespace Squirrel
         }
     }
 
+    /// <summary> Represents a modern DOTNET runtime where versions are deployed independenly of the operating system </summary>
     public class DotnetRuntimeInfo : RuntimeInfo
     {
+        /// <summary> A two part version (eg. '5.0') used to search for the latest current patch </summary>
         public string RequiredVersion { get; }
+
+        /// <summary> The CPU architecture of the runtime. This must match the RID of the app being deployed.
+        /// For example, if the Squirrel app was deployed with 'win-x64', this must be X64 also. </summary>
         public RuntimeCpu CpuArchitecture { get; }
 
+        /// <inheritdoc/>
         public DotnetRuntimeInfo(string id, string displayName, string version, RuntimeCpu architecture) : base(id, displayName)
         {
             RequiredVersion = version;
@@ -137,6 +178,7 @@ namespace Squirrel
         private const string UncachedDotNetFeed = "https://dotnetcli.blob.core.windows.net/dotnet";
         private const string DotNetFeed = "https://dotnetcli.azureedge.net/dotnet";
 
+        /// <inheritdoc/>
         public override async Task<bool> CheckIsInstalled()
         {
             switch (CpuArchitecture) {
@@ -148,6 +190,7 @@ namespace Squirrel
             }
         }
 
+        /// <inheritdoc/>
         public override Task<bool> CheckIsSupported()
         {
             if (CpuArchitecture == RuntimeCpu.X64 && !Environment.Is64BitOperatingSystem)
@@ -212,6 +255,7 @@ namespace Squirrel
             return dirs.Any(v => v.Major == myVer.Major && v.Minor == myVer.Minor);
         }
 
+        /// <inheritdoc/>
         public override async Task<string> GetDownloadUrl()
         {
             var latest = await GetLatestDotNetVersion(DotnetRuntimeType.WindowsDesktop, RequiredVersion);
@@ -265,17 +309,23 @@ namespace Squirrel
         }
     }
 
+    /// <summary> Represents a VC++ 2015-2022 redistributable, to support native applications </summary>
     public class VCredistRuntimeInfo : RuntimeInfo
     {
+        /// <summary> The minimum compatible version that must be installed </summary>
         public Version MinVersion { get; }
+
+        /// <summary> The CPU architecture of the runtime </summary>
         public RuntimeCpu CpuArchitecture { get; }
 
+        /// <inheritdoc/>
         public VCredistRuntimeInfo(string id, string displayName, Version minVersion, RuntimeCpu cpuArchitecture) : base(id, displayName)
         {
             MinVersion = minVersion;
             CpuArchitecture = cpuArchitecture;
         }
 
+        /// <inheritdoc/>
         public override Task<bool> CheckIsInstalled()
         {
             return Task.FromResult(GetInstalledVCVersions().Any(
@@ -284,6 +334,7 @@ namespace Squirrel
                 v.Ver >= MinVersion));
         }
 
+        /// <inheritdoc/>
         public override Task<bool> CheckIsSupported()
         {
             if (CpuArchitecture == RuntimeCpu.X64 && !Environment.Is64BitOperatingSystem)
@@ -294,6 +345,8 @@ namespace Squirrel
         }
 
         const string UninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
+
+        /// <inheritdoc/>
         public static (Version Ver, RuntimeCpu Cpu)[] GetInstalledVCVersions()
         {
             List<(Version Ver, RuntimeCpu Cpu)> results = new List<(Version Ver, RuntimeCpu Cpu)>();
@@ -331,6 +384,7 @@ namespace Squirrel
             return results.OrderBy(v => v.Ver).ToArray();
         }
 
+        /// <inheritdoc/>
         public override Task<string> GetDownloadUrl()
         {
             // https://docs.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022
@@ -343,35 +397,65 @@ namespace Squirrel
         }
     }
 
+    /// <summary>
+    /// Contains static properties to access common supported runtimes, and a function to search for a runtime by name
+    /// </summary>
     public static class Runtimes
     {
+        /// <summary> Runtime for .NET Framework 4.5 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK45 = new("net45", ".NET Framework 4.5", "http://go.microsoft.com/fwlink/?LinkId=397707", 378389);
+        /// <summary> Runtime for .NET Framework 4.5.1 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK451 = new("net451", ".NET Framework 4.5.1", "http://go.microsoft.com/fwlink/?LinkId=397707", 378675);
+        /// <summary> Runtime for .NET Framework 4.5.2 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK452 = new("net452", ".NET Framework 4.5.2", "http://go.microsoft.com/fwlink/?LinkId=397707", 379893);
+        /// <summary> Runtime for .NET Framework 4.6 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK46 = new("net46", ".NET Framework 4.6", "http://go.microsoft.com/fwlink/?LinkId=780596", 393295);
+        /// <summary> Runtime for .NET Framework 4.6.1 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK461 = new("net461", ".NET Framework 4.6.1", "http://go.microsoft.com/fwlink/?LinkId=780596", 394254);
+        /// <summary> Runtime for .NET Framework 4.6.2 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK462 = new("net462", ".NET Framework 4.6.2", "http://go.microsoft.com/fwlink/?LinkId=780596", 394802);
+        /// <summary> Runtime for .NET Framework 4.7 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK47 = new("net47", ".NET Framework 4.7", "http://go.microsoft.com/fwlink/?LinkId=863262", 460798);
+        /// <summary> Runtime for .NET Framework 4.7.1 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK471 = new("net471", ".NET Framework 4.7.1", "http://go.microsoft.com/fwlink/?LinkId=863262", 461308);
+        /// <summary> Runtime for .NET Framework 4.7.2 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK472 = new("net472", ".NET Framework 4.7.2", "http://go.microsoft.com/fwlink/?LinkId=863262", 461808);
+        /// <summary> Runtime for .NET Framework 4.8 </summary>
         public static readonly FxRuntimeInfo NETFRAMEWORK48 = new("net48", ".NET Framework 4.8", "http://go.microsoft.com/fwlink/?LinkId=2085155", 528040);
 
+
+        /// <summary> Runtime for .NET Core 3.1 Desktop Runtime (x86) </summary>
         public static readonly DotnetRuntimeInfo DOTNETCORE31_X86 = new("netcoreapp31-x86", ".NET Core 3.1 Desktop Runtime (x86)", "3.1", RuntimeCpu.X86);
+        /// <summary> Runtime for .NET Core 3.1 Desktop Runtime (x64) </summary>
         public static readonly DotnetRuntimeInfo DOTNETCORE31_X64 = new("netcoreapp31-x64", ".NET Core 3.1 Desktop Runtime (x64)", "3.1", RuntimeCpu.X64);
+        /// <summary> Runtime for .NET 5.0 Desktop Runtime (x86) </summary>
         public static readonly DotnetRuntimeInfo DOTNET5_X86 = new("net5-x86", ".NET 5.0 Desktop Runtime (x86)", "5.0", RuntimeCpu.X86);
+        /// <summary> Runtime for .NET 5.0 Desktop Runtime (x64) </summary>
         public static readonly DotnetRuntimeInfo DOTNET5_X64 = new("net5-x64", ".NET 5.0 Desktop Runtime (x64)", "5.0", RuntimeCpu.X64);
+        /// <summary> Runtime for .NET 6.0 Desktop Runtime (x86) </summary>
         public static readonly DotnetRuntimeInfo DOTNET6_X86 = new("net6-x86", ".NET 6.0 Desktop Runtime (x86)", "6.0", RuntimeCpu.X86);
+        /// <summary> Runtime for .NET 6.0 Desktop Runtime (x64) </summary>
         public static readonly DotnetRuntimeInfo DOTNET6_X64 = new("net6-x64", ".NET 6.0 Desktop Runtime (x64)", "6.0", RuntimeCpu.X64);
 
+
+        /// <summary> Runtime for Visual C++ 2015 Redistributable (x86) </summary>
         public static readonly VCredistRuntimeInfo VCREDIST140_X86 = new("vcredist140-x86", "Visual C++ 2015 Redistributable (x86)", new(14, 00, 23506), RuntimeCpu.X86);
+        /// <summary> Runtime for Visual C++ 2015 Redistributable (x64) </summary>
         public static readonly VCredistRuntimeInfo VCREDIST140_X64 = new("vcredist140-x64", "Visual C++ 2015 Redistributable (x64)", new(14, 00, 23506), RuntimeCpu.X64);
+        /// <summary> Runtime for Visual C++ 2017 Redistributable (x86) </summary>
         public static readonly VCredistRuntimeInfo VCREDIST141_X86 = new("vcredist141-x86", "Visual C++ 2017 Redistributable (x86)", new(14, 15, 26706), RuntimeCpu.X86);
+        /// <summary> Runtime for Visual C++ 2017 Redistributable (x64) </summary>
         public static readonly VCredistRuntimeInfo VCREDIST141_X64 = new("vcredist141-x64", "Visual C++ 2017 Redistributable (x64)", new(14, 15, 26706), RuntimeCpu.X64);
+        /// <summary> Runtime for Visual C++ 2019 Redistributable (x86) </summary>
         public static readonly VCredistRuntimeInfo VCREDIST142_X86 = new("vcredist142-x86", "Visual C++ 2019 Redistributable (x86)", new(14, 20, 27508), RuntimeCpu.X86);
+        /// <summary> Runtime for Visual C++ 2019 Redistributable (x64) </summary>
         public static readonly VCredistRuntimeInfo VCREDIST142_X64 = new("vcredist142-x64", "Visual C++ 2019 Redistributable (x64)", new(14, 20, 27508), RuntimeCpu.X64);
+        /// <summary> Runtime for Visual C++ 2022 Redistributable (x86) </summary>
         public static readonly VCredistRuntimeInfo VCREDIST143_X86 = new("vcredist143-x86", "Visual C++ 2022 Redistributable (x86)", new(14, 30, 30704), RuntimeCpu.X86);
+        /// <summary> Runtime for Visual C++ 2022 Redistributable (x64) </summary>
         public static readonly VCredistRuntimeInfo VCREDIST143_X64 = new("vcredist143-x64", "Visual C++ 2022 Redistributable (x64)", new(14, 30, 30704), RuntimeCpu.X64);
 
+        /// <summary> An array of all the currently supported runtimes </summary>
         public static readonly RuntimeInfo[] All;
 
         static Runtimes()
@@ -383,9 +467,9 @@ namespace Squirrel
                 .ToArray();
         }
 
+        /// <summary> Search for a runtime by name. If a platform architecture is not specified, the default is x64 </summary>
         public static RuntimeInfo GetRuntimeByName(string name)
         {
-            // default to x64 if not specified
             return All.FirstOrDefault(r => r.Id.Equals(name, StringComparison.InvariantCulture))
                 ?? All.FirstOrDefault(r => r.Id.Equals(name + "-x64", StringComparison.InvariantCulture));
         }

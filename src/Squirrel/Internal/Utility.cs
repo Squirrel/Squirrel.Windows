@@ -193,7 +193,7 @@ namespace Squirrel
         /// <remarks>
         ///     The string is only valid for passing directly to a process. If the target process is invoked by passing the
         ///     process name + arguments to cmd.exe then further escaping is required, to counteract cmd.exe's interpretation
-        ///     of additional special characters. See <see cref="EscapeCmdExeMetachars"/>.</remarks>
+        ///     of additional special characters. See CommandRunner.cs-EscapeCmdExeMetachars.</remarks>
         public static string ArgsToCommandLine(IEnumerable<string> args)
         {
             var sb = new StringBuilder();

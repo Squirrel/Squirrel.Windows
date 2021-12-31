@@ -14,7 +14,7 @@ namespace Squirrel
     public sealed partial class UpdateManager
     {
         [DataContract]
-        public class Release
+        private class Release
         {
             [DataMember(Name = "prerelease")]
             public bool Prerelease { get; set; }

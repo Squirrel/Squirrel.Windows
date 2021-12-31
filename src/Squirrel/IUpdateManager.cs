@@ -13,10 +13,12 @@ using System.Diagnostics;
 
 namespace Squirrel
 {
+    /// <summary>
+    /// Specifies several common places where shortcuts can be installed on a user's system
+    /// </summary>
     [Flags]
     public enum ShortcutLocation
     {
-
         /// <summary>
         /// A shortcut in ProgramFiles within a publisher sub-directory
         /// </summary>
@@ -43,12 +45,28 @@ namespace Squirrel
         StartMenuRoot = 1 << 4,
     }
 
+    /// <summary>
+    /// Indicates whether the UpdateManager is used in a Install or Update scenario.
+    /// </summary>
     public enum UpdaterIntention
     {
+        /// <summary> 
+        /// The current intent is to perform a full app install, and overwrite or 
+        /// repair any app already installed of the same name.
+        /// </summary>
         Install,
+
+        /// <summary>
+        /// The current intent is to perform an app update, and to do nothing if there
+        /// is no newer version available to install.
+        /// </summary>
         Update
     }
 
+    /// <summary>
+    /// An object providing update functionality to applications, and general helper
+    /// functions for managing installed shortcuts and registry entries.
+    /// </summary>
     public interface IUpdateManager : IDisposable, IEnableLogger
     {
         /// <summary>
@@ -96,13 +114,11 @@ namespace Squirrel
         /// <param name="silentInstall">If true, don't run the app once install completes.</param>
         /// <param name="progress">A Observer which can be used to report Progress - 
         /// will return values from 0-100 and Complete, or Throw</param>
-        /// <returns>Completion</returns>
         Task FullInstall(bool silentInstall, Action<int> progress = null);
 
         /// <summary>
         /// Completely uninstalls the targeted app
         /// </summary>
-        /// <returns>Completion</returns>
         Task FullUninstall();
 
         /// <summary>
@@ -161,8 +177,17 @@ namespace Squirrel
         void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations);
     }
 
+    /// <summary>
+    /// Contains extension methods for <see cref="IUpdateManager"/> which provide simplified functionality
+    /// </summary>
     public static class EasyModeMixin
     {
+        /// <summary>
+        /// This will check for updates, download any new available updates, and apply those
+        /// updates in a single step. The same task can be accomplished by using <see cref="IUpdateManager.CheckForUpdate"/>, 
+        /// followed by <see cref="IUpdateManager.DownloadReleases"/> and <see cref="IUpdateManager.ApplyReleases"/>.
+        /// </summary>
+        /// <returns>The installed update, or null if there were no updates available</returns>
         public static async Task<ReleaseEntry> UpdateApp(this IUpdateManager This, Action<int> progress = null)
         {
             progress = progress ?? (_ => { });
@@ -202,6 +227,10 @@ namespace Squirrel
                 default(ReleaseEntry);
         }
 
+        /// <summary>
+        /// Create a shortcut to the currently running executable at the specified locations. 
+        /// See <see cref="IUpdateManager.CreateShortcutsForExecutable"/> to create a shortcut to a different program
+        /// </summary>
         public static void CreateShortcutForThisExe(this IUpdateManager This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.CreateShortcutsForExecutable(
@@ -212,6 +241,9 @@ namespace Squirrel
                 null); // shortcut icon
         }
 
+        /// <summary>
+        /// Removes a shortcut for the currently running executable at the specified locations.
+        /// </summary>
         public static void RemoveShortcutForThisExe(this IUpdateManager This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.RemoveShortcutsForExecutable(

@@ -20,6 +20,7 @@ using Squirrel.Shell;
 
 namespace Squirrel
 {
+    /// <inheritdoc cref="IUpdateManager"/>
     public sealed partial class UpdateManager : IUpdateManager, IEnableLogger
     {
         readonly string rootAppDirectory;
@@ -49,6 +50,7 @@ namespace Squirrel
             this.rootAppDirectory = Path.Combine(rootDirectory ?? GetLocalAppDataDirectory(), this.applicationName);
         }
 
+        /// <inheritdoc/>
         public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null, UpdaterIntention intention = UpdaterIntention.Update)
         {
             var checkForUpdate = new CheckForUpdateImpl(rootAppDirectory);
@@ -57,6 +59,7 @@ namespace Squirrel
             return await checkForUpdate.CheckForUpdate(intention, Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader);
         }
 
+        /// <inheritdoc/>
         public async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
         {
             var downloadReleases = new DownloadReleasesImpl(rootAppDirectory);
@@ -65,6 +68,7 @@ namespace Squirrel
             await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
         }
 
+        /// <inheritdoc/>
         public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
@@ -73,6 +77,7 @@ namespace Squirrel
             return await applyReleases.ApplyReleases(updateInfo, false, false, progress);
         }
 
+        /// <inheritdoc/>
         public async Task FullInstall(bool silentInstall = false, Action<int> progress = null)
         {
             var updateInfo = await CheckForUpdate(intention: UpdaterIntention.Install);
@@ -84,6 +89,7 @@ namespace Squirrel
             await applyReleases.ApplyReleases(updateInfo, silentInstall, true, progress);
         }
 
+        /// <inheritdoc/>
         public async Task FullUninstall()
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
@@ -93,24 +99,28 @@ namespace Squirrel
             await applyReleases.FullUninstall();
         }
 
+        /// <inheritdoc/>
         public Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
         {
             var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
             return installHelpers.CreateUninstallerRegistryEntry(uninstallCmd, quietSwitch);
         }
 
+        /// <inheritdoc/>
         public Task<RegistryKey> CreateUninstallerRegistryEntry()
         {
             var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
             return installHelpers.CreateUninstallerRegistryEntry();
         }
 
+        /// <inheritdoc/>
         public void RemoveUninstallerRegistryEntry()
         {
             var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
             installHelpers.RemoveUninstallerRegistryEntry();
         }
 
+        /// <inheritdoc/>
         public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments = null, string icon = null)
         {
             var installHelpers = new ApplyReleasesImpl(rootAppDirectory);
@@ -123,13 +133,14 @@ namespace Squirrel
             return installHelpers.GetShortcutsForExecutable(exeName, locations, programArguments);
         }
 
-
+        /// <inheritdoc/>
         public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
         {
             var installHelpers = new ApplyReleasesImpl(rootAppDirectory);
             installHelpers.RemoveShortcutsForExecutable(exeName, locations);
         }
 
+        /// <inheritdoc/>
         public SemanticVersion CurrentlyInstalledVersion(string executable = null)
         {
             executable = executable ??
@@ -179,6 +190,7 @@ namespace Squirrel
             get { return Process.GetCurrentProcess().MainModule.FileName.StartsWith(RootAppDirectory, StringComparison.OrdinalIgnoreCase); }
         }
 
+        /// <inheritdoc/>
         public void Dispose()
         {
             var disp = Interlocked.Exchange(ref updateLock, null);
@@ -188,6 +200,17 @@ namespace Squirrel
         }
 
         static bool exiting = false;
+
+        /// <summary>
+        /// Terminates the current process immediately (with <see cref="Environment.Exit"/>) and 
+        /// re-launches the latest version of the current (or target) executable. 
+        /// </summary>
+        /// <param name="exeToStart">The file *name* (not full path) of the exe to start, or null to re-launch 
+        /// the current executable. </param>
+        /// <param name="arguments">Arguments to start the exe with</param>
+        /// <remarks>See <see cref="RestartAppWhenExited(string, string)"/> for a version which does not
+        /// exit the current process immediately, but instead allows you to exit the current process
+        /// however you'd like.</remarks>
         public static void RestartApp(string exeToStart = null, string arguments = null)
         {
             // NB: Here's how this method works:
@@ -217,6 +240,14 @@ namespace Squirrel
             Environment.Exit(0);
         }
 
+        /// <summary>
+        /// Launch Update.exe and ask it to wait until this process exits before starting
+        /// a new process. Used to re-start your app with the latest version after an update.
+        /// </summary>
+        /// <param name="exeToStart">The file *name* (not full path) of the exe to start, or null to re-launch 
+        /// the current executable. </param>
+        /// <param name="arguments">Arguments to start the exe with</param>
+        /// <returns>The Update.exe process that is waiting for this process to exit</returns>
         public static async Task<Process> RestartAppWhenExited(string exeToStart = null, string arguments = null)
         {
             // NB: Here's how this method works:
@@ -230,7 +261,7 @@ namespace Squirrel
             //    launching a different version than we started with (this is why
             //    we take the app's *name* rather than a full path)
 
-            exeToStart = exeToStart ?? Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName);
+            exeToStart = exeToStart ?? Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
@@ -243,7 +274,7 @@ namespace Squirrel
             return updateProcess;
         }
 
-        public static string GetLocalAppDataDirectory(string assemblyLocation = null)
+        private static string GetLocalAppDataDirectory(string assemblyLocation = null)
         {
             // if we're installed and running as update.exe in the app folder, the app directory root is one folder up
             if (AssemblyRuntimeInfo.IsSingleFile && Path.GetFileName(AssemblyRuntimeInfo.EntryExePath).Equals("Update.exe", StringComparison.OrdinalIgnoreCase)) {

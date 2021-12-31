@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace Squirrel
 {
-    public static class VersionExtensions
+    internal static class VersionExtensions
     {
         static readonly Regex _suffixRegex = new Regex(@"(-full|-delta)?\.nupkg$", RegexOptions.Compiled);
         static readonly Regex _versionRegex = new Regex(@"\d+(\.\d+){0,3}(-[A-Za-z][0-9A-Za-z-]*)?$", RegexOptions.Compiled);

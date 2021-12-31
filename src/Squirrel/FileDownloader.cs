@@ -5,21 +5,37 @@ using Squirrel.SimpleSplat;
 
 namespace Squirrel
 {
+    /// <summary>
+    /// A simple abstractable file downloader
+    /// </summary>
     public interface IFileDownloader
     {
+
+        /// <summary>
+        /// Download a file at the specified url to the specified local file
+        /// </summary>
         Task DownloadFile(string url, string targetFile, Action<int> progress);
+
+        /// <summary>
+        /// Returns a byte array containing the contents of the file at the specified url
+        /// </summary>
         Task<byte[]> DownloadUrl(string url);
     }
 
+    /// <inheritdoc cref="IFileDownloader"/>
     public class FileDownloader : IFileDownloader, IEnableLogger
     {
         private readonly WebClient _providedClient;
 
+        /// <summary>
+        /// Create a new <see cref="FileDownloader"/>, optionally providing a custom WebClient
+        /// </summary>
         public FileDownloader(WebClient providedClient = null)
         {
             _providedClient = providedClient;
         }
 
+        /// <inheritdoc />
         public async Task DownloadFile(string url, string targetFile, Action<int> progress)
         {
             using (var wc = _providedClient ?? Utility.CreateWebClient()) {
@@ -57,6 +73,7 @@ namespace Squirrel
             }
         }
 
+        /// <inheritdoc />
         public async Task<byte[]> DownloadUrl(string url)
         {
             using (var wc = _providedClient ?? Utility.CreateWebClient()) {

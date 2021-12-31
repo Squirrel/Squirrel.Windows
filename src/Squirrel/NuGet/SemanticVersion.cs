@@ -20,6 +20,7 @@ namespace Squirrel.NuGet
         private static readonly Regex _preReleaseVersionRegex = new Regex(@"(?<PreReleaseString>[a-z]+)(?<PreReleaseNumber>[0-9]+)$", _flags);
         private readonly string _originalString;
 
+        /// <summary> Create a new instance of <see cref="SemanticVersion"/> with the specified version </summary>
         public SemanticVersion(string version)
             : this(Parse(version))
         {
@@ -28,21 +29,25 @@ namespace Squirrel.NuGet
             _originalString = version;
         }
 
+        /// <inheritdoc cref="SemanticVersion(string)"/>
         public SemanticVersion(int major, int minor, int build, int revision)
             : this(new Version(major, minor, build, revision))
         {
         }
 
+        /// <inheritdoc cref="SemanticVersion(string)"/>
         public SemanticVersion(int major, int minor, int build, string specialVersion)
             : this(new Version(major, minor, build), specialVersion)
         {
         }
 
+        /// <inheritdoc cref="SemanticVersion(string)"/>
         public SemanticVersion(Version version)
             : this(version, String.Empty)
         {
         }
 
+        /// <inheritdoc cref="SemanticVersion(string)"/>
         public SemanticVersion(Version version, string specialVersion)
             : this(version, specialVersion, null)
         {
@@ -81,6 +86,9 @@ namespace Squirrel.NuGet
             private set;
         }
 
+        /// <summary>
+        /// Gets the components of the original string used to construct this version instance.
+        /// </summary>
         public string[] GetOriginalVersionComponents()
         {
             if (!String.IsNullOrEmpty(_originalString)) {
@@ -183,6 +191,7 @@ namespace Squirrel.NuGet
                                Math.Max(version.Revision, 0));
         }
 
+        /// <inheritdoc/>
         public int CompareTo(object obj)
         {
             if (Object.ReferenceEquals(obj, null)) {
@@ -195,6 +204,7 @@ namespace Squirrel.NuGet
             return CompareTo(other);
         }
 
+        /// <inheritdoc/>
         public int CompareTo(SemanticVersion other)
         {
             if (Object.ReferenceEquals(other, null)) {
@@ -236,6 +246,7 @@ namespace Squirrel.NuGet
             return StringComparer.OrdinalIgnoreCase.Compare(SpecialVersion, other.SpecialVersion);
         }
 
+        /// <inheritdoc/>
         public static bool operator ==(SemanticVersion version1, SemanticVersion version2)
         {
             if (Object.ReferenceEquals(version1, null)) {
@@ -244,11 +255,13 @@ namespace Squirrel.NuGet
             return version1.Equals(version2);
         }
 
+        /// <inheritdoc/>
         public static bool operator !=(SemanticVersion version1, SemanticVersion version2)
         {
             return !(version1 == version2);
         }
 
+        /// <inheritdoc/>
         public static bool operator <(SemanticVersion version1, SemanticVersion version2)
         {
             if (version1 == null) {
@@ -257,11 +270,13 @@ namespace Squirrel.NuGet
             return version1.CompareTo(version2) < 0;
         }
 
+        /// <inheritdoc/>
         public static bool operator <=(SemanticVersion version1, SemanticVersion version2)
         {
             return (version1 == version2) || (version1 < version2);
         }
 
+        /// <inheritdoc/>
         public static bool operator >(SemanticVersion version1, SemanticVersion version2)
         {
             if (version1 == null) {
@@ -270,16 +285,19 @@ namespace Squirrel.NuGet
             return version2 < version1;
         }
 
+        /// <inheritdoc/>
         public static bool operator >=(SemanticVersion version1, SemanticVersion version2)
         {
             return (version1 == version2) || (version1 > version2);
         }
 
+        /// <inheritdoc/>
         public override string ToString()
         {
             return _originalString;
         }
 
+        /// <inheritdoc/>
         public bool Equals(SemanticVersion other)
         {
             return !Object.ReferenceEquals(null, other) &&
@@ -287,12 +305,14 @@ namespace Squirrel.NuGet
                    SpecialVersion.Equals(other.SpecialVersion, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <inheritdoc/>
         public override bool Equals(object obj)
         {
             SemanticVersion semVer = obj as SemanticVersion;
             return !Object.ReferenceEquals(null, semVer) && Equals(semVer);
         }
 
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             int hashCode = Version.GetHashCode();
