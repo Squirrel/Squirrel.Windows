@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
@@ -401,7 +401,7 @@ namespace Squirrel
         }
 
         public static void DeleteFileOrDirectoryHardOrGiveUp(string path) => DeleteFileOrDirectoryHard(path, false);
-        
+
         private static void DeleteFsiTree(FileSystemInfo fileSystemInfo)
         {
             // if junction / symlink, don't iterate, just delete it.
@@ -807,46 +807,47 @@ namespace Squirrel
             guid[left] = guid[right];
             guid[right] = temp;
         }
-    }
 
 #if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
-    static unsafe class UnsafeUtility
-    {
-        public static List<Tuple<string, int>> EnumerateProcesses()
+        public static List<(string ProcessExePath, int ProcessId)> EnumerateProcesses()
         {
-            int bytesReturned = 0;
             var pids = new int[2048];
-
-            fixed (int* p = pids) {
-                if (!NativeMethods.EnumProcesses((IntPtr) p, sizeof(int) * pids.Length, out bytesReturned)) {
+            var gch = GCHandle.Alloc(pids, GCHandleType.Pinned);
+            try {
+                if (!NativeMethods.EnumProcesses(gch.AddrOfPinnedObject(), sizeof(int) * pids.Length, out var bytesReturned))
                     throw new Win32Exception("Failed to enumerate processes");
-                }
 
-                if (bytesReturned < 1) throw new Exception("Failed to enumerate processes");
-            }
+                if (bytesReturned < 1)
+                    throw new Exception("Failed to enumerate processes");
 
-            return Enumerable.Range(0, bytesReturned / sizeof(int))
-                .Where(i => pids[i] > 0)
-                .Select(i => {
+                List<(string ProcessExePath, int ProcessId)> ret = new();
+
+                for (int i = 0; i < bytesReturned / sizeof(int); i++) {
+                    IntPtr hProcess = IntPtr.Zero;
                     try {
-                        var hProcess = NativeMethods.OpenProcess(ProcessAccess.QueryLimitedInformation, false, pids[i]);
-                        if (hProcess == IntPtr.Zero) throw new Win32Exception();
+                        hProcess = NativeMethods.OpenProcess(ProcessAccess.QueryLimitedInformation, false, pids[i]);
+                        if (hProcess == IntPtr.Zero)
+                            continue;
 
                         var sb = new StringBuilder(256);
                         var capacity = sb.Capacity;
-                        if (!NativeMethods.QueryFullProcessImageName(hProcess, 0, sb, ref capacity)) {
-                            throw new Win32Exception();
-                        }
+                        if (!NativeMethods.QueryFullProcessImageName(hProcess, 0, sb, ref capacity))
+                            continue;
 
-                        NativeMethods.CloseHandle(hProcess);
-                        return Tuple.Create(sb.ToString(), pids[i]);
+                        ret.Add((sb.ToString(), pids[i]));
                     } catch (Exception) {
-                        return Tuple.Create(default(string), pids[i]);
+                        // don't care
+                    } finally {
+                        if (hProcess != IntPtr.Zero)
+                            NativeMethods.CloseHandle(hProcess);
                     }
-                })
-                .ToList();
+                }
+                return ret;
+            } finally {
+                gch.Free();
+            }
         }
     }
 

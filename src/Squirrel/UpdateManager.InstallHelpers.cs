@@ -110,7 +110,7 @@ namespace Squirrel
             {
                 var ourExePath = AssemblyRuntimeInfo.EntryExePath;
 
-                UnsafeUtility.EnumerateProcesses()
+                Utility.EnumerateProcesses()
                     .Where(x => {
                         // Processes we can't query will have an empty process name, we can't kill them
                         // anyways

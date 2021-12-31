@@ -73,16 +73,6 @@ namespace Squirrel
 
                 this.ErrorIfThrows(() => fixPinnedExecutables(updateInfo.FutureReleaseEntry.Version));
 
-                progress(96);
-
-                this.Log().Info("Fixing up tray icons");
-
-                var trayFixer = new TrayStateChanger();
-                var appDir = new DirectoryInfo(Utility.AppDirForRelease(rootAppDirectory, updateInfo.FutureReleaseEntry));
-                var allExes = appDir.GetFiles("*.exe").Select(x => x.Name).ToList();
-
-                this.ErrorIfThrows(() => trayFixer.RemoveDeadEntries(allExes, rootAppDirectory, updateInfo.FutureReleaseEntry.Version.ToString()));
-
                 progress(97);
 
                 unshimOurselves();
@@ -629,7 +619,7 @@ namespace Squirrel
 
                 // Get the current process list in an attempt to not burn 
                 // directories which have running processes
-                var runningProcesses = UnsafeUtility.EnumerateProcesses();
+                var runningProcesses = Utility.EnumerateProcesses();
 
                 // Finally, clean up the app-X.Y.Z directories
                 await toCleanup.ForEachAsync(x => {
