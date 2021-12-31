@@ -187,10 +187,12 @@ namespace Microsoft.NET.HostModel
         /// </summary>
         public static bool IsSupportedOS()
         {
+#if NETSTANDARD2_0_OR_GREATER || NET5_0_OR_GREATER
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 return false;
             }
+#endif
 
             try
             {
