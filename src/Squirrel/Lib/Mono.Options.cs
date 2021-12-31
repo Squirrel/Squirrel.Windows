@@ -680,7 +680,9 @@ namespace Mono.Options
 			get {return this.option;}
 		}
 
-		[SecurityPermission (SecurityAction.LinkDemand, SerializationFormatter = true)]
+#if NETFRAMEWORK
+        [SecurityPermission (SecurityAction.LinkDemand, SerializationFormatter = true)]
+#endif
 		public override void GetObjectData (SerializationInfo info, StreamingContext context)
 		{
 			base.GetObjectData (info, context);
