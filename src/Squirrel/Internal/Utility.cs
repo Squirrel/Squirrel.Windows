@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
@@ -70,13 +70,17 @@ namespace Squirrel
             return Encoding.UTF8.GetString(output);
         }
 
+        public static string NormalizePath(string path)
+        {
+            return Path.GetFullPath(new Uri(path).LocalPath)
+                       .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+
         public static bool IsFileInDirectory(string file, string directory)
         {
-            if (!File.Exists(file)) return false;
-            if (!Directory.Exists(directory)) return false;
-            var fileDir = Path.GetDirectoryName(file).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            var normalizedDir = directory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            return fileDir.Equals(normalizedDir, StringComparison.OrdinalIgnoreCase);
+            var normalizedDir = NormalizePath(directory) + Path.DirectorySeparatorChar;
+            var normalizedFile = NormalizePath(file);
+            return normalizedFile.StartsWith(normalizedDir, StringComparison.OrdinalIgnoreCase);
         }
 
         public static IEnumerable<FileInfo> GetAllFilesRecursively(this DirectoryInfo rootPath)
