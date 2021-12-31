@@ -37,21 +37,19 @@ namespace Squirrel
 
         static HelperExe()
         {
-            if (ModeDetector.InUnitTestRunner()) {
-                var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase.Replace("file:///", ""));
-                AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor"));
-                AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "7zip"));
-                AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "wix"));
-            } else {
 #if DEBUG
-                AddSearchPath(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "build", "publish"));
-                AddSearchPath(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor"));
-                AddSearchPath(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "7zip"));
-                AddSearchPath(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix"));
+            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "build", "publish");
+            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor");
+            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "7zip");
+            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix");
 #else
-                AddSearchPath(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "bin"));
+            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "bin");
 #endif
-            }
+        }
+
+        public static void AddSearchPath(params string[] pathParts)
+        {
+            AddSearchPath(Path.Combine(pathParts));
         }
 
         public static void AddSearchPath(string path)
