@@ -203,19 +203,19 @@ namespace Squirrel
 
             try {
                 updateInfo = await This.ErrorIfThrows(() => This.CheckForUpdate(ignoreDeltaUpdates, x => progress(x / 3)),
-                    "Failed to check for updates");
+                    "Failed to check for updates").ConfigureAwait(false);
 
                 await This.ErrorIfThrows(() =>
                     This.DownloadReleases(updateInfo.ReleasesToApply, x => progress(x / 3 + 33)),
-                    "Failed to download updates");
+                    "Failed to download updates").ConfigureAwait(false);
 
                 await This.ErrorIfThrows(() =>
                     This.ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
-                    "Failed to apply updates");
+                    "Failed to apply updates").ConfigureAwait(false);
 
                 await This.ErrorIfThrows(() =>
                     This.CreateUninstallerRegistryEntry(),
-                    "Failed to set up uninstaller");
+                    "Failed to set up uninstaller").ConfigureAwait(false);
             } catch {
                 if (ignoreDeltaUpdates == false) {
                     ignoreDeltaUpdates = true;

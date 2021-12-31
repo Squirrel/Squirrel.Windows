@@ -58,48 +58,48 @@ namespace Squirrel
         {
             var checkForUpdate = new CheckForUpdateImpl(rootAppDirectory);
 
-            await acquireUpdateLock();
-            return await checkForUpdate.CheckForUpdate(intention, Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader);
+            await acquireUpdateLock().ConfigureAwait(false);
+            return await checkForUpdate.CheckForUpdate(intention, Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
         {
             var downloadReleases = new DownloadReleasesImpl(rootAppDirectory);
-            await acquireUpdateLock();
+            await acquireUpdateLock().ConfigureAwait(false);
 
-            await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader);
+            await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
-            await acquireUpdateLock();
+            await acquireUpdateLock().ConfigureAwait(false);
 
-            return await applyReleases.ApplyReleases(updateInfo, false, false, progress);
+            return await applyReleases.ApplyReleases(updateInfo, false, false, progress).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task FullInstall(bool silentInstall = false, Action<int> progress = null)
         {
-            var updateInfo = await CheckForUpdate(intention: UpdaterIntention.Install);
-            await DownloadReleases(updateInfo.ReleasesToApply);
+            var updateInfo = await CheckForUpdate(intention: UpdaterIntention.Install).ConfigureAwait(false);
+            await DownloadReleases(updateInfo.ReleasesToApply).ConfigureAwait(false);
 
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
-            await acquireUpdateLock();
+            await acquireUpdateLock().ConfigureAwait(false);
 
-            await applyReleases.ApplyReleases(updateInfo, silentInstall, true, progress);
+            await applyReleases.ApplyReleases(updateInfo, silentInstall, true, progress).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task FullUninstall()
         {
             var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
-            await acquireUpdateLock();
+            await acquireUpdateLock().ConfigureAwait(false);
 
             this.KillAllExecutablesBelongingToPackage();
-            await applyReleases.FullUninstall();
+            await applyReleases.FullUninstall().ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
@@ -271,7 +271,7 @@ namespace Squirrel
 
             var updateProcess = Process.Start(getUpdateExe(), String.Format("--processStartAndWait {0} {1}", exeToStart, argsArg));
 
-            await Task.Delay(500);
+            await Task.Delay(500).ConfigureAwait(false);
 
             return updateProcess;
         }

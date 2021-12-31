@@ -57,10 +57,10 @@ namespace Squirrel
 
                     await this.WarnIfThrows(
                         async () => {
-                            await wc.DownloadFileTaskAsync(failedUrl ?? url, targetFile);
+                            await wc.DownloadFileTaskAsync(failedUrl ?? url, targetFile).ConfigureAwait(false);
                             progress(100);
                         },
-                        "Failed downloading URL: " + (failedUrl ?? url));
+                        "Failed downloading URL: " + (failedUrl ?? url)).ConfigureAwait(false);
                 } catch (Exception) {
                     // NB: Some super brain-dead services are case-sensitive yet 
                     // corrupt case on upload. I can't even.
@@ -84,7 +84,7 @@ namespace Squirrel
                     this.Log().Info("Downloading url: " + (failedUrl ?? url));
 
                     return await this.WarnIfThrows(() => wc.DownloadDataTaskAsync(failedUrl ?? url),
-                        "Failed to download url: " + (failedUrl ?? url));
+                        "Failed to download url: " + (failedUrl ?? url)).ConfigureAwait(false);
                 } catch (Exception) {
                     // NB: Some super brain-dead services are case-sensitive yet 
                     // corrupt case on upload. I can't even.

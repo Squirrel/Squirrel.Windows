@@ -65,10 +65,10 @@ namespace Squirrel
 
             using (var client = new HttpClient() { BaseAddress = baseAddress }) {
                 client.DefaultRequestHeaders.UserAgent.Add(userAgent);
-                var response = await client.GetAsync(releasesApiBuilder.ToString());
+                var response = await client.GetAsync(releasesApiBuilder.ToString()).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
 
-                var releases = SimpleJson.DeserializeObject<List<Release>>(await response.Content.ReadAsStringAsync());
+                var releases = SimpleJson.DeserializeObject<List<Release>>(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
                 var latestRelease = releases
                     .Where(x => prerelease || !x.Prerelease)
                     .OrderByDescending(x => x.PublishedAt)

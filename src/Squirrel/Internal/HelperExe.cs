@@ -89,7 +89,7 @@ namespace Squirrel
             try {
                 // Candle reprocesses and compiles WiX source files into object files (.wixobj).
                 var candleParams = new string[] { "-nologo", "-ext", "WixNetFxExtension", "-out", objFile, wxsTarget };
-                var processResult = await Utility.InvokeProcessAsync(WixCandlePath, candleParams, CancellationToken.None, workingDir);
+                var processResult = await Utility.InvokeProcessAsync(WixCandlePath, candleParams, CancellationToken.None, workingDir).ConfigureAwait(false);
 
                 if (processResult.Item1 != 0) {
                     var msg = String.Format(
@@ -101,7 +101,7 @@ namespace Squirrel
 
                 // Light links and binds one or more .wixobj files and creates a Windows Installer database (.msi or .msm). 
                 var lightParams = new string[] { "-ext", "WixNetFxExtension", "-spdb", "-sval", "-out", outputFile, objFile };
-                processResult = await Utility.InvokeProcessAsync(WixLightPath, lightParams, CancellationToken.None, workingDir);
+                processResult = await Utility.InvokeProcessAsync(WixLightPath, lightParams, CancellationToken.None, workingDir).ConfigureAwait(false);
 
                 if (processResult.Item1 != 0) {
                     var msg = String.Format(
@@ -118,7 +118,7 @@ namespace Squirrel
         public static async Task SetExeIcon(string exePath, string iconPath)
         {
             var args = new[] { Path.GetFullPath(exePath), "--set-icon", iconPath };
-            var processResult = await Utility.InvokeProcessAsync(RceditPath, args, CancellationToken.None);
+            var processResult = await Utility.InvokeProcessAsync(RceditPath, args, CancellationToken.None).ConfigureAwait(false);
 
             if (processResult.ExitCode != 0) {
                 var msg = String.Format(
@@ -151,7 +151,7 @@ namespace Squirrel
                 args.Add(Path.GetFullPath(iconPath));
             }
 
-            var processResult = await Utility.InvokeProcessAsync(RceditPath, args, CancellationToken.None);
+            var processResult = await Utility.InvokeProcessAsync(RceditPath, args, CancellationToken.None).ConfigureAwait(false);
 
             if (processResult.ExitCode != 0) {
                 var msg = String.Format(
@@ -183,7 +183,7 @@ namespace Squirrel
             Log.Info("About to sign {0}", exePath);
 
             var psi = Utility.CreateProcessStartInfo(SignToolPath, $"sign {signingOpts} \"{exePath}\"");
-            var processResult = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None);
+            var processResult = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None).ConfigureAwait(false);
 
             if (processResult.ExitCode != 0) {
                 var optsWithPasswordHidden = new Regex(@"/p\s+\w+").Replace(signingOpts, "/p ********");
@@ -200,7 +200,7 @@ namespace Squirrel
             var args = new string[] { "pack", nuspecPath, "-BasePath", baseDirectory, "-OutputDirectory", outputDirectory };
 
             Log.Info($"Packing '{baseDirectory}' into nupkg.");
-            var res = await Utility.InvokeProcessAsync(NugetPath, args, CancellationToken.None);
+            var res = await Utility.InvokeProcessAsync(NugetPath, args, CancellationToken.None).ConfigureAwait(false);
 
             if (res.ExitCode != 0)
                 throw new Exception($"Failed nuget pack (exit {res.ExitCode}): \r\n " + res.StdOutput);
@@ -220,7 +220,7 @@ namespace Squirrel
 
                 var psi = Utility.CreateProcessStartInfo(cmd, args);
 
-                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None);
+                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None).ConfigureAwait(false);
                 if (result.ExitCode != 0) throw new Exception(result.StdOutput);
             } catch (Exception ex) {
                 Log.Error($"Failed to extract file {zipFilePath} to {outFolder}\n{ex.Message}");
@@ -242,7 +242,7 @@ namespace Squirrel
 
                 var psi = Utility.CreateProcessStartInfo(cmd, args, inFolder);
 
-                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None);
+                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None).ConfigureAwait(false);
                 if (result.ExitCode != 0) throw new Exception(result.StdOutput);
             } catch (Exception ex) {
                 Log.Error($"Failed to extract file {zipFilePath} to {inFolder}\n{ex.Message}");

@@ -39,10 +39,10 @@ namespace Squirrel
                                 component = toIncrement / 100.0 * p;
                                 progress((int) Math.Round(current += component));
                             }
-                        });
+                        }).ConfigureAwait(false);
 
                         checksumPackage(x);
-                    });
+                    }).ConfigureAwait(false);
                 } else {
                     // From Disk
                     await releasesToDownload.ForEachAsync(x => {
@@ -55,7 +55,7 @@ namespace Squirrel
 
                         lock (progress) progress((int) Math.Round(current += toIncrement));
                         checksumPackage(x);
-                    });
+                    }).ConfigureAwait(false);
                 }
             }
 

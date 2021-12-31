@@ -13,6 +13,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <NoWarn>CA2007</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

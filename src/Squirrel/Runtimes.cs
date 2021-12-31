@@ -80,11 +80,11 @@ namespace Squirrel
         /// <summary> Download the latest installer for this runtime to the specified file </summary>
         public virtual async Task DownloadToFile(string localPath, Action<DownloadProgressChangedEventArgs> progress = null)
         {
-            var url = await GetDownloadUrl();
+            var url = await GetDownloadUrl().ConfigureAwait(false);
             Log.Info($"Downloading {Id} from {url} to {localPath}");
             using var wc = Utility.CreateWebClient();
             wc.DownloadProgressChanged += (s, e) => { progress?.Invoke(e); };
-            await wc.DownloadFileTaskAsync(url, localPath);
+            await wc.DownloadFileTaskAsync(url, localPath).ConfigureAwait(false);
         }
 
         /// <summary> Execute a runtime installer at a local file path. Typically used after <see cref="DownloadToFile"/> </summary>
@@ -93,7 +93,7 @@ namespace Squirrel
             var args = new string[] { "/passive", "/norestart", "/showrmui" };
             var quietArgs = new string[] { "/q", "/norestart" };
             Log.Info($"Running {Id} installer '{pathToInstaller} {string.Join(" ", args)}'");
-            var p = await Utility.InvokeProcessAsync(pathToInstaller, isQuiet ? quietArgs : args, CancellationToken.None);
+            var p = await Utility.InvokeProcessAsync(pathToInstaller, isQuiet ? quietArgs : args, CancellationToken.None).ConfigureAwait(false);
 
             // https://johnkoerner.com/install/windows-installer-error-codes/
 
@@ -186,7 +186,7 @@ namespace Squirrel
         {
             switch (CpuArchitecture) {
 
-            case RuntimeCpu.X64: return await CheckIsInstalledX64();
+            case RuntimeCpu.X64: return await CheckIsInstalledX64().ConfigureAwait(false);
             case RuntimeCpu.X86: return CheckIsInstalledX86();
             default: return false;
 
@@ -234,7 +234,7 @@ namespace Squirrel
             // return x64 results, so we can ask it as a last resort
             try {
                 var token = new CancellationTokenSource(2000).Token;
-                var output = await Utility.InvokeProcessAsync("dotnet", new[] { "--info" }, token);
+                var output = await Utility.InvokeProcessAsync("dotnet", new[] { "--info" }, token).ConfigureAwait(false);
                 if (output.ExitCode != 0) return false;
                 return output.StdOutput.Contains("Microsoft.WindowsDesktop.App " + RequiredVersion);
             } catch (Win32Exception wex) when (wex.HResult == -2147467259) {
@@ -261,7 +261,7 @@ namespace Squirrel
         /// <inheritdoc/>
         public override async Task<string> GetDownloadUrl()
         {
-            var latest = await GetLatestDotNetVersion(DotnetRuntimeType.WindowsDesktop, RequiredVersion);
+            var latest = await GetLatestDotNetVersion(DotnetRuntimeType.WindowsDesktop, RequiredVersion).ConfigureAwait(false);
             var architecture = CpuArchitecture switch {
                 RuntimeCpu.X86 => "x86",
                 RuntimeCpu.X64 => "x64",
@@ -288,7 +288,7 @@ namespace Squirrel
             };
 
             using var wc = Utility.CreateWebClient();
-            return await wc.DownloadStringTaskAsync(new Uri($"{UncachedDotNetFeed}/{runtime}/{channel}/latest.version"));
+            return await wc.DownloadStringTaskAsync(new Uri($"{UncachedDotNetFeed}/{runtime}/{channel}/latest.version")).ConfigureAwait(false);
         }
 
         /// <summary>

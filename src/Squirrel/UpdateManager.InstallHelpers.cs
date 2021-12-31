@@ -54,7 +54,7 @@ namespace Squirrel
                         var targetIco = Path.Combine(rootAppDirectory, "app.ico");
                         using (var iconStream = iconFile.GetStream())
                         using (var targetStream = File.Open(targetIco, FileMode.Create, FileAccess.Write))
-                            await iconStream.CopyToAsync(targetStream);
+                            await iconStream.CopyToAsync(targetStream).ConfigureAwait(false);
                         this.Log().Info($"File '{targetIco}' is being used for uninstall icon.");
                         key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
                     } catch (Exception ex) {

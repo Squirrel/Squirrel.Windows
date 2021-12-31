@@ -142,7 +142,7 @@ namespace Squirrel
             }
 
             // XXX: SafeCopy
-            await Task.Run(() => File.Copy(from, to, true));
+            await Task.Run(() => File.Copy(from, to, true)).ConfigureAwait(false);
         }
 
         public static void Retry(this Action block, int retries = 2, int retryDelay = 250)
@@ -270,11 +270,11 @@ namespace Squirrel
                     pi.Kill();
                     ct.ThrowIfCancellationRequested();
                 }
-            });
+            }).ConfigureAwait(false);
 
-            string textResult = await pi.StandardOutput.ReadToEndAsync();
+            string textResult = await pi.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
             if (String.IsNullOrWhiteSpace(textResult) || pi.ExitCode != 0) {
-                textResult = (textResult ?? "") + "\n" + await pi.StandardError.ReadToEndAsync();
+                textResult = (textResult ?? "") + "\n" + await pi.StandardError.ReadToEndAsync().ConfigureAwait(false);
 
                 if (String.IsNullOrWhiteSpace(textResult)) {
                     textResult = String.Empty;
@@ -296,7 +296,7 @@ namespace Squirrel
                 select Task.Run(async () => {
                     using (partition)
                         while (partition.MoveNext())
-                            await body(partition.Current);
+                            await body(partition.Current).ConfigureAwait(false);
                 }));
         }
 
@@ -604,7 +604,7 @@ namespace Squirrel
         public static async Task LogIfThrows(this IFullLogger This, LogLevel level, string message, Func<Task> block)
         {
             try {
-                await block();
+                await block().ConfigureAwait(false);
             } catch (Exception ex) {
                 switch (level) {
                 case LogLevel.Debug:
@@ -627,7 +627,7 @@ namespace Squirrel
         public static async Task<T> LogIfThrows<T>(this IFullLogger This, LogLevel level, string message, Func<Task<T>> block)
         {
             try {
-                return await block();
+                return await block().ConfigureAwait(false);
             } catch (Exception ex) {
                 switch (level) {
                 case LogLevel.Debug:

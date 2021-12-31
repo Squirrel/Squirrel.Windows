@@ -57,6 +57,7 @@ dotnet_naming_rule.constant_fields_should_be_pascal_case.style    = pascal_case_
 dotnet_naming_symbols.constant_fields.applicable_kinds            = field 
 dotnet_naming_symbols.constant_fields.applicable_accessibilities  = * 
 dotnet_naming_symbols.constant_fields.required_modifiers          = const 
+dotnet_diagnostic.CA2007.severity=warning
 ############################### 
 # C# Coding Conventions       # 
 ############################### 
@@ -117,6 +118,10 @@ csharp_space_between_method_call_empty_parameter_list_parentheses = false
 csharp_preserve_single_line_statements = true 
 csharp_preserve_single_line_blocks = true 
 insert_final_newline=false
+dotnet_diagnostic.IL3000.severity=error
+dotnet_diagnostic.IL3001.severity=error
+dotnet_diagnostic.IL3002.severity=error
+dotnet_diagnostic.IL3003.severity=error
 ############################### 
 # VB Coding Conventions       # 
 ############################### 

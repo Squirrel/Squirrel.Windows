@@ -34,14 +34,14 @@ namespace Squirrel
                 progress(0);
 
                 // Progress range: 00 -> 40
-                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion, new ApplyReleasesProgress(updateInfo.ReleasesToApply.Count, x => progress(CalculateProgress(x, 0, 40))));
+                var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion, new ApplyReleasesProgress(updateInfo.ReleasesToApply.Count, x => progress(CalculateProgress(x, 0, 40)))).ConfigureAwait(false);
 
                 progress(40);
 
                 if (release == null) {
                     if (attemptingFullInstall) {
                         this.Log().Info("No release to install, running the app");
-                        await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, false, true, silentInstall);
+                        await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, false, true, silentInstall).ConfigureAwait(false);
                     }
 
                     progress(100);
@@ -50,12 +50,12 @@ namespace Squirrel
 
                 // Progress range: 40 -> 80
                 var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release, x => progress(CalculateProgress(x, 40, 80))),
-                    "Failed to install package to app dir");
+                    "Failed to install package to app dir").ConfigureAwait(false);
 
                 progress(80);
 
                 var currentReleases = await this.ErrorIfThrows(() => updateLocalReleasesFile(),
-                    "Failed to update local releases file");
+                    "Failed to update local releases file").ConfigureAwait(false);
 
                 progress(85);
 
@@ -65,7 +65,7 @@ namespace Squirrel
                 progress(90);
 
                 await this.ErrorIfThrows(() => invokePostInstall(newVersion, attemptingFullInstall, false, silentInstall),
-                    "Failed to invoke post-install");
+                    "Failed to invoke post-install").ConfigureAwait(false);
 
                 progress(95);
 
@@ -93,7 +93,7 @@ namespace Squirrel
                     var currentVersion = updateInfo.CurrentlyInstalledVersion != null ?
                         updateInfo.CurrentlyInstalledVersion.Version : null;
 
-                    await cleanDeadVersions(currentVersion, newVersion);
+                    await cleanDeadVersions(currentVersion, newVersion).ConfigureAwait(false);
                 } catch (Exception ex) {
                     this.Log().WarnException("Failed to clean dead versions, continuing anyways", ex);
                 }
@@ -131,12 +131,12 @@ namespace Squirrel
                                     cts.CancelAfter(10 * 1000);
 
                                     try {
-                                        await Utility.InvokeProcessAsync(exe, new string[] { "--squirrel-uninstall", version.ToString() }, cts.Token);
+                                        await Utility.InvokeProcessAsync(exe, new string[] { "--squirrel-uninstall", version.ToString() }, cts.Token).ConfigureAwait(false);
                                     } catch (Exception ex) {
                                         this.Log().ErrorException("Failed to run cleanup hook, continuing: " + exe, ex);
                                     }
                                 }
-                            }, 1 /*at a time*/);
+                            }, 1 /*at a time*/).ConfigureAwait(false);
                         } else {
                             allApps.ForEach(x => RemoveShortcutsForExecutable(x.Name, ShortcutLocation.StartMenu | ShortcutLocation.Desktop));
                         }
@@ -317,7 +317,7 @@ namespace Squirrel
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
                         target.FullName,
                         rootAppDirectory,
-                        progressCallback);
+                        progressCallback).ConfigureAwait(false);
 
                     return target.FullName;
                 });
@@ -358,12 +358,12 @@ namespace Squirrel
                     var basePkg = new ReleasePackage(Path.Combine(rootAppDirectory, "packages", currentVersion.Filename));
                     var deltaPkg = new ReleasePackage(Path.Combine(rootAppDirectory, "packages", releasesToApply.First().Filename));
 
-                    var deltaBuilder = new DeltaPackageBuilder(Directory.GetParent(this.rootAppDirectory).FullName);
+                    var deltaBuilder = new DeltaPackageBuilder(Directory.GetParent(rootAppDirectory).FullName);
 
                     return deltaBuilder.ApplyDeltaPackage(basePkg, deltaPkg,
                         Regex.Replace(deltaPkg.InputPackageFile, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
                         x => progress.ReportReleaseProgress(x));
-                });
+                }).ConfigureAwait(false);
 
                 progress.FinishRelease();
 
@@ -375,7 +375,7 @@ namespace Squirrel
                 var entry = ReleaseEntry.GenerateFromFile(fi.OpenRead(), fi.Name);
 
                 // Recursively combine the rest of them
-                return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progress);
+                return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progress).ConfigureAwait(false);
             }
 
             void executeSelfUpdate(SemanticVersion currentVersion)
@@ -418,12 +418,12 @@ namespace Squirrel
                         cts.CancelAfter(15 * 1000);
 
                         try {
-                            await Utility.InvokeProcessAsync(exe, args, cts.Token);
+                            await Utility.InvokeProcessAsync(exe, args, cts.Token).ConfigureAwait(false);
                         } catch (Exception ex) {
                             this.Log().ErrorException("Couldn't run Squirrel hook, continuing: " + exe, ex);
                         }
                     }
-                }, 1 /* at a time */);
+                }, 1 /* at a time */).ConfigureAwait(false);
 
                 // If this is the first run, we run the apps with first-run and 
                 // *don't* wait for them, since they're probably the main EXE
@@ -612,14 +612,14 @@ namespace Squirrel
                                     cts.CancelAfter(10 * 1000);
 
                                     try {
-                                        await Utility.InvokeProcessAsync(exe, args, cts.Token);
+                                        await Utility.InvokeProcessAsync(exe, args, cts.Token).ConfigureAwait(false);
                                     } catch (Exception ex) {
                                         this.Log().ErrorException("Coudln't run Squirrel hook, continuing: " + exe, ex);
                                     }
                                 }
-                            }, 1 /* at a time */);
+                            }, 1 /* at a time */).ConfigureAwait(false);
                         }
-                    });
+                    }).ConfigureAwait(false);
                 }
 
                 // Include dead folders in folders to :fire:
@@ -650,7 +650,7 @@ namespace Squirrel
                         // NB: Same deal as above
                         markAppFolderAsDead(x.FullName);
                     }
-                });
+                }).ConfigureAwait(false);
 
                 // Clean up the packages directory too
                 var releasesFile = Utility.LocalReleaseFileForAppDir(rootAppDirectory);
@@ -682,7 +682,7 @@ namespace Squirrel
 
             internal async Task<List<ReleaseEntry>> updateLocalReleasesFile()
             {
-                return await Task.Run(() => ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(rootAppDirectory)));
+                return await Task.Run(() => ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(rootAppDirectory))).ConfigureAwait(false);
             }
 
             IEnumerable<DirectoryInfo> getReleases()

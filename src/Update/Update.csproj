@@ -12,6 +12,7 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <NoWarn>CA2007</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
