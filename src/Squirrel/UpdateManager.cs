@@ -148,9 +148,8 @@ namespace Squirrel
         {
             executable = executable ?? AssemblyRuntimeInfo.EntryExePath;
 
-            if (!executable.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase)) {
+            if (!Utility.IsFileInDirectory(executable, RootAppDirectory))
                 return null;
-            }
 
             var appDirName = executable.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                 .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
@@ -180,17 +179,11 @@ namespace Squirrel
             installHelpers.KillAllProcessesBelongingToPackage();
         }
 
-        public string ApplicationName {
-            get { return applicationName; }
-        }
+        public string ApplicationName => applicationName;
 
-        public string RootAppDirectory {
-            get { return rootAppDirectory; }
-        }
+        public string RootAppDirectory => rootAppDirectory;
 
-        public bool IsInstalledApp {
-            get { return Process.GetCurrentProcess().MainModule.FileName.StartsWith(RootAppDirectory, StringComparison.OrdinalIgnoreCase); }
-        }
+        public bool IsInstalledApp => Utility.IsFileInDirectory(AssemblyRuntimeInfo.EntryExePath, RootAppDirectory);
 
         /// <inheritdoc/>
         public void Dispose()

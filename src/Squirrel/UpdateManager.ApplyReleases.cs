@@ -538,7 +538,7 @@ namespace Squirrel
                         if (regKey == null) return;
 
                         var toDelete = regKey.GetValueNames()
-                            .Where(x => x.StartsWith(rootAppDirectory, StringComparison.OrdinalIgnoreCase))
+                            .Where(x => Utility.IsFileInDirectory(x, rootAppDirectory))
                             .ToList();
 
                         toDelete.ForEach(x =>
