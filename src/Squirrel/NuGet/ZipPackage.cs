@@ -72,7 +72,8 @@ namespace Squirrel.NuGet
             return FrameworkAssemblies.SelectMany(f => f.SupportedFrameworks)
                        .Concat(fileFrameworks)
                        .Where(f => f != null)
-                       .Distinct();
+                       .Distinct()
+                       .ToArray();
         }
 
         public IEnumerable<IPackageFile> GetLibFiles()
