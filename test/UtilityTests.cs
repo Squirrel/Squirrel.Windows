@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -157,7 +157,7 @@ namespace Squirrel.Tests.Core
         [Fact]
         public void WeCanFetchAllProcesses()
         {
-            var result = UnsafeUtility.EnumerateProcesses();
+            var result = Utility.EnumerateProcesses();
             Assert.True(result.Count > 1);
             Assert.True(result.Count != 2048);
         }
