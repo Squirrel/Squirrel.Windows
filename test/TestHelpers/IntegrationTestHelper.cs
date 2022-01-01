@@ -76,12 +76,13 @@ namespace Squirrel.Tests.TestHelpers
         {
             var targetDir = default(string);
 
-            var nuget = IntegrationTestHelper.GetPath("..", ".nuget", "nuget.exe");
             nuspecFile = nuspecFile ?? "SquirrelInstalledApp.nuspec";
 
             using (var clearTemp = Utility.WithTempDirectory(out targetDir)) {
                 var nuspec = File.ReadAllText(IntegrationTestHelper.GetPath("fixtures", nuspecFile), Encoding.UTF8);
-                File.WriteAllText(Path.Combine(targetDir, nuspecFile), nuspec.Replace("0.1.0", version), Encoding.UTF8);
+                var nuspecPath = Path.Combine(targetDir, nuspecFile);
+
+                File.WriteAllText(nuspecPath, nuspec.Replace("0.1.0", version), Encoding.UTF8);
 
                 File.Copy(
                     IntegrationTestHelper.GetPath("fixtures", "SquirrelAwareApp.exe"), 
@@ -90,20 +91,7 @@ namespace Squirrel.Tests.TestHelpers
                     IntegrationTestHelper.GetPath("fixtures", "NotSquirrelAwareApp.exe"), 
                     Path.Combine(targetDir, "NotSquirrelAwareApp.exe"));
 
-                var psi = new ProcessStartInfo(nuget, "pack " + Path.Combine(targetDir, nuspecFile)) {
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    WorkingDirectory = targetDir,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                };
-
-                var pi = Process.Start(psi);
-                pi.WaitForExit();
-                var output = pi.StandardOutput.ReadToEnd();
-                var err = pi.StandardError.ReadToEnd();
-                Console.WriteLine(output);  Console.WriteLine(err);
+                HelperExe.NugetPack(nuspecPath, targetDir, targetDir).GetAwaiter().GetResult();
 
                 var di = new DirectoryInfo(targetDir);
                 var pkg = di.EnumerateFiles("*.nupkg").First();

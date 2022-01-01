@@ -12,7 +12,7 @@ using Squirrel.SimpleSplat;
 using Xunit;
 using Squirrel.NuGet;
 
-namespace Squirrel.Tests.Core
+namespace Squirrel.Tests
 {
     public class CreateReleasePackageTests : IEnableLogger
     {

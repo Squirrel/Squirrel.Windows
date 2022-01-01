@@ -8,7 +8,7 @@ using Squirrel.SimpleSplat;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 
-namespace Squirrel.Tests.Core
+namespace Squirrel.Tests
 {
     public class ApplyDeltaPackageTests : IEnableLogger
     {

@@ -111,7 +111,7 @@ namespace Squirrel.Tests
                 }
             }
 
-            [Fact(Skip = "This test is currently failing in CI")]
+            [Fact]
             public async Task SpecialCharactersInitialInstallTest()
             {
                 string tempDir;

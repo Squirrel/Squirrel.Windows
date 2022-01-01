@@ -6,7 +6,7 @@ using Squirrel.Tests.TestHelpers;
 using Xunit;
 using Squirrel.NuGet;
 
-namespace Squirrel.Tests.Core
+namespace Squirrel.Tests
 {
     public class ReleaseEntryTests
     {

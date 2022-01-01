@@ -10,7 +10,7 @@ using Squirrel.Tests.TestHelpers;
 using Xunit;
 using Squirrel.Shell;
 
-namespace Squirrel.Tests.Core
+namespace Squirrel.Tests
 {
     public class UtilityTests : IEnableLogger
     {
@@ -125,7 +125,7 @@ namespace Squirrel.Tests.Core
             Assert.Equal(sha1FromExternalTool, sha1, StringComparer.OrdinalIgnoreCase);
         }
 
-        [Fact(Skip="This test takes forever")]
+        [Fact]
         public void CanDeleteDeepRecursiveDirectoryStructure()
         {
             string tempDir;
