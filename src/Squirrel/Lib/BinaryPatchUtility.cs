@@ -651,7 +651,7 @@ namespace Squirrel.Bsdiff
     /// <see cref="System.Security.Cryptography.CryptoStream"/> that take ownership of the stream passed to their constructors.
     /// </summary>
     /// <remarks>See <a href="http://code.logos.com/blog/2009/05/wrappingstream_implementation.html">WrappingStream Implementation</a>.</remarks>
-    public class WrappingStream : Stream
+    class WrappingStream : Stream
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="WrappingStream"/> class.
@@ -862,7 +862,7 @@ namespace Squirrel.Bsdiff
     /// <summary>
     /// Indicates whether an object takes ownership of an item.
     /// </summary>
-    public enum Ownership
+    enum Ownership
     {
         /// <summary>
         /// The object does not own this item.
@@ -878,7 +878,7 @@ namespace Squirrel.Bsdiff
     /// <summary>
     /// Provides helper methods for working with <see cref="Stream"/>.
     /// </summary>
-    public static class StreamUtility
+    static class StreamUtility
     {
         /// <summary>
         /// Reads exactly <paramref name="count"/> bytes from <paramref name="stream"/>.
