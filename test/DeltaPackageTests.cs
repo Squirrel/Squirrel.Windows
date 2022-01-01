@@ -131,9 +131,9 @@ namespace Squirrel.Tests
 
                 var newFilesAdded = new[] {
                     "Newtonsoft.Json.dll",
-                    "Refit.dll",
-                    "Refit-Portable.dll",
-                    "Castle.Core.dll",
+                    //"Refit.dll",
+                    //"Refit-Portable.dll",
+                    //"Castle.Core.dll",
                 }.Select(x => x.ToLowerInvariant());
 
                 // vNext adds a dependency on Refit

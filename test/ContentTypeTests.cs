@@ -13,7 +13,7 @@ namespace Squirrel.Tests
 {
     public class ContentTypeTests
     {
-        [Theory(Skip = "This test is currently failing in CI")]
+        [Theory]
         [InlineData("basic.xml", "basic-merged.xml")]
         [InlineData("complex.xml", "complex-merged.xml")]
         public void MergeContentTypes(string inputFileName, string expectedFileName)

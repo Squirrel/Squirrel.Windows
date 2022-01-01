@@ -482,7 +482,7 @@ namespace Squirrel.Tests
             fixture.unshimOurselves();
         }
 
-        [Fact(Skip = "This test is currently failing in CI")]
+        [Fact]
         public async Task GetShortcutsSmokeTest()
         {
             string remotePkgPath;
