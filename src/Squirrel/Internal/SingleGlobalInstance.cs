@@ -36,7 +36,7 @@ namespace Squirrel
             st.Stop();
 
             if (fh == null) {
-                throw new Exception("Couldn't acquire lock, is another instance running");
+                throw new Exception("Couldn't acquire lock, is another instance running?");
             }
 
             handle = Disposable.Create(() => {
@@ -57,8 +57,7 @@ namespace Squirrel
 
         ~SingleGlobalInstance()
         {
-            if (handle == null) return;
-            throw new AbandonedMutexException("Leaked a Mutex!");
+            Dispose();
         }
     }
 }

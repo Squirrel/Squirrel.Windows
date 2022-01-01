@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
@@ -201,8 +201,6 @@ namespace Squirrel
             }
         }
 
-        static bool exiting = false;
-
         /// <summary>
         /// Terminates the current process immediately (with <see cref="Environment.Exit"/>) and 
         /// re-launches the latest version of the current (or target) executable. 
@@ -230,8 +228,6 @@ namespace Squirrel
             exeToStart = exeToStart ?? Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName);
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
-
-            exiting = true;
 
             Process.Start(getUpdateExe(), String.Format("--processStartAndWait \"{0}\" {1}", exeToStart, argsArg));
 
@@ -267,8 +263,6 @@ namespace Squirrel
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
-            exiting = true;
-
             var updateProcess = Process.Start(getUpdateExe(), String.Format("--processStartAndWait {0} {1}", exeToStart, argsArg));
 
             await Task.Delay(500).ConfigureAwait(false);
@@ -296,9 +290,7 @@ namespace Squirrel
 
         ~UpdateManager()
         {
-            if (updateLock != null && !exiting) {
-                throw new Exception("You must dispose UpdateManager!");
-            }
+            Dispose();
         }
 
         Task<IDisposable> acquireUpdateLock()
