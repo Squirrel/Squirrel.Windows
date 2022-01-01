@@ -85,7 +85,7 @@ namespace Squirrel.Tests.TestHelpers
                 File.WriteAllText(nuspecPath, nuspec.Replace("0.1.0", version), Encoding.UTF8);
 
                 File.Copy(
-                    IntegrationTestHelper.GetPath("fixtures", "SquirrelAwareApp.exe"), 
+                    IntegrationTestHelper.GetPath("fixtures", "PublishSingleFileAwareApp.exe"), 
                     Path.Combine(targetDir, "SquirrelAwareApp.exe"));
                 File.Copy(
                     IntegrationTestHelper.GetPath("fixtures", "NotSquirrelAwareApp.exe"), 
