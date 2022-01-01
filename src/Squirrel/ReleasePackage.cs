@@ -255,7 +255,7 @@ namespace Squirrel
         static internal void addDeltaFilesToContentTypes(string rootDirectory)
         {
             var doc = new XmlDocument();
-            var path = Path.Combine(rootDirectory, "[Content_Types].xml");
+            var path = Path.Combine(rootDirectory, ContentType.ContentTypeFileName);
             doc.Load(path);
 
             ContentType.Merge(doc);

@@ -2,10 +2,12 @@
 using System.Linq;
 using System.Xml;
 
-namespace Squirrel
+namespace Squirrel.NuGet
 {
     internal static class ContentType
     {
+        public const string ContentTypeFileName = "[Content_Types].xml";
+
         public static void Clean(XmlDocument doc)
         {
             var typesElement = doc.FirstChild.NextSibling;
