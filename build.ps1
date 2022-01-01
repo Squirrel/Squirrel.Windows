@@ -36,5 +36,6 @@ Copy-Item "$PSScriptRoot\vendor\singlefilehost.exe" -Destination "$BinOut"
 
 Remove-Item "$Out\*.pdb"
 Remove-Item "$BinOut\*.pdb"
+Remove-Item "$Out\SquirrelLib.xml"
 
 Write-Output "Successfully copied files to './build/publish'"
