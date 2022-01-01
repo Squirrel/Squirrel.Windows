@@ -38,6 +38,7 @@
   <Default ContentType="application/octet" Extension="pak"/>
   <Default ContentType="application/octet" Extension="exe"/>
   <Default ContentType="application/octet" Extension="diff"/>
+  <Default ContentType="application/octet" Extension="bsdiff"/>
   <Default ContentType="text/plain" Extension="shasum"/>
   <Default ContentType="application/vnd.openxmlformats-package.core-properties+xml" Extension="psmdcp"/>
   <Override ContentType="application/octet" PartName="/Content/frontend/js/library/bootstrap/CNAME"/>
