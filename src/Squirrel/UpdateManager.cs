@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
@@ -34,7 +34,7 @@ namespace Squirrel
         IDisposable updateLock;
 
         public UpdateManager(string urlOrPath,
-            string applicationName = null,
+            string applicationName,
             string rootDirectory = null,
             IFileDownloader urlDownloader = null)
         {
