@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>FullNuspec</id>
+        <version>1.0</version>
+        <authors>Anaïs Betts, Caelan Sayler</authors>
+        <projectUrl>https://github.com/clowd/Clowd.Squirrel</projectUrl>
+        <iconUrl>https://user-images.githubusercontent.com/1287295/131249078-9e131e51-0b66-4dc7-8c0a-99cbea6bcf80.png</iconUrl>
+        <description>A test description</description>
+        <summary>A summary</summary>
+        <releaseNotes>
+release notes
+with multiple lines
+        </releaseNotes>
+        <copyright>Copyright ©</copyright>
+        <language>en-US</language>
+        <title>Squirrel for Windows</title>
+
+        <dependencies>
+            <group targetFramework=".NETFramework4.6.1">
+                <dependency id="System.ValueTuple" version="4.5.0" exclude="Build,Analyzers" />
+            </group>
+            <group targetFramework="net5.0">
+                <dependency id="System.IO.Packaging" version="5.0.0" exclude="Build,Analyzers" />
+            </group>
+        </dependencies>
+        <frameworkAssemblies>
+            <frameworkAssembly assemblyName="System.Net.Http" targetFramework=".NETFramework4.6.1" />
+            <frameworkAssembly assemblyName="System.Web" targetFramework=".NETFramework4.6.1" />
+        </frameworkAssemblies>
+
+    </metadata>
+    <files>
+        <file src="FullNuspec.txt" target="tools" />
+    </files>
+</package>

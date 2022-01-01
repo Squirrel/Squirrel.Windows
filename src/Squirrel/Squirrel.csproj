@@ -16,7 +16,6 @@
   <ItemGroup>
     <PackageReference Include="SharpCompress" Version="0.30.1" />
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
-    <PackageReference Include="System.IO.Packaging" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup Condition=" $(TargetFramework.StartsWith('net461')) ">

@@ -6,6 +6,7 @@
     <Description>Squirrel.Tests</Description>
     <Title>Squirrel.Tests</Title>
     <IsPackable>false</IsPackable>
+    <LangVersion>9</LangVersion>
     <IsTest>true</IsTest>
     <NoWarn>CS1998,xUnit2015,xUnit2017,xUnit2005,xUnit2009,xUnit2013,xUnit2004</NoWarn>
     <SignAssembly>True</SignAssembly>
@@ -17,6 +18,7 @@
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" PrivateAssets="All" />
+    <PackageReference Include="System.IO.Packaging" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Packaging;
-using System.Runtime.Versioning;
+using SharpCompress.Archives.Zip;
 
 namespace Squirrel.NuGet
 {
@@ -14,13 +13,13 @@ namespace Squirrel.NuGet
         Stream GetStream();
     }
 
-    internal class ZipPackageFile : IPackageFile
+    internal class ZipPackageFile : IPackageFile, IEquatable<ZipPackageFile>
     {
         private readonly Func<Stream> _streamFactory;
         private readonly string _targetFramework;
 
-        public ZipPackageFile(PackagePart part)
-            : this(UriUtility.GetPath(part.Uri), part.GetStream().ToStreamFactory())
+        public ZipPackageFile(string localPath, ZipArchiveEntry entry)
+            : this(localPath, entry.OpenEntryStream().ToStreamFactory())
         {
         }
 
@@ -29,7 +28,7 @@ namespace Squirrel.NuGet
         {
         }
 
-        protected ZipPackageFile(string path, Func<Stream> streamFactory)
+        internal ZipPackageFile(string path, Func<Stream> streamFactory)
         {
             Path = path;
             _streamFactory = streamFactory;
@@ -72,6 +71,33 @@ namespace Squirrel.NuGet
         public override string ToString()
         {
             return Path;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked {
+                int hash = 17;
+                hash = hash * 23 + Path.GetHashCode();
+                hash = hash * 23 + EffectivePath.GetHashCode();
+                hash = hash * 23 + TargetFramework.GetHashCode();
+                return hash;
+            }
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is ZipPackageFile zpf)
+                return Equals(zpf);
+            return false;
+        }
+
+        public bool Equals(ZipPackageFile other)
+        {
+            if (other == null) return false;
+            return
+                Path.Equals(other.Path) &&
+                EffectivePath.Equals(other.EffectivePath) &&
+                TargetFramework.Equals(other.TargetFramework);
         }
     }
 }

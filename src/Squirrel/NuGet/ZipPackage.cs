@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.IO.Packaging;
 using System.Linq;
-using System.Runtime.Versioning;
 using System.Xml.Linq;
+using SharpCompress.Archives.Zip;
 
 namespace Squirrel.NuGet
 {
@@ -61,16 +60,14 @@ namespace Squirrel.NuGet
 
         public IEnumerable<string> GetSupportedFrameworks()
         {
-            IEnumerable<string> fileFrameworks;
+            using var stream = _streamFactory();
+            using var zip = ZipArchive.Open(stream);
 
-            using (Stream stream = _streamFactory()) {
-                var package = Package.Open(stream);
-
-                string effectivePath;
-                fileFrameworks = from part in package.GetParts()
-                                 where IsPackageFile(part)
-                                 select VersionUtility.ParseFrameworkNameFromFilePath(UriUtility.GetPath(part.Uri), out effectivePath);
-            }
+            var fileFrameworks = from entries in zip.Entries
+                                 let uri = new Uri(entries.Key, UriKind.Relative)
+                                 let path = UriUtility.GetPath(uri)
+                                 where IsPackageFile(path)
+                                 select VersionUtility.ParseFrameworkNameFromFilePath(path, out var effectivePath);
 
             return FrameworkAssemblies.SelectMany(f => f.SupportedFrameworks)
                        .Concat(fileFrameworks)
@@ -96,13 +93,16 @@ namespace Squirrel.NuGet
 
         public List<IPackageFile> GetFiles()
         {
-            using (Stream stream = _streamFactory()) {
-                Package package = Package.Open(stream);
+            using var stream = _streamFactory();
+            using var zip = ZipArchive.Open(stream);
 
-                return (from part in package.GetParts()
-                        where IsPackageFile(part)
-                        select (IPackageFile) new ZipPackageFile(part)).ToList();
-            }
+            var files = from entries in zip.Entries
+                        let uri = new Uri(entries.Key, UriKind.Relative)
+                        let path = UriUtility.GetPath(uri)
+                        where IsPackageFile(path)
+                        select (IPackageFile) new ZipPackageFile(path, entries);
+
+            return files.ToList();
         }
 
         public string GetFullName()
@@ -112,25 +112,17 @@ namespace Squirrel.NuGet
 
         private void EnsureManifest()
         {
-            using (Stream stream = _streamFactory()) {
-                Package package = Package.Open(stream);
+            using var stream = _streamFactory();
+            using var zip = ZipArchive.Open(stream);
 
-                PackageRelationship relationshipType = package.GetRelationshipsByType(Constants.PackageRelationshipNamespace + ManifestRelationType).SingleOrDefault();
+            var manifest = zip.Entries
+                .FirstOrDefault(f => f.Key.EndsWith(Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase));
 
-                if (relationshipType == null) {
-                    throw new InvalidOperationException("PackageDoesNotContainManifest");
-                }
+            if (manifest == null)
+                throw new InvalidOperationException("PackageDoesNotContainManifest");
 
-                PackagePart manifestPart = package.GetPart(relationshipType.TargetUri);
-
-                if (manifestPart == null) {
-                    throw new InvalidOperationException("PackageDoesNotContainManifest");
-                }
-
-                using (Stream manifestStream = manifestPart.GetStream()) {
-                    ReadManifest(manifestStream);
-                }
-            }
+            using var manifestStream = manifest.OpenEntryStream();
+            ReadManifest(manifestStream);
         }
 
         void ReadManifest(Stream manifestStream)
@@ -172,7 +164,7 @@ namespace Squirrel.NuGet
                 Version = new SemanticVersion(value);
                 break;
             case "authors":
-                Authors = value?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries) ?? Enumerable.Empty<string>();
+                Authors = value?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()) ?? Enumerable.Empty<string>();
                 break;
             //case "owners":
             //    Owners = value;
@@ -290,14 +282,16 @@ namespace Squirrel.NuGet
                                  .Select(VersionUtility.ParseFrameworkName);
         }
 
-        bool IsPackageFile(PackagePart part)
+        bool IsPackageFile(string partPath)
         {
-            string path = UriUtility.GetPath(part.Uri);
-            string directory = Path.GetDirectoryName(path);
+            if (Path.GetFileName(partPath).Equals(ContentType.ContentTypeFileName, StringComparison.OrdinalIgnoreCase))
+                return false;
 
-            // We exclude any opc files and the manifest file (.nuspec)
-            return !ExcludePaths.Any(p => directory.StartsWith(p, StringComparison.OrdinalIgnoreCase)) &&
-                   !PackageHelper.IsManifest(path);
+            if (Path.GetExtension(partPath).Equals(Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            string directory = Path.GetDirectoryName(partPath);
+            return !ExcludePaths.Any(p => directory.StartsWith(p, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
