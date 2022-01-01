@@ -18,19 +18,19 @@ namespace Squirrel
 #endif
     internal static class HelperExe
     {
-        public static string SetupPath => FindHelperExecutable("Setup.exe", _searchPaths);
-        public static string UpdatePath => FindHelperExecutable("Update.exe", _searchPaths);
-        public static string StubExecutablePath => FindHelperExecutable("StubExecutable.exe", _searchPaths);
-        public static string SingleFileHostPath => FindHelperExecutable("singlefilehost.exe", _searchPaths);
-        public static string WixTemplatePath => FindHelperExecutable("template.wxs", _searchPaths);
+        public static string SetupPath => FindHelperFile("Setup.exe");
+        public static string UpdatePath => FindHelperFile("Update.exe");
+        public static string StubExecutablePath => FindHelperFile("StubExecutable.exe");
+        public static string SingleFileHostPath => FindHelperFile("singlefilehost.exe");
+        public static string WixTemplatePath => FindHelperFile("template.wxs");
 
         // private so we don't expose paths to internal tools. these should be exposed as a helper function
-        private static string NugetPath => FindHelperExecutable("NuGet.exe", _searchPaths);
-        private static string RceditPath => FindHelperExecutable("rcedit.exe", _searchPaths);
-        private static string SevenZipPath => FindHelperExecutable("7z.exe", _searchPaths);
-        private static string SignToolPath => FindHelperExecutable("signtool.exe", _searchPaths);
-        private static string WixCandlePath => FindHelperExecutable("candle.exe", _searchPaths);
-        private static string WixLightPath => FindHelperExecutable("light.exe", _searchPaths);
+        private static string NugetPath => FindHelperFile("nuget.exe");
+        private static string RceditPath => FindHelperFile("rcedit.exe");
+        private static string SevenZipPath => FindHelperFile("7z.exe");
+        private static string SignToolPath => FindHelperFile("signtool.exe");
+        private static string WixCandlePath => FindHelperFile("candle.exe");
+        private static string WixLightPath => FindHelperFile("light.exe");
 
         private static List<string> _searchPaths = new List<string>();
         private static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(HelperExe));
@@ -58,14 +58,15 @@ namespace Squirrel
                 _searchPaths.Insert(0, path);
         }
 
-        private static string FindHelperExecutable(string toFind, IEnumerable<string> additionalDirs = null, bool throwWhenNotFound = true)
+        private static string FindHelperFile(string toFind)
         {
             if (File.Exists(toFind))
                 return Path.GetFullPath(toFind);
 
-            additionalDirs = additionalDirs ?? Enumerable.Empty<string>();
+            const bool throwWhenNotFound = true;
+
             var dirs = (new[] { AppContext.BaseDirectory, Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
-                .Concat(additionalDirs ?? Enumerable.Empty<string>())
+                .Concat(_searchPaths)
                 .Where(d => !String.IsNullOrEmpty(d))
                 .Select(Path.GetFullPath);
 
