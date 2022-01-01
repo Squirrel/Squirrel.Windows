@@ -836,6 +836,10 @@ namespace Squirrel
                         if (!NativeMethods.QueryFullProcessImageName(hProcess, 0, sb, ref capacity))
                             continue;
 
+                        var exePath = sb.ToString();
+                        if (String.IsNullOrWhiteSpace(exePath) || !File.Exists(exePath))
+                            continue;
+
                         ret.Add((sb.ToString(), pids[i]));
                     } catch (Exception) {
                         // don't care
