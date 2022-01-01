@@ -90,7 +90,8 @@ namespace Squirrel.Tests
                 Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt")));
 
                 var text = File.ReadAllText(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt"), Encoding.UTF8);
-                Assert.Contains("updated|0.2.0", text);
+                Assert.Contains("updated", text);
+                Assert.Contains("0.2.0", text);
             }
         }
 

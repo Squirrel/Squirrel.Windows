@@ -408,7 +408,7 @@ namespace Squirrel
                         cts.CancelAfter(15 * 1000);
 
                         try {
-                            await Utility.InvokeProcessAsync(exe, args, cts.Token).ConfigureAwait(false);
+                            await Utility.InvokeProcessAsync(exe, args, cts.Token, Path.GetDirectoryName(exe)).ConfigureAwait(false);
                         } catch (Exception ex) {
                             this.Log().ErrorException("Couldn't run Squirrel hook, continuing: " + exe, ex);
                         }
