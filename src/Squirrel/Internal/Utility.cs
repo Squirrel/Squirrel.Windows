@@ -72,8 +72,9 @@ namespace Squirrel
 
         public static string NormalizePath(string path)
         {
-            return Path.GetFullPath(new Uri(path).LocalPath)
-                       .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            var fullPath = Path.GetFullPath(path);
+            var normalized = new Uri(fullPath, UriKind.Absolute).LocalPath;
+            return normalized.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         }
 
         public static bool IsFileInDirectory(string file, string directory)

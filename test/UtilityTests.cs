@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -14,6 +14,36 @@ namespace Squirrel.Tests.Core
 {
     public class UtilityTests : IEnableLogger
     {
+        [Theory]
+        [InlineData("file.txt", "file.txt")]
+        [InlineData("file", "file")]
+        [InlineData("/file", "\\file")]
+        [InlineData("/file/", "\\file")]
+        [InlineData("one\\two\\..\\file", "one\\file")]
+        [InlineData("C:/AnApp/file/", "C:\\AnApp\\file")]
+        public void PathIsNormalized(string input, string expected)
+        {
+            var exp = Path.GetFullPath(expected);
+            var normal = Utility.NormalizePath(input);
+            Assert.Equal(exp, normal);
+        }
+
+        [Theory]
+        [InlineData("C:\\AnApp", "C:\\AnApp\\file.exe", true)]
+        [InlineData("C:\\AnApp\\", "C:\\AnApp\\file.exe", true)]
+        [InlineData("C:\\AnApp", "C:\\AnApp\\sub\\dir\\file.exe", true)]
+        [InlineData("C:\\AnApp\\", "C:\\AnApp\\sub\\dir\\file.exe", true)]
+        [InlineData("C:\\AnAppTwo", "C:\\AnApp\\file.exe", false)]
+        [InlineData("C:\\AnAppTwo\\", "C:\\AnApp\\file.exe", false)]
+        [InlineData("C:\\AnAppTwo", "C:\\AnApp\\sub\\dir\\file.exe", false)]
+        [InlineData("C:\\AnAppTwo\\", "C:\\AnApp\\sub\\dir\\file.exe", false)]
+        [InlineData("AnAppThree", "AnAppThree\\file.exe", true)]
+        public void FileIsInDirectory(string directory, string file, bool isIn)
+        {
+            var fileInDir = Utility.IsFileInDirectory(file, directory);
+            Assert.Equal(isIn, fileInDir);
+        }
+
         [Fact]
         public void SetAppIdOnShortcutTest()
         {
