@@ -64,6 +64,7 @@ namespace Squirrel.NuGet
             using var zip = ZipArchive.Open(stream);
 
             var fileFrameworks = from entries in zip.Entries
+                                 where !entries.IsDirectory
                                  let uri = new Uri(entries.Key, UriKind.Relative)
                                  let path = UriUtility.GetPath(uri)
                                  where IsPackageFile(path)
@@ -98,6 +99,7 @@ namespace Squirrel.NuGet
             using var zip = ZipArchive.Open(stream);
 
             var files = from entries in zip.Entries
+                        where !entries.IsDirectory
                         let uri = new Uri(entries.Key, UriKind.Relative)
                         let path = UriUtility.GetPath(uri)
                         where IsPackageFile(path)
