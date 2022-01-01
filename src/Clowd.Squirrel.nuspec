@@ -1,30 +1,56 @@
 ﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
-    <version>0.0.0</version> <!-- should be set on the command line -->
-    <authors>Anaïs Betts, Caelan Sayler, GitHub, others</authors>
-    <owners>Caelan Sayler</owners>
-    <licenseUrl>https://github.com/clowd/Clowd.Squirrel/blob/master/COPYING</licenseUrl>
-    <projectUrl>https://github.com/clowd/Clowd.Squirrel</projectUrl>
-    <iconUrl>https://user-images.githubusercontent.com/1287295/131249078-9e131e51-0b66-4dc7-8c0a-99cbea6bcf80.png</iconUrl>
-
-    <dependencies>
-      <group targetFramework="netstandard2.0">
-        <dependency id="SharpCompress" version="0.30.1" />
-        <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
-        <dependency id="System.IO.Packaging" version="5.0.0" />
-      </group>
-    </dependencies>
+    <!-- should be set on the command line -->
+    <version>0.0.0</version>
 
     <id>Clowd.Squirrel</id>
     <title>Squirrel for Windows</title>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>An installation and update framework for Windows applications</description>
     <copyright>Copyright © Caelan Sayler 2021</copyright>
+    <authors>Anaïs Betts, Caelan Sayler, GitHub, others</authors>
+    <owners>Caelan Sayler</owners>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/clowd/Clowd.Squirrel</projectUrl>
+    <icon>images\Squirrel-Clowd-Logo.png</icon>
+    <iconUrl>https://user-images.githubusercontent.com/1287295/131249078-9e131e51-0b66-4dc7-8c0a-99cbea6bcf80.png</iconUrl>
+
+    <dependencies>
+      <group targetFramework=".NETFramework4.6.1">
+        <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
+        <dependency id="SharpCompress" version="0.30.1" />
+        <dependency id="System.ValueTuple" version="4.5.0" />
+      </group>
+      <group targetFramework="net5.0">
+        <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
+        <dependency id="SharpCompress" version="0.30.1" />
+      </group>
+      <group targetFramework="net6.0">
+        <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
+        <dependency id="SharpCompress" version="0.30.1" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
+        <dependency id="SharpCompress" version="0.30.1" />
+      </group>
+    </dependencies>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System.Net.Http" targetFramework=".NETFramework4.6.1" />
+      <frameworkAssembly assemblyName="System.Web" targetFramework=".NETFramework4.6.1" />
+    </frameworkAssemblies>
+
   </metadata>
   <files>
-    <file src="..\build\Release\netstandard2.0\*" target="lib\netstandard2.0" />
+    <!-- Include all target frameworks -->
+    <file src="..\build\Release\net461\SquirrelLib.*" target="lib\net461" />
+    <file src="..\build\Release\net5.0\SquirrelLib.*" target="lib\net5.0" />
+    <file src="..\build\Release\net6.0\SquirrelLib.*" target="lib\net6.0" />
+    <file src="..\build\Release\netstandard2.0\SquirrelLib.*" target="lib\netstandard2.0" />
+
+    <!-- Binary tools, icon, and build properties -->
     <file src="..\build\publish\*" target="tools" />
+    <file src="..\docs\artwork\Squirrel-Clowd-Logo.png" target="images" />
     <!--<file src="Clowd.Squirrel.props" target="build" />-->
   </files>
 </package>
