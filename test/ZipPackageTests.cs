@@ -34,6 +34,7 @@ namespace Squirrel.Tests
             //        throw new Exception();
             //}
 
+            Assert.Equal(packagingfw, zipfw);
             Assert.Equal(packaging, zipf);
             Assert.Equal(packagingLib, zipfLib);
         }
