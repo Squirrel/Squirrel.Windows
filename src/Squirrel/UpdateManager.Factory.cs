@@ -11,7 +11,7 @@ using Squirrel.Json;
 
 namespace Squirrel
 {
-    public sealed partial class UpdateManager
+    public partial class UpdateManager
     {
         [DataContract]
         private class Release
@@ -26,6 +26,12 @@ namespace Squirrel
             public string HtmlUrl { get; set; }
         }
 
+        /// <summary>
+        /// This function is obsolete and will be removed in a future version,
+        /// see the <see cref="GithubUpdateManager" /> class for a replacement.
+        /// </summary>
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [Obsolete("Use 'new GithubUpdateManager(...)' instead")]
         public static async Task<UpdateManager> GitHubUpdateManager(
             string repoUrl,
             string applicationName = null,

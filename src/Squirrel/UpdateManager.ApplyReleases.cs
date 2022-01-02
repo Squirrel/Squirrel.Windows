@@ -16,7 +16,7 @@ using Microsoft.Win32;
 
 namespace Squirrel
 {
-    public sealed partial class UpdateManager
+    public partial class UpdateManager
     {
         internal class ApplyReleasesImpl : IEnableLogger
         {

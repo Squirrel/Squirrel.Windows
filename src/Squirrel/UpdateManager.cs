@@ -24,7 +24,7 @@ namespace Squirrel
 #if NET5_0_OR_GREATER
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
-    public sealed partial class UpdateManager : IUpdateManager, IEnableLogger
+    public partial class UpdateManager : IUpdateManager, IEnableLogger
     {
         /// <summary>The name of the application.</summary>
         public string ApplicationName => applicationName;
@@ -38,7 +38,9 @@ namespace Squirrel
         private readonly string rootAppDirectory;
         private readonly string applicationName;
         private readonly IFileDownloader urlDownloader;
-        private readonly string updateUrlOrPath;
+
+        /// <summary>The url to use when checking for or downloading updates</summary>
+        protected string updateUrlOrPath;
 
         private readonly object lockobj = new object();
         private IDisposable updateLock;
@@ -53,7 +55,8 @@ namespace Squirrel
         /// </param>
         /// <param name="applicationName">
         /// The name of your application should correspond with the 
-        /// appdata directory name, and the name used with Squirrel releasify/pack.</param>
+        /// appdata directory name, and the name used with Squirrel releasify/pack.
+        /// </param>
         public UpdateManager(string urlOrPath, string applicationName)
             : this(urlOrPath, applicationName, null, null)
         {
@@ -65,7 +68,8 @@ namespace Squirrel
         /// </param>
         /// <param name="applicationName">
         /// The name of your application should correspond with the 
-        /// appdata directory name, and the name used with Squirrel releasify/pack.</param>
+        /// appdata directory name, and the name used with Squirrel releasify/pack.
+        /// </param>
         /// <param name="urlDownloader">
         /// A custom file downloader, for using non-standard package sources or adding proxy configurations. 
         /// </param>
@@ -80,7 +84,8 @@ namespace Squirrel
         /// </param>
         /// <param name="applicationName">
         /// The name of your application should correspond with the 
-        /// appdata directory name, and the name used with Squirrel releasify/pack.</param>
+        /// appdata directory name, and the name used with Squirrel releasify/pack.
+        /// </param>
         /// <param name="urlDownloader">
         /// A custom file downloader, for using non-standard package sources or adding proxy configurations. 
         /// </param>
@@ -88,7 +93,8 @@ namespace Squirrel
         /// Provide a custom location for the system LocalAppData, it will be used 
         /// instead of <see cref="Environment.SpecialFolder.LocalApplicationData"/>.
         /// </param>
-        public UpdateManager(string urlOrPath,
+        public UpdateManager(
+            string urlOrPath,
             string applicationName,
             string localAppDataDirectoryOverride,
             IFileDownloader urlDownloader)
@@ -109,7 +115,7 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
-        public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null, UpdaterIntention intention = UpdaterIntention.Update)
+        public virtual async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null, UpdaterIntention intention = UpdaterIntention.Update)
         {
             var checkForUpdate = new CheckForUpdateImpl(rootAppDirectory);
 
@@ -118,7 +124,7 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
-        public async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
+        public virtual async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
         {
             var downloadReleases = new DownloadReleasesImpl(rootAppDirectory);
             await acquireUpdateLock().ConfigureAwait(false);

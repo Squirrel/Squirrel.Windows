@@ -14,7 +14,7 @@ using Squirrel.SimpleSplat;
 
 namespace Squirrel
 {
-    public sealed partial class UpdateManager
+    public partial class UpdateManager
     {
         internal class InstallHelperImpl : IEnableLogger
         {
