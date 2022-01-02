@@ -67,7 +67,7 @@ namespace Squirrel
     /// An object providing update functionality to applications, and general helper
     /// functions for managing installed shortcuts and registry entries.
     /// </summary>
-    public interface IUpdateManager : IDisposable, IEnableLogger
+    public interface IUpdateManager : IDisposable, IEnableLogger, IApplicationTools
     {
         /// <summary>
         /// Fetch the remote store for updates and compare against the current 
@@ -121,6 +121,19 @@ namespace Squirrel
         /// </summary>
         Task FullUninstall();
 
+        /// <summary>
+        /// Kills all the executables in the target install directory, excluding
+        /// the currently executing process.
+        /// </summary>
+        void KillAllExecutablesBelongingToPackage();
+    }
+
+    /// <summary>
+    /// Provides accessory functions such as managing uninstall registry or 
+    /// creating, updating, and removing shortcuts.
+    /// </summary>
+    public interface IApplicationTools
+    {
         /// <summary>
         /// Gets the currently installed version of the given executable, or if
         /// not given, the currently running assembly
@@ -232,9 +245,9 @@ namespace Squirrel
 
         /// <summary>
         /// Create a shortcut to the currently running executable at the specified locations. 
-        /// See <see cref="IUpdateManager.CreateShortcutsForExecutable"/> to create a shortcut to a different program
+        /// See <see cref="IApplicationTools.CreateShortcutsForExecutable"/> to create a shortcut to a different program
         /// </summary>
-        public static void CreateShortcutForThisExe(this IUpdateManager This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
+        public static void CreateShortcutForThisExe(this IApplicationTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.CreateShortcutsForExecutable(
                 Path.GetFileName(AssemblyRuntimeInfo.EntryExePath),
@@ -247,7 +260,7 @@ namespace Squirrel
         /// <summary>
         /// Removes a shortcut for the currently running executable at the specified locations.
         /// </summary>
-        public static void RemoveShortcutForThisExe(this IUpdateManager This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
+        public static void RemoveShortcutForThisExe(this IApplicationTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.RemoveShortcutsForExecutable(
                 Path.GetFileName(AssemblyRuntimeInfo.EntryExePath),

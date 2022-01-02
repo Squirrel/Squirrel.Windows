@@ -185,12 +185,6 @@ namespace Squirrel
             installHelpers.CreateShortcutsForExecutable(exeName, locations, updateOnly, programArguments, icon);
         }
 
-        public Dictionary<ShortcutLocation, ShellLink> GetShortcutsForExecutable(string exeName, ShortcutLocation locations, string programArguments = null)
-        {
-            var installHelpers = new ApplyReleasesImpl(rootAppDirectory);
-            return installHelpers.GetShortcutsForExecutable(exeName, locations, programArguments);
-        }
-
         /// <inheritdoc/>
         public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
         {
@@ -228,6 +222,7 @@ namespace Squirrel
             NativeMethods.SetCurrentProcessExplicitAppUserModelID(appUserModelId);
         }
 
+        /// <inheritdoc/>
         public void KillAllExecutablesBelongingToPackage()
         {
             var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
@@ -271,7 +266,7 @@ namespace Squirrel
             //    launching a different version than we started with (this is why
             //    we take the app's *name* rather than a full path)
 
-            exeToStart = exeToStart ?? Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName);
+            exeToStart = exeToStart ?? Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
@@ -316,6 +311,12 @@ namespace Squirrel
             return updateProcess;
         }
 
+        internal Dictionary<ShortcutLocation, ShellLink> GetShortcutsForExecutable(string exeName, ShortcutLocation locations, string programArguments = null)
+        {
+            var installHelpers = new ApplyReleasesImpl(rootAppDirectory);
+            return installHelpers.GetShortcutsForExecutable(exeName, locations, programArguments);
+        }
+
         private static string GetLocalAppDataDirectory(string assemblyLocation = null)
         {
             // if we're installed and running as update.exe in the app folder, the app directory root is one folder up
@@ -334,7 +335,7 @@ namespace Squirrel
             return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         }
 
-        Task<IDisposable> acquireUpdateLock()
+        private Task<IDisposable> acquireUpdateLock()
         {
             lock (lockobj) {
                 if (disposed) throw new ObjectDisposedException(nameof(UpdateManager));
@@ -383,13 +384,13 @@ namespace Squirrel
             return (int) totalPercentage;
         }
 
-        static string getApplicationName()
+        private static string getApplicationName()
         {
             var fi = new FileInfo(getUpdateExe());
             return fi.Directory.Name;
         }
 
-        static string getUpdateExe()
+        private static string getUpdateExe()
         {
             var ourPath = AssemblyRuntimeInfo.EntryExePath;
 
