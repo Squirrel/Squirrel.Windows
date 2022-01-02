@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 //using Squirrel.NuGet.Resources;
 
-namespace Squirrel.NuGet
+namespace Squirrel
 {
     /// <summary>
     /// A hybrid implementation of SemVer that supports semantic versioning as described at http://semver.org while not strictly enforcing it to 

@@ -67,7 +67,7 @@ namespace Squirrel
     /// An object providing update functionality to applications, and general helper
     /// functions for managing installed shortcuts and registry entries.
     /// </summary>
-    public interface IUpdateManager : IDisposable, IEnableLogger, IApplicationTools
+    public interface IUpdateManager : IDisposable, IEnableLogger, IAppTools
     {
         /// <summary>
         /// Fetch the remote store for updates and compare against the current 
@@ -132,7 +132,7 @@ namespace Squirrel
     /// Provides accessory functions such as managing uninstall registry or 
     /// creating, updating, and removing shortcuts.
     /// </summary>
-    public interface IApplicationTools
+    public interface IAppTools
     {
         /// <summary>
         /// Gets the currently installed version of the given executable, or if
@@ -252,9 +252,9 @@ namespace Squirrel
 
         /// <summary>
         /// Create a shortcut to the currently running executable at the specified locations. 
-        /// See <see cref="IApplicationTools.CreateShortcutsForExecutable"/> to create a shortcut to a different program
+        /// See <see cref="IAppTools.CreateShortcutsForExecutable"/> to create a shortcut to a different program
         /// </summary>
-        public static void CreateShortcutForThisExe(this IApplicationTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
+        public static void CreateShortcutForThisExe(this IAppTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.CreateShortcutsForExecutable(
                 Path.GetFileName(AssemblyRuntimeInfo.EntryExePath),
@@ -267,7 +267,7 @@ namespace Squirrel
         /// <summary>
         /// Removes a shortcut for the currently running executable at the specified locations.
         /// </summary>
-        public static void RemoveShortcutForThisExe(this IApplicationTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
+        public static void RemoveShortcutForThisExe(this IAppTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.RemoveShortcutsForExecutable(
                 Path.GetFileName(AssemblyRuntimeInfo.EntryExePath),
