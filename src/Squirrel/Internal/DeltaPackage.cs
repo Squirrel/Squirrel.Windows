@@ -17,7 +17,7 @@ using SharpCompress.Compressors.Deflate;
 
 namespace Squirrel
 {
-    public interface IDeltaPackageBuilder
+    internal interface IDeltaPackageBuilder
     {
         ReleasePackage CreateDeltaPackage(ReleasePackage basePackage, ReleasePackage newPackage, string outputFile);
         ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile);
@@ -26,7 +26,7 @@ namespace Squirrel
 #if NET5_0_OR_GREATER
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
-    public class DeltaPackageBuilder : IEnableLogger, IDeltaPackageBuilder
+    internal class DeltaPackageBuilder : IEnableLogger, IDeltaPackageBuilder
     {
         readonly string localAppDirectory;
         public DeltaPackageBuilder(string localAppDataOverride = null)

@@ -18,14 +18,14 @@ using SharpCompress.Readers;
 
 namespace Squirrel
 {
-    public interface IReleasePackage
+    internal interface IReleasePackage
     {
         string InputPackageFile { get; }
         string ReleasePackageFile { get; }
         string SuggestedReleaseFileName { get; }
     }
 
-    public class ReleasePackage : IEnableLogger, IReleasePackage
+    internal class ReleasePackage : IEnableLogger, IReleasePackage
     {
         public ReleasePackage(string inputPackageFile, bool isReleasePackage = false)
         {
@@ -265,10 +265,5 @@ namespace Squirrel
                 doc.Save(sw);
             }
         }
-    }
-
-    public class ChecksumFailedException : Exception
-    {
-        public string Filename { get; set; }
     }
 }

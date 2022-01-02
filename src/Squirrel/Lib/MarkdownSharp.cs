@@ -93,8 +93,7 @@ using System.Text.RegularExpressions;
 
 namespace Squirrel.MarkdownSharp
 {
-
-    public class MarkdownOptions
+    internal class MarkdownOptions
     {
         /// <summary>
         /// when true, (most) bare plain URLs are auto-hyperlinked
@@ -127,13 +126,12 @@ namespace Squirrel.MarkdownSharp
         public bool StrictBoldItalic { get; set; }
     }
 
-
     /// <summary>
     /// Markdown is a text-to-HTML conversion tool for web writers.
     /// Markdown allows you to write using an easy-to-read, easy-to-write plain text format,
     /// then convert it to structurally valid XHTML (or HTML).
     /// </summary>
-    public class Markdown
+    internal class Markdown
     {
         private const string _version = "1.13";
 
