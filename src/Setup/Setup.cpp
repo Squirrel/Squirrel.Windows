@@ -117,14 +117,15 @@ void wexec(const wchar_t* cmd)
         dwExitCode = (DWORD)-9;
     }
 
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
     if (dwExitCode != 0) {
         throw std::exception(string("Process exited with error code: " + to_string(dwExitCode)).c_str());
     }
-
-    // leaks handles, but don't care - they will be cleaned up when we quit
 }
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
     wstring myPath = getCurrentExecutablePath();
     wstring updaterPath = getTempExePath();
