@@ -39,7 +39,10 @@ namespace Squirrel
         private readonly string applicationName;
         private readonly IFileDownloader urlDownloader;
         private readonly string updateUrlOrPath;
+
+        private readonly object lockobj = new object();
         private IDisposable updateLock;
+        private bool disposed;
 
         /// <summary>
         /// Create a new instance of <see cref="UpdateManager"/> to check for and install updates. 
@@ -234,9 +237,13 @@ namespace Squirrel
         /// <inheritdoc/>
         public void Dispose()
         {
-            var disp = Interlocked.Exchange(ref updateLock, null);
-            if (disp != null) {
-                disp.Dispose();
+            lock (lockobj) {
+                var disp = Interlocked.Exchange(ref updateLock, null);
+                if (disp != null) {
+                    disp.Dispose();
+                }
+                disposed = true;
+                GC.SuppressFinalize(this);
             }
         }
 
@@ -329,7 +336,10 @@ namespace Squirrel
 
         Task<IDisposable> acquireUpdateLock()
         {
-            if (updateLock != null) return Task.FromResult(updateLock);
+            lock (lockobj) {
+                if (disposed) throw new ObjectDisposedException(nameof(UpdateManager));
+                if (updateLock != null) return Task.FromResult(updateLock);
+            }
 
             return Task.Run(() => {
                 var key = Utility.CalculateStreamSHA1(new MemoryStream(Encoding.UTF8.GetBytes(rootAppDirectory)));
