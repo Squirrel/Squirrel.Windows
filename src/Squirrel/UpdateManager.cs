@@ -73,22 +73,6 @@ namespace Squirrel
         /// <param name="urlDownloader">
         /// A custom file downloader, for using non-standard package sources or adding proxy configurations. 
         /// </param>
-        public UpdateManager(string urlOrPath, string applicationName, IFileDownloader urlDownloader)
-            : this(urlOrPath, applicationName, null, urlDownloader)
-        {
-        }
-
-        /// <inheritdoc cref="UpdateManager(string, string)"/>
-        /// <param name="urlOrPath">
-        /// The URL where your update packages or stored, or a local package repository directory
-        /// </param>
-        /// <param name="applicationName">
-        /// The name of your application should correspond with the 
-        /// appdata directory name, and the name used with Squirrel releasify/pack.
-        /// </param>
-        /// <param name="urlDownloader">
-        /// A custom file downloader, for using non-standard package sources or adding proxy configurations. 
-        /// </param>
         /// <param name="localAppDataDirectoryOverride">
         /// Provide a custom location for the system LocalAppData, it will be used 
         /// instead of <see cref="Environment.SpecialFolder.LocalApplicationData"/>.
@@ -96,8 +80,8 @@ namespace Squirrel
         public UpdateManager(
             string urlOrPath,
             string applicationName,
-            string localAppDataDirectoryOverride,
-            IFileDownloader urlDownloader)
+            string localAppDataDirectoryOverride = null,
+            IFileDownloader urlDownloader = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(urlOrPath));
             Contract.Requires(!String.IsNullOrEmpty(applicationName));

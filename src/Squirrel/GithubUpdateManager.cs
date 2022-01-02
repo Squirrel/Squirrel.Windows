@@ -43,34 +43,7 @@ namespace Squirrel
         /// for up to 60 requests per hour, limited by IP address.
         /// </param>
         public GithubUpdateManager(string repoUrl, string applicationName, bool prerelease = false, string accessToken = null)
-            : this(repoUrl, applicationName, null, null, prerelease, accessToken)
-        {
-        }
-
-        /// <inheritdoc cref="UpdateManager(string, string)"/>
-        /// <param name="repoUrl">
-        /// The URL of the GitHub repository to download releases from 
-        /// (e.g. https://github.com/myuser/myrepo)
-        /// </param>
-        /// <param name="applicationName">
-        /// The name of your application should correspond with the 
-        /// appdata directory name, and the name used with Squirrel releasify/pack.
-        /// </param>
-        /// <param name="urlDownloader">
-        /// A custom file downloader, for using non-standard package sources or adding 
-        /// proxy configurations. 
-        /// </param>
-        /// <param name="prerelease">
-        /// If true, the latest pre-release will be downloaded. If false, the latest 
-        /// stable release will be downloaded.
-        /// </param>
-        /// <param name="accessToken">
-        /// The GitHub access token to use with the request to download releases. 
-        /// If left empty, the GitHub rate limit for unauthenticated requests allows 
-        /// for up to 60 requests per hour, limited by IP address.
-        /// </param>
-        public GithubUpdateManager(string repoUrl, string applicationName, bool prerelease = false, string accessToken = null, IFileDownloader urlDownloader = null)
-            : this(repoUrl, applicationName, null, urlDownloader, prerelease, accessToken)
+            : this(repoUrl, applicationName, prerelease, accessToken, null, null)
         {
         }
 
@@ -100,12 +73,13 @@ namespace Squirrel
         /// If left empty, the GitHub rate limit for unauthenticated requests allows 
         /// for up to 60 requests per hour, limited by IP address.
         /// </param>
-        public GithubUpdateManager(string repoUrl,
+        public GithubUpdateManager(
+            string repoUrl,
             string applicationName,
-            string localAppDataDirectoryOverride,
-            IFileDownloader urlDownloader,
-            bool prerelease,
-            string accessToken)
+            bool prerelease = false,
+            string accessToken = null,
+            string localAppDataDirectoryOverride = null,
+            IFileDownloader urlDownloader = null)
             : base(null, applicationName, localAppDataDirectoryOverride, urlDownloader)
         {
             this.repoUrl = repoUrl;
