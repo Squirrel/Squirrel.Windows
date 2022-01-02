@@ -26,17 +26,69 @@ namespace Squirrel
 #endif
     public sealed partial class UpdateManager : IUpdateManager, IEnableLogger
     {
-        readonly string rootAppDirectory;
-        readonly string applicationName;
-        readonly IFileDownloader urlDownloader;
-        readonly string updateUrlOrPath;
+        /// <summary>The name of the application.</summary>
+        public string ApplicationName => applicationName;
 
-        IDisposable updateLock;
+        /// <summary>The directory the app is (or will be) installed in.</summary>
+        public string RootAppDirectory => rootAppDirectory;
 
+        /// <summary>True if the current executable is inside the target install directory (see <see cref="RootAppDirectory"/>).</summary>
+        public bool IsInstalledApp => Utility.IsFileInDirectory(AssemblyRuntimeInfo.EntryExePath, RootAppDirectory);
+
+        private readonly string rootAppDirectory;
+        private readonly string applicationName;
+        private readonly IFileDownloader urlDownloader;
+        private readonly string updateUrlOrPath;
+        private IDisposable updateLock;
+
+        /// <summary>
+        /// Create a new instance of <see cref="UpdateManager"/> to check for and install updates. 
+        /// Do not forget to dispose this class!
+        /// </summary>
+        /// <param name="urlOrPath">
+        /// The URL where your update packages or stored, or a local package repository directory
+        /// </param>
+        /// <param name="applicationName">
+        /// The name of your application should correspond with the 
+        /// appdata directory name, and the name used with Squirrel releasify/pack.</param>
+        public UpdateManager(string urlOrPath, string applicationName)
+            : this(urlOrPath, applicationName, null, null)
+        {
+        }
+
+        /// <inheritdoc cref="UpdateManager(string, string)"/>
+        /// <param name="urlOrPath">
+        /// The URL where your update packages or stored, or a local package repository directory
+        /// </param>
+        /// <param name="applicationName">
+        /// The name of your application should correspond with the 
+        /// appdata directory name, and the name used with Squirrel releasify/pack.</param>
+        /// <param name="urlDownloader">
+        /// A custom file downloader, for using non-standard package sources or adding proxy configurations. 
+        /// </param>
+        public UpdateManager(string urlOrPath, string applicationName, IFileDownloader urlDownloader)
+            : this(urlOrPath, applicationName, null, urlDownloader)
+        {
+        }
+
+        /// <inheritdoc cref="UpdateManager(string, string)"/>
+        /// <param name="urlOrPath">
+        /// The URL where your update packages or stored, or a local package repository directory
+        /// </param>
+        /// <param name="applicationName">
+        /// The name of your application should correspond with the 
+        /// appdata directory name, and the name used with Squirrel releasify/pack.</param>
+        /// <param name="urlDownloader">
+        /// A custom file downloader, for using non-standard package sources or adding proxy configurations. 
+        /// </param>
+        /// <param name="localAppDataDirectoryOverride">
+        /// Provide a custom location for the system LocalAppData, it will be used 
+        /// instead of <see cref="Environment.SpecialFolder.LocalApplicationData"/>.
+        /// </param>
         public UpdateManager(string urlOrPath,
             string applicationName,
-            string rootDirectory = null,
-            IFileDownloader urlDownloader = null)
+            string localAppDataDirectoryOverride,
+            IFileDownloader urlDownloader)
         {
             Contract.Requires(!String.IsNullOrEmpty(urlOrPath));
             Contract.Requires(!String.IsNullOrEmpty(applicationName));
@@ -44,13 +96,13 @@ namespace Squirrel
             updateUrlOrPath = urlOrPath;
             this.applicationName = applicationName ?? UpdateManager.getApplicationName();
             this.urlDownloader = urlDownloader ?? new FileDownloader();
+            this.rootAppDirectory = Path.Combine(localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), this.applicationName);
+        }
 
-            if (rootDirectory != null) {
-                this.rootAppDirectory = Path.Combine(rootDirectory, this.applicationName);
-                return;
-            }
-
-            this.rootAppDirectory = Path.Combine(rootDirectory ?? GetLocalAppDataDirectory(), this.applicationName);
+        /// <summary>Clean up UpdateManager resources</summary>
+        ~UpdateManager()
+        {
+            Dispose();
         }
 
         /// <inheritdoc/>
@@ -179,12 +231,6 @@ namespace Squirrel
             installHelpers.KillAllProcessesBelongingToPackage();
         }
 
-        public string ApplicationName => applicationName;
-
-        public string RootAppDirectory => rootAppDirectory;
-
-        public bool IsInstalledApp => Utility.IsFileInDirectory(AssemblyRuntimeInfo.EntryExePath, RootAppDirectory);
-
         /// <inheritdoc/>
         public void Dispose()
         {
@@ -279,11 +325,6 @@ namespace Squirrel
 
             // if neither of the above are true, we're probably not installed yet, so return the real appdata directory
             return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        }
-
-        ~UpdateManager()
-        {
-            Dispose();
         }
 
         Task<IDisposable> acquireUpdateLock()

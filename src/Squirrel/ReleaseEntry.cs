@@ -46,8 +46,16 @@ namespace Squirrel
         /// </summary>
         float? StagingPercentage { get; }
 
+        /// <summary>
+        /// Given a local directory containing a package corresponding to this release, returns the 
+        /// correspoding release notes from within the package.
+        /// </summary>
         string GetReleaseNotes(string packageDirectory);
 
+        /// <summary>
+        /// Given a local directory containing a package corresponding to this release, 
+        /// returns the iconUrl specified in the package.
+        /// </summary>
         Uri GetIconUrl(string packageDirectory);
     }
 
@@ -112,6 +120,7 @@ namespace Squirrel
             }
         }
 
+        /// <inheritdoc />
         public string GetReleaseNotes(string packageDirectory)
         {
             var zp = new ZipPackage(Path.Combine(packageDirectory, Filename));
@@ -124,6 +133,7 @@ namespace Squirrel
             return zp.ReleaseNotes;
         }
 
+        /// <inheritdoc />
         public Uri GetIconUrl(string packageDirectory)
         {
             var zp = new ZipPackage(Path.Combine(packageDirectory, Filename));
