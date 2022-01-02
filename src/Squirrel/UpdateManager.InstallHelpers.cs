@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using Squirrel.NuGet;
-using System.Reflection;
 using Squirrel.SimpleSplat;
 
 namespace Squirrel

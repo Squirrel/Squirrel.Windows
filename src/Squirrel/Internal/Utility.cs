@@ -4,11 +4,8 @@ using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
 using System.Security.Cryptography;
-using System.Security.Principal;
 using System.Threading;
 using Squirrel.SimpleSplat;
 using System.Text;
@@ -16,7 +13,6 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
-using Squirrel.NuGet;
 
 namespace Squirrel
 {

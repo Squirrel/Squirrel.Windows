@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using Squirrel.SimpleSplat;
-using Squirrel.NuGet;
-using System.Diagnostics;
 
 namespace Squirrel
 {

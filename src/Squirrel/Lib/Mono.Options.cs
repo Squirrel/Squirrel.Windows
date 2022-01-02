@@ -134,7 +134,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
@@ -155,7 +154,7 @@ namespace NDesk.Options
 namespace Mono.Options
 #endif
 {
-	static class StringCoda {
+    static class StringCoda {
 
 		public static IEnumerable<string> WrappedLines (string self, params int[] widths)
 		{

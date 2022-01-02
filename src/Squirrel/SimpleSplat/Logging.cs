@@ -3,8 +3,6 @@ using System;
 using System.ComponentModel;
 using System.Reflection;
 using System.Globalization;
-using System.Text;
-using System.Threading;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
 
