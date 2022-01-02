@@ -41,7 +41,7 @@ namespace Squirrel
         public enum RuntimeInstallResult
         {
             /// <summary> The install was successful </summary>
-            Success = 0,
+            InstallSuccess = 0,
             /// <summary> The install failed because it was cancelled by the user </summary>
             UserCancelled = 1602,
             /// <summary> The install failed because another install is in progress, try again later </summary>
@@ -100,7 +100,7 @@ namespace Squirrel
                 // https://johnkoerner.com/install/windows-installer-error-codes/
 
                 if (p.ExitCode == 1638) // a newer compatible version is already installed
-                    return RuntimeInstallResult.Success;
+                    return RuntimeInstallResult.InstallSuccess;
 
                 if (p.ExitCode == 1641) // installer initiated a restart
                     return RuntimeInstallResult.RestartRequired;

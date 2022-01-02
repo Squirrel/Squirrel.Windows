@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Squirrel.NuGet;
 using Squirrel.Lib;
+using static Squirrel.Runtimes.RuntimeInstallResult;
 
 namespace Squirrel.Update
 {
@@ -185,14 +186,14 @@ namespace Squirrel.Update
                     var exitcode = await f.InvokeInstaller(localPath, silentInstall);
                     splash.Show();
 
-                    if (exitcode == RuntimeInstallResult.RestartRequired) {
+                    if (exitcode == RestartRequired) {
                         rebootRequired = true;
                         continue;
-                    } else if (exitcode != RuntimeInstallResult.Success) {
+                    } else if (exitcode != InstallSuccess) {
                         string rtmsg = exitcode switch {
-                            RuntimeInstallResult.UserCancelled => $"User cancelled install of {f.DisplayName}. Setup can not continue and will now exit.",
-                            RuntimeInstallResult.AnotherInstallInProgress => "Another installation is already in progress. Complete that installation before proceeding with this install.",
-                            RuntimeInstallResult.SystemDoesNotMeetRequirements => $"This computer does not meet the system requirements for {f.DisplayName}.",
+                            UserCancelled => $"User cancelled install of {f.DisplayName}. Setup can not continue and will now exit.",
+                            AnotherInstallInProgress => "Another installation is already in progress. Complete that installation before proceeding with this install.",
+                            SystemDoesNotMeetRequirements => $"This computer does not meet the system requirements for {f.DisplayName}.",
                             _ => $"{f.DisplayName} installer exited with error code '{exitcode}'.",
                         };
                         splash.ShowErrorDialog($"Error installing {f.DisplayName}", rtmsg);
