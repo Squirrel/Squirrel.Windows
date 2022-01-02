@@ -172,7 +172,7 @@ namespace Squirrel
                     if (!locations.HasFlag(f)) continue;
 
                     var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
-                    var appUserModelId = String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
+                    var appUserModelId = Utility.GetAppUserModelId(zf.Id, exeName);
                     var toastActivatorCLSDID = Utility.CreateGuidFromHash(appUserModelId).ToString();
 
                     this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
@@ -248,7 +248,7 @@ namespace Squirrel
                             sl.Arguments += String.Format(" -a \"{0}\"", programArguments);
                         }
 
-                        var appUserModelId = String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
+                        var appUserModelId = Utility.GetAppUserModelId(zf.Id, exeName);
                         var toastActivatorCLSID = Utility.CreateGuidFromHash(appUserModelId).ToString();
 
                         sl.SetAppUserModelId(appUserModelId);

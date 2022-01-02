@@ -188,6 +188,13 @@ namespace Squirrel
         /// app install directory.</param>
         /// <param name="locations">The locations to install the shortcut</param>
         void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations);
+
+        /// <summary>
+        /// Sets the AppUserModelID of the current process to match that which was added to the 
+        /// shell shortcuts. This ID is used to group an application's processes and windows under 
+        /// a single taskbar button.
+        /// </summary>
+        void SetProcessAppUserModelId();
     }
 
     /// <summary>

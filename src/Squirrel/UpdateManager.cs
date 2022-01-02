@@ -207,6 +207,7 @@ namespace Squirrel
             return appDirName.ToSemanticVersion();
         }
 
+        /// <inheritdoc/>
         public void SetProcessAppUserModelId()
         {
             var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
@@ -217,8 +218,7 @@ namespace Squirrel
                 thisRelease.Filename));
 
             var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
-
-            var appUserModelId = String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
+            var appUserModelId = Utility.GetAppUserModelId(zf.Id, exeName);
             NativeMethods.SetCurrentProcessExplicitAppUserModelID(appUserModelId);
         }
 

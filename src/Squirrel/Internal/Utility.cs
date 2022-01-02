@@ -494,6 +494,11 @@ namespace Squirrel
             return localReleases.OrderByDescending(x => x.Version).FirstOrDefault(x => !x.IsDelta);
         }
 
+        public static string GetAppUserModelId(string packageId, string exeName)
+        {
+            return String.Format("com.squirrel.{0}.{1}", packageId.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
+        }
+
         public static bool IsHttpUrl(string urlOrPath)
         {
             var uri = default(Uri);
