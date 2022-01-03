@@ -10,7 +10,7 @@ namespace Squirrel.Tests
     public class ApplyReleasesProgressTests
     {
 
-        [Fact]
+        [Fact(Skip = "the Progress callback not being synchonous makes this test unreliable in it's current format")]
         public async void CalculatesPercentageCorrectly()
         {
             // Just 1 complex situation should be enough to cover this
