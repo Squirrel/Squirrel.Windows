@@ -13,6 +13,16 @@ This library will help you build a `Setup.exe`, integrated (or standalone `Updat
 
 ---
 
+## Migrating from Squirrel.Windows?
+
+A couple of notes you should be aware of.
+ - The command line interface for Squirrel.exe is massively different. Check 'Squirrel.exe -h' for more info.
+ - The commnad line for Update.exe has stayed the same
+ - Update.exe is significantly bigger (12.5mb)
+ - There have been a great many other improvements here. To see some of them [have a look at the feature matrix](#feature-matrix).
+
+---
+
 ## What Do We Want?
 
 Windows apps should be as fast and as easy to install and update as apps like Google Chrome. From an app developer's side, it should be really straightforward to create an installer for my app, and publish updates to it, without having to jump through insane hoops. 
@@ -71,12 +81,10 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    
    When installed, uninstalled or updated, these methods will be executed, giving your app a chance to add or remove application shortcuts or perform other tasks. 
 
-4. Publish your app (with `dotnet publish` or similar) 
-   - If you want your application installer to install your runtime during setup (eg, `net48` or `net6`), you can use the `--framework` option in the next step. This means your installer will be smaller, but may require the internet if your user does not already have the required runtime installed.
-   - Otherwise, you wish to ship a self contained app, you must specify `--selfContained=true` option during publish. This means your installer will be larger, but will also work offline and will not need to download or install any additional dependencies.
+4. Build/Publish your app (with `msbuild`, `dotnet publish` or similar)
 
 5. Create a Squirrel release using the `Squirrel.exe` command line tool. 
-   The tool can be downloaded from GitHub Releases, or it is also bundled into the [Clowd.Squirrel](https://www.nuget.org/packages/Clowd.Squirrel/) nuget package. 
+   The tool can be downloaded from GitHub Releases, and it is also bundled into the [Clowd.Squirrel](https://www.nuget.org/packages/Clowd.Squirrel/) nuget package. 
    If installed through NuGet, the tools can usually be found at:
    - `%userprofile%\.nuget\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`, or;
    - `..\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`
@@ -85,11 +93,10 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    ```cmd
    Squirrel.exe pack --packName "YourApp" --packVersion "1.0.0" --packAuthors "YourCompany" --packDirectory "path-to/publish/folder"
    ```
-   Notes:
-   - Custom icons and splash art can be added to your installer using the options `--setupIcon` and `--splashImage`. Splash art can be any kind of image, but will appear animated if a `.gif` is supplied.
+   Important Notes:
    - The same `--releaseDir` (default `.\Releases`) should be used each time, so delta updates can be generated.
    - The package version must comply to strict SemVer syntax. (eg. `1.0.0`, `1.0.1-pre`)
-   - A list of supported runtimes for the `--framework` argument is [available here](https://github.com/clowd/Clowd.Squirrel/blob/develop/src/Squirrel/Runtimes.cs#L348)
+   - A list of supported runtimes for the `--framework` argument is [available here](https://github.com/clowd/Clowd.Squirrel/blob/develop/src/Squirrel/Runtimes.cs)
    
 6. Distribute your entire `--releaseDir` folder online. This folder can be hosted on any static web/file server, [Amazon S3](docs/using/amazon-s3.md), BackBlaze B2, or even via [GitHub Releases](docs/using/github.md). 
    
@@ -117,7 +124,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
 
 7. Update your app on startup / periodically with UpdateManager.
    ```cs
-   private static async void UpdateMyApp()
+   private static async Task UpdateMyApp()
    {
       using var mgr = new UpdateManager("https://the.place/you-host/updates");
       var newVersion = await mgr.UpdateApp();
@@ -142,6 +149,42 @@ This quick start guide is coming soon. Refer to below for complete docs which co
 **Note - most of the following documentation is now out of date and updates are also coming soon**
 
 See the documentation [Table of Contents](docs/readme.md) for an overview of the available documentation. 
+
+---
+
+## Feature Matrix
+
+| Feature | Clowd.Squirrel | Squirrel.Windows |
+|---|---|---|
+| Continuous updates, bug fixes, and other improvements | ✅ | ❌ |
+| Provides a command line update interface (Update.exe) with your app | ✅ | ✅ |
+| Update.exe Size | ❌ 12.5mb | ✅ 2mb |
+| Provides a C# SDK | netstandard2.0<br>net461<br>net5.0<br>net6.0 | netstandard2.0 |
+| SDK has 100% XML comment coverage in Nuget Pacakge | ✅ | None, does not ship comments in NuGet |
+| SDK Dependencies | SharpCompress | SharpCompress (outdated & security vulnerability)<br>NuGet (outdated and bugs)<br>Mono.Cecil (outdated and bugs)<br>Microsoft.Web.Xdt<br>Microsoft.CSharp<br>Microsoft.Win32.Registry<br>System.Drawing.Common<br>System.Net.Http<br>System.Web |
+| SDK is strong-name signed | ✅ | ❌ |
+| Provides an update package builder (Squirrel.exe) | ✅ | ✅ |
+| Supports building tiny delta updates | ✅ | ✅ |
+| Can compile a release/setup in a single easy command | ✅ | ❌ |
+| Command line tool for package building that actually prints helpful messages to the console | ✅ | ❌ |
+| CLI help text that is command-based and easily understandable | ✅ | ❌ |
+| Supports building packages for native apps | ✅ | ✅ |
+| Supports building packages for .Net/Core | ✅ | Limited/Buggy |
+| Supports building packages for PublishSingleFile apps | ✅ | ❌ |
+| Supports fully automated CI package deployments easily | ✅ | ❌ |
+| Compiles an installer (Setup.exe) | ✅ | ✅ |
+| Setup Splash Gif | ✅ | ✅ |
+| Setup Splash Png,Jpeg,Tiff,Etc | ✅ | ❌ |
+| Setup Splash Progress Bar | ✅ | ❌ |
+| Setup Splash has Multi-Monitor DPI support | ✅ | ❌ |
+| No internal dependencies on external frameworks/runtimes | ✅ | ❌ |
+| Can deploy an application that has no dependencies | ✅ | ❌ (always installs .Net Framework with your app) |
+| Can install .Net Full Framework during setup | ✅ | ✅ |
+| Can install .Net/Core during setup | ✅ | ❌ |
+| Can install vcredist during setup | ✅ | ❌ |
+| Can install new runtimes (see above) during updates | ✅ | ❌ |
+| Cleans up after itself | ✅ | Leaves huge log files everywhere<br>Does not delete itself during uninstall |
+| Can build an MSI enterprise machine-wide deployment tool | ✅ | ✅ |
 
 ---
 
