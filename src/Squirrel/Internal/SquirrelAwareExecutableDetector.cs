@@ -60,45 +60,11 @@ namespace Squirrel
 
         static int? GetVersionBlockSquirrelAwareValue(string executable)
         {
-            int size = NativeMethods.GetFileVersionInfoSize(executable, IntPtr.Zero);
-
-            // Nice try, buffer overflow
-            if (size <= 0 || size > 4096) return null;
-
-            var buf = new byte[size];
-            if (!NativeMethods.GetFileVersionInfo(executable, 0, size, buf)) return null;
-
-            const string englishUS = "040904B0";
-            const string neutral = "000004B0";
-            var supportedLanguageCodes = new[] { englishUS, neutral };
-
-            IntPtr result;
-            int resultSize;
-            if (!supportedLanguageCodes.Any(
-                languageCode =>
-                    NativeMethods.VerQueryValue(
-                        buf,
-                        $"\\StringFileInfo\\{languageCode}\\{SQUIRREL_AWARE_KEY}",
-                        out result, out resultSize
-                    )
-            )) {
-                return null;
-            }
-
-            // NB: I have **no** idea why, but Atom.exe won't return the version
-            // number "1" despite it being in the resource file and being 100% 
-            // identical to the version block that actually works. I've got stuff
-            // to ship, so we're just going to return '1' if we find the name in 
-            // the block at all. I hate myself for this.
-            return 1;
-
-#if __NOT__DEFINED_EVAR__
-            int ret;
-            string resultData = Marshal.PtrToStringAnsi(result, resultSize-1 /* Subtract one for null terminator */);
-            if (!Int32.TryParse(resultData, NumberStyles.Integer, CultureInfo.CurrentCulture, out ret)) return null;
-
-            return ret;
-#endif
+            return StringFileInfo.ReadVersionInfo(executable, out var vi)
+                .Where(i => i.Key == SQUIRREL_AWARE_KEY)
+                .Where(i => int.TryParse(i.Value, out var _))
+                .Select(i => (int?)int.Parse(i.Value))
+                .FirstOrDefault(i => i > 0);
         }
 
         static int? GetSidecarSquirrelAwareValue(string executable)
