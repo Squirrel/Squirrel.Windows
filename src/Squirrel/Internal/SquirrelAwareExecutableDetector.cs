@@ -32,20 +32,27 @@ namespace Squirrel
             if (!File.Exists(exePath)) return null;
             var fullname = Path.GetFullPath(exePath);
 
+            // ways to search for SquirrelAwareVersion, ordered by precedence
+            // search exe-embedded values first, and if not found, move on to sidecar files
+            var detectors = new Func<string, int?>[] {
+                GetEmbeddedManifestSquirrelAwareValue,
+                GetVersionBlockSquirrelAwareValue,
+                GetSidecarSquirrelAwareValue,
+                GetSideBySideManifestSquirrelAwareValue,
+                GetSideBySideDllManifestSquirrelAwareValue,
+            };
+
             for (int i = 0; i < 3; i++) {
-                try {
-                    var maniVer = GetManifestSquirrelAwareValue(exePath);
-                    if (maniVer != null)
-                        return GetManifestSquirrelAwareValue(exePath);
-                } catch { }
-
-                try {
-                    var vblockVer = GetVersionBlockSquirrelAwareValue(exePath);
-                    if (vblockVer != null)
-                        return GetVersionBlockSquirrelAwareValue(exePath);
-                } catch { }
-
-                Thread.Sleep(200);
+                foreach (var fn in detectors) {
+                    try {
+                        var v = fn(exePath);
+                        if (v != null) return v;
+                    } catch {
+                        // do not throw, otherwise other detectors will not run
+                    }
+                }
+                // retry 3 times with 100ms delay
+                Thread.Sleep(100);
             }
 
             return null;
@@ -71,7 +78,7 @@ namespace Squirrel
                 languageCode =>
                     NativeMethods.VerQueryValue(
                         buf,
-                        $"\\StringFileInfo\\{languageCode}\\SquirrelAwareVersion",
+                        $"\\StringFileInfo\\{languageCode}\\{SQUIRREL_AWARE_KEY}",
                         out result, out resultSize
                     )
             )) {
@@ -94,12 +101,53 @@ namespace Squirrel
 #endif
         }
 
-        static int? GetManifestSquirrelAwareValue(string executable)
+        static int? GetSidecarSquirrelAwareValue(string executable)
         {
+            // Looks for a "MyApp.exe.squirrel" sidecar file
+            // the file should contain just the integer version (eg. "1")
+            var sidecarPath = executable + ".squirrel";
+            if (File.Exists(sidecarPath)) {
+                var txt = File.ReadAllText(sidecarPath);
+                if (int.TryParse(txt, out var pv)) {
+                    return pv;
+                }
+            }
+            return null;
+        }
+
+        static int? GetSideBySideManifestSquirrelAwareValue(string executable)
+        {
+            // Looks for an external application manifest eg. "MyApp.exe.manifest"
+            var manifestPath = executable + ".manifest";
+            if (File.Exists(manifestPath)) {
+                return ParseManifestAwareValue(File.ReadAllBytes(manifestPath));
+            }
+            return null;
+        }
+
+        static int? GetSideBySideDllManifestSquirrelAwareValue(string executable)
+        {
+            // Looks for an external application DLL manifest eg. "MyApp.dll.manifest"
+            var manifestPath = Path.Combine(
+                Path.GetDirectoryName(executable),
+                Path.GetFileNameWithoutExtension(executable) + ".dll.manifest");
+            if (File.Exists(manifestPath)) {
+                return ParseManifestAwareValue(File.ReadAllBytes(manifestPath));
+            }
+            return null;
+        }
+
+        static int? GetEmbeddedManifestSquirrelAwareValue(string executable)
+        {
+            // Looks for an embedded application manifest
             byte[] buffer = null;
             using (var rr = new ResourceReader(executable))
                 buffer = rr.ReadAssemblyManifest();
+            return ParseManifestAwareValue(buffer);
+        }
 
+        static int? ParseManifestAwareValue(byte[] buffer)
+        {
             if (buffer == null)
                 return null;
 
