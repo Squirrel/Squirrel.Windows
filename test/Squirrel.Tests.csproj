@@ -25,4 +25,8 @@
     <ProjectReference Include="..\src\Squirrel\Squirrel.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
 </Project>

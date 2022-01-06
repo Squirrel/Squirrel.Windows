@@ -11,6 +11,7 @@ using Squirrel.Tests.TestHelpers;
 using Xunit;
 using System.Net;
 using Squirrel.NuGet;
+using System.Net.Http;
 
 namespace Squirrel.Tests
 {
@@ -314,7 +315,7 @@ namespace Squirrel.Tests
             {
                 // This should result in a WebException (which gets caught) unless you can actually access http://lol
                 using (var fixture = new UpdateManager("http://lol", "theApp")) {
-                    await Assert.ThrowsAsync(typeof(WebException), () => fixture.CheckForUpdate());
+                    await Assert.ThrowsAsync(typeof(HttpRequestException), () => fixture.CheckForUpdate());
                 }
             }
 
