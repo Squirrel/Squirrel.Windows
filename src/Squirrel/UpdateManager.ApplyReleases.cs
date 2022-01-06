@@ -183,7 +183,7 @@ namespace Squirrel
                         IconPath = target,
                         IconIndex = 0,
                         WorkingDirectory = Path.GetDirectoryName(exePath),
-                        Description = zf.Description,
+                        Description = zf.ProductDescription,
                     };
 
                     if (!String.IsNullOrWhiteSpace(programArguments)) {
@@ -240,7 +240,7 @@ namespace Squirrel
                             IconPath = icon ?? target,
                             IconIndex = 0,
                             WorkingDirectory = Path.GetDirectoryName(exePath),
-                            Description = zf.Description,
+                            Description = zf.ProductDescription,
                         };
 
                         if (!String.IsNullOrWhiteSpace(programArguments)) {
@@ -693,14 +693,14 @@ namespace Squirrel
             {
                 var possibleProductNames = new[] {
                     versionInfo.ProductName,
-                    package.Title,
+                    package.ProductName,
                     versionInfo.FileDescription,
                     Path.GetFileNameWithoutExtension(versionInfo.FileName)
                 };
 
                 var possibleCompanyNames = new[] {
                     versionInfo.CompanyName,
-                    package.Authors.FirstOrDefault() ?? package.Id,
+                    package.ProductCompany,
                 };
 
                 var prodName = possibleCompanyNames.First(x => !String.IsNullOrWhiteSpace(x));

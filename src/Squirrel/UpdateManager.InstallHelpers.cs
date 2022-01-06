@@ -44,13 +44,12 @@ namespace Squirrel
 
                 // we will try to find an "app.ico" from the package, write it to the local app dir, and then 
                 // use it for the uninstaller icon. If an app.ico does not exist, it will use a SquirrelAwareApp exe icon instead.
-                var iconFile = zp.GetLibFiles().FirstOrDefault(f => f.Path.EndsWith("app.ico", StringComparison.InvariantCultureIgnoreCase));
-                if (iconFile != null) {
+                using var iconFileStream = zp.ReadLibFileStream("app.ico");
+                if (iconFileStream != null) {
                     try {
                         var targetIco = Path.Combine(rootAppDirectory, "app.ico");
-                        using (var iconStream = iconFile.GetStream())
                         using (var targetStream = File.Open(targetIco, FileMode.Create, FileAccess.Write))
-                            await iconStream.CopyToAsync(targetStream).ConfigureAwait(false);
+                            await iconFileStream.CopyToAsync(targetStream).ConfigureAwait(false);
                         this.Log().Info($"File '{targetIco}' is being used for uninstall icon.");
                         key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
                     } catch (Exception ex) {
@@ -68,11 +67,11 @@ namespace Squirrel
                 }
 
                 var stringsToWrite = new[] {
-                    new { Key = "DisplayName", Value = zp.Title ?? zp.Description ?? zp.Summary },
+                    new { Key = "DisplayName", Value = zp.ProductName },
                     new { Key = "DisplayVersion", Value = zp.Version.ToString() },
                     new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyyMMdd") },
                     new { Key = "InstallLocation", Value = rootAppDirectory },
-                    new { Key = "Publisher", Value = String.Join(",", zp.Authors) },
+                    new { Key = "Publisher", Value = zp.ProductCompany },
                     new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
                     new { Key = "UninstallString", Value = uninstallCmd },
                     new { Key = "URLUpdateInfo", Value = zp.ProjectUrl != null ? zp.ProjectUrl.ToString() : "", }

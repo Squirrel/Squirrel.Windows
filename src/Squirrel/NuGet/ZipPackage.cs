@@ -11,42 +11,46 @@ namespace Squirrel.NuGet
     internal interface IPackage
     {
         string Id { get; }
-        string Description { get; }
-        IEnumerable<string> Authors { get; }
-        string Title { get; }
-        string Summary { get; }
+        string ProductName { get; }
+        string ProductDescription { get; }
+        string ProductCompany { get; }
+        string ProductCopyright { get; }
         string Language { get; }
-        string Copyright { get; }
+        SemanticVersion Version { get; }
+        IEnumerable<FrameworkAssemblyReference> FrameworkAssemblies { get; }
+        IEnumerable<PackageDependencySet> DependencySets { get; }
         Uri ProjectUrl { get; }
         string ReleaseNotes { get; }
         Uri IconUrl { get; }
-        IEnumerable<FrameworkAssemblyReference> FrameworkAssemblies { get; }
-        IEnumerable<PackageDependencySet> DependencySets { get; }
-        SemanticVersion Version { get; }
-        IEnumerable<string> GetSupportedFrameworks();
-        IEnumerable<IPackageFile> GetLibFiles();
-        string GetFullName();
+        string[] GetFrameworks();
+        Stream ReadLibFileStream(string fileName);
     }
 
     internal class ZipPackage : IPackage
     {
+        public string ProductName => Title ?? Id;
+        public string ProductDescription => Description ?? Summary ?? Title ?? Id;
+        public string ProductCompany => (Authors.Any() ? String.Join(", ", Authors) : Owners) ?? ProductName;
+        public string ProductCopyright => Copyright ?? "Copyright © " + DateTime.Now.Year.ToString() + " " + ProductCompany;
+
         public string Id { get; private set; }
-        public string Description { get; private set; }
-        public IEnumerable<string> Authors { get; private set; } = Enumerable.Empty<string>();
-        public string Title { get; private set; }
-        public string Summary { get; private set; }
-        public string Language { get; private set; }
-        public string Copyright { get; private set; }
         public SemanticVersion Version { get; private set; }
         public IEnumerable<FrameworkAssemblyReference> FrameworkAssemblies { get; private set; } = Enumerable.Empty<FrameworkAssemblyReference>();
         public IEnumerable<PackageDependencySet> DependencySets { get; private set; } = Enumerable.Empty<PackageDependencySet>();
         public Uri ProjectUrl { get; private set; }
         public string ReleaseNotes { get; private set; }
         public Uri IconUrl { get; private set; }
+        public string Language { get; private set; }
+
+        protected string Description { get; private set; }
+        protected IEnumerable<string> Authors { get; private set; } = Enumerable.Empty<string>();
+        protected string Owners { get; private set; }
+        protected string Title { get; private set; }
+        protected string Summary { get; private set; }
+        protected string Copyright { get; private set; }
 
         private readonly Func<Stream> _streamFactory;
         private static readonly string[] ExcludePaths = new[] { "_rels", "package" };
-        private const string ManifestRelationType = "manifest";
 
         public ZipPackage(string filePath)
         {
@@ -58,23 +62,41 @@ namespace Squirrel.NuGet
             EnsureManifest();
         }
 
-        public IEnumerable<string> GetSupportedFrameworks()
+        public string[] GetFrameworks()
         {
             using var stream = _streamFactory();
             using var zip = ZipArchive.Open(stream);
 
-            var fileFrameworks = from entries in zip.Entries
-                                 where !entries.IsDirectory
-                                 let uri = new Uri(entries.Key, UriKind.Relative)
-                                 let path = UriUtility.GetPath(uri)
-                                 where IsPackageFile(path)
-                                 select VersionUtility.ParseFrameworkNameFromFilePath(path, out var effectivePath);
+            var fileFrameworks = GetPackageFiles(zip)
+                .Select(z => VersionUtility.ParseFrameworkNameFromFilePath(z.Path, out var _));
 
-            return FrameworkAssemblies.SelectMany(f => f.SupportedFrameworks)
-                       .Concat(fileFrameworks)
-                       .Where(f => f != null)
-                       .Distinct()
-                       .ToArray();
+            return FrameworkAssemblies
+                .SelectMany(f => f.SupportedFrameworks)
+                .Concat(fileFrameworks)
+                .Where(f => f != null)
+                .Distinct()
+                .ToArray();
+        }
+
+        public Stream ReadLibFileStream(string fileName)
+        {
+            using var stream = _streamFactory();
+            using var zip = ZipArchive.Open(stream);
+
+            string folderPrefix = Constants.LibDirectory + Path.DirectorySeparatorChar;
+            var files = GetPackageFiles(zip)
+                .Where(z => z.Path.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase))
+                .Where(z => Path.GetFileName(z.Path).Equals(fileName, StringComparison.OrdinalIgnoreCase));
+
+            if (!files.Any()) {
+                return null;
+            }
+
+            var f = files.First();
+            using var fstream = f.Entry.OpenEntryStream();
+            var ms = new MemoryStream();
+            fstream.CopyTo(ms);
+            return ms;
         }
 
         public IEnumerable<IPackageFile> GetLibFiles()
@@ -93,24 +115,23 @@ namespace Squirrel.NuGet
             return GetFiles().Where(file => file.Path.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase));
         }
 
-        public List<IPackageFile> GetFiles()
+        public IEnumerable<IPackageFile> GetFiles()
         {
             using var stream = _streamFactory();
             using var zip = ZipArchive.Open(stream);
-
-            var files = from entries in zip.Entries
-                        where !entries.IsDirectory
-                        let uri = new Uri(entries.Key, UriKind.Relative)
-                        let path = UriUtility.GetPath(uri)
-                        where IsPackageFile(path)
-                        select (IPackageFile) new ZipPackageFile(path, entries);
-
-            return files.ToList();
+            return GetPackageFiles(zip)
+                .Select(z => (IPackageFile) new ZipPackageFile(z.Path))
+                .ToArray();
         }
 
-        public string GetFullName()
+        private IEnumerable<(string Path, ZipArchiveEntry Entry)> GetPackageFiles(ZipArchive zip)
         {
-            return Id + " " + Version;
+            return from entry in zip.Entries
+                   where !entry.IsDirectory
+                   let uri = new Uri(entry.Key, UriKind.Relative)
+                   let path = UriUtility.GetPath(uri)
+                   where IsPackageFile(path)
+                   select (path, entry);
         }
 
         private void EnsureManifest()
@@ -128,7 +149,7 @@ namespace Squirrel.NuGet
             ReadManifest(manifestStream);
         }
 
-        void ReadManifest(Stream manifestStream)
+        private void ReadManifest(Stream manifestStream)
         {
             var document = XmlUtility.LoadSafe(manifestStream, ignoreWhiteSpace: true);
 
@@ -169,9 +190,9 @@ namespace Squirrel.NuGet
             case "authors":
                 Authors = value?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()) ?? Enumerable.Empty<string>();
                 break;
-            //case "owners":
-            //    Owners = value;
-            //    break;
+            case "owners":
+                Owners = value;
+                break;
             //case "licenseUrl":
             //    LicenseUrl = value;
             //    break;
@@ -285,7 +306,7 @@ namespace Squirrel.NuGet
                                  .Select(VersionUtility.ParseFrameworkName);
         }
 
-        bool IsPackageFile(string partPath)
+        private bool IsPackageFile(string partPath)
         {
             if (Path.GetFileName(partPath).Equals(ContentType.ContentTypeFileName, StringComparison.OrdinalIgnoreCase))
                 return false;

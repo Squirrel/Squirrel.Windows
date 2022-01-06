@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -276,7 +276,7 @@ namespace SquirrelCli
             Log.Info($"Creating Setup bundle");
             var infosave = new BundledSetupInfo() {
                 AppId = bundledzp.Id,
-                AppFriendlyName = bundledzp.Title ?? bundledzp.Id,
+                AppFriendlyName = bundledzp.ProductName,
                 BundledPackageBytes = File.ReadAllBytes(newestReleasePath),
                 BundledPackageName = Path.GetFileName(newestReleasePath),
                 RequiredFrameworks = requiredFrameworks.ToArray(),
@@ -304,16 +304,15 @@ namespace SquirrelCli
 
             var setupExeDir = Path.GetDirectoryName(setupExe);
             var setupName = Path.GetFileNameWithoutExtension(setupExe);
-            var company = String.Join(",", package.Authors);
             var culture = CultureInfo.GetCultureInfo(package.Language ?? "").TextInfo.ANSICodePage;
 
             var templateText = File.ReadAllText(HelperExe.WixTemplatePath);
             var templateData = new Dictionary<string, string> {
                 { "Id", package.Id },
-                { "Title", package.Title },
-                { "Author", company },
+                { "Title", package.ProductName },
+                { "Author", package.ProductCompany },
                 { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
-                { "Summary", package.Summary ?? package.Description ?? package.Id },
+                { "Summary", package.ProductDescription },
                 { "Codepage", $"{culture}" },
                 { "Platform", packageAs64Bit ? "x64" : "x86" },
                 { "ProgramFilesFolder", packageAs64Bit ? "ProgramFiles64Folder" : "ProgramFilesFolder" },

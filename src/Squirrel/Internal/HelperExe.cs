@@ -130,17 +130,16 @@ namespace Squirrel
             }
         }
 
-        public static async Task SetPEVersionBlockFromPackageInfo(string exePath, Squirrel.NuGet.IPackage package, string iconPath = null)
+        public static async Task SetPEVersionBlockFromPackageInfo(string exePath, NuGet.IPackage package, string iconPath = null)
         {
             var realExePath = Path.GetFullPath(exePath);
-            var company = String.Join(",", package.Authors);
 
             List<string> args = new List<string>() {
                 realExePath,
-                "--set-version-string", "CompanyName", company,
-                "--set-version-string", "LegalCopyright", package.Copyright ?? "Copyright © " + DateTime.Now.Year.ToString() + " " + company,
-                "--set-version-string", "FileDescription", package.Summary ?? package.Description ?? "Installer for " + package.Id,
-                "--set-version-string", "ProductName", package.Description ?? package.Summary ?? package.Id,
+                "--set-version-string", "CompanyName", package.ProductCompany,
+                "--set-version-string", "LegalCopyright", package.ProductCopyright,
+                "--set-version-string", "FileDescription", package.ProductDescription,
+                "--set-version-string", "ProductName", package.ProductName,
                 "--set-file-version", package.Version.ToString(),
                 "--set-product-version", package.Version.ToString(),
             };

@@ -20,7 +20,7 @@ namespace Squirrel.Tests
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "slack-1.1.8-full.nupkg");
 
             var zp = new ZipPackage(inputPackage);
-            var zipfw = zp.GetSupportedFrameworks();
+            var zipfw = zp.GetFrameworks();
             var zipf = zp.GetFiles().OrderBy(f => f.Path).ToArray();
             var zipfLib = zp.GetLibFiles().OrderBy(f => f.Path).ToArray();
 
@@ -45,17 +45,19 @@ namespace Squirrel.Tests
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "FullNuspec.1.0.0.nupkg");
             var zp = new ZipPackage(inputPackage);
 
+            var dyn = ExposedObject.From(zp);
+
             Assert.Equal("FullNuspec", zp.Id);
             Assert.Equal(new SemanticVersion("1.0"), zp.Version);
-            Assert.Equal(new [] { "Anaïs Betts", "Caelan Sayler" }, zp.Authors);
+            Assert.Equal(new [] { "Anaïs Betts", "Caelan Sayler" }, dyn.Authors);
             Assert.Equal(new Uri("https://github.com/clowd/Clowd.Squirrel"), zp.ProjectUrl);
             Assert.Equal(new Uri("https://user-images.githubusercontent.com/1287295/131249078-9e131e51-0b66-4dc7-8c0a-99cbea6bcf80.png"), zp.IconUrl);
-            Assert.Equal("A test description", zp.Description);
-            Assert.Equal("A summary", zp.Summary);
+            Assert.Equal("A test description", dyn.Description);
+            Assert.Equal("A summary", dyn.Summary);
             Assert.Equal("release notes\nwith multiple lines", zp.ReleaseNotes);
-            Assert.Equal("Copyright ©", zp.Copyright);
+            Assert.Equal("Copyright ©", dyn.Copyright);
             Assert.Equal("en-US", zp.Language);
-            Assert.Equal("Squirrel for Windows", zp.Title);
+            Assert.Equal("Squirrel for Windows", dyn.Title);
 
             Assert.NotEmpty(zp.DependencySets);
             var net461 = zp.DependencySets.First();
@@ -102,7 +104,7 @@ namespace Squirrel.Tests
         {
             return (from part in package.GetParts()
                     where IsPackageFile(part)
-                    select (IPackageFile) new ZipPackageFile(UriUtility.GetPath(part.Uri), part.GetStream().ToStreamFactory())).ToList();
+                    select (IPackageFile) new ZipPackageFile(UriUtility.GetPath(part.Uri))).ToList();
         }
 
         bool IsPackageFile(PackagePart part)

@@ -72,7 +72,7 @@ namespace Squirrel
             // we can tell from here what platform(s) the package targets
             // but given this is a simple package we only
             // ever expect one entry here (crash hard otherwise)
-            var frameworks = package.GetSupportedFrameworks();
+            var frameworks = package.GetFrameworks();
             if (frameworks.Count() > 1) {
                 var platforms = frameworks
                     .Aggregate(new StringBuilder(), (sb, f) => sb.Append(f.ToString() + "; "));

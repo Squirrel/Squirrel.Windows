@@ -10,29 +10,15 @@ namespace Squirrel.NuGet
         string Path { get; }
         string EffectivePath { get; }
         string TargetFramework { get; }
-        Stream GetStream();
     }
 
     internal class ZipPackageFile : IPackageFile, IEquatable<ZipPackageFile>
     {
-        private readonly Func<Stream> _streamFactory;
         private readonly string _targetFramework;
 
-        public ZipPackageFile(string localPath, ZipArchiveEntry entry)
-            : this(localPath, entry.OpenEntryStream().ToStreamFactory())
-        {
-        }
-
-        public ZipPackageFile(IPackageFile file)
-            : this(file.Path, file.GetStream().ToStreamFactory())
-        {
-        }
-
-        internal ZipPackageFile(string path, Func<Stream> streamFactory)
+        public ZipPackageFile(string path)
         {
             Path = path;
-            _streamFactory = streamFactory;
-
             string effectivePath;
             _targetFramework = VersionUtility.ParseFrameworkNameFromFilePath(path, out effectivePath);
             EffectivePath = effectivePath;
@@ -61,11 +47,6 @@ namespace Squirrel.NuGet
                 }
                 yield break;
             }
-        }
-
-        public Stream GetStream()
-        {
-            return _streamFactory();
         }
 
         public override string ToString()
