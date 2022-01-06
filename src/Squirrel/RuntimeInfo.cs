@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
@@ -80,13 +81,12 @@ namespace Squirrel
             public abstract Task<bool> CheckIsSupported();
 
             /// <summary> Download the latest installer for this runtime to the specified file </summary>
-            public virtual async Task DownloadToFile(string localPath, Action<DownloadProgressChangedEventArgs> progress = null)
+            public virtual async Task DownloadToFile(string localPath, Action<int> progress = null, IFileDownloader downloader = null)
             {
                 var url = await GetDownloadUrl().ConfigureAwait(false);
                 Log.Info($"Downloading {Id} from {url} to {localPath}");
-                using var wc = Utility.CreateWebClient();
-                wc.DownloadProgressChanged += (s, e) => { progress?.Invoke(e); };
-                await wc.DownloadFileTaskAsync(url, localPath).ConfigureAwait(false);
+                downloader = downloader ?? Utility.CreateDefaultDownloader();
+                await downloader.DownloadFile(url, localPath, progress).ConfigureAwait(false);
             }
 
             /// <summary> Execute a runtime installer at a local file path. Typically used after <see cref="DownloadToFile"/> </summary>
@@ -277,7 +277,7 @@ namespace Squirrel
             /// Get latest available version of dotnet. Channel can be 'LTS', 'current', or a two part version 
             /// (eg. '6.0') to get the latest minor release.
             /// </summary>
-            public static async Task<string> GetLatestDotNetVersion(DotnetRuntimeType runtimeType, string channel)
+            public static async Task<string> GetLatestDotNetVersion(DotnetRuntimeType runtimeType, string channel, IFileDownloader downloader = null)
             {
                 // https://github.com/dotnet/install-scripts/blob/main/src/dotnet-install.ps1#L427
                 // these are case sensitive
@@ -289,13 +289,13 @@ namespace Squirrel
                     _ => throw new NotImplementedException(),
                 };
 
-                using var wc = Utility.CreateWebClient();
-                return await wc.DownloadStringTaskAsync(new Uri($"{UncachedDotNetFeed}/{runtime}/{channel}/latest.version")).ConfigureAwait(false);
+                downloader = downloader ?? Utility.CreateDefaultDownloader();
+                return await downloader.DownloadString($"{UncachedDotNetFeed}/{runtime}/{channel}/latest.version").ConfigureAwait(false);
             }
 
             /// <summary>
             /// Get download url for a specific version of dotnet. Version must be an absolute version, such as one
-            /// returned by <see cref="GetLatestDotNetVersion(DotnetRuntimeType, string)"/>. cpuarch should be either
+            /// returned by <see cref="GetLatestDotNetVersion(DotnetRuntimeType, string, IFileDownloader)"/>. cpuarch should be either
             /// 'x86', 'x64', or 'arm64'.
             /// </summary>
             public static string GetDotNetDownloadUrl(DotnetRuntimeType runtimeType, string version, string cpuarch)

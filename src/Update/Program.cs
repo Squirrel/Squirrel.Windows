@@ -178,7 +178,7 @@ namespace Squirrel.Update
                 // iterate through each missing dependency and download/run the installer.
                 foreach (var f in missingFrameworks) {
                     var localPath = Path.Combine(tempFolder, f.Id + ".exe");
-                    await f.DownloadToFile(localPath, e => splash.SetProgress((ulong) e.BytesReceived, (ulong) e.TotalBytesToReceive));
+                    await f.DownloadToFile(localPath, e => splash.SetProgress((ulong) e, 100));
                     splash.SetProgressIndeterminate();
 
                     // hide splash screen while the runtime installer is running so the user can see progress

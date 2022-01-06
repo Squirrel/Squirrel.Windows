@@ -77,8 +77,7 @@ namespace Squirrel
                             });
                         }
 
-                        var data = await urlDownloader.DownloadUrl(uri.ToString()).ConfigureAwait(false);
-                        releaseFile = Encoding.UTF8.GetString(data);
+                        releaseFile = await urlDownloader.DownloadString(uri.ToString()).ConfigureAwait(false);
                     } catch (WebException ex) {
                         this.Log().InfoException("Download resulted in WebException (returning blank release list)", ex);
 

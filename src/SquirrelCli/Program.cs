@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -227,8 +227,8 @@ namespace SquirrelCli
 
                         // icon was provided in the nuspec. download it and possibly convert it from a different image format
                         Log.Info($"Downloading app icon from '{zpkg.IconUrl}'.");
-                        using var wc = Utility.CreateWebClient();
-                        var imgBytes = wc.DownloadData(zpkg.IconUrl);
+                        var fd = Utility.CreateDefaultDownloader();
+                        var imgBytes = fd.DownloadBytes(zpkg.IconUrl.ToString()).Result;
                         if (zpkg.IconUrl.AbsolutePath.EndsWith(".ico")) {
                             File.WriteAllBytes(iconTarget, imgBytes);
                         } else {

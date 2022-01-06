@@ -81,8 +81,8 @@ namespace Squirrel
             Contract.Requires(!String.IsNullOrEmpty(applicationName));
 
             updateUrlOrPath = urlOrPath;
-            this.applicationName = applicationName ?? UpdateManager.getApplicationName();
-            this.urlDownloader = urlDownloader ?? new FileDownloader();
+            this.applicationName = applicationName ?? getApplicationName();
+            this.urlDownloader = urlDownloader ?? Utility.CreateDefaultDownloader();
             this.rootAppDirectory = Path.Combine(localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), this.applicationName);
         }
 

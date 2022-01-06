@@ -12,11 +12,6 @@ namespace SquirrelCli.Sources
 {
     internal class SyncImplementations
     {
-        static SyncImplementations()
-        {
-            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-        }
-
         public static async Task SyncRemoteReleases(Uri targetUri, DirectoryInfo releasesDir)
         {
             var releasesUri = Utility.AppendPathToUri(targetUri, "RELEASES");
@@ -114,8 +109,8 @@ namespace SquirrelCli.Sources
             }
 
             Console.WriteLine("Downloading release from {0}", remoteUrl);
-            var wc = new NotBrokenWebClient();
-            await wc.DownloadFileTaskAsync(remoteUrl, localPath);
+            var wc = Utility.CreateDefaultDownloader();
+            await wc.DownloadFile(remoteUrl.ToString(), localPath, null);
         }
 
         static Tuple<string, string> nwoFromRepoUrl(string repoUrl)
@@ -150,20 +145,4 @@ namespace SquirrelCli.Sources
             await retryAsync(count, async () => { await block(); return false; });
         }
     }
-
-#pragma warning disable SYSLIB0014 // Type or member is obsolete
-    class NotBrokenWebClient : WebClient
-    {
-        protected override WebRequest GetWebRequest(Uri address)
-        {
-            var wr = base.GetWebRequest(address);
-            var hwr = wr as HttpWebRequest;
-            if (hwr == null) return wr;
-
-            hwr.AllowAutoRedirect = true;
-            hwr.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-            return hwr;
-        }
-    }
-#pragma warning restore SYSLIB0014 // Type or member is obsolete
 }

@@ -112,22 +112,9 @@ namespace Squirrel
             }
         }
 
-        // https://source.dot.net/#System.Net.Primitives/Interop.SchProtocols.cs,acd9ff17ab451613
-        private const int SP_PROT_TLS1_3_SERVER = 0x00001000;
-        private const int SP_PROT_TLS1_3_CLIENT = 0x00002000;
-        private const int SP_PROT_TLS1_3 = (SP_PROT_TLS1_3_SERVER | SP_PROT_TLS1_3_CLIENT);
-        public static WebClient CreateWebClient()
+        public static IFileDownloader CreateDefaultDownloader()
         {
-            ServicePointManager.SecurityProtocol = (SecurityProtocolType) SP_PROT_TLS1_3 | SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-
-            var ret = new WebClient();
-            var wp = WebRequest.DefaultWebProxy;
-            if (wp != null) {
-                wp.Credentials = CredentialCache.DefaultCredentials;
-                ret.Proxy = wp;
-            }
-
-            return ret;
+            return new HttpClientFileDownloader();
         }
 
         public static async Task CopyToAsync(string from, string to)
