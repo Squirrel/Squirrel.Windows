@@ -81,7 +81,7 @@ namespace Squirrel.Tests
         {
             var fileFrameworks = from part in package.GetParts()
                                  where IsPackageFile(part)
-                                 select VersionUtility.ParseFrameworkNameFromFilePath(UriUtility.GetPath(part.Uri), out var effectivePath);
+                                 select NugetUtil.ParseFrameworkNameFromFilePath(NugetUtil.GetPath(part.Uri), out var effectivePath);
 
             return zp.FrameworkAssemblies.SelectMany(f => f.SupportedFrameworks)
                        .Concat(fileFrameworks)
@@ -91,7 +91,7 @@ namespace Squirrel.Tests
 
         IEnumerable<IPackageFile> GetLibFiles(Package package)
         {
-            return GetFiles(package, Constants.LibDirectory);
+            return GetFiles(package, NugetUtil.LibDirectory);
         }
 
         IEnumerable<IPackageFile> GetFiles(Package package, string directory)
@@ -104,12 +104,12 @@ namespace Squirrel.Tests
         {
             return (from part in package.GetParts()
                     where IsPackageFile(part)
-                    select (IPackageFile) new ZipPackageFile(UriUtility.GetPath(part.Uri))).ToList();
+                    select (IPackageFile) new ZipPackageFile(NugetUtil.GetPath(part.Uri))).ToList();
         }
 
         bool IsPackageFile(PackagePart part)
         {
-            string path = UriUtility.GetPath(part.Uri);
+            string path = NugetUtil.GetPath(part.Uri);
             string directory = Path.GetDirectoryName(path);
             string[] ExcludePaths = new[] { "_rels", "package" };
             return !ExcludePaths.Any(p => directory.StartsWith(p, StringComparison.OrdinalIgnoreCase)) && !IsManifest(path);
@@ -117,7 +117,7 @@ namespace Squirrel.Tests
 
         bool IsManifest(string p)
         {
-            return Path.GetExtension(p).Equals(Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase);
+            return Path.GetExtension(p).Equals(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

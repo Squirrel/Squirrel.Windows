@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using SharpCompress.Archives.Zip;
 
 namespace Squirrel.NuGet
 {
@@ -20,7 +18,7 @@ namespace Squirrel.NuGet
         {
             Path = path;
             string effectivePath;
-            _targetFramework = VersionUtility.ParseFrameworkNameFromFilePath(path, out effectivePath);
+            _targetFramework = NugetUtil.ParseFrameworkNameFromFilePath(path, out effectivePath);
             EffectivePath = effectivePath;
         }
 

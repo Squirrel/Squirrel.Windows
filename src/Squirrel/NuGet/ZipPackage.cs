@@ -68,7 +68,7 @@ namespace Squirrel.NuGet
             using var zip = ZipArchive.Open(stream);
 
             var fileFrameworks = GetPackageFiles(zip)
-                .Select(z => VersionUtility.ParseFrameworkNameFromFilePath(z.Path, out var _));
+                .Select(z => NugetUtil.ParseFrameworkNameFromFilePath(z.Path, out var _));
 
             return FrameworkAssemblies
                 .SelectMany(f => f.SupportedFrameworks)
@@ -83,7 +83,7 @@ namespace Squirrel.NuGet
             using var stream = _streamFactory();
             using var zip = ZipArchive.Open(stream);
 
-            string folderPrefix = Constants.LibDirectory + Path.DirectorySeparatorChar;
+            string folderPrefix = NugetUtil.LibDirectory + Path.DirectorySeparatorChar;
             var files = GetPackageFiles(zip)
                 .Where(z => z.Path.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase))
                 .Where(z => Path.GetFileName(z.Path).Equals(fileName, StringComparison.OrdinalIgnoreCase));
@@ -101,12 +101,12 @@ namespace Squirrel.NuGet
 
         public IEnumerable<IPackageFile> GetLibFiles()
         {
-            return GetFiles(Constants.LibDirectory);
+            return GetFiles(NugetUtil.LibDirectory);
         }
 
         public IEnumerable<IPackageFile> GetContentFiles()
         {
-            return GetFiles(Constants.ContentDirectory);
+            return GetFiles(NugetUtil.ContentDirectory);
         }
 
         public IEnumerable<IPackageFile> GetFiles(string directory)
@@ -129,7 +129,7 @@ namespace Squirrel.NuGet
             return from entry in zip.Entries
                    where !entry.IsDirectory
                    let uri = new Uri(entry.Key, UriKind.Relative)
-                   let path = UriUtility.GetPath(uri)
+                   let path = NugetUtil.GetPath(uri)
                    where IsPackageFile(path)
                    select (path, entry);
         }
@@ -140,7 +140,7 @@ namespace Squirrel.NuGet
             using var zip = ZipArchive.Open(stream);
 
             var manifest = zip.Entries
-                .FirstOrDefault(f => f.Key.EndsWith(Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(f => f.Key.EndsWith(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase));
 
             if (manifest == null)
                 throw new InvalidOperationException("PackageDoesNotContainManifest");
@@ -151,7 +151,7 @@ namespace Squirrel.NuGet
 
         private void ReadManifest(Stream manifestStream)
         {
-            var document = XmlUtility.LoadSafe(manifestStream, ignoreWhiteSpace: true);
+            var document = NugetUtil.LoadSafe(manifestStream, ignoreWhiteSpace: true);
 
             var metadataElement = document.Root.ElementsNoNamespace("metadata").FirstOrDefault();
             if (metadataElement == null) {
@@ -279,7 +279,7 @@ namespace Squirrel.NuGet
                 return (from element in groups
                         let fx = ParseFrameworkNames(element.GetOptionalAttributeValue("targetFramework").SafeTrim())
                         select new PackageDependencySet(
-                            VersionUtility.ParseFrameworkName(element.GetOptionalAttributeValue("targetFramework").SafeTrim()),
+                            element.GetOptionalAttributeValue("targetFramework").SafeTrim(),
                             ReadDependencies(element))).ToList();
             }
         }
@@ -292,7 +292,7 @@ namespace Squirrel.NuGet
                     where idElement != null && !String.IsNullOrEmpty(idElement.Value)
                     select new PackageDependency(
                         idElement.Value.SafeTrim(),
-                        VersionUtility.ParseVersionSpec(element.GetOptionalAttributeValue("version").SafeTrim())
+                        element.GetOptionalAttributeValue("version").SafeTrim()
                     )).ToList();
         }
 
@@ -302,8 +302,7 @@ namespace Squirrel.NuGet
                 return Enumerable.Empty<string>();
             }
 
-            return frameworkNames.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                 .Select(VersionUtility.ParseFrameworkName);
+            return frameworkNames.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
         }
 
         private bool IsPackageFile(string partPath)
@@ -311,7 +310,7 @@ namespace Squirrel.NuGet
             if (Path.GetFileName(partPath).Equals(ContentType.ContentTypeFileName, StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            if (Path.GetExtension(partPath).Equals(Constants.ManifestExtension, StringComparison.OrdinalIgnoreCase))
+            if (Path.GetExtension(partPath).Equals(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase))
                 return false;
 
             string directory = Path.GetDirectoryName(partPath);
