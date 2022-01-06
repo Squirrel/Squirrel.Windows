@@ -43,14 +43,22 @@ namespace Squirrel
             };
 
             for (int i = 0; i < 3; i++) {
+                bool error = false;
                 foreach (var fn in detectors) {
                     try {
                         var v = fn(exePath);
                         if (v != null) return v;
                     } catch {
+                        error = true;
                         // do not throw, otherwise other detectors will not run
                     }
                 }
+
+                if (!error) {
+                    // we tried all the detectors and none of them threw, so we don't need to retry
+                    break;
+                }
+
                 // retry 3 times with 100ms delay
                 Thread.Sleep(100);
             }
@@ -63,7 +71,7 @@ namespace Squirrel
             return StringFileInfo.ReadVersionInfo(executable, out var vi)
                 .Where(i => i.Key == SQUIRREL_AWARE_KEY)
                 .Where(i => int.TryParse(i.Value, out var _))
-                .Select(i => (int?)int.Parse(i.Value))
+                .Select(i => (int?) int.Parse(i.Value))
                 .FirstOrDefault(i => i > 0);
         }
 
