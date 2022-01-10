@@ -95,7 +95,7 @@ namespace SquirrelCli
             Add("packName=", "The name of the package to create", v => packId = v, true);
 
             // public arguments, with indexes so they appear before ReleasifyOptions
-            InsertAt(1, "u=|packUniqueId=", "Unique identifier for application/package", v => packId = v);
+            InsertAt(1, "u=|packId=", "Unique identifier for application/package", v => packId = v);
             InsertAt(2, "v=|packVersion=", "Current application version", v => packVersion = v);
             InsertAt(3, "p=|packDirectory=", "Directory containing application files to package", v => packDirectory = v);
             InsertAt(4, "packTitle=", "Optional display/friendly name for package", v => packTitle = v);
