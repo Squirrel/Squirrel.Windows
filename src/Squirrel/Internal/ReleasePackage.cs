@@ -59,22 +59,21 @@ namespace Squirrel
 
             var package = new ZipPackage(InputPackageFile);
 
+            // just in-case our parsing is more-strict than nuget.exe and
+            // the 'releasify' command was used instead of 'pack'.
+            NugetUtil.ThrowIfInvalidNugetId(package.Id);
+
             // NB: Our test fixtures use packages that aren't SemVer compliant, 
             // we don't really care that they aren't valid
             if (!ModeDetector.InUnitTestRunner()) {
                 // verify that the .nuspec version is semver compliant
-                if (!SemanticVersion.TryParseStrict(package.Version.ToString(), out var verdontcare)) {
-                    throw new Exception(
-                        String.Format(
-                            "Your package version is currently {0}, which is *not* SemVer-compatible, change this to be a SemVer version number",
-                            package.Version.ToString()));
-                }
+                NugetUtil.ThrowIfVersionNotSemverCompliant(package.Version.ToString());
 
                 // verify that the suggested filename can be round-tripped as an assurance 
                 // someone won't run across an edge case and install a broken app somehow
                 var idtest = ReleaseEntry.ParseEntryFileName(SuggestedReleaseFileName);
                 if (idtest.PackageName != package.Id || idtest.Version != package.Version) {
-                    throw new Exception($"The package id/version could not be properly parsed.");
+                    throw new Exception($"The package id/version could not be properly parsed, are you using special characters?");
                 }
             }
 

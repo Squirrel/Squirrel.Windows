@@ -814,7 +814,7 @@ namespace Mono.Options
 			return this;
 		}
 
-		sealed class ActionOption : Option {
+		protected sealed class ActionOption : Option {
 			Action<OptionValueCollection> action;
 
 			public ActionOption (string prototype, string description, int count, Action<OptionValueCollection> action)

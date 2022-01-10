@@ -20,6 +20,22 @@ namespace Squirrel.NuGet
         public static readonly string PackageReferenceFile = "packages.config";
         public static readonly string MirroringReferenceFile = "mirroring.config";
 
+        public static void ThrowIfInvalidNugetId(string id)
+        {
+            if (!System.Text.RegularExpressions.Regex.IsMatch(id, @"^[\w\.-]*$"))
+                throw new ArgumentException($"Invalid package Id '{id}', it must contain only alphanumeric characters, underscores, dashes, and dots.");
+        }
+
+        public static void ThrowIfVersionNotSemverCompliant(string version)
+        {
+            if (!SemanticVersion.TryParseStrict(version, out var _)) {
+                throw new Exception(
+                    String.Format(
+                        "Invalid package version '{0}', it must be a 3-part SemVer compliant version string.",
+                        version));
+            }
+        }
+
         public static string SafeTrim(this string value)
         {
             return value == null ? null : value.Trim();

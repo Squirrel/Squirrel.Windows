@@ -21,6 +21,19 @@ namespace SquirrelCli
 
     internal abstract class ValidatedOptionSet : OptionSet
     {
+        public OptionSet InsertAt(int index, string prototype, string description, Action<string> action)
+        {
+            return InsertAt(index, prototype, description, action, false);
+        }
+
+        public OptionSet InsertAt(int index, string prototype, string description, Action<string> action, bool hidden)
+        {
+            if (action == null)
+                throw new ArgumentNullException("action");
+            Option p = new ActionOption(prototype, description, 1, delegate (OptionValueCollection v) { action(v[0]); }, hidden);
+            base.InsertItem(index, p);
+            return this;
+        }
         protected virtual bool IsNullOrDefault(string propertyName)
         {
             var p = this.GetType().GetProperty(propertyName);
@@ -65,6 +78,17 @@ namespace SquirrelCli
                     throw new OptionValidationException($"Argument '{propertyName}': Expected file to exist at this location but no file was found");
                 } else if (forcedExtension != null && !Path.GetExtension(path).TrimStart('.').Equals(forcedExtension.TrimStart('.'), StringComparison.InvariantCultureIgnoreCase)) {
                     throw new OptionValidationException($"Argument '{propertyName}': File must be of type '{forcedExtension}'.");
+                }
+            }
+        }
+
+        protected virtual void IsValidDirectory(string propertyName)
+        {
+            var p = this.GetType().GetProperty(propertyName);
+            var path = p.GetValue(this, null) as string;
+            if (path != null) {
+                if (!Directory.Exists(path)) {
+                    throw new OptionValidationException($"Argument '{propertyName}': Expected directory to exist at this location but none was found");
                 }
             }
         }

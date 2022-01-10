@@ -13,7 +13,7 @@ namespace SquirrelCli
         public string releaseDir { get; private set; } = ".\\Releases";
         public BaseOptions()
         {
-            Add("r=|releaseDir=", "Release directory containing releasified packages", v => releaseDir = v);
+            Add("r=|releaseDir=", "Output directory for releasified packages", v => releaseDir = v);
         }
     }
 
@@ -36,21 +36,20 @@ namespace SquirrelCli
             // hidden arguments
             Add("b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true);
             Add("allowUnaware", "Allows building packages without a SquirrelAwareApp (disabled by default)", v => allowUnaware = true, true);
+            Add("addSearchPath=", "Add additional search directories when looking for helper exe's such as Setup.exe, Update.exe, etc", v => HelperExe.AddSearchPath(v), true);
 
             // public arguments
-            Add("p=|package=", "Path to a nuget package to releasify", v => package = v);
-            Add("n=|signParams=", "Sign the installer via SignTool.exe with the parameters given", v => signParams = v);
-            Add("f=|framework=", "Set the required .NET framework version, e.g. net461", v => framework = v);
-            Add("i=|icon=", "Sets all the icons (update, app, setup). Can be used with another icon property, later arguments will take precedence.",
+            Add("p=|package=", "Path to a '.nupkg' package to releasify", v => package = v);
+            Add("n=|signParams=", "Sign files via SignTool.exe using these parameters", v => signParams = v);
+            Add("f=|framework=", "List of required runtimes to install during setup -\nexample: 'net6,vcredist143'", v => framework = v);
+            Add("i=|icon=", "Sets all the icons: Update, App, and Setup",
                 (v) => { updateIcon = v; appIcon = v; setupIcon = v; });
-            Add("updateIcon=", "ICO file that will be used for Update.exe", v => updateIcon = v);
-            Add("appIcon=", "ICO file that will be used in the 'Apps and Features' list.", v => appIcon = v);
-            Add("setupIcon=", "ICO file that will be used for Setup.exe", v => setupIcon = v);
-            Add("splashImage=", "Image to be displayed during installation (can be jpg, png, gif, etc)", v => splashImage = v);
-            Add("noDelta", "Skip the generation of delta packages to save time", v => noDelta = true);
-            Add("addSearchPath=", "Add additional search directories when looking for helper exe's such as Setup.exe, Update.exe, etc", v => HelperExe.AddSearchPath(v));
-            Add("msi=", "Will generate a .msi machine-wide deployment tool. If installed on a machine, this msi will silently install the releasified " +
-                "app each time a user signs in if it is not already installed. This value must be either 'x86' 'x64'.", v => msi = v.ToLower());
+            Add("updateIcon=", ".ico to be used for Update.exe", v => updateIcon = v);
+            Add("appIcon=", ".ico to be used in the 'Apps and Features' list", v => appIcon = v);
+            Add("setupIcon=", ".ico to be used for Setup.exe", v => setupIcon = v);
+            Add("splashImage=", "Splash image to be displayed during installation", v => splashImage = v);
+            Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
+            Add("msi=", "Compiles a .msi machine-wide deployment tool.\nThis value must be either 'x86' 'x64'", v => msi = v.ToLower());
         }
 
         public override void Validate()
@@ -79,7 +78,8 @@ namespace SquirrelCli
 
     internal class PackOptions : ReleasifyOptions
     {
-        public string packName { get; private set; }
+        public string packId { get; private set; }
+        public string packTitle { get; private set; }
         public string packVersion { get; private set; }
         public string packAuthors { get; private set; }
         public string packDirectory { get; private set; }
@@ -87,20 +87,28 @@ namespace SquirrelCli
 
         public PackOptions()
         {
-            Add("packName=", "The name of the package to create", v => packName = v);
-            Add("packVersion=", "Package version", v => packVersion = v);
-            Add("packAuthors=", "Comma delimited list of package authors", v => packAuthors = v);
-            Add("packDirectory=", "The directory with the application files that will be packaged into a release", v => packDirectory = v);
-            Add("includePdb", "Include the *.pdb files in the package (default: false)", v => includePdb = true);
-
-            // remove 'package' argument
+            // remove 'package' argument from ReleasifyOptions
             Remove("package");
             Remove("p");
+
+            // hidden arguments
+            Add("packName=", "The name of the package to create", v => packId = v, true);
+
+            // public arguments, with indexes so they appear before ReleasifyOptions
+            InsertAt(1, "u=|packUniqueId=", "Unique identifier for application/package", v => packId = v);
+            InsertAt(2, "v=|packVersion=", "Current application version", v => packVersion = v);
+            InsertAt(3, "p=|packDirectory=", "Directory containing application files to package", v => packDirectory = v);
+            InsertAt(4, "packTitle=", "Optional display/friendly name for package", v => packTitle = v);
+            InsertAt(5, "packAuthors=", "Optional company or list of package authors", v => packAuthors = v);
+            InsertAt(6, "includePdb", "Include *.pdb files in the package", v => includePdb = true);
         }
 
         public override void Validate()
         {
-            IsRequired(nameof(packName), nameof(packVersion), nameof(packAuthors), nameof(packDirectory));
+            IsRequired(nameof(packId), nameof(packVersion), nameof(packDirectory));
+            Squirrel.NuGet.NugetUtil.ThrowIfInvalidNugetId(packId);
+            Squirrel.NuGet.NugetUtil.ThrowIfVersionNotSemverCompliant(packVersion);
+            IsValidDirectory(nameof(packDirectory));
             base.ValidateInternal(false);
         }
     }
@@ -113,9 +121,9 @@ namespace SquirrelCli
 
         public SyncBackblazeOptions()
         {
-            Add("b2BucketId=", "Id or name of the bucket in B2, S3, etc", v => b2BucketId = v);
-            Add("b2keyid=", "B2 Auth Key Id", v => b2KeyId = v);
-            Add("b2key=", "B2 Auth Key", v => b2AppKey = v);
+            Add("b2BucketId=", v => b2BucketId = v);
+            Add("b2keyid=", v => b2KeyId = v);
+            Add("b2key=", v => b2AppKey = v);
         }
 
         public override void Validate()
@@ -131,7 +139,7 @@ namespace SquirrelCli
 
         public SyncHttpOptions()
         {
-            Add("url=", "Url to the simple http folder where the releases are found", v => url = v);
+            Add("url=", "Base url to the http location with hosted releases", v => url = v);
         }
 
         public override void Validate()
@@ -148,7 +156,7 @@ namespace SquirrelCli
 
         public SyncGithubOptions()
         {
-            Add("repoUrl=", "Url to the github repository (eg. 'https://github.com/myname/myrepo')", v => repoUrl = v);
+            Add("repoUrl=", "Full url to the github repository -\nexample: 'https://github.com/myname/myrepo'", v => repoUrl = v);
             Add("token=", "The oauth token to use as login credentials", v => token = v);
         }
 

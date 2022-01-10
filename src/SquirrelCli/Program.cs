@@ -38,8 +38,8 @@ namespace SquirrelCli
                 $"Usage: {exeName} [verb] [--option:value]",
                 "",
                 "Package Authoring:",
-                { "releasify", "Take an existing nuget package and turn it into a Squirrel release", new ReleasifyOptions(), Releasify },
-                { "pack", "Creates a nuget package from a folder and releasifies it in a single step", new PackOptions(), Pack },
+                { "pack", "Creates a Squirrel release from a folder containing application files", new PackOptions(), Pack },
+                { "releasify", "Take an existing nuget package and convert it into a Squirrel release", new ReleasifyOptions(), Releasify },
                 "",
                 "Package Deployment / Syncing:",
                 { "b2-down", "Download recent releases from BackBlaze B2", new SyncBackblazeOptions(), o => new BackblazeRepository(o).DownloadRecentPackages().Wait() },
@@ -61,7 +61,7 @@ namespace SquirrelCli
                 bool verbose = false;
                 new OptionSet() {
                     { "h|?|help", _ => help = true },
-                    { "v|verbose", _ => verbose = true },
+                    { "verbose", _ => verbose = true },
                 }.Parse(args);
 
                 if (verbose) {
@@ -94,10 +94,10 @@ namespace SquirrelCli
 <?xml version=""1.0"" encoding=""utf-8""?>
 <package>
   <metadata>
-    <id>{options.packName}</id>
-    <title>{options.packName}</title>
-    <description>{options.packName}</description>
-    <authors>{options.packAuthors}</authors>
+    <id>{options.packId}</id>
+    <title>{options.packTitle ?? options.packId}</title>
+    <description>{options.packTitle ?? options.packId}</description>
+    <authors>{options.packAuthors ?? options.packId}</authors>
     <version>{options.packVersion}</version>
   </metadata>
   <files>
@@ -105,7 +105,7 @@ namespace SquirrelCli
   </files>
 </package>
 ".Trim();
-                var nuspecPath = Path.Combine(tmpDir, options.packName + ".nuspec");
+                var nuspecPath = Path.Combine(tmpDir, options.packId + ".nuspec");
                 File.WriteAllText(nuspecPath, nuspec);
 
                 HelperExe.NugetPack(nuspecPath, options.packDirectory, tmpDir).Wait();
