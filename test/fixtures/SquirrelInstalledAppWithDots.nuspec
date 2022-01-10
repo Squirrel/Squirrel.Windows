@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Squirrel.Installed.App</id>
+        <version>0.1.0</version>
+        <authors>Anaïs Betts</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>My package description.</description>
+    </metadata>
+    <files>
+        <file src="NotSquirrelAwareApp.exe" target="lib\net45\NotSquirrelAwareApp.exe" />
+        <file src="SquirrelAwareApp.exe" target="lib\net45\SquirrelAwareApp.exe" />
+    </files>
+</package>

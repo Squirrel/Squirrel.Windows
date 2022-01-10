@@ -28,6 +28,26 @@ namespace Squirrel.Tests
         }
 
         [Theory]
+        [InlineData(@"94689fede03fed7ab59c24337673a27837f0c3ec My.Cool.App-1.0-full.nupkg 1004502", "My.Cool.App")]
+        [InlineData(@"94689fede03fed7ab59c24337673a27837f0c3ec   My.Cool.App-1.1.nupkg 1004502", "My.Cool.App")]
+        [InlineData(@"94689fede03fed7ab59c24337673a27837f0c3ec  http://test.org/Folder/My.Cool.App-1.2.nupkg?query=param     1231953", "My.Cool.App")]
+        public void ParseValidReleaseEntryLinesWithDots(string releaseEntry, string packageName)
+        {
+            var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
+            Assert.Equal(packageName, fixture.PackageName);
+        }
+
+        [Theory]
+        [InlineData(@"94689fede03fed7ab59c24337673a27837f0c3ec My-Cool-App-1.0-full.nupkg 1004502", "My-Cool-App")]
+        [InlineData(@"94689fede03fed7ab59c24337673a27837f0c3ec   My-Cool-App-1.1.nupkg 1004502", "My-Cool-App")]
+        [InlineData(@"94689fede03fed7ab59c24337673a27837f0c3ec  http://test.org/Folder/My-Cool-App-1.2.nupkg?query=param     1231953", "My-Cool-App")]
+        public void ParseValidReleaseEntryLinesWithDashes(string releaseEntry, string packageName)
+        {
+            var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
+            Assert.Equal(packageName, fixture.PackageName);
+        }
+
+        [Theory]
         [InlineData(@"0000000000000000000000000000000000000000  file:/C/Folder/MyCoolApp-0.0.nupkg  0")]
         [InlineData(@"0000000000000000000000000000000000000000  C:\Folder\MyCoolApp-0.0.nupkg  0")]
         [InlineData(@"0000000000000000000000000000000000000000  ..\OtherFolder\MyCoolApp-0.0.nupkg  0")]

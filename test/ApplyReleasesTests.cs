@@ -177,6 +177,50 @@ namespace Squirrel.Tests
         }
 
         [Fact]
+        public async Task CanInstallAndUpdatePackageWithDotsInId()
+        {
+            string tempDir;
+            string remotePkgDir;
+            const string pkgName = "Squirrel.Installed.App";
+
+            using (Utility.WithTempDirectory(out tempDir))
+            using (Utility.WithTempDirectory(out remotePkgDir)) {
+                // install 0.1.0
+                IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir, "SquirrelInstalledAppWithDots.nuspec");
+                var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
+                ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
+
+                using (var fixture = new UpdateManager(remotePkgDir, pkgName, tempDir)) {
+                    await fixture.FullInstall();
+                }
+
+                Assert.True(Directory.Exists(Path.Combine(tempDir, pkgName, "app-0.1.0")));
+                await Task.Delay(1000);
+
+                // update top 0.2.0
+                IntegrationTestHelper.CreateFakeInstalledApp("0.2.0", remotePkgDir, "SquirrelInstalledAppWithDots.nuspec");
+                pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
+                ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
+
+                using (var fixture = new UpdateManager(remotePkgDir, pkgName, tempDir)) {
+                    await fixture.UpdateApp();
+                }
+
+                Assert.True(Directory.Exists(Path.Combine(tempDir, pkgName, "app-0.2.0")));
+                await Task.Delay(1000);
+
+                // uninstall
+                using (var fixture = new UpdateManager(remotePkgDir, pkgName, tempDir)) {
+                    await fixture.FullUninstall();
+                }
+
+                Assert.False(File.Exists(Path.Combine(tempDir, pkgName, "app-0.1.0", "args.txt")));
+                Assert.False(File.Exists(Path.Combine(tempDir, pkgName, "app-0.2.0", "args.txt")));
+                Assert.True(File.Exists(Path.Combine(tempDir, pkgName, ".dead")));
+            }
+        }
+
+        [Fact]
         public void WhenNoNewReleasesAreAvailableTheListIsEmpty()
         {
             string tempDir;
