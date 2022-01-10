@@ -25,6 +25,11 @@ namespace SquirrelCli
     {
         private static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(SingleFileBundle));
 
+        public static bool IsSingleFileBundle(string peFile)
+        {
+            return HostWriter.IsBundle(peFile, out var offset) && offset > 0;
+        }
+
         public static async Task UpdateSingleFileIcon(string sourceFile, string destinationFile, string iconPath)
         {
             using var d = Utility.WithTempDirectory(out var tmpdir);

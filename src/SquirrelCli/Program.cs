@@ -159,6 +159,9 @@ namespace SquirrelCli
                 File.Copy(HelperExe.UpdatePath, updatePath, true);
             }
 
+            if (!SingleFileBundle.IsSingleFileBundle(updatePath))
+                throw new InvalidOperationException("Update.exe is corrupt. Broken Squirrel install?");
+
             // Sign Update.exe so that virus scanners don't think we're pulling one over on them
             HelperExe.SignPEFile(updatePath, signingOpts).Wait();
 
