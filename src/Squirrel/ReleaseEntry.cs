@@ -81,14 +81,19 @@ namespace Squirrel
         /// <summary>
         /// Create a new instance of <see cref="ReleaseEntry"/>.
         /// </summary>
-        protected ReleaseEntry(string sha1, string filename, long filesize, bool isDelta, string baseUrl = null, string query = null, float? stagingPercentage = null)
+        protected ReleaseEntry(string sha1, string filename, long filesize, string baseUrl = null, string query = null, float? stagingPercentage = null)
         {
             Contract.Requires(sha1 != null && sha1.Length == 40);
             Contract.Requires(filename != null);
             Contract.Requires(filename.Contains(Path.DirectorySeparatorChar) == false);
             Contract.Requires(filesize > 0);
 
-            SHA1 = sha1; BaseUrl = baseUrl; Filename = filename; Query = query; Filesize = filesize; IsDelta = isDelta; StagingPercentage = stagingPercentage;
+            SHA1 = sha1; BaseUrl = baseUrl; Filename = filename; Query = query; Filesize = filesize; StagingPercentage = stagingPercentage;
+
+            var identity = ParseEntryFileName(Filename);
+            Version = identity.Version;
+            PackageName = identity.PackageName;
+            IsDelta = identity.IsDelta;
         }
 
         /// <inheritdoc />
@@ -105,20 +110,11 @@ namespace Squirrel
 
         /// <inheritdoc />
         [IgnoreDataMember]
-        public SemanticVersion Version { get { return Filename.ToSemanticVersion(); } }
-
-        static readonly Regex packageNameRegex = new Regex(@"^([\w-]+)-\d+\..+\.nupkg$");
+        public SemanticVersion Version { get; }
 
         /// <inheritdoc />
         [IgnoreDataMember]
-        public string PackageName {
-            get {
-                var match = packageNameRegex.Match(Filename);
-                return match.Success ?
-                    match.Groups[1].Value :
-                    Filename.Substring(0, Filename.IndexOfAny(new[] { '-', '.' }));
-            }
-        }
+        public string PackageName { get; }
 
         /// <inheritdoc />
         public string GetReleaseNotes(string packageDirectory)
@@ -200,9 +196,7 @@ namespace Squirrel
             }
 
             long size = Int64.Parse(m.Groups[3].Value);
-            bool isDelta = filenameIsDeltaFile(filename);
-
-            return new ReleaseEntry(m.Groups[1].Value, filename, size, isDelta, baseUrl, query, stagingPercentage);
+            return new ReleaseEntry(m.Groups[1].Value, filename, size, baseUrl, query, stagingPercentage);
         }
 
         /// <summary>
@@ -301,7 +295,7 @@ namespace Squirrel
             Contract.Requires(!String.IsNullOrEmpty(filename));
 
             var hash = Utility.CalculateStreamSHA1(file);
-            return new ReleaseEntry(hash, filename, file.Length, filenameIsDeltaFile(filename), baseUrl);
+            return new ReleaseEntry(hash, filename, file.Length, baseUrl);
         }
 
         /// <summary>
@@ -362,10 +356,6 @@ namespace Squirrel
             return String.Format("{0:F0}%", percentage * 100.0);
         }
 
-        static bool filenameIsDeltaFile(string filename)
-        {
-            return filename.EndsWith("-delta.nupkg", StringComparison.InvariantCultureIgnoreCase);
-        }
 
         /// <summary>
         /// Given a list of releases and a specified release package, returns the release package
@@ -374,13 +364,41 @@ namespace Squirrel
         internal static ReleasePackage GetPreviousRelease(IEnumerable<ReleaseEntry> releaseEntries, IReleasePackage package, string targetDir)
         {
             if (releaseEntries == null || !releaseEntries.Any()) return null;
-
             return releaseEntries
                 .Where(x => x.IsDelta == false)
-                .Where(x => x.Version < package.ToSemanticVersion())
+                .Where(x => x.Version < package.Version)
                 .OrderByDescending(x => x.Version)
                 .Select(x => new ReleasePackage(Path.Combine(targetDir, x.Filename), true))
                 .FirstOrDefault();
+        }
+
+        static readonly Regex _suffixRegex = new Regex(@"(-full|-delta)?\.nupkg$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        static readonly Regex _versionStartRegex = new Regex(@"(^|[^\d])(0|[1-9]\d*)\.(0|[1-9]\d*)($|[^\d])", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Takes a filename such as 'My-Cool3-App-1.0.1-build.23-full.nupkg' and separates it into 
+        /// it's name and version (eg. 'My-Cool3-App', and '1.0.1-build.23'). Returns null values if 
+        /// the filename can not be parsed.
+        /// </summary>
+        internal static (string PackageName, SemanticVersion Version, bool IsDelta) ParseEntryFileName(string fileName)
+        {
+            if (!fileName.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
+                return (null, null, false);
+
+            bool delta = Path.GetFileNameWithoutExtension(fileName).EndsWith("-delta", StringComparison.OrdinalIgnoreCase);
+
+            var nameAndVer = _suffixRegex.Replace(fileName, "");
+
+            var match = _versionStartRegex.Match(nameAndVer);
+            if (!match.Success)
+                return (null, null, delta);
+
+            var verIdx = match.Index;
+            var name = nameAndVer.Substring(0, verIdx);
+            var version = nameAndVer.Substring(verIdx + 1);
+
+            var semVer = new SemanticVersion(version);
+            return (name, semVer, delta);
         }
     }
 }

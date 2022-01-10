@@ -19,6 +19,7 @@ namespace Squirrel
         string InputPackageFile { get; }
         string ReleasePackageFile { get; }
         string SuggestedReleaseFileName { get; }
+        SemanticVersion Version { get; }
     }
 
     internal class ReleasePackage : IEnableLogger, IReleasePackage
@@ -42,7 +43,7 @@ namespace Squirrel
             }
         }
 
-        public SemanticVersion Version { get { return InputPackageFile.ToSemanticVersion(); } }
+        public SemanticVersion Version => ReleaseEntry.ParseEntryFileName(InputPackageFile).Version;
 
 #if NET5_0_OR_GREATER
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
@@ -58,15 +59,23 @@ namespace Squirrel
 
             var package = new ZipPackage(InputPackageFile);
 
-            var dontcare = default(SemanticVersion);
-
             // NB: Our test fixtures use packages that aren't SemVer compliant, 
             // we don't really care that they aren't valid
-            if (!ModeDetector.InUnitTestRunner() && !SemanticVersion.TryParseStrict(package.Version.ToString(), out dontcare)) {
-                throw new Exception(
-                    String.Format(
-                        "Your package version is currently {0}, which is *not* SemVer-compatible, change this to be a SemVer version number",
-                        package.Version.ToString()));
+            if (!ModeDetector.InUnitTestRunner()) {
+                // verify that the .nuspec version is semver compliant
+                if (!SemanticVersion.TryParseStrict(package.Version.ToString(), out var verdontcare)) {
+                    throw new Exception(
+                        String.Format(
+                            "Your package version is currently {0}, which is *not* SemVer-compatible, change this to be a SemVer version number",
+                            package.Version.ToString()));
+                }
+
+                // verify that the suggested filename can be round-tripped as an assurance 
+                // someone won't run across an edge case and install a broken app somehow
+                var idtest = ReleaseEntry.ParseEntryFileName(SuggestedReleaseFileName);
+                if (idtest.PackageName != package.Id || idtest.Version != package.Version) {
+                    throw new Exception($"The package id/version could not be properly parsed.");
+                }
             }
 
             // we can tell from here what platform(s) the package targets

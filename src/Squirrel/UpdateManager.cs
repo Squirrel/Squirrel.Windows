@@ -188,7 +188,7 @@ namespace Squirrel
                 .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
 
             if (appDirName == null) return null;
-            return appDirName.ToSemanticVersion();
+            return new SemanticVersion(appDirName.Substring(4));
         }
 
         /// <inheritdoc/>

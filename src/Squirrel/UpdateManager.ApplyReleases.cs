@@ -98,12 +98,10 @@ namespace Squirrel
                 if (!releases.Any())
                     return;
 
-                var currentRelease = releases.MaxBy(x => x.Name.ToSemanticVersion()).FirstOrDefault();
+                var (currentRelease, currentVersion) = releases.OrderByDescending(x => x.Version).FirstOrDefault();
 
                 this.Log().Info("Starting full uninstall");
                 if (currentRelease.Exists) {
-                    var version = currentRelease.Name.ToSemanticVersion();
-
                     try {
                         var squirrelAwareApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName);
 
@@ -120,7 +118,7 @@ namespace Squirrel
                                     cts.CancelAfter(10 * 1000);
 
                                     try {
-                                        await Utility.InvokeProcessAsync(exe, new string[] { "--squirrel-uninstall", version.ToString() }, cts.Token).ConfigureAwait(false);
+                                        await Utility.InvokeProcessAsync(exe, new string[] { "--squirrel-uninstall", currentVersion.ToString() }, cts.Token).ConfigureAwait(false);
                                     } catch (Exception ex) {
                                         this.Log().ErrorException("Failed to run cleanup hook, continuing: " + exe, ex);
                                     }
@@ -674,14 +672,15 @@ namespace Squirrel
                 return await Task.Run(() => ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(rootAppDirectory))).ConfigureAwait(false);
             }
 
-            IEnumerable<DirectoryInfo> getReleases()
+            IEnumerable<(DirectoryInfo Directory, SemanticVersion Version)> getReleases()
             {
                 var rootDirectory = new DirectoryInfo(rootAppDirectory);
 
-                if (!rootDirectory.Exists) return Enumerable.Empty<DirectoryInfo>();
+                if (!rootDirectory.Exists) return Enumerable.Empty<(DirectoryInfo Directory, SemanticVersion Version)>();
 
                 return rootDirectory.GetDirectories()
-                    .Where(x => x.Name.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase));
+                    .Where(x => x.Name.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase))
+                    .Select(x => (x, new SemanticVersion(x.Name.Substring(4))));
             }
 
             DirectoryInfo getDirectoryForRelease(SemanticVersion releaseVersion)

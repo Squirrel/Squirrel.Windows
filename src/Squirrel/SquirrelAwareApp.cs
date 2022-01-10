@@ -53,7 +53,7 @@ namespace Squirrel
             if (args.Length != 2) return;
 
             if (!lookup.ContainsKey(args[0])) return;
-            var version = args[1].ToSemanticVersion().Version;
+            var version = new SemanticVersion(args[1]).Version;
 
             try {
                 lookup[args[0]](version);
@@ -115,7 +115,7 @@ namespace Squirrel
             if (args.Length != 2) return;
 
             if (!lookup.ContainsKey(args[0])) return;
-            var version = args[1].ToSemanticVersion();
+            var version = new SemanticVersion(args[1]);
 
             try {
                 // CS: call dispose immediately means this instance of UpdateManager
