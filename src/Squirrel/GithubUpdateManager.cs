@@ -19,18 +19,14 @@ namespace Squirrel
 #endif
     public class GithubUpdateManager : UpdateManager
     {
-        private readonly string repoUrl;
-        private readonly string accessToken;
-        private readonly bool prerelease;
+        private readonly string _repoUrl;
+        private readonly string _accessToken;
+        private readonly bool _prerelease;
 
-        /// <inheritdoc cref="UpdateManager(string, string)"/>
+        /// <inheritdoc cref="UpdateManager(string)"/>
         /// <param name="repoUrl">
         /// The URL of the GitHub repository to download releases from 
         /// (e.g. https://github.com/myuser/myrepo)
-        /// </param>
-        /// <param name="applicationName">
-        /// The name of your application should correspond with the 
-        /// appdata directory name, and the name used with Squirrel releasify/pack.
         /// </param>
         /// <param name="prerelease">
         /// If true, the latest pre-release will be downloaded. If false, the latest 
@@ -41,19 +37,21 @@ namespace Squirrel
         /// If left empty, the GitHub rate limit for unauthenticated requests allows 
         /// for up to 60 requests per hour, limited by IP address.
         /// </param>
-        public GithubUpdateManager(string repoUrl, string applicationName, bool prerelease = false, string accessToken = null)
-            : this(repoUrl, applicationName, prerelease, accessToken, null, null)
+        public GithubUpdateManager(string repoUrl, bool prerelease = false, string accessToken = null)
+            : this(repoUrl, prerelease, accessToken, null, null, null)
         {
         }
 
-        /// <inheritdoc cref="UpdateManager(string, string)"/>
+        /// <inheritdoc cref="UpdateManager(string)"/>
         /// <param name="repoUrl">
         /// The URL of the GitHub repository to download releases from 
         /// (e.g. https://github.com/myuser/myrepo)
         /// </param>
-        /// <param name="applicationName">
-        /// The name of your application should correspond with the 
-        /// appdata directory name, and the name used with Squirrel releasify/pack.
+        /// <param name="applicationIdOverride">
+        /// The Id of your application should correspond with the 
+        /// appdata directory name, and the Id used with Squirrel releasify/pack.
+        /// If left null/empty, will attempt to determine the current application Id  
+        /// from the installed app location.
         /// </param>
         /// <param name="urlDownloader">
         /// A custom file downloader, for using non-standard package sources or adding 
@@ -74,16 +72,16 @@ namespace Squirrel
         /// </param>
         public GithubUpdateManager(
             string repoUrl,
-            string applicationName,
             bool prerelease = false,
             string accessToken = null,
+            string applicationIdOverride = null,
             string localAppDataDirectoryOverride = null,
             IFileDownloader urlDownloader = null)
-            : base(null, applicationName, localAppDataDirectoryOverride, urlDownloader)
+            : base(null, applicationIdOverride, localAppDataDirectoryOverride, urlDownloader)
         {
-            this.repoUrl = repoUrl;
-            this.accessToken = accessToken;
-            this.prerelease = prerelease;
+            _repoUrl = repoUrl;
+            _accessToken = accessToken;
+            _prerelease = prerelease;
         }
 
         /// <inheritdoc />
@@ -102,14 +100,14 @@ namespace Squirrel
 
         private async Task EnsureReleaseUrl()
         {
-            if (this.updateUrlOrPath == null) {
-                this.updateUrlOrPath = await GetLatestGithubRelease().ConfigureAwait(false);
+            if (this._updateUrlOrPath == null) {
+                this._updateUrlOrPath = await GetLatestGithubRelease().ConfigureAwait(false);
             }
         }
 
         private async Task<string> GetLatestGithubRelease()
         {
-            var repoUri = new Uri(repoUrl);
+            var repoUri = new Uri(_repoUrl);
             var userAgent = new ProductInfoHeaderValue("Squirrel", AssemblyRuntimeInfo.ExecutingAssemblyName.Version.ToString());
 
             if (repoUri.Segments.Length != 3) {
@@ -120,8 +118,8 @@ namespace Squirrel
                 .Append(repoUri.AbsolutePath)
                 .Append("/releases");
 
-            if (!string.IsNullOrWhiteSpace(accessToken))
-                releasesApiBuilder.Append("?access_token=").Append(accessToken);
+            if (!string.IsNullOrWhiteSpace(_accessToken))
+                releasesApiBuilder.Append("?access_token=").Append(_accessToken);
 
             Uri baseAddress;
 
@@ -145,7 +143,7 @@ namespace Squirrel
 
             var releases = SimpleJson.DeserializeObject<List<Release>>(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
             var latestRelease = releases
-                .Where(x => prerelease || !x.Prerelease)
+                .Where(x => _prerelease || !x.Prerelease)
                 .OrderByDescending(x => x.PublishedAt)
                 .First();
 

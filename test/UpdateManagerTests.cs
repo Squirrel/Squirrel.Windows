@@ -333,6 +333,14 @@ namespace Squirrel.Tests
                 }
             }
 
+            [Fact]
+            public void CurrentlyInstalledVersionDoesNotThrow()
+            {
+                using var fixture = new UpdateManager(null);
+                Assert.Null(fixture.CurrentlyInstalledVersion());
+                Assert.False(fixture.IsInstalledApp);
+            }
+
             [Theory]
             [InlineData(0, 0, 25, 0)]
             [InlineData(12, 0, 25, 3)]

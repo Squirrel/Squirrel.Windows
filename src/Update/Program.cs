@@ -254,23 +254,23 @@ namespace Squirrel.Update
                 .First().PackageName;
 
             using (var mgr = new UpdateManager(sourceDirectory, ourAppName)) {
-                Log.Info("About to install to: " + mgr.RootAppDirectory);
-                if (Directory.Exists(mgr.RootAppDirectory)) {
-                    Log.Warn("Install path {0} already exists, burning it to the ground", mgr.RootAppDirectory);
+                Log.Info("About to install to: " + mgr.AppDirectory);
+                if (Directory.Exists(mgr.AppDirectory)) {
+                    Log.Warn("Install path {0} already exists, burning it to the ground", mgr.AppDirectory);
 
                     mgr.KillAllExecutablesBelongingToPackage();
                     await Task.Delay(500);
 
-                    Log.ErrorIfThrows(() => Utility.Retry(() => Utility.DeleteFileOrDirectoryHard(mgr.RootAppDirectory)),
+                    Log.ErrorIfThrows(() => Utility.Retry(() => Utility.DeleteFileOrDirectoryHard(mgr.AppDirectory)),
                         "Failed to remove existing directory on full install, is the app still running???");
 
-                    Log.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.RootAppDirectory), 3),
+                    Log.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.AppDirectory), 3),
                         "Couldn't recreate app directory, perhaps Antivirus is blocking it");
                 }
 
-                Directory.CreateDirectory(mgr.RootAppDirectory);
+                Directory.CreateDirectory(mgr.AppDirectory);
 
-                var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
+                var updateTarget = Path.Combine(mgr.AppDirectory, "Update.exe");
                 Log.ErrorIfThrows(() => File.Copy(AssemblyRuntimeInfo.EntryExePath, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
@@ -289,7 +289,7 @@ namespace Squirrel.Update
 
             using (var mgr = new UpdateManager(updateUrl, appName)) {
                 bool ignoreDeltaUpdates = false;
-                Log.Info("About to update to: " + mgr.RootAppDirectory);
+                Log.Info("About to update to: " + mgr.AppDirectory);
 
             retry:
                 try {
@@ -312,7 +312,7 @@ namespace Squirrel.Update
                     goto retry;
                 }
 
-                var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
+                var updateTarget = Path.Combine(mgr.AppDirectory, "Update.exe");
 
                 await Log.ErrorIfThrows(() =>
                     mgr.CreateUninstallerRegistryEntry(),
@@ -389,7 +389,7 @@ namespace Squirrel.Update
                 mgr.RemoveUninstallerRegistryEntry();
 
                 // if this exe is in the app directory, starts a process that will wait 3 seconds and then delete this exe
-                if (AssemblyRuntimeInfo.EntryExePath.StartsWith(mgr.RootAppDirectory, StringComparison.InvariantCultureIgnoreCase)) {
+                if (Utility.IsFileInDirectory(AssemblyRuntimeInfo.EntryExePath, mgr.AppDirectory)) {
                     Process.Start(new ProcessStartInfo() {
                         Arguments = "/C choice /C Y /N /D Y /T 3 & Del \"" + AssemblyRuntimeInfo.EntryExePath + "\"",
                         WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true, FileName = "cmd.exe"

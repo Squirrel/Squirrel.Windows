@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,72 +17,73 @@ namespace Squirrel
 #if NET5_0_OR_GREATER
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
-    public partial class UpdateManager : IUpdateManager, IEnableLogger
+    public partial class UpdateManager : IUpdateManager
     {
-        /// <summary>The name of the application.</summary>
-        public string ApplicationName => applicationName;
+        /// <summary>The unique Id of the application.</summary>
+        public string AppId => _applicationIdOverride ?? getInstalledApplicationName();
 
         /// <summary>The directory the app is (or will be) installed in.</summary>
-        public string RootAppDirectory => rootAppDirectory;
+        public string AppDirectory => Path.Combine(_localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), AppId);
 
-        /// <summary>True if the current executable is inside the target install directory (see <see cref="RootAppDirectory"/>).</summary>
-        public bool IsInstalledApp => Utility.IsFileInDirectory(AssemblyRuntimeInfo.EntryExePath, RootAppDirectory);
+        /// <summary>True if the current executable is inside the target <see cref="AppDirectory"/>.</summary>
+        public bool IsInstalledApp => isUpdateExeAvailable() ? Utility.IsFileInDirectory(AssemblyRuntimeInfo.EntryExePath, AppDirectory) : false;
 
-        private readonly string rootAppDirectory;
-        private readonly string applicationName;
-        private readonly IFileDownloader urlDownloader;
+        /// <summary>The url to use when checking for or downloading updates.</summary>
+        protected string _updateUrlOrPath;
 
-        /// <summary>The url to use when checking for or downloading updates</summary>
-        protected string updateUrlOrPath;
+        /// <summary>The application name provided in constructor, or null.</summary>
+        protected readonly string _applicationIdOverride;
 
-        private readonly object lockobj = new object();
-        private IDisposable updateLock;
-        private bool disposed;
+        /// <summary>The path to the local app data folder on this machine.</summary>
+        protected readonly string _localAppDataDirectoryOverride;
+
+        /// <summary>The <see cref="IFileDownloader"/> to use when downloading data from the internet.</summary>
+        protected readonly IFileDownloader _urlDownloader;
+
+        private readonly object _lockobj = new object();
+        private IDisposable _updateLock;
+        private bool _disposed;
 
         /// <summary>
         /// Create a new instance of <see cref="UpdateManager"/> to check for and install updates. 
         /// Do not forget to dispose this class!
         /// </summary>
         /// <param name="urlOrPath">
-        /// The URL where your update packages or stored, or a local package repository directory
+        /// The URL where your update packages or stored, or a local package repository directory.
         /// </param>
-        /// <param name="applicationName">
-        /// The name of your application should correspond with the 
-        /// appdata directory name, and the name used with Squirrel releasify/pack.
-        /// </param>
-        public UpdateManager(string urlOrPath, string applicationName)
-            : this(urlOrPath, applicationName, null, null)
+        public UpdateManager(string urlOrPath)
+            : this(urlOrPath, null, null, null)
         {
         }
 
-        /// <inheritdoc cref="UpdateManager(string, string)"/>
+        /// <inheritdoc cref="UpdateManager(string)"/>
         /// <param name="urlOrPath">
-        /// The URL where your update packages or stored, or a local package repository directory
+        /// The URL where your update packages or stored, or a local package repository directory.
         /// </param>
-        /// <param name="applicationName">
-        /// The name of your application should correspond with the 
-        /// appdata directory name, and the name used with Squirrel releasify/pack.
-        /// </param>
-        /// <param name="urlDownloader">
-        /// A custom file downloader, for using non-standard package sources or adding proxy configurations. 
+        /// <param name="applicationIdOverride">
+        /// The Id of your application should correspond with the 
+        /// appdata directory name, and the Id used with Squirrel releasify/pack.
+        /// If left null/empty, UpdateManger will attempt to determine the current application Id  
+        /// from the installed app location, or throw if the app is not currently installed during certain 
+        /// operations.
         /// </param>
         /// <param name="localAppDataDirectoryOverride">
         /// Provide a custom location for the system LocalAppData, it will be used 
         /// instead of <see cref="Environment.SpecialFolder.LocalApplicationData"/>.
         /// </param>
+        /// <param name="urlDownloader">
+        /// A custom file downloader, for using non-standard package sources or adding proxy configurations. 
+        /// </param>
         public UpdateManager(
             string urlOrPath,
-            string applicationName,
+            string applicationIdOverride = null,
             string localAppDataDirectoryOverride = null,
             IFileDownloader urlDownloader = null)
         {
-            Contract.Requires(!String.IsNullOrEmpty(urlOrPath));
-            Contract.Requires(!String.IsNullOrEmpty(applicationName));
-
-            updateUrlOrPath = urlOrPath;
-            this.applicationName = applicationName ?? getApplicationName();
-            this.urlDownloader = urlDownloader ?? Utility.CreateDefaultDownloader();
-            this.rootAppDirectory = Path.Combine(localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), this.applicationName);
+            _updateUrlOrPath = urlOrPath;
+            _applicationIdOverride = applicationIdOverride;
+            _localAppDataDirectoryOverride = localAppDataDirectoryOverride;
+            _urlDownloader = urlDownloader ?? Utility.CreateDefaultDownloader();
         }
 
         /// <summary>Clean up UpdateManager resources</summary>
@@ -95,25 +95,25 @@ namespace Squirrel
         /// <inheritdoc/>
         public virtual async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null, UpdaterIntention intention = UpdaterIntention.Update)
         {
-            var checkForUpdate = new CheckForUpdateImpl(rootAppDirectory);
+            var checkForUpdate = new CheckForUpdateImpl(AppDirectory);
 
             await acquireUpdateLock().ConfigureAwait(false);
-            return await checkForUpdate.CheckForUpdate(intention, Utility.LocalReleaseFileForAppDir(rootAppDirectory), updateUrlOrPath, ignoreDeltaUpdates, progress, urlDownloader).ConfigureAwait(false);
+            return await checkForUpdate.CheckForUpdate(intention, Utility.LocalReleaseFileForAppDir(AppDirectory), _updateUrlOrPath, ignoreDeltaUpdates, progress, _urlDownloader).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public virtual async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
         {
-            var downloadReleases = new DownloadReleasesImpl(rootAppDirectory);
+            var downloadReleases = new DownloadReleasesImpl(AppDirectory);
             await acquireUpdateLock().ConfigureAwait(false);
 
-            await downloadReleases.DownloadReleases(updateUrlOrPath, releasesToDownload, progress, urlDownloader).ConfigureAwait(false);
+            await downloadReleases.DownloadReleases(_updateUrlOrPath, releasesToDownload, progress, _urlDownloader).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
         public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
-            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(AppDirectory);
             await acquireUpdateLock().ConfigureAwait(false);
 
             return await applyReleases.ApplyReleases(updateInfo, false, false, progress).ConfigureAwait(false);
@@ -125,7 +125,7 @@ namespace Squirrel
             var updateInfo = await CheckForUpdate(intention: UpdaterIntention.Install).ConfigureAwait(false);
             await DownloadReleases(updateInfo.ReleasesToApply).ConfigureAwait(false);
 
-            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(AppDirectory);
             await acquireUpdateLock().ConfigureAwait(false);
 
             await applyReleases.ApplyReleases(updateInfo, silentInstall, true, progress).ConfigureAwait(false);
@@ -134,7 +134,7 @@ namespace Squirrel
         /// <inheritdoc/>
         public async Task FullUninstall()
         {
-            var applyReleases = new ApplyReleasesImpl(rootAppDirectory);
+            var applyReleases = new ApplyReleasesImpl(AppDirectory);
             await acquireUpdateLock().ConfigureAwait(false);
 
             this.KillAllExecutablesBelongingToPackage();
@@ -144,61 +144,66 @@ namespace Squirrel
         /// <inheritdoc/>
         public Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
         {
-            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            var installHelpers = new InstallHelperImpl(AppId, AppDirectory);
             return installHelpers.CreateUninstallerRegistryEntry(uninstallCmd, quietSwitch);
         }
 
         /// <inheritdoc/>
         public Task<RegistryKey> CreateUninstallerRegistryEntry()
         {
-            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            var installHelpers = new InstallHelperImpl(AppId, AppDirectory);
             return installHelpers.CreateUninstallerRegistryEntry();
         }
 
         /// <inheritdoc/>
         public void RemoveUninstallerRegistryEntry()
         {
-            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            var installHelpers = new InstallHelperImpl(AppId, AppDirectory);
             installHelpers.RemoveUninstallerRegistryEntry();
         }
 
         /// <inheritdoc/>
         public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments = null, string icon = null)
         {
-            var installHelpers = new ApplyReleasesImpl(rootAppDirectory);
+            var installHelpers = new ApplyReleasesImpl(AppDirectory);
             installHelpers.CreateShortcutsForExecutable(exeName, locations, updateOnly, programArguments, icon);
         }
 
         /// <inheritdoc/>
         public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
         {
-            var installHelpers = new ApplyReleasesImpl(rootAppDirectory);
+            var installHelpers = new ApplyReleasesImpl(AppDirectory);
             installHelpers.RemoveShortcutsForExecutable(exeName, locations);
         }
 
         /// <inheritdoc/>
         public SemanticVersion CurrentlyInstalledVersion(string executable = null)
         {
-            executable = executable ?? AssemblyRuntimeInfo.EntryExePath;
+            try {
+                executable = executable ?? AssemblyRuntimeInfo.EntryExePath;
 
-            if (!Utility.IsFileInDirectory(executable, RootAppDirectory))
+                if (!Utility.IsFileInDirectory(executable, AppDirectory))
+                    return null;
+
+                var appDirName = executable.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                    .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
+
+                if (appDirName == null) return null;
+                return new SemanticVersion(appDirName.Substring(4));
+            } catch (InvalidOperationException) {
+                // app is not installed, see getUpdateExe()
                 return null;
-
-            var appDirName = executable.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
-
-            if (appDirName == null) return null;
-            return new SemanticVersion(appDirName.Substring(4));
+            }
         }
 
         /// <inheritdoc/>
         public void SetProcessAppUserModelId()
         {
-            var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(rootAppDirectory));
+            var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(AppDirectory));
             var thisRelease = Utility.FindCurrentVersion(releases);
 
             var zf = new ZipPackage(Path.Combine(
-                Utility.PackageDirectoryForAppDir(rootAppDirectory),
+                Utility.PackageDirectoryForAppDir(AppDirectory),
                 thisRelease.Filename));
 
             var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
@@ -209,19 +214,19 @@ namespace Squirrel
         /// <inheritdoc/>
         public void KillAllExecutablesBelongingToPackage()
         {
-            var installHelpers = new InstallHelperImpl(applicationName, rootAppDirectory);
+            var installHelpers = new InstallHelperImpl(AppId, AppDirectory);
             installHelpers.KillAllProcessesBelongingToPackage();
         }
 
         /// <inheritdoc/>
         public void Dispose()
         {
-            lock (lockobj) {
-                var disp = Interlocked.Exchange(ref updateLock, null);
+            lock (_lockobj) {
+                var disp = Interlocked.Exchange(ref _updateLock, null);
                 if (disp != null) {
                     disp.Dispose();
                 }
-                disposed = true;
+                _disposed = true;
                 GC.SuppressFinalize(this);
             }
         }
@@ -297,7 +302,7 @@ namespace Squirrel
 
         internal Dictionary<ShortcutLocation, ShellLink> GetShortcutsForExecutable(string exeName, ShortcutLocation locations, string programArguments = null)
         {
-            var installHelpers = new ApplyReleasesImpl(rootAppDirectory);
+            var installHelpers = new ApplyReleasesImpl(AppDirectory);
             return installHelpers.GetShortcutsForExecutable(exeName, locations, programArguments);
         }
 
@@ -321,13 +326,13 @@ namespace Squirrel
 
         private Task<IDisposable> acquireUpdateLock()
         {
-            lock (lockobj) {
-                if (disposed) throw new ObjectDisposedException(nameof(UpdateManager));
-                if (updateLock != null) return Task.FromResult(updateLock);
+            lock (_lockobj) {
+                if (_disposed) throw new ObjectDisposedException(nameof(UpdateManager));
+                if (_updateLock != null) return Task.FromResult(_updateLock);
             }
 
             return Task.Run(() => {
-                var key = Utility.CalculateStreamSHA1(new MemoryStream(Encoding.UTF8.GetBytes(rootAppDirectory)));
+                var key = Utility.CalculateStreamSHA1(new MemoryStream(Encoding.UTF8.GetBytes(AppDirectory)));
 
                 IDisposable theLock;
                 try {
@@ -339,10 +344,10 @@ namespace Squirrel
 
                 var ret = Disposable.Create(() => {
                     theLock.Dispose();
-                    updateLock = null;
+                    _updateLock = null;
                 });
 
-                updateLock = ret;
+                _updateLock = ret;
                 return ret;
             });
         }
@@ -368,10 +373,20 @@ namespace Squirrel
             return (int) totalPercentage;
         }
 
-        private static string getApplicationName()
+        private static string getInstalledApplicationName()
         {
             var fi = new FileInfo(getUpdateExe());
             return fi.Directory.Name;
+        }
+
+        private static bool isUpdateExeAvailable()
+        {
+            try {
+                getUpdateExe();
+                return true;
+            } catch {
+                return false;
+            }
         }
 
         private static string getUpdateExe()
@@ -389,7 +404,10 @@ namespace Squirrel
             var updateDotExe = Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..\\Update.exe");
             var target = new FileInfo(updateDotExe);
 
-            if (!target.Exists) throw new Exception("Update.exe not found, not a Squirrel-installed app?");
+            if (!target.Exists)
+                throw new InvalidOperationException(
+                    "This operation is only valid in an installed application (Update.exe was not found).\n" +
+                    "Check 'IsInstalledApp' or 'CurrentlyInstalledVersion()' before calling this function.");
             return target.FullName;
         }
     }

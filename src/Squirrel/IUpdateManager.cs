@@ -59,8 +59,9 @@ namespace Squirrel
     }
 
     /// <summary>
-    /// An object providing update functionality to applications, and general helper
-    /// functions for managing installed shortcuts and registry entries.
+    /// Provides update functionality to applications, and general helper
+    /// functions for managing installed shortcuts and registry entries. Use this
+    /// to check if the current app is installed or not before performing an update.
     /// </summary>
     public interface IUpdateManager : IDisposable, IEnableLogger, IAppTools
     {
