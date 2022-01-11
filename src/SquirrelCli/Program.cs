@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -89,6 +90,10 @@ namespace SquirrelCli
 
         static void Pack(PackOptions options)
         {
+            var releaseNotesText = String.IsNullOrEmpty(options.releaseNotes)
+                ? "" // no releaseNotes
+                : $"<releaseNotes>{SecurityElement.Escape(File.ReadAllText(options.releaseNotes))}</releaseNotes>";
+
             using (Utility.WithTempDirectory(out var tmpDir)) {
                 string nuspec = $@"
 <?xml version=""1.0"" encoding=""utf-8""?>
@@ -99,6 +104,7 @@ namespace SquirrelCli
     <description>{options.packTitle ?? options.packId}</description>
     <authors>{options.packAuthors ?? options.packId}</authors>
     <version>{options.packVersion}</version>
+    {releaseNotesText}
   </metadata>
   <files>
     <file src=""**"" target=""lib\native\"" exclude=""{(options.includePdb ? "" : "*.pdb;")}*.nupkg;*.vshost.*""/>

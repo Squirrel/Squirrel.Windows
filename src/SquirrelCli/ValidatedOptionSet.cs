@@ -82,13 +82,17 @@ namespace SquirrelCli
             }
         }
 
-        protected virtual void IsValidDirectory(string propertyName)
+        protected virtual void IsValidDirectory(string propertyName, bool verifyIsNotEmpty)
         {
             var p = this.GetType().GetProperty(propertyName);
             var path = p.GetValue(this, null) as string;
             if (path != null) {
                 if (!Directory.Exists(path)) {
                     throw new OptionValidationException($"Argument '{propertyName}': Expected directory to exist at this location but none was found");
+                }
+
+                if (verifyIsNotEmpty && !Directory.EnumerateFileSystemEntries(path).Any()) {
+                    throw new OptionValidationException($"Argument '{propertyName}': Expected non-empty directory, but the specified directory was empty.");
                 }
             }
         }

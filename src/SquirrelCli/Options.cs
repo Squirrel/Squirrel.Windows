@@ -42,12 +42,12 @@ namespace SquirrelCli
             Add("p=|package=", "Path to a '.nupkg' package to releasify", v => package = v);
             Add("n=|signParams=", "Sign files via SignTool.exe using these parameters", v => signParams = v);
             Add("f=|framework=", "List of required runtimes to install during setup -\nexample: 'net6,vcredist143'", v => framework = v);
+            Add("s=|splashImage=", "Splash image to be displayed during installation", v => splashImage = v);
             Add("i=|icon=", "Sets all the icons: Update, App, and Setup",
                 (v) => { updateIcon = v; appIcon = v; setupIcon = v; });
             Add("updateIcon=", ".ico to be used for Update.exe", v => updateIcon = v);
             Add("appIcon=", ".ico to be used in the 'Apps and Features' list", v => appIcon = v);
             Add("setupIcon=", ".ico to be used for Setup.exe", v => setupIcon = v);
-            Add("splashImage=", "Splash image to be displayed during installation", v => splashImage = v);
             Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
             Add("msi=", "Compiles a .msi machine-wide deployment tool.\nThis value must be either 'x86' 'x64'", v => msi = v.ToLower());
         }
@@ -84,6 +84,7 @@ namespace SquirrelCli
         public string packAuthors { get; private set; }
         public string packDirectory { get; private set; }
         public bool includePdb { get; private set; }
+        public string releaseNotes { get; private set; }
 
         public PackOptions()
         {
@@ -101,6 +102,7 @@ namespace SquirrelCli
             InsertAt(4, "packTitle=", "Optional display/friendly name for package", v => packTitle = v);
             InsertAt(5, "packAuthors=", "Optional company or list of package authors", v => packAuthors = v);
             InsertAt(6, "includePdb", "Include *.pdb files in the package", v => includePdb = true);
+            InsertAt(7, "releaseNotes=", "File containing markdown notes for this version", v => releaseNotes = v);
         }
 
         public override void Validate()
@@ -108,7 +110,8 @@ namespace SquirrelCli
             IsRequired(nameof(packId), nameof(packVersion), nameof(packDirectory));
             Squirrel.NuGet.NugetUtil.ThrowIfInvalidNugetId(packId);
             Squirrel.NuGet.NugetUtil.ThrowIfVersionNotSemverCompliant(packVersion);
-            IsValidDirectory(nameof(packDirectory));
+            IsValidDirectory(nameof(packDirectory), true);
+            IsValidFile(nameof(releaseNotes));
             base.ValidateInternal(false);
         }
     }
