@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -21,10 +21,10 @@ namespace Squirrel
         public static string StubExecutablePath => FindHelperFile("StubExecutable.exe");
         public static string SingleFileHostPath => FindHelperFile("singlefilehost.exe");
         public static string WixTemplatePath => FindHelperFile("template.wxs");
+        public static string SevenZipPath => FindHelperFile("7z.exe");
 
         // private so we don't expose paths to internal tools. these should be exposed as a helper function
         private static string RceditPath => FindHelperFile("rcedit.exe");
-        private static string SevenZipPath => FindHelperFile("7z.exe");
         private static string SignToolPath => FindHelperFile("signtool.exe");
         private static string WixCandlePath => FindHelperFile("candle.exe");
         private static string WixLightPath => FindHelperFile("light.exe");
@@ -73,7 +73,7 @@ namespace Squirrel
                 .FirstOrDefault(x => File.Exists(x));
 
             if (result == null && throwWhenNotFound)
-                throw new Exception($"Could not find helper '{exe}'. If not in the default location, add additional search paths using command arguments.");
+                throw new Exception($"Could not find '{exe}'.");
 
             return result ?? exe;
         }
@@ -189,50 +189,6 @@ namespace Squirrel
                 throw new Exception(msg);
             } else {
                 Log.Info("Sign successful: " + processResult.StdOutput);
-            }
-        }
-
-        public static async Task ExtractZipToDirectory(string zipFilePath, string outFolder)
-        {
-            try {
-                var cmd = SevenZipPath;
-                var args = String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder);
-
-                // TODO this should probably fall back to SharpCompress if not on windows
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
-                    cmd = "wine";
-                    args = SevenZipPath + " " + args;
-                }
-
-                var psi = Utility.CreateProcessStartInfo(cmd, args);
-
-                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None).ConfigureAwait(false);
-                if (result.ExitCode != 0) throw new Exception(result.StdOutput);
-            } catch (Exception ex) {
-                Log.Error($"Failed to extract file {zipFilePath} to {outFolder}\n{ex.Message}");
-                throw;
-            }
-        }
-
-        public static async Task CreateZipFromDirectory(string zipFilePath, string inFolder)
-        {
-            try {
-                var cmd = SevenZipPath;
-                var args = String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath);
-
-                // TODO this should probably fall back to SharpCompress if not on windows
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
-                    cmd = "wine";
-                    args = SevenZipPath + " " + args;
-                }
-
-                var psi = Utility.CreateProcessStartInfo(cmd, args, inFolder);
-
-                var result = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None).ConfigureAwait(false);
-                if (result.ExitCode != 0) throw new Exception(result.StdOutput);
-            } catch (Exception ex) {
-                Log.Error($"Failed to extract file {zipFilePath} to {inFolder}\n{ex.Message}");
-                throw;
             }
         }
     }

@@ -68,8 +68,8 @@ namespace Squirrel
                 this.Log().Info("Extracting {0} and {1} into {2}",
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
-                HelperExe.ExtractZipToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName).Wait();
-                HelperExe.ExtractZipToDirectory(newPackage.ReleasePackageFile, tempInfo.FullName).Wait();
+                EasyZip.ExtractZipToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName);
+                EasyZip.ExtractZipToDirectory(newPackage.ReleasePackageFile, tempInfo.FullName);
 
                 // Collect a list of relative paths under 'lib' and map them
                 // to their full name. We'll use this later to determine in
@@ -86,7 +86,7 @@ namespace Squirrel
                 }
 
                 ReleasePackage.addDeltaFilesToContentTypes(tempInfo.FullName);
-                HelperExe.CreateZipFromDirectory(outputFile, tempInfo.FullName).Wait();
+                EasyZip.CreateZipFromDirectory(outputFile, tempInfo.FullName);
             }
 
             return new ReleasePackage(outputFile);

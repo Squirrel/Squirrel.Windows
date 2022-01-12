@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
@@ -123,7 +123,7 @@ namespace Squirrel
 
                 contentsPostProcessHook?.Invoke(tempPath, package);
 
-                HelperExe.CreateZipFromDirectory(outputFile, tempPath).Wait();
+                EasyZip.CreateZipFromDirectory(outputFile, tempPath);
 
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;
