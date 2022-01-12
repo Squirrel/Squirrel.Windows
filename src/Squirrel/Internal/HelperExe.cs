@@ -23,7 +23,6 @@ namespace Squirrel
         public static string WixTemplatePath => FindHelperFile("template.wxs");
 
         // private so we don't expose paths to internal tools. these should be exposed as a helper function
-        private static string NugetPath => FindHelperFile("nuget.exe");
         private static string RceditPath => FindHelperFile("rcedit.exe");
         private static string SevenZipPath => FindHelperFile("7z.exe");
         private static string SignToolPath => FindHelperFile("signtool.exe");
@@ -191,17 +190,6 @@ namespace Squirrel
             } else {
                 Log.Info("Sign successful: " + processResult.StdOutput);
             }
-        }
-
-        public static async Task NugetPack(string nuspecPath, string baseDirectory, string outputDirectory)
-        {
-            var args = new string[] { "pack", nuspecPath, "-BasePath", baseDirectory, "-OutputDirectory", outputDirectory };
-
-            Log.Info($"Packing '{baseDirectory}' into nupkg.");
-            var res = await Utility.InvokeProcessAsync(NugetPath, args, CancellationToken.None).ConfigureAwait(false);
-
-            if (res.ExitCode != 0)
-                throw new Exception($"Failed nuget pack (exit {res.ExitCode}): \r\n " + res.StdOutput);
         }
 
         public static async Task ExtractZipToDirectory(string zipFilePath, string outFolder)

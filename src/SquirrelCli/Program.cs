@@ -114,7 +114,7 @@ namespace SquirrelCli
                 var nuspecPath = Path.Combine(tmpDir, options.packId + ".nuspec");
                 File.WriteAllText(nuspecPath, nuspec);
 
-                HelperExe.NugetPack(nuspecPath, options.packDirectory, tmpDir).Wait();
+                new NugetConsole().Pack(nuspecPath, options.packDirectory, tmpDir);
 
                 var nupkgPath = Directory.EnumerateFiles(tmpDir).Where(f => f.EndsWith(".nupkg")).FirstOrDefault();
                 if (nupkgPath == null)

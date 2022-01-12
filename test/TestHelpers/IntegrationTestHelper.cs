@@ -91,7 +91,7 @@ namespace Squirrel.Tests.TestHelpers
                     IntegrationTestHelper.GetPath("fixtures", "NotSquirrelAwareApp.exe"), 
                     Path.Combine(targetDir, "NotSquirrelAwareApp.exe"));
 
-                HelperExe.NugetPack(nuspecPath, targetDir, targetDir).GetAwaiter().GetResult();
+                new SquirrelCli.NugetConsole().Pack(nuspecPath, targetDir, targetDir);
 
                 var di = new DirectoryInfo(targetDir);
                 var pkg = di.EnumerateFiles("*.nupkg").First();
