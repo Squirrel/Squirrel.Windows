@@ -133,6 +133,7 @@ namespace SquirrelCli
             }
 
             var signingOpts = options.signParams;
+            var signToolPath = options.signToolPath;
             var package = options.package;
             var baseUrl = options.baseUrl;
             var generateDeltas = !options.noDelta;
@@ -169,7 +170,7 @@ namespace SquirrelCli
                 throw new InvalidOperationException("Update.exe is corrupt. Broken Squirrel install?");
 
             // Sign Update.exe so that virus scanners don't think we're pulling one over on them
-            HelperExe.SignPEFile(updatePath, signingOpts).Wait();
+            HelperExe.SignPEFile(signToolPath, updatePath, signingOpts).Wait();
 
             // copy input package to target output directory
             var di = new DirectoryInfo(targetDir);
@@ -218,7 +219,7 @@ namespace SquirrelCli
                     // sign all exe's in this package
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
-                        .ForEachAsync(x => HelperExe.SignPEFile(x.FullName, signingOpts))
+                        .ForEachAsync(x => HelperExe.SignPEFile(signToolPath, x.FullName, signingOpts))
                         .Wait();
 
                     // copy Update.exe into package, so it can also be updated in both full/delta packages
@@ -296,18 +297,18 @@ namespace SquirrelCli
 
             infosave.WriteToFile(targetSetupExe);
 
-            HelperExe.SignPEFile(targetSetupExe, signingOpts).Wait();
+            HelperExe.SignPEFile(signToolPath, targetSetupExe, signingOpts).Wait();
 
             if (!String.IsNullOrEmpty(options.msi)) {
                 bool x64 = options.msi.Equals("x64");
-                createMsiPackage(targetSetupExe, new ZipPackage(package), x64).Wait();
-                HelperExe.SignPEFile(targetSetupExe.Replace(".exe", ".msi"), signingOpts).Wait();
+                var msiPath = createMsiPackage(targetSetupExe, new ZipPackage(package), x64).Result;
+                HelperExe.SignPEFile(signToolPath, msiPath, signingOpts).Wait();
             }
 
             Log.Info("Done");
         }
 
-        static async Task createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
+        static async Task<string> createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
         {
             Log.Info($"Compiling machine-wide msi deployment tool in {(packageAs64Bit ? "64-bit" : "32-bit")} mode");
 
@@ -343,6 +344,7 @@ namespace SquirrelCli
             try {
                 var msiTarget = Path.Combine(setupExeDir, setupName + "_DeploymentTool.msi");
                 await HelperExe.CompileWixTemplateToMsi(wxsTarget, msiTarget);
+                return msiTarget;
             } finally {
                 File.Delete(wxsTarget);
             }

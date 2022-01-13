@@ -161,7 +161,7 @@ namespace Squirrel
             }
         }
 
-        public static async Task SignPEFile(string exePath, string signingOpts)
+        public static async Task SignPEFile(string signPath, string exePath, string signingOpts)
         {
             if (String.IsNullOrEmpty(signingOpts)) {
                 Log.Debug("{0} was not signed.", exePath);
@@ -177,9 +177,11 @@ namespace Squirrel
                 Log.ErrorException("Failed to determine signing status for " + exePath, ex);
             }
 
+            signPath = signPath ?? SignToolPath;
+
             Log.Info("About to sign {0}", exePath);
 
-            var psi = Utility.CreateProcessStartInfo(SignToolPath, $"sign {signingOpts} \"{exePath}\"");
+            var psi = Utility.CreateProcessStartInfo(signPath, $"sign {signingOpts} \"{exePath}\"");
             var processResult = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None).ConfigureAwait(false);
 
             if (processResult.ExitCode != 0) {

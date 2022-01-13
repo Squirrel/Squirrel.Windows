@@ -22,6 +22,7 @@ namespace SquirrelCli
         public string package { get; set; }
         public string baseUrl { get; private set; }
         public string signParams { get; private set; }
+        public string signToolPath { get; private set; }
         public string framework { get; private set; }
         public string splashImage { get; private set; }
         public string updateIcon { get; private set; }
@@ -40,7 +41,6 @@ namespace SquirrelCli
 
             // public arguments
             Add("p=|package=", "Path to a '.nupkg' package to releasify", v => package = v);
-            Add("n=|signParams=", "Sign files via SignTool.exe using these parameters", v => signParams = v);
             Add("f=|framework=", "List of required runtimes to install during setup -\nexample: 'net6,vcredist143'", v => framework = v);
             Add("s=|splashImage=", "Splash image to be displayed during installation", v => splashImage = v);
             Add("i=|icon=", "Sets all the icons: Update, App, and Setup",
@@ -50,6 +50,8 @@ namespace SquirrelCli
             Add("setupIcon=", ".ico to be used for Setup.exe", v => setupIcon = v);
             Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
             Add("msi=", "Compiles a .msi machine-wide deployment tool.\nThis value must be either 'x86' 'x64'", v => msi = v.ToLower());
+            Add("n=|signParams=", "Sign files via SignTool.exe using these parameters", v => signParams = v);
+            Add("signToolPath=", "Use a custom signing binary (eg AzureSignTool.exe)", v => signToolPath = v);
         }
 
         public override void Validate()
