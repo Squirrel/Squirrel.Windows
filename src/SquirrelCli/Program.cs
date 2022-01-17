@@ -132,8 +132,6 @@ namespace SquirrelCli
                 Directory.CreateDirectory(targetDir);
             }
 
-            var signingOpts = options.signParams;
-            var signToolPath = options.signToolPath;
             var package = options.package;
             var baseUrl = options.baseUrl;
             var generateDeltas = !options.noDelta;
@@ -170,7 +168,7 @@ namespace SquirrelCli
                 throw new InvalidOperationException("Update.exe is corrupt. Broken Squirrel install?");
 
             // Sign Update.exe so that virus scanners don't think we're pulling one over on them
-            HelperExe.SignPEFile(signToolPath, updatePath, signingOpts).Wait();
+            options.SignPEFile(updatePath);
 
             // copy input package to target output directory
             var di = new DirectoryInfo(targetDir);
@@ -219,7 +217,7 @@ namespace SquirrelCli
                     // sign all exe's in this package
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => Utility.FileIsLikelyPEImage(x.Name))
-                        .ForEachAsync(x => HelperExe.SignPEFile(signToolPath, x.FullName, signingOpts))
+                        .ForEachAsync(x => options.SignPEFile(x.FullName))
                         .Wait();
 
                     // copy Update.exe into package, so it can also be updated in both full/delta packages
@@ -296,13 +294,12 @@ namespace SquirrelCli
             if (backgroundGif != null) infosave.SplashImageBytes = File.ReadAllBytes(backgroundGif);
 
             infosave.WriteToFile(targetSetupExe);
-
-            HelperExe.SignPEFile(signToolPath, targetSetupExe, signingOpts).Wait();
+            options.SignPEFile(targetSetupExe);
 
             if (!String.IsNullOrEmpty(options.msi)) {
                 bool x64 = options.msi.Equals("x64");
                 var msiPath = createMsiPackage(targetSetupExe, new ZipPackage(package), x64).Result;
-                HelperExe.SignPEFile(signToolPath, msiPath, signingOpts).Wait();
+                options.SignPEFile(msiPath);
             }
 
             Log.Info("Done");

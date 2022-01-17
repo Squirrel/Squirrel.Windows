@@ -181,7 +181,7 @@ namespace Squirrel
         /// <remarks>
         ///     The string is only valid for passing directly to a process. If the target process is invoked by passing the
         ///     process name + arguments to cmd.exe then further escaping is required, to counteract cmd.exe's interpretation
-        ///     of additional special characters. See CommandRunner.cs-EscapeCmdExeMetachars.</remarks>
+        ///     of additional special characters. See <see cref="EscapeCmdExeMetachars"/>.</remarks>
         public static string ArgsToCommandLine(IEnumerable<string> args)
         {
             var sb = new StringBuilder();
@@ -219,6 +219,32 @@ namespace Squirrel
             return sb.ToString();
         }
         private static readonly char[] _cmdChars = new[] { ' ', '"', '\n', '\t', '\v' };
+
+        /// <summary>
+        ///     Escapes all cmd.exe meta-characters by prefixing them with a ^. See <see cref="ArgsToCommandLine"/> for more
+        ///     information.</summary>
+        public static string EscapeCmdExeMetachars(string command)
+        {
+            var result = new StringBuilder();
+            foreach (var ch in command) {
+                switch (ch) {
+                case '(':
+                case ')':
+                case '%':
+                case '!':
+                case '^':
+                case '"':
+                case '<':
+                case '>':
+                case '&':
+                case '|':
+                    result.Append('^');
+                    break;
+                }
+                result.Append(ch);
+            }
+            return result.ToString();
+        }
 
         /// <summary>
         /// This function will escape command line arguments such that CommandLineToArgvW is guarenteed to produce the same output as the 'args' parameter. 

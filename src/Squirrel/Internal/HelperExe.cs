@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -22,10 +22,10 @@ namespace Squirrel
         public static string SingleFileHostPath => FindHelperFile("singlefilehost.exe");
         public static string WixTemplatePath => FindHelperFile("template.wxs");
         public static string SevenZipPath => FindHelperFile("7z.exe");
+        public static string SignToolPath => FindHelperFile("signtool.exe");
 
         // private so we don't expose paths to internal tools. these should be exposed as a helper function
         private static string RceditPath => FindHelperFile("rcedit.exe");
-        private static string SignToolPath => FindHelperFile("signtool.exe");
         private static string WixCandlePath => FindHelperFile("candle.exe");
         private static string WixLightPath => FindHelperFile("light.exe");
 
@@ -158,39 +158,6 @@ namespace Squirrel
                 throw new Exception(msg);
             } else {
                 Console.WriteLine(processResult.StdOutput);
-            }
-        }
-
-        public static async Task SignPEFile(string signPath, string exePath, string signingOpts)
-        {
-            if (String.IsNullOrEmpty(signingOpts)) {
-                Log.Debug("{0} was not signed.", exePath);
-                return;
-            }
-
-            try {
-                if (AuthenticodeTools.IsTrusted(exePath)) {
-                    Log.Info("{0} is already signed, skipping...", exePath);
-                    return;
-                }
-            } catch (Exception ex) {
-                Log.ErrorException("Failed to determine signing status for " + exePath, ex);
-            }
-
-            signPath = signPath ?? SignToolPath;
-
-            Log.Info("About to sign {0}", exePath);
-
-            var psi = Utility.CreateProcessStartInfo(signPath, $"sign {signingOpts} \"{exePath}\"");
-            var processResult = await Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None).ConfigureAwait(false);
-
-            if (processResult.ExitCode != 0) {
-                var optsWithPasswordHidden = new Regex(@"/p\s+\w+").Replace(signingOpts, "/p ********");
-                var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}'\r\n{3}",
-                    SignToolPath, optsWithPasswordHidden, exePath, processResult.StdOutput);
-                throw new Exception(msg);
-            } else {
-                Log.Info("Sign successful: " + processResult.StdOutput);
             }
         }
     }
