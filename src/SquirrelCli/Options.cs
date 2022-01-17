@@ -42,6 +42,10 @@ namespace SquirrelCli
             if (!String.IsNullOrEmpty(signParams) && !String.IsNullOrEmpty(signTemplate)) {
                 throw new OptionValidationException($"Cannot use 'signParams' and 'signTemplate' options together, please choose one or the other.");
             }
+
+            if (!String.IsNullOrEmpty(signTemplate) && !signTemplate.Contains("{{file}}")) {
+                throw new OptionValidationException($"Argument 'signTemplate': Must contain '{{{{file}}}}' in template string (replaced with the file to sign). Current value is '{signTemplate}'");
+            }
         }
 
         public void SignPEFile(string filePath)
