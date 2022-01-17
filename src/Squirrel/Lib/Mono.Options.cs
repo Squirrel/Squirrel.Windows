@@ -1030,8 +1030,8 @@ namespace Mono.Options
 			return false;
 		}
 
-		private readonly Regex ValueOption = new Regex (
-			@"^(?<flag>--|-|/)(?<name>[^:=]+)((?<sep>[:=])(?<value>.*))?$");
+		private readonly static Regex ValueOption = new Regex (
+			@"^(?<flag>--|-|/)(?<name>[^:=]+)((?<sep>[:=])(?<value>.*))?$", RegexOptions.Compiled);
 
 		protected bool GetOptionParts (string argument, out string flag, out string name, out string sep, out string value)
 		{
@@ -1295,28 +1295,54 @@ namespace Mono.Options
 			o.Write (s);
 		}
 
+        // this regex will match {argName}, {0:argName} etc - but not {{argName}} (we treat double brackets like they are escaped)
+        private static readonly Regex _argNameRegex = new Regex(@"(^|[^{]){(?<name>[^{}]*)}($|[^}])", RegexOptions.Compiled);
 		private static string GetArgumentName (int index, int maxIndex, string description)
 		{
-			if (description == null)
-				return maxIndex == 1 ? "VALUE" : "VALUE" + (index + 1);
-			string[] nameStart;
-			if (maxIndex == 1)
-				nameStart = new string[]{"{0:", "{"};
-			else
-				nameStart = new string[]{"{" + index + ":"};
-			for (int i = 0; i < nameStart.Length; ++i) {
-				int start, j = 0;
-				do {
-					start = description.IndexOf (nameStart [i], j);
-				} while (start >= 0 && j != 0 ? description [j++ - 1] == '{' : false);
-				if (start == -1)
-					continue;
-				int end = description.IndexOf ("}", start);
-				if (end == -1)
-					continue;
-				return description.Substring (start + nameStart [i].Length, end - start - nameStart [i].Length);
-			}
-			return maxIndex == 1 ? "VALUE" : "VALUE" + (index + 1);
+            if (description != null) {
+                if (maxIndex == 1) {
+                    // if there can only be one argument, we're looking for {argName} or {0:argName}
+                    var match = _argNameRegex.Match(description);
+                    if (match.Success) {
+                        var argName = match.Groups["name"].Value;
+                        return argName.StartsWith("0:") ? argName.Substring(2) : argName;
+                    }
+                } else {
+                    // if there are more than one arguments, we are looking for {index:argName} only
+                    var matches = _argNameRegex.Matches(description);
+                    foreach (Match m in matches) {
+                        var argName = m.Groups["name"].Value;
+                        if (argName.StartsWith(index + ":")) {
+                            return argName.Substring(index.ToString().Length + 1);
+                        }
+                    }
+                }
+            }
+
+            // CS: this is the original NDesk implementation which did not support escaped brackets
+            // strangely enough GetDescription(string) below does support this very thing.
+
+            //if (description == null)
+            //	return maxIndex == 1 ? "VALUE" : "VALUE" + (index + 1);
+            //string[] nameStart;
+            //if (maxIndex == 1)
+            //	nameStart = new string[]{"{0:", "{"};
+            //else
+            //	nameStart = new string[]{"{" + index + ":"};
+            //for (int i = 0; i < nameStart.Length; ++i) {
+            //	int start, j = 0;
+            //	do {
+            //		start = description.IndexOf (nameStart [i], j);
+            //	} while (start >= 0 && j != 0 ? description [j++ - 1] == '{' : false);
+            //	if (start == -1)
+            //		continue;
+            //	int end = description.IndexOf ("}", start);
+            //	if (end == -1)
+            //		continue;
+            //	return description.Substring (start + nameStart [i].Length, end - start - nameStart [i].Length);
+            //}
+
+            return maxIndex == 1 ? "VALUE" : "VALUE" + (index + 1);
 		}
 
 		private static string GetDescription (string description)
