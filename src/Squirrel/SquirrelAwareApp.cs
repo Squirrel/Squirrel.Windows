@@ -32,7 +32,7 @@ namespace Squirrel
         /// This overload is obsolete and will be removed in a future version. 
         /// See <see cref="HandleEvents(SquirrelHook, SquirrelHook, SquirrelHook, SquirrelHook, SquirrelRunHook, string[])" />
         /// </summary>
-        //[System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
         [Obsolete("Use the HandleEvents overload which provides a SemanticVersion as the argument")]
         public static void HandleEvents(
             Action<Version> onInitialInstall = null,
