@@ -1,16 +1,21 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Squirrel;
 using Squirrel.Lib;
+using Squirrel.SimpleSplat;
 
 namespace SquirrelCli
 {
     internal abstract class BaseOptions : ValidatedOptionSet
     {
         public string releaseDir { get; private set; } = ".\\Releases";
+
+        protected static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(BaseOptions));
+
         public BaseOptions()
         {
             Add("r=|releaseDir=", "Output directory for releasified packages", v => releaseDir = v);
@@ -93,7 +98,8 @@ namespace SquirrelCli
             Remove("p");
 
             // hidden arguments
-            Add("packName=", "The name of the package to create", v => packId = v, true);
+            Add("packName=", "The name of the package to create",
+                v => { packId = v; Log.Warn("--packName is deprecated. Use --packId instead."); }, true);
 
             // public arguments, with indexes so they appear before ReleasifyOptions
             InsertAt(1, "u=|packId=", "Unique identifier for application/package", v => packId = v);
