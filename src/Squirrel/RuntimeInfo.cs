@@ -116,12 +116,9 @@ namespace Squirrel
         }
 
         /// <summary> Represents a full .NET Framework runtime, usually included in Windows automatically through Windows Update </summary>
-#if NET5_0_OR_GREATER
-        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
         public class FrameworkInfo : RuntimeInfo
         {
-            /// <summary> Permalink to the runtime installer for this runtime </summary>
+            /// <summary> Permalink to the installer for this runtime </summary>
             public string DownloadUrl { get; }
 
             /// <summary> The minimum compatible release version for this runtime </summary>
@@ -314,16 +311,13 @@ namespace Squirrel
             }
         }
 
-        /// <summary> Represents a VC++ 2015-2022 redistributable, to support native applications </summary>
-#if NET5_0_OR_GREATER
-        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
-        public class VCRedistInfo : RuntimeInfo
+        /// <summary> The base class for a VC++ redistributable package. </summary>
+        public abstract class VCRedistInfo : RuntimeInfo
         {
-            /// <summary> The minimum compatible version that must be installed </summary>
+            /// <summary> The minimum compatible version that must be installed. </summary>
             public Version MinVersion { get; }
 
-            /// <summary> The CPU architecture of the runtime </summary>
+            /// <summary> The CPU architecture of the runtime. </summary>
             public RuntimeCpu CpuArchitecture { get; }
 
             /// <inheritdoc/>
@@ -354,7 +348,10 @@ namespace Squirrel
 
             const string UninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
 
-            /// <inheritdoc/>
+            /// <summary>
+            /// Returns the list of currently installed VC++ redistributables, as reported by the
+            /// Windows Programs &amp; Features dialog.
+            /// </summary>
             public static (Version Ver, RuntimeCpu Cpu)[] GetInstalledVCVersions()
             {
                 List<(Version Ver, RuntimeCpu Cpu)> results = new List<(Version Ver, RuntimeCpu Cpu)>();
@@ -391,10 +388,21 @@ namespace Squirrel
 
                 return results.OrderBy(v => v.Ver).ToArray();
             }
+        }
+
+        /// <summary> Represents a VC++ 2015-2022 redistributable package. </summary>
+        public class VCRedist14 : VCRedistInfo
+        {
+            /// <inheritdoc/>
+            public VCRedist14(string id, string displayName, Version minVersion, RuntimeCpu cpuArchitecture)
+                : base(id, displayName, minVersion, cpuArchitecture)
+            {
+            }
 
             /// <inheritdoc/>
             public override Task<string> GetDownloadUrl()
             {
+                // from 2015-2022, the binaries are all compatible, so we can always just install the latest version
                 // https://docs.microsoft.com/en-US/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022
                 // https://docs.microsoft.com/en-us/cpp/porting/binary-compat-2015-2017?view=msvc-170
                 return Task.FromResult(CpuArchitecture switch {
@@ -403,6 +411,23 @@ namespace Squirrel
                     _ => throw new ArgumentOutOfRangeException(nameof(CpuArchitecture)),
                 });
             }
+        }
+
+        /// <summary> Represents a VC++ redistributable package which is referenced by a permalink </summary>
+        public class VCRedist00 : VCRedistInfo
+        {
+            /// <summary> Permalink to the installer for this runtime </summary>
+            public string DownloadUrl { get; }
+
+            /// <inheritdoc/>
+            public VCRedist00(string id, string displayName, Version minVersion, RuntimeCpu cpuArchitecture, string downloadUrl)
+                : base(id, displayName, minVersion, cpuArchitecture)
+            {
+                DownloadUrl = downloadUrl;
+            }
+
+            /// <inheritdoc/>
+            public override Task<string> GetDownloadUrl() => Task.FromResult(DownloadUrl);
         }
     }
 }
