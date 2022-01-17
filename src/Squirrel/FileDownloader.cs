@@ -111,12 +111,22 @@ namespace Squirrel
             var buffer = new byte[81920];
             long totalBytesRead = 0;
             int bytesRead;
+            int lastProgress = 0;
             while ((bytesRead = await download.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false)) != 0) {
                 await destination.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
                 totalBytesRead += bytesRead;
+
                 // Convert absolute progress (bytes downloaded) into relative progress (0% - 100%)
-                progress((int) (totalBytesRead / contentLength.Value));
+                // and don't report progress < 3% difference, kind of like a shitty debounce.
+                var curProgress = (int) ((double) totalBytesRead / contentLength.Value * 100);
+                if (curProgress - lastProgress >= 3) {
+                    lastProgress = curProgress;
+                    progress(curProgress);
+                }
             }
+
+            if (lastProgress != 100)
+                progress(100);
         }
 
         /// <summary>

@@ -9,6 +9,7 @@ using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 using Squirrel.Shell;
+using System.Collections.Generic;
 
 namespace Squirrel.Tests
 {
@@ -92,7 +93,7 @@ namespace Squirrel.Tests
 
             var emptyString = string.Empty;
             string nullString = null;
-            byte[] nullByteArray = {};
+            byte[] nullByteArray = { };
             Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(emptyString));
             Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(nullString));
             Assert.Equal(string.Empty, Utility.RemoveByteOrderMarkerIfPresent(nullByteArray));
@@ -182,14 +183,29 @@ namespace Squirrel.Tests
             Assert.Equal(result, Utility.IsFileTopLevelInPackage(input, packagePath));
         }
 
-
-
         [Fact]
         public void WeCanFetchAllProcesses()
         {
             var result = Utility.EnumerateProcesses();
             Assert.True(result.Count > 1);
             Assert.True(result.Count != 2048);
+        }
+
+        [Fact(Skip = "Only really need to run this test after changes to FileDownloader")]
+        public void DownloaderReportsProgress()
+        {
+            // this probably should use a local http server instead.
+            const string testUrl = "http://speedtest.tele2.net/1MB.zip";
+
+            var dl = Utility.CreateDefaultDownloader();
+
+            List<int> prog = new List<int>();
+            using (Utility.WithTempFile(out var tempPath))
+                dl.DownloadFile(testUrl, tempPath, prog.Add).Wait();
+
+            Assert.True(prog.Count > 10);
+            Assert.Equal(100, prog.Last());
+            Assert.True(prog[1] != 0);
         }
 
         static void CreateSampleDirectory(string directory)
@@ -237,8 +253,7 @@ namespace Squirrel.Tests
         {
             var rv = new byte[arrays.Sum(a => a.Length)];
             var offset = 0;
-            foreach (var array in arrays)
-            {
+            foreach (var array in arrays) {
                 Buffer.BlockCopy(array, 0, rv, offset, array.Length);
                 offset += array.Length;
             }
