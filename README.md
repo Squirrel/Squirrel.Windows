@@ -92,7 +92,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    
    Once you have located the tools folder, create a release. Example below with some useful options, but explore `Squirrel.exe -h` for a complete list.
    ```cmd
-   Squirrel.exe pack --packName "YourApp" --packVersion "1.0.0" --packAuthors "YourCompany" --packDirectory "path-to/publish/folder"
+   Squirrel.exe pack --packId "YourApp" --packVersion "1.0.0" --packAuthors "YourCompany" --packDirectory "path-to/publish/folder"
    ```
    Important Notes:
    - The same `--releaseDir` (default `.\Releases`) should be used each time, so delta updates can be generated.
@@ -115,7 +115,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    # build new version and delta updates.
    Squirrel pack`
     --framework net6,vcredist143-x86`  # Install .NET 6.0 (x64) and vcredist143 (x86) during setup, if not installed
-    --packName "YourApp"`              # Application / package name
+    --packId "YourApp"`                # Application / package name
     --packVersion "1.0.0"`             # Version to build. Should be supplied by your CI
     --packAuthors "YourCompany"`       # Your name, or your company name
     --packDirectory ".\publish"`       # The directory the application was published to
@@ -203,12 +203,3 @@ See [Contributing](docs/contributing/contributing.md) for additional information
 ## License and Usage
 
 See [COPYING](COPYING) for details on copyright and usage.
-
-
-
-
-
-
-
-
-
