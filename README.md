@@ -90,13 +90,13 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    - `%userprofile%\.nuget\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`, or;
    - `..\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`
    
-   Once you have located the tools folder, create a release. Example below with some useful options, but explore `Squirrel.exe -h` for a complete list.
+   Once you have located the tools folder, create a release. Minimal example below with some useful options, but explore `Squirrel.exe -h` for a complete list.
    ```cmd
-   Squirrel.exe pack --packId "YourApp" --packVersion "1.0.0" --packAuthors "YourCompany" --packDirectory "path-to/publish/folder"
+   Squirrel.exe pack --packId "YourApp" --packVersion "1.0.0" --packDirectory "path-to/publish/folder"
    ```
    Important Notes:
-   - The same `--releaseDir` (default `.\Releases`) should be used each time, so delta updates can be generated.
-   - The package version must comply to strict SemVer syntax. (eg. `1.0.0`, `1.0.1-pre`)
+   - The same `--releaseDir` (default `.\Releases` if not specified) should be used each time, so delta updates can be generated.
+   - The package version must comply to strict 3-part SemVer syntax. (eg. `1.0.0`, `1.0.1-pre`)
    - A list of supported runtimes for the `--framework` argument is [available here](https://github.com/clowd/Clowd.Squirrel/blob/develop/src/Squirrel/Runtimes.cs)
    
 6. Distribute your entire `--releaseDir` folder online. This folder can be hosted on any static web/file server, [Amazon S3](docs/using/amazon-s3.md), BackBlaze B2, or even via [GitHub Releases](docs/using/github.md). 
@@ -107,7 +107,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    dotnet publish -c Release -o ".\publish" 
 
    # find Squirrel.exe path and add an alias
-   Set-Alias Squirrel ($env:USERPROFILE + "\.nuget\packages\clowd.squirrel\2.6.2-pre\tools\Squirrel.exe");
+   Set-Alias Squirrel ($env:USERPROFILE + "\.nuget\packages\clowd.squirrel\2.7.79-pre\tools\Squirrel.exe");
 
    # download currently live version
    Squirrel http-down --url "https://the.place/you-host/updates"
