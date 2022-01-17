@@ -29,6 +29,7 @@ Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$BinOut" -Recurse
 Copy-Item -Path "$PSScriptRoot\vendor\wix\*" -Destination "$BinOut" -Recurse
 Copy-Item "$In\Win32\Setup.exe" -Destination "$BinOut"
 Copy-Item "$In\Win32\StubExecutable.exe" -Destination "$BinOut"
+Copy-Item "$PSScriptRoot\vendor\nuget.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\singlefilehost.exe" -Destination "$BinOut"
