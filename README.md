@@ -51,32 +51,33 @@ Windows apps should be as fast and as easy to install and update as apps like Go
 3. Handle Squirrel events somewhere very early in your application startup (such as the beginning of `main()` or `Application.OnStartup()` for WPF). 
 
    ```cs
-   public static int Main(string[] args)
+   public static void Main(string[] args)
    {
+       // run Squirrel first, as the app may exit after these run
        SquirrelAwareApp.HandleEvents(
-           onInitialInstall: OnInstall,
-           onAppUpdate: OnUpdate,
-           onAppUninstall: OnUninstall,
-           onFirstRun: OnFirstRun);
-           
-       // ...
+           onInitialInstall: OnAppInstall,
+           onAppUninstall: OnAppUninstall,
+           onEveryRun: OnAppRun);
+
+       // ... other app init code after ...
    }
 
-   private static void OnInstall(Version obj)
+   private static void OnAppInstall(SemanticVersion version, IAppTools tools)
    {
-       using var mgr = new UpdateManager("https://the.place/you-host/updates");
-       mgr.CreateUninstallerRegistryEntry();
-       mgr.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
+       tools.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
    }
-   
-   private static void OnUninstall(Version obj)
+
+   private static void OnAppUninstall(SemanticVersion version, IAppTools tools)
    {
-       using var mgr = new UpdateManager("https://the.place/you-host/updates");
-       mgr.RemoveUninstallerRegistryEntry();
-       mgr.RemoveShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
+       tools.RemoveShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
    }
-   
-   // ...
+
+   private static void OnAppRun(SemanticVersion version, IAppTools tools, bool firstRun)
+   {
+       tools.SetProcessAppUserModelId();
+       // show a welcome message when the app is first installed
+       if (firstRun) MessageBox.Show("Thanks for installing my application!");
+   }
    ```
    
    When installed, uninstalled or updated, these methods will be executed, giving your app a chance to add or remove application shortcuts or perform other tasks. 
