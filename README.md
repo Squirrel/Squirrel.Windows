@@ -26,6 +26,7 @@ A couple of notes you should be aware of.
  - The commnad line for Update.exe has stayed the same
  - Update.exe is significantly bigger (12.5mb)
  - There have been a great many other improvements here. To see some of them [have a look at the feature matrix](#feature-matrix).
+ - Something detected as a virus? This was an issue at the old Squirrel, and also see [issue #28](https://github.com/clowd/Clowd.Squirrel/issues/28)
 
 ---
 
