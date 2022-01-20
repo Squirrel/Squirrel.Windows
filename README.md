@@ -11,6 +11,12 @@ This project is a fork of the library [Squirrel.Windows](https://github.com/Squi
 
 This library will help you build a `Setup.exe`, integrated (or standalone `Update.exe`) application updater, and release updates to your users very quickly and easily. The `Setup.exe` and `Update.exe` produced by this library are completely dependency free, and can even help you bootstrap/install any number of runtimes your app needs (such as dotnet 5/6, .net 4.8 or others).
 
+Feel free to join our discord for help or questions:
+
+[![discordimg2](https://user-images.githubusercontent.com/1287295/150318745-cbfcf5d0-3697-4bef-ac1a-b0d751f53b48.png)](https://discord.gg/CjrCrNzd3F)
+
+
+
 ---
 
 ## Migrating from Squirrel.Windows?
