@@ -94,8 +94,8 @@ Windows apps should be as fast and as easy to install and update as apps like Go
 5. Create a Squirrel release using the `Squirrel.exe` command line tool. 
    The tool can be downloaded from GitHub Releases, and it is also bundled into the [Clowd.Squirrel](https://www.nuget.org/packages/Clowd.Squirrel/) nuget package. 
    If installed through NuGet, the tools can usually be found at:
-   - `%userprofile%\.nuget\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`, or;
-   - `..\packages\Clowd.Squirrel\<Clowd.Squirrel version>\tools`
+   - `%userprofile%\.nuget\packages\clowd.squirrel\2.7.89-pre\tools`, or;
+   - `..\packages\clowd.squirrel\2.7.89-pre\tools`
    
    Once you have located the tools folder, create a release. Minimal example below with some useful options, but explore `Squirrel.exe -h` for a complete list.
    ```cmd
