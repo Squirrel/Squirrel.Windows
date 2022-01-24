@@ -114,7 +114,7 @@ Windows apps should be as fast and as easy to install and update as apps like Go
    dotnet publish -c Release -o ".\publish" 
 
    # find Squirrel.exe path and add an alias
-   Set-Alias Squirrel ($env:USERPROFILE + "\.nuget\packages\clowd.squirrel\2.7.79-pre\tools\Squirrel.exe");
+   Set-Alias Squirrel ($env:USERPROFILE + "\.nuget\packages\clowd.squirrel\2.7.89-pre\tools\Squirrel.exe");
 
    # download currently live version
    Squirrel http-down --url "https://the.place/you-host/updates"
