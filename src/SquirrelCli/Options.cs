@@ -20,7 +20,7 @@ namespace SquirrelCli
 
         public BaseOptions()
         {
-            Add("r=|releaseDir=", "Output directory for releasified packages", v => releaseDir = v);
+            Add("r=|releaseDir=", "Output {DIRECTORY} for releasified packages", v => releaseDir = v);
         }
     }
 
@@ -31,9 +31,9 @@ namespace SquirrelCli
 
         public SigningOptions()
         {
-            Add("n=|signParams=", "Sign files via SignTool.exe using these parameters",
+            Add("n=|signParams=", "Sign files via SignTool.exe using these {PARAMETERS}",
                 v => signParams = v);
-            Add("signTemplate=", "Use an entirely custom signing command. '{{{{file}}}}' will be replaced by the path of the file to sign.",
+            Add("signTemplate=", "Use a custom signing {COMMAND}. '{{{{file}}}}' will be replaced by the path of the file to sign.",
                 v => signTemplate = v);
         }
 
@@ -109,14 +109,14 @@ namespace SquirrelCli
                 v => HelperExe.AddSearchPath(v), true);
 
             // public arguments
-            InsertAt(1, "p=|package=", "Path to a '.nupkg' package to releasify", v => package = v);
+            InsertAt(1, "p=|package=", "{PATH} to a '.nupkg' package to releasify", v => package = v);
             Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
-            Add("f=|framework=", "List of required runtimes to install during setup -\nexample: 'net6,vcredist143'", v => framework = v);
-            Add("s=|splashImage=", "Splash image to be displayed during installation", v => splashImage = v);
-            Add("i=|icon=", ".ico to be used for Setup.exe and Update.exe",
+            Add("f=|framework=", "List of required {RUNTIMES} to install during setup\nexample: 'net6,vcredist143'", v => framework = v);
+            Add("s=|splashImage=", "{PATH} to image/gif displayed during installation", v => splashImage = v);
+            Add("i=|icon=", "{PATH} to .ico for Setup.exe and Update.exe",
                 (v) => { updateIcon = v; setupIcon = v; });
-            Add("appIcon=", ".ico to be used in the 'Apps and Features' list", v => appIcon = v);
-            Add("msi=", "Compiles a .msi machine-wide deployment tool.\nThis value must be either 'x86' 'x64'", v => msi = v.ToLower());
+            Add("appIcon=", "{PATH} to .ico for 'Apps and Features' list", v => appIcon = v);
+            Add("msi=", "Compile a .msi machine-wide deployment tool with the specified {BITNESS}. (either 'x86' or 'x64')", v => msi = v.ToLower());
         }
 
         public override void Validate()
@@ -164,15 +164,16 @@ namespace SquirrelCli
             // hidden arguments
             Add("packName=", "The name of the package to create",
                 v => { packId = v; Log.Warn("--packName is deprecated. Use --packId instead."); }, true);
+            Add("packDirectory=", "", v => packDirectory = v, true);
 
             // public arguments, with indexes so they appear before ReleasifyOptions
-            InsertAt(1, "u=|packId=", "Unique identifier for application/package", v => packId = v);
-            InsertAt(2, "v=|packVersion=", "Current application version", v => packVersion = v);
-            InsertAt(3, "p=|packDirectory=", "Directory containing application files to package", v => packDirectory = v);
-            InsertAt(4, "packTitle=", "Optional display/friendly name for package", v => packTitle = v);
-            InsertAt(5, "packAuthors=", "Optional company or list of package authors", v => packAuthors = v);
-            InsertAt(6, "includePdb", "Include *.pdb files in the package", v => includePdb = true);
-            InsertAt(7, "releaseNotes=", "File containing markdown notes for this version", v => releaseNotes = v);
+            InsertAt(1, "u=|packId=", "Unique {ID} for release", v => packId = v);
+            InsertAt(2, "v=|packVersion=", "Current {VERSION} for release", v => packVersion = v);
+            InsertAt(3, "p=|packDir=", "{DIRECTORY} containing application files for release", v => packDirectory = v);
+            InsertAt(4, "packTitle=", "Optional display/friendly {NAME} for release", v => packTitle = v);
+            InsertAt(5, "packAuthors=", "Optional company or list of release {AUTHORS}", v => packAuthors = v);
+            InsertAt(6, "includePdb", "Add *.pdb files to release package", v => includePdb = true);
+            InsertAt(7, "releaseNotes=", "{PATH} to file with markdown notes for version", v => releaseNotes = v);
         }
 
         public override void Validate()
@@ -229,8 +230,8 @@ namespace SquirrelCli
 
         public SyncGithubOptions()
         {
-            Add("repoUrl=", "Full url to the github repository -\nexample: 'https://github.com/myname/myrepo'", v => repoUrl = v);
-            Add("token=", "The oauth token to use as login credentials", v => token = v);
+            Add("repoUrl=", "Full url to the github repository\nexample: 'https://github.com/myname/myrepo'", v => repoUrl = v);
+            Add("token=", "OAuth token to use as login credentials", v => token = v);
         }
 
         public override void Validate()
