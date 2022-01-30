@@ -27,17 +27,6 @@ namespace Squirrel
             SDK,
         }
 
-        /// <summary> The Runtime CPU Architecture </summary>
-        public enum RuntimeCpu
-        {
-            /// <summary> Unknown / Unspecified </summary>
-            Unknown = 0,
-            /// <summary> Intel x86 </summary>
-            X86 = 1,
-            /// <summary> x64 / amd64 </summary>
-            X64 = 2,
-        }
-
         /// <summary> Runtime installation result code </summary>
         public enum RuntimeInstallResult
         {
