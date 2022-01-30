@@ -19,8 +19,8 @@ namespace Squirrel
         X86 = 0x014c,
         /// <summary> x64 / Amd64 </summary>
         X64 = 0x8664,
-        /// <summary> Arm64 </summary>
-        Arm64 = 0xAA64,
+        // <summary> Arm64 </summary>
+        // Arm64 = 0xAA64,
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ namespace Squirrel
 #if !NETFRAMEWORK
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
 #endif
-            CheckArchitectureWindows();
+                CheckArchitectureWindows();
 #if !NETFRAMEWORK
             } else {
                 CheckArchitectureOther();
@@ -99,11 +99,11 @@ namespace Squirrel
 
             if (!String.IsNullOrEmpty(pf64compat)) {
                 switch (pf64compat) {
+                //case "ARM64":
+                //    Architecture = RuntimeCpu.Arm64;
+                //    break;
                 case "AMD64":
                     Architecture = RuntimeCpu.X64;
-                    break;
-                case "ARM64":
-                    Architecture = RuntimeCpu.Arm64;
                     break;
                 }
             }
@@ -125,7 +125,7 @@ namespace Squirrel
             Architecture = RuntimeInformation.OSArchitecture switch {
                 InteropArchitecture.X86 => RuntimeCpu.X86,
                 InteropArchitecture.X64 => RuntimeCpu.X64,
-                InteropArchitecture.Arm64 => RuntimeCpu.Arm64,
+                //InteropArchitecture.Arm64 => RuntimeCpu.Arm64,
                 _ => RuntimeCpu.Unknown,
             };
         }

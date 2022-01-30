@@ -156,6 +156,13 @@ namespace Squirrel.Update
             using var _t = Utility.WithTempDirectory(out var tempFolder);
             ISplashWindow splash = new Windows.User32SplashWindow(info.AppFriendlyName, silentInstall, info.SetupIconBytes, info.SplashImageBytes);
 
+            // verify that this package can be installed on this cpu architecture
+            var zp = new ZipPackage(new MemoryStream(info.BundledPackageBytes));
+            if (AssemblyRuntimeInfo.Architecture == RuntimeCpu.X86 && zp.MachineArchitecture == RuntimeCpu.X64) {
+                splash.ShowErrorDialog("Incompatible System", "The current operating system uses the x86 cpu architecture, but this package requires an x64 system.");
+                return;
+            }
+
             var missingFrameworks = info.RequiredFrameworks
                 .Select(f => Runtimes.GetRuntimeByName(f))
                 .Where(f => f != null)

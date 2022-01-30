@@ -20,7 +20,7 @@ namespace Squirrel.Tests
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "slack-1.1.8-full.nupkg");
 
             var zp = new ZipPackage(inputPackage);
-            var zipfw = zp.GetFrameworks();
+            var zipfw = zp.Frameworks;
             var zipf = zp.GetFiles().OrderBy(f => f.Path).ToArray();
             var zipfLib = zp.GetLibFiles().OrderBy(f => f.Path).ToArray();
 

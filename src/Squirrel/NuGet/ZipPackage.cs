@@ -59,6 +59,14 @@ namespace Squirrel.NuGet
         private readonly Func<Stream> _streamFactory;
         private static readonly string[] ExcludePaths = new[] { "_rels", "package" };
 
+        public ZipPackage(Stream zipStream)
+        {
+            using var zip = ZipArchive.Open(zipStream, new() { LeaveStreamOpen = true });
+            using var manifest = GetManifestEntry(zip).OpenEntryStream();
+            ReadManifest(manifest);
+            Frameworks = GetFrameworks(zip);
+        }
+
         public ZipPackage(string filePath)
         {
             if (String.IsNullOrEmpty(filePath)) {

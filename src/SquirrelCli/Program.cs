@@ -221,7 +221,7 @@ namespace SquirrelCli
                     // because of emulation support. Arm64 generally supports x86/x64 emulation, and x64
                     // often supports x86 emulation, so we want to pick the least compatible architecture
                     // for the package.
-                    var archOrder = new[] { RuntimeCpu.Arm64, RuntimeCpu.X64, RuntimeCpu.X86 };
+                    var archOrder = new[] { /*RuntimeCpu.Arm64,*/ RuntimeCpu.X64, RuntimeCpu.X86 };
                     var pkgarch = archOrder.First(o => pearchs.Contains(o));
 
                     if (pkgarch == RuntimeCpu.Unknown) {
