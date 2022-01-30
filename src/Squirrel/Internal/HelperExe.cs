@@ -17,7 +17,7 @@ namespace Squirrel
     internal static class HelperExe
     {
         public static string SetupPath => FindHelperFile("Setup.exe");
-        public static string UpdatePath => FindHelperFile("Update.exe");
+        public static string UpdatePath(Func<string, bool> predicate) => FindHelperFile("Update.exe", predicate);
         public static string StubExecutablePath => FindHelperFile("StubExecutable.exe");
         public static string SingleFileHostPath => FindHelperFile("singlefilehost.exe");
         public static string WixTemplatePath => FindHelperFile("template.wxs");
@@ -55,27 +55,32 @@ namespace Squirrel
                 _searchPaths.Insert(0, path);
         }
 
-        private static string FindHelperFile(string toFind)
+        private static string FindHelperFile(string toFind, Func<string, bool> predicate = null)
         {
-            if (File.Exists(toFind))
-                return Path.GetFullPath(toFind);
-
             const bool throwWhenNotFound = true;
 
-            var dirs = (new[] { AppContext.BaseDirectory, Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
-                .Concat(_searchPaths)
+            var baseDirs = new[] {
+                AppContext.BaseDirectory,
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
+                Environment.CurrentDirectory,
+            };
+
+            var files = _searchPaths
+                .Concat(baseDirs)
                 .Where(d => !String.IsNullOrEmpty(d))
+                .Distinct()
+                .Select(d => Path.Combine(d, toFind))
+                .Where(File.Exists)
                 .Select(Path.GetFullPath);
 
-            var exe = @".\" + toFind;
-            var result = dirs
-                .Select(x => Path.Combine(x, toFind))
-                .FirstOrDefault(x => File.Exists(x));
+            if (predicate != null)
+                files = files.Where(predicate);
 
+            var result = files.FirstOrDefault();
             if (result == null && throwWhenNotFound)
-                throw new Exception($"Could not find '{exe}'.");
+                throw new Exception($"Could not find '{toFind}'.");
 
-            return result ?? exe;
+            return result ?? toFind;
         }
 
         public static async Task CompileWixTemplateToMsi(string wxsTarget, string outputFile)

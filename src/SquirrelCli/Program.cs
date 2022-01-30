@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -157,11 +157,12 @@ namespace SquirrelCli
             using var ud = Utility.WithTempDirectory(out var tempDir);
 
             // update icon for Update.exe if requested
+            var bundledUpdatePath = HelperExe.UpdatePath(p => Microsoft.NET.HostModel.AppHost.HostWriter.IsBundle(p, out var _hz));
             var updatePath = Path.Combine(tempDir, "Update.exe");
             if (options.updateIcon != null) {
-                SingleFileBundle.UpdateSingleFileIcon(HelperExe.UpdatePath, updatePath, options.updateIcon).Wait();
+                SingleFileBundle.UpdateSingleFileIcon(bundledUpdatePath, updatePath, options.updateIcon).Wait();
             } else {
-                File.Copy(HelperExe.UpdatePath, updatePath, true);
+                File.Copy(bundledUpdatePath, updatePath, true);
             }
 
             if (!SingleFileBundle.IsSingleFileBundle(updatePath))
