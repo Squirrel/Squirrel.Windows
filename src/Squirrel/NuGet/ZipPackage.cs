@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 using SharpCompress.Archives.Zip;
 
@@ -17,13 +18,15 @@ namespace Squirrel.NuGet
         string ProductCopyright { get; }
         string Language { get; }
         SemanticVersion Version { get; }
+        IEnumerable<string> Frameworks { get; }
         IEnumerable<FrameworkAssemblyReference> FrameworkAssemblies { get; }
         IEnumerable<PackageDependencySet> DependencySets { get; }
         Uri ProjectUrl { get; }
         string ReleaseNotes { get; }
         Uri IconUrl { get; }
-        string[] GetFrameworks();
-        Stream ReadLibFileStream(string fileName);
+        IEnumerable<string> Tags { get; }
+        IEnumerable<string> RuntimeDependencies { get; }
+        RuntimeCpu MachineArchitecture { get; }
     }
 
     internal class ZipPackage : IPackage
@@ -41,6 +44,10 @@ namespace Squirrel.NuGet
         public string ReleaseNotes { get; private set; }
         public Uri IconUrl { get; private set; }
         public string Language { get; private set; }
+        public IEnumerable<string> Tags { get; private set; } = Enumerable.Empty<string>();
+        public IEnumerable<string> RuntimeDependencies { get; private set; } = Enumerable.Empty<string>();
+        public IEnumerable<string> Frameworks { get; private set; }
+        public RuntimeCpu MachineArchitecture { get; private set; }
 
         protected string Description { get; private set; }
         protected IEnumerable<string> Authors { get; private set; } = Enumerable.Empty<string>();
@@ -59,14 +66,16 @@ namespace Squirrel.NuGet
             }
 
             _streamFactory = () => File.OpenRead(filePath);
-            EnsureManifest();
-        }
 
-        public string[] GetFrameworks()
-        {
             using var stream = _streamFactory();
             using var zip = ZipArchive.Open(stream);
+            using var manifest = GetManifestEntry(zip).OpenEntryStream();
+            ReadManifest(manifest);
+            Frameworks = GetFrameworks(zip);
+        }
 
+        private string[] GetFrameworks(ZipArchive zip)
+        {
             var fileFrameworks = GetPackageFiles(zip)
                 .Select(z => NugetUtil.ParseFrameworkNameFromFilePath(z.Path, out var _));
 
@@ -134,19 +143,15 @@ namespace Squirrel.NuGet
                    select (path, entry);
         }
 
-        private void EnsureManifest()
+        private ZipArchiveEntry GetManifestEntry(ZipArchive zip)
         {
-            using var stream = _streamFactory();
-            using var zip = ZipArchive.Open(stream);
-
             var manifest = zip.Entries
-                .FirstOrDefault(f => f.Key.EndsWith(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase));
+              .FirstOrDefault(f => f.Key.EndsWith(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase));
 
             if (manifest == null)
-                throw new InvalidOperationException("PackageDoesNotContainManifest");
+                throw new InvalidDataException("PackageDoesNotContainManifest");
 
-            using var manifestStream = manifest.OpenEntryStream();
-            ReadManifest(manifestStream);
+            return manifest;
         }
 
         private void ReadManifest(Stream manifestStream)
@@ -171,6 +176,35 @@ namespace Squirrel.NuGet
             }
         }
 
+        public static void SetSquirrelMetadata(string nuspecPath, RuntimeCpu architecture, IEnumerable<string> runtimes)
+        {
+            Dictionary<string, string> toSet = new();
+            if (architecture != RuntimeCpu.Unknown)
+                toSet.Add("machineArchitecture", architecture.ToString());
+            if (runtimes.Any())
+                toSet.Add("runtimeDependencies", String.Join(", ", runtimes));
+
+            if (!toSet.Any())
+                return;
+
+            XDocument document;
+            using (var fs = File.OpenRead(nuspecPath))
+                document = NugetUtil.LoadSafe(fs, ignoreWhiteSpace: true);
+
+            var metadataElement = document.Root.ElementsNoNamespace("metadata").FirstOrDefault();
+            if (metadataElement == null) {
+                throw new InvalidDataException(
+                    String.Format(CultureInfo.CurrentCulture, "Manifest_RequiredElementMissing", "metadata"));
+            }
+
+            foreach (var el in toSet) {
+                var elName = XName.Get(el.Key, document.Root.GetDefaultNamespace().NamespaceName);
+                metadataElement.SetElementValue(elName, el.Value);
+            }
+
+            document.Save(nuspecPath);
+        }
+
         private void ReadMetadataValue(XElement element, HashSet<string> allElements)
         {
             if (element.Value == null) {
@@ -178,6 +212,12 @@ namespace Squirrel.NuGet
             }
 
             allElements.Add(element.Name.LocalName);
+
+            IEnumerable<string> getCommaDelimitedValue(string v)
+            {
+                return v?.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => s.Trim()) ?? Enumerable.Empty<string>();
+            }
 
             string value = element.Value.SafeTrim();
             switch (element.Name.LocalName) {
@@ -188,26 +228,17 @@ namespace Squirrel.NuGet
                 Version = new SemanticVersion(value);
                 break;
             case "authors":
-                Authors = value?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()) ?? Enumerable.Empty<string>();
+                Authors = getCommaDelimitedValue(value);
                 break;
             case "owners":
                 Owners = value;
                 break;
-            //case "licenseUrl":
-            //    LicenseUrl = value;
-            //    break;
             case "projectUrl":
                 ProjectUrl = new Uri(value);
                 break;
             case "iconUrl":
                 IconUrl = new Uri(value);
                 break;
-            //case "requireLicenseAcceptance":
-            //    RequireLicenseAcceptance = XmlConvert.ToBoolean(value);
-            //    break;
-            //case "developmentDependency":
-            //    DevelopmentDependency = XmlConvert.ToBoolean(value);
-            //    break;
             case "description":
                 Description = value;
                 break;
@@ -226,18 +257,25 @@ namespace Squirrel.NuGet
             case "title":
                 Title = value;
                 break;
-            //case "tags":
-            //    Tags = value;
-            //    break;
+            case "tags":
+                Tags = getCommaDelimitedValue(value);
+                break;
             case "dependencies":
                 DependencySets = ReadDependencySets(element);
                 break;
             case "frameworkAssemblies":
                 FrameworkAssemblies = ReadFrameworkAssemblies(element);
                 break;
-                //case "references":
-                //    ReferenceSets = ReadReferenceSets(element);
-                //    break;
+
+            // ===
+            // the following metadata elements are added by squirrel and are not
+            // used by nuget.
+            case "machineArchitecture":
+                MachineArchitecture = (RuntimeCpu) Enum.Parse(typeof(RuntimeCpu), value, true);
+                break;
+            case "runtimeDependencies":
+                RuntimeDependencies = getCommaDelimitedValue(value);
+                break;
             }
         }
 

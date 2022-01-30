@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -192,18 +192,45 @@ namespace SquirrelCli
 
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
+                    var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly).First();
                     var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib")).First();
+                    var awareExes = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(libDir);
 
                     // unless the validation has been disabled, do not allow the creation of packages without a SquirrelAwareApp inside
-                    if (!options.allowUnaware) {
-                        var awareExes = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(libDir);
-                        if (!awareExes.Any()) {
-                            throw new ArgumentException(
-                                "There are no SquirreAwareApp's in the provided package. Please mark an exe " +
-                                "as aware using the assembly manifest, or use the '--allowUnaware' argument " +
-                                "to skip this validation and create a package anyway (at your own risk).");
-                        }
+                    if (!options.allowUnaware && !awareExes.Any()) {
+                        throw new ArgumentException(
+                            "There are no SquirreAwareApp's in the provided package. Please mark an exe " +
+                            "as aware using the assembly manifest, or use the '--allowUnaware' argument " +
+                            "to skip this validation and create a package anyway (at your own risk).");
                     }
+
+                    // record architecture of squirrel aware binaries so setup can fast fail if unsupported
+                    var pearchs = awareExes
+                        .Select(path => new PeNet.PeFile(path))
+                        .Select(pe => pe?.ImageNtHeaders?.FileHeader?.Machine ?? 0)
+                        .Select(machine => { Utility.TryParseEnumU16<RuntimeCpu>((ushort) machine, out var cpu); return cpu; })
+                        .Where(m => m != RuntimeCpu.Unknown)
+                        .Distinct()
+                        .ToArray();
+
+                    if (pearchs.Length > 1) {
+                        Log.Warn("Multiple squirrel aware binaries were detected with different machine architectures: " + String.Join(", ", pearchs));
+                    }
+
+                    // CS: the first will be selected for the "package" architecture. this order is important,
+                    // because of emulation support. Arm64 generally supports x86/x64 emulation, and x64
+                    // often supports x86 emulation, so we want to pick the least compatible architecture
+                    // for the package.
+                    var archOrder = new[] { RuntimeCpu.Arm64, RuntimeCpu.X64, RuntimeCpu.X86 };
+                    var pkgarch = archOrder.First(o => pearchs.Contains(o));
+
+                    if (pkgarch == RuntimeCpu.Unknown) {
+                        Log.Warn("Unable to detect package machine architecture. Are the SquirrelAware binaries compatible?");
+                    } else {
+                        Log.Info($"Package architecture: {pkgarch} (implicit, from a SquirrelAware binary)");
+                    }
+
+                    ZipPackage.SetSquirrelMetadata(nuspecPath, pkgarch, requiredFrameworks);
 
                     // create stub executable for all exe's in this package (except Squirrel!)
                     Log.Info("Creating stub executables");

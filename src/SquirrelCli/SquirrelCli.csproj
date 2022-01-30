@@ -28,6 +28,7 @@
     <PackageReference Include="B2Net" Version="0.7.5" />
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
     <PackageReference Include="NuGet.Commands" Version="6.0.0" />
+    <PackageReference Include="PeNet" Version="2.9.3" />
   </ItemGroup>
 
   <ItemGroup>

@@ -80,7 +80,7 @@ namespace Squirrel
 
             try {
                 if (IsWow64Process2(GetCurrentProcess(), out var _, out var nativeMachine)) {
-                    if (Utility.TryParseEnum<RuntimeCpu>(nativeMachine, out var val)) {
+                    if (Utility.TryParseEnumU16<RuntimeCpu>(nativeMachine, out var val)) {
                         Architecture = val;
                     }
                 }

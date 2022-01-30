@@ -66,6 +66,16 @@ namespace Squirrel
             return Encoding.UTF8.GetString(output);
         }
 
+        public static bool TryParseEnumU16<TEnum>(ushort enumValue, out TEnum retVal)
+        {
+            retVal = default(TEnum);
+            bool success = Enum.IsDefined(typeof(TEnum), enumValue);
+            if (success) {
+                retVal = (TEnum) Enum.ToObject(typeof(TEnum), enumValue);
+            }
+            return success;
+        }
+
         public static string NormalizePath(string path)
         {
             var fullPath = Path.GetFullPath(path);
