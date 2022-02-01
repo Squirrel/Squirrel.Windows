@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -78,7 +79,7 @@ namespace Squirrel
                 var stringsToWrite = new[] {
                     new { Key = "DisplayName", Value = zp.Title ?? zp.Description ?? zp.Summary },
                     new { Key = "DisplayVersion", Value = zp.Version.ToString() },
-                    new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyyMMdd") },
+                    new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture) },
                     new { Key = "InstallLocation", Value = rootAppDirectory },
                     new { Key = "Publisher", Value = String.Join(",", zp.Authors) },
                     new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
