@@ -23,26 +23,7 @@ namespace Squirrel
         private readonly string _accessToken;
         private readonly bool _prerelease;
 
-        /// <inheritdoc cref="UpdateManager(string)"/>
-        /// <param name="repoUrl">
-        /// The URL of the GitHub repository to download releases from 
-        /// (e.g. https://github.com/myuser/myrepo)
-        /// </param>
-        /// <param name="prerelease">
-        /// If true, the latest pre-release will be downloaded. If false, the latest 
-        /// stable release will be downloaded.
-        /// </param>
-        /// <param name="accessToken">
-        /// The GitHub access token to use with the request to download releases. 
-        /// If left empty, the GitHub rate limit for unauthenticated requests allows 
-        /// for up to 60 requests per hour, limited by IP address.
-        /// </param>
-        public GithubUpdateManager(string repoUrl, bool prerelease = false, string accessToken = null)
-            : this(repoUrl, prerelease, accessToken, null, null, null)
-        {
-        }
-
-        /// <inheritdoc cref="UpdateManager(string)"/>
+        /// <inheritdoc cref="UpdateManager(string, string, string, IFileDownloader)"/>
         /// <param name="repoUrl">
         /// The URL of the GitHub repository to download releases from 
         /// (e.g. https://github.com/myuser/myrepo)

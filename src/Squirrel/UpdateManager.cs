@@ -51,15 +51,6 @@ namespace Squirrel
         /// <param name="urlOrPath">
         /// The URL where your update packages or stored, or a local package repository directory.
         /// </param>
-        public UpdateManager(string urlOrPath)
-            : this(urlOrPath, null, null, null)
-        {
-        }
-
-        /// <inheritdoc cref="UpdateManager(string)"/>
-        /// <param name="urlOrPath">
-        /// The URL where your update packages or stored, or a local package repository directory.
-        /// </param>
         /// <param name="applicationIdOverride">
         /// The Id of your application should correspond with the 
         /// appdata directory name, and the Id used with Squirrel releasify/pack.
