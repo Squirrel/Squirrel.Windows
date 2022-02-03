@@ -17,17 +17,17 @@ namespace Squirrel.Tests
 {
     public class FakeUrlDownloader : IFileDownloader
     {
-        public Task<byte[]> DownloadBytes(string url)
+        public Task<byte[]> DownloadBytes(string url, string auth)
         {
             return Task.FromResult(new byte[0]);
         }
 
-        public Task DownloadFile(string url, string targetFile, Action<int> progress)
+        public Task DownloadFile(string url, string targetFile, Action<int> progress, string auth)
         {
             return Task.CompletedTask;
         }
 
-        public Task<string> DownloadString(string url)
+        public Task<string> DownloadString(string url, string auth)
         {
             return Task.FromResult("");
         }

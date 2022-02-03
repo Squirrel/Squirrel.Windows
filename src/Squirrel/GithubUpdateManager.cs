@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
@@ -82,15 +80,19 @@ namespace Squirrel
         private async Task EnsureReleaseUrl()
         {
             if (this._updateUrlOrPath == null) {
-                this._updateUrlOrPath = await GetLatestGithubRelease().ConfigureAwait(false);
+                this._updateUrlOrPath = await GetLatestGithubReleaseUrl().ConfigureAwait(false);
             }
         }
 
-        private async Task<string> GetLatestGithubRelease()
+        private async Task<string> GetLatestGithubReleaseUrl()
         {
             var repoUri = new Uri(_repoUrl);
-            var userAgent = new ProductInfoHeaderValue("Squirrel", AssemblyRuntimeInfo.ExecutingAssemblyName.Version.ToString());
+            var releases = await GetGithubReleases(repoUri, _accessToken, _prerelease, _urlDownloader).ConfigureAwait(false);
+            return releases.First().DownloadUrl;
+        }
 
+        internal static async Task<IEnumerable<GithubRelease>> GetGithubReleases(Uri repoUri, string token, bool prerelease, IFileDownloader downloader)
+        {
             if (repoUri.Segments.Length != 3) {
                 throw new Exception("Repo URL must be to the root URL of the repo e.g. https://github.com/myuser/myrepo");
             }
@@ -99,9 +101,6 @@ namespace Squirrel
                 .Append(repoUri.AbsolutePath)
                 .Append("/releases");
 
-            if (!string.IsNullOrWhiteSpace(_accessToken))
-                releasesApiBuilder.Append("?access_token=").Append(_accessToken);
-
             Uri baseAddress;
 
             if (repoUri.Host.EndsWith("github.com", StringComparison.OrdinalIgnoreCase)) {
@@ -109,31 +108,26 @@ namespace Squirrel
             } else {
                 // if it's not github.com, it's probably an Enterprise server
                 // now the problem with Enterprise is that the API doesn't come prefixed
-                // it comes suffixed
-                // so the API path of http://internal.github.server.local API location is
-                // http://interal.github.server.local/api/v3. 
+                // it comes suffixed so the API path of http://internal.github.server.local
+                // API location is http://interal.github.server.local/api/v3
                 baseAddress = new Uri(string.Format("{0}{1}{2}/api/v3/", repoUri.Scheme, Uri.SchemeDelimiter, repoUri.Host));
             }
 
             // above ^^ notice the end slashes for the baseAddress, explained here: http://stackoverflow.com/a/23438417/162694
 
-            using var client = new HttpClient() { BaseAddress = baseAddress };
-            client.DefaultRequestHeaders.UserAgent.Add(userAgent);
-            var response = await client.GetAsync(releasesApiBuilder.ToString()).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+            string bearer = null;
+            if (!string.IsNullOrWhiteSpace(token))
+                bearer = "Bearer " + token;
 
-            var releases = SimpleJson.DeserializeObject<List<Release>>(await response.Content.ReadAsStringAsync().ConfigureAwait(false));
-            var latestRelease = releases
-                .Where(x => _prerelease || !x.Prerelease)
-                .OrderByDescending(x => x.PublishedAt)
-                .First();
+            var fullPath = new Uri(baseAddress, releasesApiBuilder.ToString());
+            var response = await downloader.DownloadString(fullPath.ToString(), bearer).ConfigureAwait(false);
 
-            var latestReleaseUrl = latestRelease.HtmlUrl.Replace("/tag/", "/download/");
-            return latestReleaseUrl;
+            var releases = SimpleJson.DeserializeObject<List<GithubRelease>>(response);
+            return releases.OrderByDescending(d => d.PublishedAt).Where(x => prerelease || !x.Prerelease);
         }
 
         [DataContract]
-        private class Release
+        internal class GithubRelease
         {
             [DataMember(Name = "prerelease")]
             public bool Prerelease { get; set; }
@@ -143,6 +137,8 @@ namespace Squirrel
 
             [DataMember(Name = "html_url")]
             public string HtmlUrl { get; set; }
+
+            public string DownloadUrl => HtmlUrl.Replace("/tag/", "/download/");
         }
     }
 }
