@@ -206,11 +206,47 @@ namespace SquirrelCli
         }
     }
 
+    internal class SyncS3Options : BaseOptions
+    {
+        public string key { get; private set; }
+        public string secret { get; private set; }
+        public string region { get; private set; }
+        public string endpointUrl { get; private set; }
+        public string bucket { get; private set; }
+        public string pathPrefix { get; private set; }
+        public bool overwrite { get; private set; }
+
+        public SyncS3Options() 
+        {
+            Add("key=", "Authentication {IDENTIFIER} or access key", v => key = v);
+            Add("secret=", "Authentication secret {KEY}", v => secret = v);
+            Add("region=", "AWS service {REGION} (eg. us-west-1)", v => region = v);
+            Add("endpointUrl=", "Custom service {URL} (from backblaze, digital ocean, etc)", v => endpointUrl = v);
+            Add("bucket=", "{NAME} of the S3 bucket to access", v => bucket = v);
+            Add("pathPrefix=", "A sub-folder {PATH} to read and write files in", v => pathPrefix = v);
+            Add("overwrite", "Replace any mismatched remote files with files in local directory", v => overwrite = true);
+        }
+
+        public override void Validate()
+        {
+            IsRequired(nameof(secret), nameof(key), nameof(bucket));
+            IsValidUrl(nameof(endpointUrl));
+
+            if ((region == null) == (endpointUrl == null)) {
+                throw new OptionValidationException("One of 'region' and 'endpoint' arguments is required and are also mutually exclusive. Specify one of these. ");
+            }
+
+            if (region != null) {
+                var r = Amazon.RegionEndpoint.GetBySystemName(region);
+                if (r.DisplayName == "Unknown")
+                    Log.Warn($"Region '{region}' lookup failed, is this a valid AWS region?");
+            }
+        }
+    }
+
     internal class SyncHttpOptions : BaseOptions
     {
         public string url { get; private set; }
-        public string token { get; private set; }
-
         public SyncHttpOptions()
         {
             Add("url=", "Base url to the http location with hosted releases", v => url = v);

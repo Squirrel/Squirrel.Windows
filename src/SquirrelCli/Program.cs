@@ -49,6 +49,8 @@ namespace SquirrelCli
                 //{ "http-up", "sync", new SyncHttpOptions(), o => new SimpleWebRepository(o).UploadMissingPackages().Wait() },
                 { "github-down", "Download recent releases from GitHub", new SyncGithubOptions(), o => new GitHubRepository(o).DownloadRecentPackages().Wait() },
                 //{ "github-up", "sync", new SyncGithubOptions(), o => new GitHubRepository(o).UploadMissingPackages().Wait() },
+                { "s3-down", "Download recent releases from a S3 bucket", new SyncS3Options(), o => new S3Repository(o).DownloadRecentPackages().Wait() },
+                { "s3-up", "Upload recent releases to a S3 bucket", new SyncS3Options(), o => new S3Repository(o).UploadMissingPackages().Wait() },
                 //"",
                 //"Examples:",
                 //$"    {exeName} pack ",
