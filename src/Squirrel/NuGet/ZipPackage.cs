@@ -279,7 +279,9 @@ namespace Squirrel.NuGet
             // the following metadata elements are added by squirrel and are not
             // used by nuget.
             case "machineArchitecture":
-                MachineArchitecture = (RuntimeCpu) Enum.Parse(typeof(RuntimeCpu), value, true);
+                if (Enum.TryParse(value, true, out RuntimeCpu ma)) {
+                    MachineArchitecture = ma;
+                }
                 break;
             case "runtimeDependencies":
                 RuntimeDependencies = getCommaDelimitedValue(value);
