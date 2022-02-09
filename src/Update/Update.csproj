@@ -37,4 +37,13 @@
     <TrimmableAssembly Include="Vanara.PInvoke.User32" />
   </ItemGroup>
 
+  <!-- Allow netframework binaries to be built explicitly using the command line -->
+  <ItemGroup Condition=" $(TargetFramework) == 'net461' ">
+    <PackageReference Include="ILRepack" Version="2.0.18" PrivateAssets="all" />
+  </ItemGroup>
+
+  <Target Name="Repack" AfterTargets="Build" Condition=" $(TargetFramework) == 'net461' ">
+    <Exec WorkingDirectory="$(OutDir)" Command="$(PkgILRepack)\tools\ILRepack.exe /wildcards /out:Update461.exe Update.exe *.dll" />
+  </Target>
+
 </Project>
