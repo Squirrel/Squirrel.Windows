@@ -28,7 +28,7 @@ namespace SquirrelCli.Sources
                 releaseDirectoryInfo.Create();
 
             var releases = await GithubUpdateManager.GetGithubReleases(
-                new Uri(_options.repoUrl), _options.token, false, dl);
+                new Uri(_options.repoUrl), _options.token, _options.pre, dl);
 
             if (!releases.Any()) {
                 Log.Warn("No github releases found.");
