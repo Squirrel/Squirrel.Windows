@@ -23,8 +23,9 @@ Feel free to join our discord for help or questions:
 
 A couple of notes you should be aware of.
  - The command line interface for Squirrel.exe is massively different. Check 'Squirrel.exe -h' for more info.
- - The commnad line for Update.exe has stayed the same
- - Update.exe is significantly bigger (12.5mb)
+ - The command line for Update.exe here is compatible with the old Squirrel.
+ - Update.exe here is bigger (total 12.5mb) and is included in your packages.
+ - Migrating to this library is fully compatible, except for the way we detect SquirrelAware binaries. More info below.
  - There have been a great many other improvements here. To see some of them [have a look at the feature matrix](#feature-matrix).
  - Something detected as a virus? This was an issue at the old Squirrel, and also see [issue #28](https://github.com/clowd/Clowd.Squirrel/issues/28)
 
