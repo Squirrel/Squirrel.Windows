@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Squirrel.SimpleSplat;
 
 namespace Squirrel
 {
@@ -86,6 +87,8 @@ namespace Squirrel
         /// <summary> An array of all the currently supported runtimes </summary>
         public static readonly RuntimeInfo[] All;
 
+        internal readonly static IFullLogger Log = SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Runtimes));
+
         static Runtimes()
         {
             All = typeof(Runtimes)
@@ -113,12 +116,28 @@ namespace Squirrel
         {
             List<RuntimeInfo> requiredFrameworks = new List<RuntimeInfo>();
             if (!String.IsNullOrWhiteSpace(dependencies)) {
-                var frameworks = dependencies.Split(',');
+                var frameworks = dependencies.Split(',').Select(d => d.Trim());
                 foreach (var f in frameworks) {
                     var r = Runtimes.GetRuntimeByName(f);
                     if (r == null) {
                         throw new Exception($"Runtime '{f}' is unsupported. Specify a dotnet runtime (eg. 'net6.0') or a static runtime such as: {String.Join(", ", Runtimes.All.Select(r => r.Id))}");
                     }
+
+                    if (r is DotnetInfo dni) {
+                        // check if the provided dotnet version is actually valid and warn the user if not
+                        string latest = null;
+                        try {
+                            latest = DotnetInfo.GetLatestDotNetVersion(DotnetRuntimeType.WindowsDesktop, $"{dni.MinVersion.Major}.{dni.MinVersion.Minor}")
+                                .ConfigureAwait(false).GetAwaiter().GetResult();
+                        } catch (Exception ex) {
+                            Log.ErrorException($"Unable to verify version for runtime '{f}'", ex);
+                        }
+
+                        if (latest != null && Version.Parse(latest) < dni.MinVersion) {
+                            throw new Exception($"For runtime string '{f}', version provided ({dni.MinVersion}) is greater than the latest available version ({latest}).");
+                        }
+                    }
+
                     requiredFrameworks.Add(r);
                 }
             }

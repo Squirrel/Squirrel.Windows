@@ -52,8 +52,6 @@ namespace Squirrel
             /// <summary> The human-friendly name of this runtime - for displaying to users </summary>
             public virtual string DisplayName { get; }
 
-            internal readonly static IFullLogger Log = SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(RuntimeInfo));
-
             /// <summary> Creates a new instance with the specified properties </summary>
             protected RuntimeInfo() { }
 
@@ -363,7 +361,12 @@ namespace Squirrel
                 };
 
                 downloader = downloader ?? Utility.CreateDefaultDownloader();
-                return await downloader.DownloadString($"{UncachedDotNetFeed}/{runtime}/{channel}/latest.version").ConfigureAwait(false);
+
+                try {
+                    return await downloader.DownloadString($"{UncachedDotNetFeed}/{runtime}/{channel}/latest.version").ConfigureAwait(false);
+                } catch (System.Net.Http.HttpRequestException ex) {
+                    throw new Exception($"Dotnet version '{channel}' ({runtime}) was not found online or could not be retrieved.", ex);
+                }
             }
 
             /// <summary>
