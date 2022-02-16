@@ -95,7 +95,10 @@ namespace SquirrelCli
 
                 if (runtime == null) {
                     var suggestedArg = $"--framework net{corelib.MajorVersion}.{corelib.MinorVersion}" + probablyBitness;
-                    Log.Warn($"{name} has one or more unresolved references, and no matching runtimes were found. (Are you missing the '{suggestedArg}' argument?)");
+                    Log.Warn($"{name} has {lookup.Count} unresolved references, and no matching runtimes were found. (Are you missing the '{suggestedArg}' argument?)");
+                    foreach (var f in lookup)
+                        Log.Debug($"{name} has unresolved reference {f.Key}.");
+
                     return;
                 }
 
