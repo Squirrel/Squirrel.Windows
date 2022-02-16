@@ -16,13 +16,31 @@ namespace Squirrel.Tests
 {
     public class CreateReleasePackageTests : IEnableLogger
     {
-        [Fact]
-        public void SemanticVersionDoesWhatIWant()
+        [Theory]
+        [InlineData("1.2.3")]
+        [InlineData("1.2.3-alpha13")]
+        [InlineData("1.2.3-alpha135")]
+        [InlineData("0.0.1")]
+        [InlineData("1.299656.3-alpha")]
+        public void SemanticVersionParsesValidVersion(string ver)
         {
-            var sv = new SemanticVersion("1.2.3.4");
-            var dontcare = default(SemanticVersion);
+            NugetUtil.ThrowIfVersionNotSemverCompliant(ver);
+            Assert.True(SemanticVersion.TryParseStrict(ver, out var _));
+        }
 
-            Assert.False(SemanticVersion.TryParseStrict(sv.ToString(), out dontcare));
+        [Theory]
+        [InlineData("")]
+        [InlineData("1")]
+        [InlineData("0")]
+        [InlineData("1.2.3.4")]
+        [InlineData("1.2.3.4-alpha")]
+        [InlineData("0.0.0.0")]
+        [InlineData("0.0.0")]
+        [InlineData("0.0")]
+        [InlineData("0.0.0-alpha")]
+        public void SemanticVersionThrowsInvalidVersion(string ver)
+        {
+            Assert.ThrowsAny<Exception>(() => NugetUtil.ThrowIfVersionNotSemverCompliant(ver));
         }
 
         [Fact]

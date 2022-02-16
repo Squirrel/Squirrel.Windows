@@ -28,11 +28,12 @@ namespace Squirrel.NuGet
 
         public static void ThrowIfVersionNotSemverCompliant(string version)
         {
-            if (!SemanticVersion.TryParseStrict(version, out var _)) {
-                throw new Exception(
-                    String.Format(
-                        "Invalid package version '{0}', it must be a 3-part SemVer compliant version string.",
-                        version));
+            if (SemanticVersion.TryParseStrict(version, out var parsed)) {
+                if (parsed < new SemanticVersion(0, 0, 1, 0)) {
+                    throw new Exception($"Invalid package version '{version}', it must be >= 0.0.1.");
+                }
+            } else {
+                throw new Exception($"Invalid package version '{version}', it must be a 3-part SemVer compliant version string.");
             }
         }
 
