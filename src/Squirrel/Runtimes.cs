@@ -104,11 +104,16 @@ namespace Squirrel
         /// </summary>
         public static RuntimeInfo GetRuntimeByName(string name)
         {
-            if (DotnetInfo.TryParse(name, out var i))
-                return i;
-
-            return All.FirstOrDefault(r => r.Id.Equals(name, StringComparison.InvariantCulture))
+            var rt = All.FirstOrDefault(r => r.Id.Equals(name, StringComparison.InvariantCulture))
                 ?? All.FirstOrDefault(r => r.Id.Equals(name + "-x64", StringComparison.InvariantCulture));
+
+            if (rt != null)
+                return rt;
+
+            if (DotnetInfo.TryParse(name, out var dn))
+                return dn;
+
+            return null;
         }
 
         /// <summary> Returns an array of runtimes representing the input string, or throws if the dependencies can not be parsed. </summary>
@@ -133,7 +138,7 @@ namespace Squirrel
                             Log.ErrorException($"Unable to verify version for runtime '{f}'", ex);
                         }
 
-                        if (latest != null && Version.Parse(latest) < dni.MinVersion) {
+                        if (latest != null && SemanticVersion.Parse(latest) < dni.MinVersion) {
                             throw new Exception($"For runtime string '{f}', version provided ({dni.MinVersion}) is greater than the latest available version ({latest}).");
                         }
                     }

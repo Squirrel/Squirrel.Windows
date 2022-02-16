@@ -35,7 +35,7 @@ namespace SquirrelCli
                     return;
                 }
 
-                Log.Debug($"CheckDotnetReferences: Verifying dependencies for {name}");
+                Log.Debug($"Verifying dependencies for {name}");
 
                 var probablyBitness = pe.IsExe && pe.Is32Bit ? "-x86" : ""; // used to construct a suggested reference later
 
@@ -51,7 +51,7 @@ namespace SquirrelCli
                             var original = st[0].OriginalFilename;
                             if (original != null && original.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase) && File.Exists(Path.Combine(baseDir, original))) {
                                 pe = new PeNet.PeFile(Path.Combine(baseDir, original));
-                                Log.Debug($"CheckDotnetReferences: Redirecting to {original}");
+                                Log.Debug($"Redirecting to {original}");
                             }
                         }
                     }
@@ -59,7 +59,7 @@ namespace SquirrelCli
 
                 var refs = pe.MetaDataStreamTablesHeader?.Tables?.AssemblyRef ?? new();
                 if (!pe.IsDotNet || refs.Count == 0) {
-                    Log.Info($"CheckDotnetReferences: {name} is not a CLR assembly or no assembly references were found.");
+                    Log.Info($"{name} is not a CLR assembly or no assembly references were found.");
                     return;
                 }
 
@@ -67,13 +67,13 @@ namespace SquirrelCli
 
                 // base lib is "mscorlib" for full framework or "System.Runtime" for dotnet
                 if (lookup.ContainsKey("mscorlib")) {
-                    Log.Debug($"CheckDotnetReferences: {name} references the full framework, skipping....");
+                    Log.Debug($"{name} references the full framework, skipping....");
                     return;
                 }
 
                 var foundcore = lookup.TryGetValue("System.Runtime", out var corelib);
                 if (!foundcore) {
-                    Log.Debug($"CheckDotnetReferences: {name} has no reference to a known core lib, skipping...");
+                    Log.Debug($"{name} has no reference to a known core lib, skipping...");
                     return;
                 }
 
@@ -81,7 +81,7 @@ namespace SquirrelCli
                 foreach (var k in Directory.GetFiles(baseDir)) {
                     if (Utility.FileIsLikelyPEImage(k)) {
                         if (lookup.ContainsKey(Path.GetFileNameWithoutExtension(k))) {
-                            Log.Debug($"CheckDotnetReferences: Reference {Path.GetFileName(k)} found in local directory.");
+                            Log.Debug($"Reference {Path.GetFileName(k)} found in local directory.");
                             lookup.Remove(Path.GetFileNameWithoutExtension(k));
                         }
                     }
@@ -95,14 +95,14 @@ namespace SquirrelCli
 
                 if (runtime == null) {
                     var suggestedArg = $"--framework net{corelib.MajorVersion}.{corelib.MinorVersion}" + probablyBitness;
-                    Log.Warn($"CheckDotnetReferences: {name} has one or more unresolved references, and no matching runtimes were found. (Are you missing the '{suggestedArg}' argument?)");
+                    Log.Warn($"{name} has one or more unresolved references, and no matching runtimes were found. (Are you missing the '{suggestedArg}' argument?)");
                     return;
                 }
 
                 foreach (var f in lookup) {
-                    var fver = new Version(f.Value.MajorVersion, f.Value.MinorVersion, f.Value.BuildNumber, f.Value.RevisionNumber);
+                    var fver = new SemanticVersion(f.Value.MajorVersion, f.Value.MinorVersion, f.Value.BuildNumber, f.Value.RevisionNumber);
                     if (fver > runtime.MinVersion) {
-                        Log.Warn($"CheckDotnetReferences: {name} references {f.Key},Version={fver} - which is higher than the current runtime version ({runtime.MinVersion}).");
+                        Log.Warn($"{name} references {f.Key},Version={fver} - which is higher than the current runtime version ({runtime.MinVersion}).");
                     }
                 }
             } catch (Exception ex) {

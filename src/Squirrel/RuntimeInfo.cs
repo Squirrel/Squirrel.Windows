@@ -165,7 +165,7 @@ namespace Squirrel
                 : $".NET Core {TrimVersion(MinVersion)} Desktop Runtime ({CpuArchitecture.ToString().ToLower()})";
 
             /// <summary> The minimum compatible version that must be installed. </summary>
-            public Version MinVersion { get; }
+            public SemanticVersion MinVersion { get; }
 
             /// <summary> The CPU architecture of the runtime. This must match the RID of the app being deployed.
             /// For example, if the Squirrel app was deployed with 'win-x64', this must be X64 also. </summary>
@@ -174,7 +174,7 @@ namespace Squirrel
             /// <inheritdoc/>
             protected DotnetInfo(Version minversion, RuntimeCpu architecture)
             {
-                MinVersion = minversion;
+                MinVersion = new SemanticVersion(minversion);
                 CpuArchitecture = architecture;
             }
 
@@ -246,8 +246,8 @@ namespace Squirrel
 
                 var dirs = Directory.EnumerateDirectories(directory)
                     .Select(d => Path.GetFileName(d))
-                    .Where(d => Version.TryParse(d, out var _))
-                    .Select(d => Version.Parse(d));
+                    .Where(d => SemanticVersion.TryParse(d, out var _))
+                    .Select(d => SemanticVersion.Parse(d));
 
                 return dirs.Any(v => v.Major == MinVersion.Major && v.Minor == MinVersion.Minor && v >= MinVersion);
             }
@@ -329,7 +329,7 @@ namespace Squirrel
             /// <summary>
             /// Converts a version structure into the shortest string possible, by trimming trailing zeros.
             /// </summary>
-            protected static string TrimVersion(Version ver)
+            protected static string TrimVersion(SemanticVersion ver)
             {
                 string v = ver.Major.ToString();
                 if (ver.Minor > 0 || ver.Build > 0 || ver.Revision > 0) {
@@ -394,13 +394,13 @@ namespace Squirrel
         public abstract class VCRedistInfo : RuntimeInfo
         {
             /// <summary> The minimum compatible version that must be installed. </summary>
-            public Version MinVersion { get; }
+            public SemanticVersion MinVersion { get; }
 
             /// <summary> The CPU architecture of the runtime. </summary>
             public RuntimeCpu CpuArchitecture { get; }
 
             /// <inheritdoc/>
-            public VCRedistInfo(string id, string displayName, Version minVersion, RuntimeCpu cpuArchitecture) : base(id, displayName)
+            public VCRedistInfo(string id, string displayName, SemanticVersion minVersion, RuntimeCpu cpuArchitecture) : base(id, displayName)
             {
                 MinVersion = minVersion;
                 CpuArchitecture = cpuArchitecture;
@@ -431,9 +431,9 @@ namespace Squirrel
             /// Returns the list of currently installed VC++ redistributables, as reported by the
             /// Windows Programs &amp; Features dialog.
             /// </summary>
-            public static (Version Ver, RuntimeCpu Cpu)[] GetInstalledVCVersions()
+            public static (SemanticVersion Ver, RuntimeCpu Cpu)[] GetInstalledVCVersions()
             {
-                List<(Version Ver, RuntimeCpu Cpu)> results = new List<(Version Ver, RuntimeCpu Cpu)>();
+                List<(SemanticVersion Ver, RuntimeCpu Cpu)> results = new List<(SemanticVersion Ver, RuntimeCpu Cpu)>();
 
                 void searchreg(RegistryKey view)
                 {
@@ -442,7 +442,7 @@ namespace Squirrel
                         var name = subKey.GetValue("DisplayName") as string;
                         if (name != null && name.Contains("Microsoft Visual C++") && name.Contains("Redistributable")) {
                             var version = subKey.GetValue("DisplayVersion") as string;
-                            if (Version.TryParse(version, out var v)) {
+                            if (SemanticVersion.TryParse(version, out var v)) {
                                 // these entries do not get added into the correct registry hive, so we need to determine
                                 // the cpu architecture from the name. I hate this but what can I do?
                                 if (name.Contains("x64") && Environment.Is64BitOperatingSystem) {
@@ -473,7 +473,7 @@ namespace Squirrel
         public class VCRedist14 : VCRedistInfo
         {
             /// <inheritdoc/>
-            public VCRedist14(string id, string displayName, Version minVersion, RuntimeCpu cpuArchitecture)
+            public VCRedist14(string id, string displayName, SemanticVersion minVersion, RuntimeCpu cpuArchitecture)
                 : base(id, displayName, minVersion, cpuArchitecture)
             {
             }
@@ -499,7 +499,7 @@ namespace Squirrel
             public string DownloadUrl { get; }
 
             /// <inheritdoc/>
-            public VCRedist00(string id, string displayName, Version minVersion, RuntimeCpu cpuArchitecture, string downloadUrl)
+            public VCRedist00(string id, string displayName, SemanticVersion minVersion, RuntimeCpu cpuArchitecture, string downloadUrl)
                 : base(id, displayName, minVersion, cpuArchitecture)
             {
                 DownloadUrl = downloadUrl;

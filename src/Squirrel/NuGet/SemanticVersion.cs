@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
-//using Squirrel.NuGet.Resources;
 
 namespace Squirrel
 {
@@ -10,7 +9,6 @@ namespace Squirrel
     /// allow older 4-digit versioning schemes to continue working.
     /// </summary>
     [Serializable]
-    //[TypeConverter(typeof(SemanticVersionTypeConverter))]
     public sealed class SemanticVersion : IComparable, IComparable<SemanticVersion>, IEquatable<SemanticVersion>
     {
         private const RegexOptions _flags = RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture;
@@ -26,6 +24,12 @@ namespace Squirrel
             // The constructor normalizes the version string so that it we do not need to normalize it every time we need to operate on it. 
             // The original string represents the original form in which the version is represented to be used when printing.
             _originalString = version;
+        }
+
+        /// <inheritdoc cref="SemanticVersion(string)"/>
+        public SemanticVersion(int major, int minor, int build)
+            : this(new Version(major, minor, build, 0))
+        {
         }
 
         /// <inheritdoc cref="SemanticVersion(string)"/>
@@ -68,6 +72,18 @@ namespace Squirrel
             Version = semVer.Version;
             SpecialVersion = semVer.SpecialVersion;
         }
+
+        /// <summary> Gets the value of the major component of the version number for the current System.Version object. </summary>
+        public int Major => Version.Major;
+
+        /// <summary> Gets the value of the minor component of the version number for the current System.Version object. </summary>
+        public int Minor => Version.Minor;
+
+        /// <summary> Gets the value of the build component of the version number for the current System.Version object. </summary>
+        public int Build => Version.Build;
+
+        /// <summary> Gets the value of the revision component of the version number for the current System.Version object. </summary>
+        public int Revision => Version.Revision;
 
         /// <summary>
         /// Gets the normalized version portion.
