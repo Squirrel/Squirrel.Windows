@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
@@ -46,12 +47,15 @@ namespace Squirrel
         public abstract class RuntimeInfo
         {
             /// <summary> The unique Id of this runtime. Can be used to retrieve a runtime instance with <see cref="Runtimes.GetRuntimeByName(string)"/> </summary>
-            public string Id { get; }
+            public virtual string Id { get; }
 
             /// <summary> The human-friendly name of this runtime - for displaying to users </summary>
-            public string DisplayName { get; }
+            public virtual string DisplayName { get; }
 
             internal readonly static IFullLogger Log = SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(RuntimeInfo));
+
+            /// <summary> Creates a new instance with the specified properties </summary>
+            protected RuntimeInfo() { }
 
             /// <summary> Creates a new instance with the specified properties </summary>
             protected RuntimeInfo(string id, string displayName)
@@ -152,31 +156,46 @@ namespace Squirrel
         /// <summary> Represents a modern DOTNET runtime where versions are deployed independenly of the operating system </summary>
         public class DotnetInfo : RuntimeInfo
         {
-            /// <summary> A two part version (eg. '5.0') used to search for the latest current patch </summary>
-            public string RequiredVersion { get; }
+            /// <inheritdoc/>
+            public override string Id => MinVersion.Major >= 5
+                ? $"net{TrimVersion(MinVersion)}-{CpuArchitecture.ToString().ToLower()}"
+                : $"netcoreapp{TrimVersion(MinVersion)}-{CpuArchitecture.ToString().ToLower()}";
+
+            /// <inheritdoc/>
+            public override string DisplayName => MinVersion.Major >= 5
+                ? $".NET {TrimVersion(MinVersion)} Desktop Runtime ({CpuArchitecture.ToString().ToLower()})"
+                : $".NET Core {TrimVersion(MinVersion)} Desktop Runtime ({CpuArchitecture.ToString().ToLower()})";
+
+            /// <summary> The minimum compatible version that must be installed. </summary>
+            public Version MinVersion { get; }
 
             /// <summary> The CPU architecture of the runtime. This must match the RID of the app being deployed.
             /// For example, if the Squirrel app was deployed with 'win-x64', this must be X64 also. </summary>
             public RuntimeCpu CpuArchitecture { get; }
 
             /// <inheritdoc/>
-            public DotnetInfo(string id, string displayName, string version, RuntimeCpu architecture) : base(id, displayName)
+            protected DotnetInfo(Version minversion, RuntimeCpu architecture)
             {
-                RequiredVersion = version;
+                MinVersion = minversion;
                 CpuArchitecture = architecture;
+            }
+
+            internal DotnetInfo(string minversion, RuntimeCpu architecture)
+                : this(ParseVersion(minversion), architecture)
+            {
             }
 
             private const string UncachedDotNetFeed = "https://dotnetcli.blob.core.windows.net/dotnet";
             private const string DotNetFeed = "https://dotnetcli.azureedge.net/dotnet";
 
             /// <inheritdoc/>
-            public override async Task<bool> CheckIsInstalled()
+            public override Task<bool> CheckIsInstalled()
             {
                 switch (CpuArchitecture) {
 
-                case RuntimeCpu.X64: return await CheckIsInstalledX64().ConfigureAwait(false);
-                case RuntimeCpu.X86: return CheckIsInstalledX86();
-                default: return false;
+                case RuntimeCpu.X64: return Task.FromResult(CheckIsInstalledX64());
+                case RuntimeCpu.X86: return Task.FromResult(CheckIsInstalledX86());
+                default: return Task.FromResult(false);
 
                 }
             }
@@ -197,7 +216,7 @@ namespace Squirrel
                 return CheckIsInstalledInBaseDirectory(pf86);
             }
 
-            private async Task<bool> CheckIsInstalledX64()
+            private bool CheckIsInstalledX64()
             {
                 if (!Environment.Is64BitOperatingSystem)
                     return false;
@@ -218,16 +237,7 @@ namespace Squirrel
                 if (Directory.Exists(pf64compat))
                     return CheckIsInstalledInBaseDirectory(pf64compat);
 
-                // on a 64 bit operating system, the dotnet cli should be x64, and will only
-                // return x64 results, so we can ask it as a last resort
-                try {
-                    var token = new CancellationTokenSource(2000).Token;
-                    var output = await Utility.InvokeProcessAsync("dotnet", new[] { "--info" }, token).ConfigureAwait(false);
-                    if (output.ExitCode != 0) return false;
-                    return output.StdOutput.Contains("Microsoft.WindowsDesktop.App " + RequiredVersion);
-                } catch (Win32Exception wex) when (wex.HResult == -2147467259) {
-                    return false; // executable not found
-                }
+                return false;
             }
 
             private bool CheckIsInstalledInBaseDirectory(string baseDirectory)
@@ -236,20 +246,18 @@ namespace Squirrel
                 if (!Directory.Exists(directory))
                     return false;
 
-                var myVer = new Version(RequiredVersion);
-
                 var dirs = Directory.EnumerateDirectories(directory)
                     .Select(d => Path.GetFileName(d))
                     .Where(d => Version.TryParse(d, out var _))
                     .Select(d => Version.Parse(d));
 
-                return dirs.Any(v => v.Major == myVer.Major && v.Minor == myVer.Minor);
+                return dirs.Any(v => v.Major == MinVersion.Major && v.Minor == MinVersion.Minor && v >= MinVersion);
             }
 
             /// <inheritdoc/>
             public override async Task<string> GetDownloadUrl()
             {
-                var latest = await GetLatestDotNetVersion(DotnetRuntimeType.WindowsDesktop, RequiredVersion).ConfigureAwait(false);
+                var latest = await GetLatestDotNetVersion(DotnetRuntimeType.WindowsDesktop, $"{MinVersion.Major}.{MinVersion.Minor}").ConfigureAwait(false);
                 var architecture = CpuArchitecture switch {
                     RuntimeCpu.X86 => "x86",
                     RuntimeCpu.X64 => "x64",
@@ -257,6 +265,85 @@ namespace Squirrel
                 };
 
                 return GetDotNetDownloadUrl(DotnetRuntimeType.WindowsDesktop, latest, architecture);
+            }
+
+            private static Regex _dotnetRegex = new Regex(@"^net(?:coreapp)?(?<version>[\d\.]{1,6})(?:-(?<arch>[\w\d]+))?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+            /// <summary>
+            /// Parses a string such as 'net6' or net5.0.14-x86 into a DotnetInfo class capable of checking
+            /// the current system for installed status, or downloading / installing.
+            /// </summary>
+            public static DotnetInfo Parse(string input)
+            {
+                var match = _dotnetRegex.Match(input);
+                if (!match.Success)
+                    throw new ArgumentException("Not a valid runtime identifier.", nameof(input));
+
+                var verstr = match.Groups["version"].Value;
+                var archstr = match.Groups["arch"].Value; // default is x64 if not specified
+
+                var archValid = Enum.TryParse<RuntimeCpu>(String.IsNullOrWhiteSpace(archstr) ? "x64" : archstr, true, out var cpu);
+                if (!archValid)
+                    throw new ArgumentException($"Invalid machine architecture '{archstr}'.");
+
+                var ver = ParseVersion(verstr);
+                return new DotnetInfo(ver, cpu);
+            }
+
+            /// <inheritdoc cref="Parse(string)"/>
+            public static bool TryParse(string input, out DotnetInfo info)
+            {
+                try {
+                    info = Parse(input);
+                    return true;
+                } catch {
+                    info = null;
+                    return false;
+                }
+            }
+
+            /// <summary>
+            /// Safely converts a version string into a version structure, and provides some validation for invalid/unsupported versions.
+            /// </summary>
+            protected static Version ParseVersion(string input)
+            {
+                // Version will not parse "6" by itself, so we add an extra zero to help it out.
+                if (!input.Contains("."))
+                    input += ".0";
+
+                if (Version.TryParse(input, out var v)) {
+                    if (v.Revision > 0)
+                        throw new ArgumentException("Version must only be a 3-part version string.", nameof(input));
+
+                    if ((v.Major == 3 && v.Minor == 1) || v.Major >= 5) {
+                        if (v.Major > 7) {
+                            Log.Warn(
+                                $"Runtime version '{input}' was resolved to major version '{v.Major}', but this is greater than any known dotnet version, " +
+                                $"and if this version does not exist this package may fail to install.");
+                        }
+                        return v;
+                    }
+                    throw new ArgumentException($"Version must be 3.1 or >= 5.0. (Actual: {v})", nameof(input));
+                }
+                throw new ArgumentException("Invalid version string: " + input, nameof(input));
+            }
+
+            /// <summary>
+            /// Converts a version structure into the shortest string possible, by trimming trailing zeros.
+            /// </summary>
+            protected static string TrimVersion(Version ver)
+            {
+                string v = ver.Major.ToString();
+                if (ver.Minor > 0 || ver.Build > 0 || ver.Revision > 0) {
+                    v += "." + ver.Minor;
+                }
+                if (ver.Build > 0 || ver.Revision > 0) {
+                    v += "." + ver.Build;
+                }
+                if (ver.Revision > 0) {
+                    v += "." + ver.Revision;
+                }
+                return v;
             }
 
             /// <summary>

@@ -21,16 +21,16 @@ using System.Threading.Tasks;
 
 namespace SquirrelCli
 {
-    internal class SingleFileBundle
+    internal class DotnetUtil
     {
-        private static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(SingleFileBundle));
+        private static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(DotnetUtil));
 
         public static bool IsSingleFileBundle(string peFile)
         {
             return HostWriter.IsBundle(peFile, out var offset) && offset > 0;
         }
 
-        public static async Task UpdateSingleFileIcon(string sourceFile, string destinationFile, string iconPath)
+        public static async Task UpdateSingleFileBundleIcon(string sourceFile, string destinationFile, string iconPath)
         {
             using var d = Utility.WithTempDirectory(out var tmpdir);
             var sourceName = Path.GetFileNameWithoutExtension(sourceFile);
@@ -68,7 +68,7 @@ namespace SquirrelCli
             );
 
             Log.Info("Re-packing Update.exe bundle");
-            var singleFile = SingleFileBundle.GenerateBundle(bundler, tmpdir, bundlerOutput);
+            var singleFile = DotnetUtil.GenerateBundle(bundler, tmpdir, bundlerOutput);
 
             // copy to requested location
             File.Copy(singleFile, destinationFile);
@@ -82,7 +82,7 @@ namespace SquirrelCli
 
             using (var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read)) {
                 using (var packageView = memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read)) {
-                    var manifest = SingleFileBundle.ReadManifest(packageView, bundleHeaderOffset);
+                    var manifest = DotnetUtil.ReadManifest(packageView, bundleHeaderOffset);
                     foreach (var entry in manifest.Entries) {
                         Stream contents;
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -144,17 +144,7 @@ namespace SquirrelCli
                 throw new ArgumentException("package must be packed with nuget and end in '.nupkg'");
 
             // normalize and validate that the provided frameworks are supported 
-            List<string> requiredFrameworks = new List<string>();
-            if (!String.IsNullOrWhiteSpace(options.framework)) {
-                var frameworks = options.framework.Split(",");
-                foreach (var f in frameworks) {
-                    var r = Runtimes.GetRuntimeByName(f);
-                    if (r == null) {
-                        throw new Exception($"Runtime '{f}' is unsupported. Supported runtimes are: {String.Join(", ", Runtimes.All.Select(r => r.Id))}");
-                    }
-                    requiredFrameworks.Add(r.Id);
-                }
-            }
+            var requiredFrameworks = Runtimes.ParseDependencyString(options.framework);
 
             using var ud = Utility.WithTempDirectory(out var tempDir);
 
@@ -162,12 +152,12 @@ namespace SquirrelCli
             var bundledUpdatePath = HelperExe.UpdatePath(p => Microsoft.NET.HostModel.AppHost.HostWriter.IsBundle(p, out var _hz));
             var updatePath = Path.Combine(tempDir, "Update.exe");
             if (options.updateIcon != null) {
-                SingleFileBundle.UpdateSingleFileIcon(bundledUpdatePath, updatePath, options.updateIcon).Wait();
+                DotnetUtil.UpdateSingleFileBundleIcon(bundledUpdatePath, updatePath, options.updateIcon).Wait();
             } else {
                 File.Copy(bundledUpdatePath, updatePath, true);
             }
 
-            if (!SingleFileBundle.IsSingleFileBundle(updatePath))
+            if (!DotnetUtil.IsSingleFileBundle(updatePath))
                 throw new InvalidOperationException("Update.exe is corrupt. Broken Squirrel install?");
 
             // Sign Update.exe so that virus scanners don't think we're pulling one over on them
@@ -210,9 +200,9 @@ namespace SquirrelCli
                     }
 
                     // record architecture of squirrel aware binaries so setup can fast fail if unsupported
-                    var pearchs = awareExes
-                        .Select(path => new PeNet.PeFile(path))
-                        .Select(pe => pe?.ImageNtHeaders?.FileHeader?.Machine ?? 0)
+                    var peparsed = awareExes.ToDictionary(path => path, path => new PeNet.PeFile(path));
+                    var pearchs = peparsed
+                        .Select(pe => pe.Value?.ImageNtHeaders?.FileHeader?.Machine ?? 0)
                         .Select(machine => { Utility.TryParseEnumU16<RuntimeCpu>((ushort) machine, out var cpu); return cpu; })
                         .Where(m => m != RuntimeCpu.Unknown)
                         .Distinct()
@@ -221,6 +211,9 @@ namespace SquirrelCli
                     if (pearchs.Length > 1) {
                         Log.Warn("Multiple squirrel aware binaries were detected with different machine architectures: " + String.Join(", ", pearchs));
                     }
+
+                    // check dependencies for squirrel aware binaries 
+                    // peparsed.ForEach(kvp => DotnetUtil.CheckAssemblyReferences(kvp.Key, kvp.Value));
 
                     // CS: the first will be selected for the "package" architecture. this order is important,
                     // because of emulation support. Arm64 generally supports x86/x64 emulation, and x64
@@ -235,7 +228,7 @@ namespace SquirrelCli
                         Log.Info($"Package architecture: {pkgarch} (implicit, from a SquirrelAware binary)");
                     }
 
-                    ZipPackage.SetSquirrelMetadata(nuspecPath, pkgarch, requiredFrameworks);
+                    ZipPackage.SetSquirrelMetadata(nuspecPath, pkgarch, requiredFrameworks.Select(r => r.Id));
 
                     // create stub executable for all exe's in this package (except Squirrel!)
                     Log.Info("Creating stub executables");
@@ -320,7 +313,7 @@ namespace SquirrelCli
                 AppFriendlyName = bundledzp.ProductName,
                 BundledPackageBytes = File.ReadAllBytes(newestReleasePath),
                 BundledPackageName = Path.GetFileName(newestReleasePath),
-                RequiredFrameworks = requiredFrameworks.ToArray(),
+                RequiredFrameworks = requiredFrameworks.Select(r => r.Id).ToArray(),
             };
 
             if (setupIcon != null) infosave.SetupIconBytes = File.ReadAllBytes(setupIcon);

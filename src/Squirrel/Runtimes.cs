@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Squirrel
@@ -34,17 +35,17 @@ namespace Squirrel
 
 
         /// <summary> Runtime for .NET Core 3.1 Desktop Runtime (x86) </summary>
-        public static readonly DotnetInfo DOTNETCORE31_X86 = new("netcoreapp31-x86", ".NET Core 3.1 Desktop Runtime (x86)", "3.1", RuntimeCpu.X86);
+        public static readonly DotnetInfo DOTNETCORE31_X86 = new("3.1", RuntimeCpu.X86); // eg. netcoreapp3.1-x86
         /// <summary> Runtime for .NET Core 3.1 Desktop Runtime (x64) </summary>
-        public static readonly DotnetInfo DOTNETCORE31_X64 = new("netcoreapp31-x64", ".NET Core 3.1 Desktop Runtime (x64)", "3.1", RuntimeCpu.X64);
+        public static readonly DotnetInfo DOTNETCORE31_X64 = new("3.1", RuntimeCpu.X64); // eg. netcoreapp3.1-x64
         /// <summary> Runtime for .NET 5.0 Desktop Runtime (x86) </summary>
-        public static readonly DotnetInfo DOTNET5_X86 = new("net5-x86", ".NET 5.0 Desktop Runtime (x86)", "5.0", RuntimeCpu.X86);
+        public static readonly DotnetInfo DOTNET5_X86 = new("5.0", RuntimeCpu.X86); // eg. net5.0.14-x86
         /// <summary> Runtime for .NET 5.0 Desktop Runtime (x64) </summary>
-        public static readonly DotnetInfo DOTNET5_X64 = new("net5-x64", ".NET 5.0 Desktop Runtime (x64)", "5.0", RuntimeCpu.X64);
+        public static readonly DotnetInfo DOTNET5_X64 = new("5.0", RuntimeCpu.X64); // eg. net5
         /// <summary> Runtime for .NET 6.0 Desktop Runtime (x86) </summary>
-        public static readonly DotnetInfo DOTNET6_X86 = new("net6-x86", ".NET 6.0 Desktop Runtime (x86)", "6.0", RuntimeCpu.X86);
+        public static readonly DotnetInfo DOTNET6_X86 = new("6.0", RuntimeCpu.X86); // eg. net6-x86
         /// <summary> Runtime for .NET 6.0 Desktop Runtime (x64) </summary>
-        public static readonly DotnetInfo DOTNET6_X64 = new("net6-x64", ".NET 6.0 Desktop Runtime (x64)", "6.0", RuntimeCpu.X64);
+        public static readonly DotnetInfo DOTNET6_X64 = new("6.0", RuntimeCpu.X64); // eg. net6.0.2
 
 
         /// <summary> Runtime for Visual C++ 2010 Redistributable (x86) </summary>
@@ -65,8 +66,6 @@ namespace Squirrel
         /// <summary> Runtime for Visual C++ 2013 Redistributable (x64) </summary>
         public static readonly VCRedist00 VCREDIST120_X64 = new("vcredist120-x64", "Visual C++ 2013 Redistributable (x64)", new(12, 00, 40664), RuntimeCpu.X64,
             "https://aka.ms/highdpimfc2013x64enu");
-
-
         /// <summary> Runtime for Visual C++ 2015 Redistributable (x86) </summary>
         public static readonly VCRedist14 VCREDIST140_X86 = new("vcredist140-x86", "Visual C++ 2015 Redistributable (x86)", new(14, 00, 23506), RuntimeCpu.X86);
         /// <summary> Runtime for Visual C++ 2015 Redistributable (x64) </summary>
@@ -96,11 +95,34 @@ namespace Squirrel
                 .ToArray();
         }
 
-        /// <summary> Search for a runtime by name. If a platform architecture is not specified, the default is x64 </summary>
+        /// <summary> 
+        /// Search for a runtime by name. If a platform architecture is not specified, the default is x64.
+        /// Returns null if no match is found. 
+        /// </summary>
         public static RuntimeInfo GetRuntimeByName(string name)
         {
+            if (DotnetInfo.TryParse(name, out var i))
+                return i;
+
             return All.FirstOrDefault(r => r.Id.Equals(name, StringComparison.InvariantCulture))
                 ?? All.FirstOrDefault(r => r.Id.Equals(name + "-x64", StringComparison.InvariantCulture));
+        }
+
+        /// <summary> Returns an array of runtimes representing the input string, or throws if the dependencies can not be parsed. </summary>
+        public static IEnumerable<RuntimeInfo> ParseDependencyString(string dependencies)
+        {
+            List<RuntimeInfo> requiredFrameworks = new List<RuntimeInfo>();
+            if (!String.IsNullOrWhiteSpace(dependencies)) {
+                var frameworks = dependencies.Split(',');
+                foreach (var f in frameworks) {
+                    var r = Runtimes.GetRuntimeByName(f);
+                    if (r == null) {
+                        throw new Exception($"Runtime '{f}' is unsupported. Specify a dotnet runtime (eg. 'net6.0') or a static runtime such as: {String.Join(", ", Runtimes.All.Select(r => r.Id))}");
+                    }
+                    requiredFrameworks.Add(r);
+                }
+            }
+            return requiredFrameworks;
         }
     }
 }
