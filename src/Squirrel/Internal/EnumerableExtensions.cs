@@ -13,6 +13,30 @@ namespace Squirrel
         }
 
         /// <summary>
+        /// Essentially just .Single() but with context aware error messages which are more helpful to a user.
+        /// Eg. "Invalid {is}. Only a single {what} expected in {in}."
+        /// </summary>
+        public static T ContextualSingle<T>(this IEnumerable<T> source, string strIs, string strWhat, string strIn = null)
+        {
+            var c = System.Linq.Enumerable.Count(source);
+            if (c == 0) {
+                throw new InvalidOperationException(
+                    $"Invalid {strIs}: One {strWhat} expected" +
+                    (strIn == null ? "." : $" in {strIn}.") +
+                    " None was found.");
+            }
+
+            if (c > 1) {
+                throw new InvalidOperationException(
+                    $"Invalid {strIs}: Only a single {strWhat} expected" +
+                    (strIn == null ? "." : $" in {strIn}.") +
+                    $" Actually found: {c}.");
+            }
+
+            return System.Linq.Enumerable.First(source);
+        }
+
+        /// <summary>
         /// Enumerates the sequence and invokes the given action for each value in the sequence.
         /// </summary>
         /// <typeparam name="TSource">Source sequence element type.</typeparam>

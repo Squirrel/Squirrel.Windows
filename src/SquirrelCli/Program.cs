@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -190,12 +190,15 @@ namespace SquirrelCli
             }
 
             foreach (var file in toProcess) {
-                Log.Info("Creating release package: " + file.FullName);
+                Log.Info("Creating release for package: " + file.FullName);
 
                 var rp = new ReleasePackage(file.FullName);
                 rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
-                    var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly).First();
-                    var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib")).First();
+                    var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
+                        .ContextualSingle("package", "*.nuspec", "top level directory");
+                    var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
+                        .ContextualSingle("package", "'lib' folder");
+
                     var awareExes = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(libDir);
 
                     // unless the validation has been disabled, do not allow the creation of packages without a SquirrelAwareApp inside
@@ -224,10 +227,10 @@ namespace SquirrelCli
                     // often supports x86 emulation, so we want to pick the least compatible architecture
                     // for the package.
                     var archOrder = new[] { /*RuntimeCpu.Arm64,*/ RuntimeCpu.X64, RuntimeCpu.X86 };
-                    var pkgarch = archOrder.First(o => pearchs.Contains(o));
+                    var pkgarch = archOrder.FirstOrDefault(o => pearchs.Contains(o));
 
                     if (pkgarch == RuntimeCpu.Unknown) {
-                        Log.Warn("Unable to detect package machine architecture. Are the SquirrelAware binaries compatible?");
+                        Log.Warn("Unable to detect package machine architecture from SquirrelAware binaries.");
                     } else {
                         Log.Info($"Package architecture: {pkgarch} (implicit, from a SquirrelAware binary)");
                     }
