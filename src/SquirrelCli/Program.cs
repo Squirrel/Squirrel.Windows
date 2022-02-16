@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -215,7 +215,7 @@ namespace SquirrelCli
                     }
 
                     // check dependencies for squirrel aware binaries 
-                    // peparsed.ForEach(kvp => DotnetUtil.CheckAssemblyReferences(kvp.Key, kvp.Value));
+                    peparsed.ForEach(kvp => DotnetUtil.CheckDotnetReferences(kvp.Key, kvp.Value, requiredFrameworks));
 
                     // CS: the first will be selected for the "package" architecture. this order is important,
                     // because of emulation support. Arm64 generally supports x86/x64 emulation, and x64
