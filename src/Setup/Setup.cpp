@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <versionhelpers.h>
 #include <string>
 #include <functional>
 #include <tchar.h>
@@ -21,12 +22,10 @@ wstring getTempExePath()
 BYTE* getByteResource(int idx, DWORD* cBuf)
 {
     auto f = FindResource(NULL, MAKEINTRESOURCE(idx), L"DATA");
-    if (!f)
-        throw std::exception(string("Unable to find resource " + to_string(idx)).c_str());
+    if (!f) throw wstring(L"Unable to find resource " + to_wstring(idx));
 
     auto r = LoadResource(NULL, f);
-    if (!r)
-        throw std::exception(string("Unable to load resource " + to_string(idx)).c_str());
+    if (!r) throw wstring(L"Unable to load resource " + to_wstring(idx));
 
     *cBuf = SizeofResource(NULL, f);
     return (BYTE*)LockResource(r);
@@ -38,6 +37,17 @@ wstring getCurrentExecutablePath()
     HMODULE hMod = GetModuleHandle(NULL);
     GetModuleFileName(hMod, ourFile, _countof(ourFile));
     return wstring(ourFile);
+}
+
+wstring getNameFromPath(wstring path)
+{
+    auto idx = path.find_last_of('\\');
+
+    // if we can't find last \ or the name is too short, default to 'Setup'
+    if (idx == wstring::npos || path.length() < idx + 3)
+        return L"Setup";
+
+    return path.substr(idx + 1);
 }
 
 // https://stackoverflow.com/a/874160/184746
@@ -77,7 +87,7 @@ void unzipSingleFile(BYTE* zipBuf, DWORD cZipBuf, wstring fileLocation, std::fun
 
     CloseZip(zipFile);
 
-    if (!unzipSuccess) throw std::exception("Unable to extract embedded package");
+    if (!unzipSuccess) throw wstring(L"Unable to extract embedded package (predicate not found).");
 }
 
 // https://stackoverflow.com/a/17387176/184746
@@ -88,12 +98,12 @@ void throwLastWin32Error()
         return;
     }
 
-    LPSTR messageBuffer = nullptr;
-    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                                 NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+    LPWSTR messageBuffer = nullptr;
+    size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&messageBuffer, 0, NULL);
 
-    std::string message(messageBuffer, size);
-    throw std::exception(message.c_str());
+    std::wstring message(messageBuffer, size);
+    throw message;
 }
 
 void wexec(const wchar_t* cmd)
@@ -121,12 +131,25 @@ void wexec(const wchar_t* cmd)
     CloseHandle(pi.hThread);
 
     if (dwExitCode != 0) {
-        throw std::exception(string("Process exited with error code: " + to_string(dwExitCode)).c_str());
+        throw wstring(L"Process exited with error code: " + to_wstring(dwExitCode));
     }
+}
+
+int showErrorDialog(wstring msg)
+{
+    wstring myPath = getCurrentExecutablePath();
+    wstring myName = getNameFromPath(myPath);
+    wstring errorTitle = myName + L" Error";
+    MessageBox(0, msg.c_str(), errorTitle.c_str(), MB_OK | MB_ICONERROR);
+    return -1;
 }
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
+    if (!IsWindows7SP1OrGreater()) {
+        return showErrorDialog(L"This application requires Windows 7 SP1 or later and cannot be installed on this computer.");
+    }
+
     wstring myPath = getCurrentExecutablePath();
     wstring updaterPath = getTempExePath();
 
@@ -145,15 +168,21 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         wstring cmd = L"\"" + updaterPath + L"\" --setup \"" + myPath + L"\" " + pCmdLine;
         wexec(cmd.c_str());
     }
+    catch (wstring wsx) {
+        return showErrorDialog(L"An error occurred while running setup: " + wsx + L". Please contact the application author.");
+    }
     catch (std::exception ex) {
+        // nasty shit to convert from ascii to wide-char. this will fail if there are multi-byte characters.
+        // hopefully we remember to throw 'wstring' everywhere instead of 'exception' and it doesn't matter.
         string msg = ex.what();
-        // just use the _A function because std does not have a wexception
-        MessageBoxA(0, string("An error occurred while running setup: " + msg + ". Please contact the application author.").c_str(), "Setup Error", MB_OK | MB_ICONERROR);
+        wstring wsTmp(msg.begin(), msg.end());
+        return showErrorDialog(L"An error occurred while running setup: " + wsTmp + L". Please contact the application author.");
     }
     catch (...) {
-        MessageBox(0, L"An unknown error occurred while running setup. Please contact the application author.", L"Setup Error", MB_OK | MB_ICONERROR);
+        return showErrorDialog(L"An unknown error occurred while running setup. Please contact the application author.");
     }
 
     // clean-up after ourselves
     DeleteFile(updaterPath.c_str());
+    return 0;
 }
