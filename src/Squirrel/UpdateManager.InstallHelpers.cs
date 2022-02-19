@@ -44,26 +44,29 @@ namespace Squirrel
 
                 // we will try to find an "app.ico" from the package, write it to the local app dir, and then 
                 // use it for the uninstaller icon. If an app.ico does not exist, it will use a SquirrelAwareApp exe icon instead.
-                using var iconFileStream = zp.ReadLibFileStream("app.ico");
-                if (iconFileStream != null) {
-                    try {
+                try {
+                    var appIconEntry = zp.Files
+                        .FirstOrDefault(f => f.IsLibFile() && f.EffectivePath.Equals("app.ico", StringComparison.InvariantCultureIgnoreCase));
+                    if (appIconEntry != null) {
                         var targetIco = Path.Combine(rootAppDirectory, "app.ico");
+                        using (var pkgStream = File.OpenRead(pkgPath))
+                        using (var iconStream = appIconEntry.GetEntryStream(pkgStream))
                         using (var targetStream = File.Open(targetIco, FileMode.Create, FileAccess.Write))
-                            await iconFileStream.CopyToAsync(targetStream).ConfigureAwait(false);
+                            await iconStream.CopyToAsync(targetStream).ConfigureAwait(false);
                         this.Log().Info($"File '{targetIco}' is being used for uninstall icon.");
                         key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
-                    } catch (Exception ex) {
-                        this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
+                    } else {
+                        // DisplayIcon can be a path to an exe instead of an ico if an icon was not provided.
+                        var appDir = new DirectoryInfo(Utility.AppDirForRelease(rootAppDirectory, latest));
+                        var appIconExe = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(appDir.FullName).FirstOrDefault()
+                            ?? appDir.GetFiles("*.exe").Select(x => x.FullName).FirstOrDefault();
+                        if (appIconExe != null) {
+                            this.Log().Info($"There was no icon found, will use '{appIconExe}' for uninstall icon.");
+                            key.SetValue("DisplayIcon", appIconExe, RegistryValueKind.String);
+                        }
                     }
-                } else {
-                    // DisplayIcon can be a path to an exe instead of an ico if an icon was not provided.
-                    var appDir = new DirectoryInfo(Utility.AppDirForRelease(rootAppDirectory, latest));
-                    var appIconExe = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(appDir.FullName).FirstOrDefault()
-                        ?? appDir.GetFiles("*.exe").Select(x => x.FullName).FirstOrDefault();
-                    if (appIconExe != null) {
-                        this.Log().Info($"There was no icon found, will use '{appIconExe}' for uninstall icon.");
-                        key.SetValue("DisplayIcon", appIconExe, RegistryValueKind.String);
-                    }
+                } catch (Exception ex) {
+                    this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
                 }
 
                 var stringsToWrite = new[] {

@@ -21,8 +21,8 @@ namespace Squirrel.Tests
 
             var zp = new ZipPackage(inputPackage);
             var zipfw = zp.Frameworks;
-            var zipf = zp.GetFiles().OrderBy(f => f.Path).ToArray();
-            var zipfLib = zp.GetLibFiles().OrderBy(f => f.Path).ToArray();
+            var zipf = zp.Files.OrderBy(f => f.Path).ToArray();
+            var zipfLib = zp.Files.Where(f => f.IsLibFile()).OrderBy(f => f.Path).ToArray();
 
             using Package package = Package.Open(inputPackage);
             var packagingfw = GetSupportedFrameworks(zp, package);
@@ -49,7 +49,7 @@ namespace Squirrel.Tests
 
             Assert.Equal("FullNuspec", zp.Id);
             Assert.Equal(new SemanticVersion("1.0"), zp.Version);
-            Assert.Equal(new [] { "Anaïs Betts", "Caelan Sayler" }, dyn.Authors);
+            Assert.Equal(new[] { "Anaïs Betts", "Caelan Sayler" }, dyn.Authors);
             Assert.Equal(new Uri("https://github.com/clowd/Clowd.Squirrel"), zp.ProjectUrl);
             Assert.Equal(new Uri("https://user-images.githubusercontent.com/1287295/131249078-9e131e51-0b66-4dc7-8c0a-99cbea6bcf80.png"), zp.IconUrl);
             Assert.Equal("A test description", dyn.Description);
@@ -74,7 +74,7 @@ namespace Squirrel.Tests
             Assert.NotEmpty(zp.FrameworkAssemblies);
             var fw = zp.FrameworkAssemblies.First();
             Assert.Equal("System.Net.Http", fw.AssemblyName);
-            Assert.Equal(new [] { ".NETFramework4.6.1" }, fw.SupportedFrameworks);
+            Assert.Equal(new[] { ".NETFramework4.6.1" }, fw.SupportedFrameworks);
         }
 
         IEnumerable<string> GetSupportedFrameworks(ZipPackage zp, Package package)
@@ -104,7 +104,7 @@ namespace Squirrel.Tests
         {
             return (from part in package.GetParts()
                     where IsPackageFile(part)
-                    select (IPackageFile) new ZipPackageFile(NugetUtil.GetPath(part.Uri))).ToList();
+                    select (IPackageFile) new ZipPackageFile(part.Uri)).ToList();
         }
 
         bool IsPackageFile(PackagePart part)

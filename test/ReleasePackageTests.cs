@@ -63,7 +63,7 @@ namespace Squirrel.Tests
 
                 this.Log().Info("Files in release package:");
 
-                List<IPackageFile> files = pkg.GetFiles().ToList();
+                List<ZipPackageFile> files = pkg.Files.ToList();
                 files.ForEach(x => this.Log().Info(x.Path));
 
                 List<string> nonDesktopPaths = new[] { "sl", "winrt", "netcore", "win8", "windows8", "MonoAndroid", "MonoTouch", "MonoMac", "wp", }
@@ -156,7 +156,7 @@ namespace Squirrel.Tests
 
                 this.Log().Info("Files in release package:");
 
-                var contentFiles = pkg.GetContentFiles();
+                var contentFiles = pkg.Files.Where(f => f.IsContentFile()).ToArray();
                 Assert.Equal(2, contentFiles.Count());
 
                 var contentFilePaths = contentFiles.Select(f => f.EffectivePath);
@@ -164,7 +164,7 @@ namespace Squirrel.Tests
                 Assert.Contains("some-words.txt", contentFilePaths);
                 Assert.Contains("dir\\item-in-subdirectory.txt", contentFilePaths);
 
-                Assert.Equal(1, pkg.GetLibFiles().Count());
+                Assert.Equal(1, pkg.Files.Where(f => f.IsLibFile()).Count());
             } finally {
                 File.Delete(outputPackage);
             }

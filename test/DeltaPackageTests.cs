@@ -31,11 +31,11 @@ namespace Squirrel.Tests
                 result.Version.ShouldEqual(expected.Version);
 
                 this.Log().Info("Expected file list:");
-                var expectedList = expected.GetFiles().Select(x => x.Path).OrderBy(x => x).ToList();
+                var expectedList = expected.Files.Select(x => x.Path).OrderBy(x => x).ToList();
                 expectedList.ForEach(x => this.Log().Info(x));
 
                 this.Log().Info("Actual file list:");
-                var actualList = result.GetFiles().Select(x => x.Path).OrderBy(x => x).ToList();
+                var actualList = result.Files.Select(x => x.Path).OrderBy(x => x).ToList();
                 actualList.ForEach(x => this.Log().Info(x));
 
                 Enumerable.Zip(expectedList, actualList, (e, a) => e == a)
@@ -123,7 +123,7 @@ namespace Squirrel.Tests
                 // File Checks
                 ///
 
-                var deltaPkgFiles = deltaPkg.GetFiles().ToList();
+                var deltaPkgFiles = deltaPkg.Files.ToList();
                 deltaPkgFiles.Count.ShouldBeGreaterThan(0);
 
                 this.Log().Info("Files in delta package:");
@@ -148,13 +148,13 @@ namespace Squirrel.Tests
                     .ShouldBeTrue();
 
                 // Every .diff file should have a shasum file
-                deltaPkg.GetFiles().Any(x => x.Path.ToLowerInvariant().EndsWith(".diff")).ShouldBeTrue();
-                deltaPkg.GetFiles()
+                deltaPkg.Files.Any(x => x.Path.ToLowerInvariant().EndsWith(".diff")).ShouldBeTrue();
+                deltaPkg.Files
                     .Where(x => x.Path.ToLowerInvariant().EndsWith(".diff"))
                     .ForEach(x => {
                         var lookingFor = x.Path.Replace(".diff", ".shasum");
                         this.Log().Info("Looking for corresponding shasum file: {0}", lookingFor);
-                        deltaPkg.GetFiles().Any(y => y.Path == lookingFor).ShouldBeTrue();
+                        deltaPkg.Files.Any(y => y.Path == lookingFor).ShouldBeTrue();
                     });
             } finally {
                 tempFiles.ForEach(File.Delete);

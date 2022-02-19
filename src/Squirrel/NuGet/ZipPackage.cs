@@ -21,6 +21,7 @@ namespace Squirrel.NuGet
         IEnumerable<string> Frameworks { get; }
         IEnumerable<FrameworkAssemblyReference> FrameworkAssemblies { get; }
         IEnumerable<PackageDependencySet> DependencySets { get; }
+        IEnumerable<ZipPackageFile> Files { get; }
         Uri ProjectUrl { get; }
         string ReleaseNotes { get; }
         Uri IconUrl { get; }
@@ -46,7 +47,8 @@ namespace Squirrel.NuGet
         public string Language { get; private set; }
         public IEnumerable<string> Tags { get; private set; } = Enumerable.Empty<string>();
         public IEnumerable<string> RuntimeDependencies { get; private set; } = Enumerable.Empty<string>();
-        public IEnumerable<string> Frameworks { get; private set; }
+        public IEnumerable<string> Frameworks { get; private set; } = Enumerable.Empty<string>();
+        public IEnumerable<ZipPackageFile> Files { get; private set; } = Enumerable.Empty<ZipPackageFile>();
         public RuntimeCpu MachineArchitecture { get; private set; }
 
         protected string Description { get; private set; }
@@ -56,99 +58,67 @@ namespace Squirrel.NuGet
         protected string Summary { get; private set; }
         protected string Copyright { get; private set; }
 
-        private readonly Func<Stream> _streamFactory;
         private static readonly string[] ExcludePaths = new[] { "_rels", "package" };
 
-        public ZipPackage(Stream zipStream)
+        public ZipPackage(string filePath) : this(File.OpenRead(filePath))
+        { }
+
+        public ZipPackage(Stream zipStream, bool leaveOpen = false)
         {
-            using var zip = ZipArchive.Open(zipStream, new() { LeaveStreamOpen = true });
+            using var zip = ZipArchive.Open(zipStream, new() { LeaveStreamOpen = leaveOpen });
             using var manifest = GetManifestEntry(zip).OpenEntryStream();
             ReadManifest(manifest);
-            Frameworks = GetFrameworks(zip);
+            Files = GetPackageFiles(zip).ToArray();
+            Frameworks = GetFrameworks(Files);
         }
 
-        public ZipPackage(string filePath)
+        public static void SetSquirrelMetadata(string nuspecPath, RuntimeCpu architecture, IEnumerable<string> runtimes)
         {
-            if (String.IsNullOrEmpty(filePath)) {
-                throw new ArgumentException("Argument_Cannot_Be_Null_Or_Empty", "filePath");
+            Dictionary<string, string> toSet = new();
+            if (architecture != RuntimeCpu.Unknown)
+                toSet.Add("machineArchitecture", architecture.ToString());
+            if (runtimes.Any())
+                toSet.Add("runtimeDependencies", String.Join(",", runtimes));
+
+            if (!toSet.Any())
+                return;
+
+            XDocument document;
+            using (var fs = File.OpenRead(nuspecPath))
+                document = NugetUtil.LoadSafe(fs, ignoreWhiteSpace: true);
+
+            var metadataElement = document.Root.ElementsNoNamespace("metadata").FirstOrDefault();
+            if (metadataElement == null) {
+                throw new InvalidDataException(
+                    String.Format(CultureInfo.CurrentCulture, "Manifest_RequiredElementMissing", "metadata"));
             }
 
-            _streamFactory = () => File.OpenRead(filePath);
-
-            using var stream = _streamFactory();
-            using var zip = ZipArchive.Open(stream);
-            using var manifest = GetManifestEntry(zip).OpenEntryStream();
-            ReadManifest(manifest);
-            Frameworks = GetFrameworks(zip);
-        }
-
-        private string[] GetFrameworks(ZipArchive zip)
-        {
-            var fileFrameworks = GetPackageFiles(zip)
-                .Select(z => NugetUtil.ParseFrameworkNameFromFilePath(z.Path, out var _));
-
-            return FrameworkAssemblies
-                .SelectMany(f => f.SupportedFrameworks)
-                .Concat(fileFrameworks)
-                .Where(f => f != null)
-                .Distinct()
-                .ToArray();
-        }
-
-        public Stream ReadLibFileStream(string fileName)
-        {
-            using var stream = _streamFactory();
-            using var zip = ZipArchive.Open(stream);
-
-            string folderPrefix = NugetUtil.LibDirectory + Path.DirectorySeparatorChar;
-            var files = GetPackageFiles(zip)
-                .Where(z => z.Path.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase))
-                .Where(z => Path.GetFileName(z.Path).Equals(fileName, StringComparison.OrdinalIgnoreCase));
-
-            if (!files.Any()) {
-                return null;
+            foreach (var el in toSet) {
+                var elName = XName.Get(el.Key, document.Root.GetDefaultNamespace().NamespaceName);
+                metadataElement.SetElementValue(elName, el.Value);
             }
 
-            var f = files.First();
-            using var fstream = f.Entry.OpenEntryStream();
-            var ms = new MemoryStream();
-            fstream.CopyTo(ms);
-            return ms;
+            document.Save(nuspecPath);
         }
 
-        public IEnumerable<IPackageFile> GetLibFiles()
-        {
-            return GetFiles(NugetUtil.LibDirectory);
-        }
-
-        public IEnumerable<IPackageFile> GetContentFiles()
-        {
-            return GetFiles(NugetUtil.ContentDirectory);
-        }
-
-        public IEnumerable<IPackageFile> GetFiles(string directory)
-        {
-            string folderPrefix = directory + Path.DirectorySeparatorChar;
-            return GetFiles().Where(file => file.Path.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase));
-        }
-
-        public IEnumerable<IPackageFile> GetFiles()
-        {
-            using var stream = _streamFactory();
-            using var zip = ZipArchive.Open(stream);
-            return GetPackageFiles(zip)
-                .Select(z => (IPackageFile) new ZipPackageFile(z.Path))
-                .ToArray();
-        }
-
-        private IEnumerable<(string Path, ZipArchiveEntry Entry)> GetPackageFiles(ZipArchive zip)
+        private IEnumerable<ZipPackageFile> GetPackageFiles(ZipArchive zip)
         {
             return from entry in zip.Entries
                    where !entry.IsDirectory
                    let uri = new Uri(entry.Key, UriKind.Relative)
                    let path = NugetUtil.GetPath(uri)
                    where IsPackageFile(path)
-                   select (path, entry);
+                   select new ZipPackageFile(uri);
+        }
+
+        private string[] GetFrameworks(IEnumerable<ZipPackageFile> files)
+        {
+            return FrameworkAssemblies
+                .SelectMany(f => f.SupportedFrameworks)
+                .Concat(files.Select(z => z.TargetFramework))
+                .Where(f => f != null)
+                .Distinct()
+                .ToArray();
         }
 
         private ZipArchiveEntry GetManifestEntry(ZipArchive zip)
@@ -182,35 +152,6 @@ namespace Squirrel.NuGet
                 }
                 node = node.NextNode;
             }
-        }
-
-        public static void SetSquirrelMetadata(string nuspecPath, RuntimeCpu architecture, IEnumerable<string> runtimes)
-        {
-            Dictionary<string, string> toSet = new();
-            if (architecture != RuntimeCpu.Unknown)
-                toSet.Add("machineArchitecture", architecture.ToString());
-            if (runtimes.Any())
-                toSet.Add("runtimeDependencies", String.Join(",", runtimes));
-
-            if (!toSet.Any())
-                return;
-
-            XDocument document;
-            using (var fs = File.OpenRead(nuspecPath))
-                document = NugetUtil.LoadSafe(fs, ignoreWhiteSpace: true);
-
-            var metadataElement = document.Root.ElementsNoNamespace("metadata").FirstOrDefault();
-            if (metadataElement == null) {
-                throw new InvalidDataException(
-                    String.Format(CultureInfo.CurrentCulture, "Manifest_RequiredElementMissing", "metadata"));
-            }
-
-            foreach (var el in toSet) {
-                var elName = XName.Get(el.Key, document.Root.GetDefaultNamespace().NamespaceName);
-                metadataElement.SetElementValue(elName, el.Value);
-            }
-
-            document.Save(nuspecPath);
         }
 
         private void ReadMetadataValue(XElement element, HashSet<string> allElements)

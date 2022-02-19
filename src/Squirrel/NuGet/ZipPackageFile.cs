@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using SharpCompress.Archives.Zip;
 
 namespace Squirrel.NuGet
 {
@@ -8,35 +11,16 @@ namespace Squirrel.NuGet
         string Path { get; }
         string EffectivePath { get; }
         string TargetFramework { get; }
+        bool IsLibFile();
+        bool IsContentFile();
+        Stream GetEntryStream(Stream archiveStream);
     }
 
     internal class ZipPackageFile : IPackageFile, IEquatable<ZipPackageFile>
     {
-        private readonly string _targetFramework;
-
-        public ZipPackageFile(string path)
-        {
-            Path = path;
-            string effectivePath;
-            _targetFramework = NugetUtil.ParseFrameworkNameFromFilePath(path, out effectivePath);
-            EffectivePath = effectivePath;
-        }
-
-        public string Path {
-            get;
-            private set;
-        }
-
-        public string EffectivePath {
-            get;
-            private set;
-        }
-
-        public string TargetFramework {
-            get {
-                return _targetFramework;
-            }
-        }
+        public string EffectivePath { get; }
+        public string TargetFramework { get; }
+        public string Path { get; }
 
         IEnumerable<string> IFrameworkTargetable.SupportedFrameworks {
             get {
@@ -47,21 +31,35 @@ namespace Squirrel.NuGet
             }
         }
 
-        public override string ToString()
+        private readonly Uri _entryKey;
+
+        public ZipPackageFile(Uri relpath)
         {
-            return Path;
+            _entryKey = relpath;
+            Path = NugetUtil.GetPath(relpath);
+            TargetFramework = NugetUtil.ParseFrameworkNameFromFilePath(Path, out var effectivePath);
+            EffectivePath = effectivePath;
         }
 
-        public override int GetHashCode()
+        public Stream GetEntryStream(Stream archiveStream)
         {
-            unchecked {
-                int hash = 17;
-                hash = hash * 23 + Path.GetHashCode();
-                hash = hash * 23 + EffectivePath.GetHashCode();
-                hash = hash * 23 + TargetFramework.GetHashCode();
-                return hash;
-            }
+            using var zip = ZipArchive.Open(archiveStream, new() { LeaveStreamOpen = true });
+            var entry = zip.Entries.FirstOrDefault(f => new Uri(f.Key, UriKind.Relative) == _entryKey);
+            return entry?.OpenEntryStream();
         }
+
+        public bool IsLibFile() => IsFileInTopDirectory(NugetUtil.LibDirectory);
+        public bool IsContentFile() => IsFileInTopDirectory(NugetUtil.ContentDirectory);
+
+        public bool IsFileInTopDirectory(string directory)
+        {
+            string folderPrefix = directory + System.IO.Path.DirectorySeparatorChar;
+            return Path.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public override string ToString() => Path;
+
+        public override int GetHashCode() => Path.GetHashCode();
 
         public override bool Equals(object obj)
         {
@@ -73,10 +71,7 @@ namespace Squirrel.NuGet
         public bool Equals(ZipPackageFile other)
         {
             if (other == null) return false;
-            return
-                Path.Equals(other.Path) &&
-                EffectivePath.Equals(other.EffectivePath) &&
-                TargetFramework.Equals(other.TargetFramework);
+            return Path.Equals(other.Path);
         }
     }
 }
