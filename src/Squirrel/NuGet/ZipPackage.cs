@@ -190,7 +190,7 @@ namespace Squirrel.NuGet
             if (architecture != RuntimeCpu.Unknown)
                 toSet.Add("machineArchitecture", architecture.ToString());
             if (runtimes.Any())
-                toSet.Add("runtimeDependencies", String.Join(", ", runtimes));
+                toSet.Add("runtimeDependencies", String.Join(",", runtimes));
 
             if (!toSet.Any())
                 return;
