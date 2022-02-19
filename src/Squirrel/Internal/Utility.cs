@@ -449,6 +449,10 @@ namespace Squirrel
 
         private static void DeleteFsiVeryHard(FileSystemInfo fileSystemInfo)
         {
+            // don't try to delete the running process
+            if (fileSystemInfo.FullName.Equals(AssemblyRuntimeInfo.EntryExePath, StringComparison.InvariantCultureIgnoreCase))
+                return;
+
             // try to remove "ReadOnly" attributes
             try { fileSystemInfo.Attributes = FileAttributes.Normal; } catch { }
             try { fileSystemInfo.Refresh(); } catch { }
