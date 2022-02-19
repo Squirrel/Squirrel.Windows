@@ -18,6 +18,7 @@ using Squirrel;
 using Squirrel.Json;
 using Squirrel.Lib;
 using Squirrel.NuGet;
+using Squirrel.Shared;
 using Squirrel.SimpleSplat;
 using SquirrelCli.Sources;
 
@@ -138,7 +139,7 @@ namespace SquirrelCli
             var baseUrl = options.baseUrl;
             var generateDeltas = !options.noDelta;
             var backgroundGif = options.splashImage;
-            var setupIcon = options.setupIcon;
+            var setupIcon = options.icon ?? options.appIcon;
 
             if (!package.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase))
                 throw new ArgumentException("package must be packed with nuget and end in '.nupkg'");
@@ -153,8 +154,8 @@ namespace SquirrelCli
             // update icon for Update.exe if requested
             var bundledUpdatePath = HelperExe.UpdatePath(p => Microsoft.NET.HostModel.AppHost.HostWriter.IsBundle(p, out var _hz));
             var updatePath = Path.Combine(tempDir, "Update.exe");
-            if (options.updateIcon != null) {
-                DotnetUtil.UpdateSingleFileBundleIcon(bundledUpdatePath, updatePath, options.updateIcon).Wait();
+            if (setupIcon != null) {
+                DotnetUtil.UpdateSingleFileBundleIcon(bundledUpdatePath, updatePath, setupIcon).Wait();
             } else {
                 File.Copy(bundledUpdatePath, updatePath, true);
             }
@@ -275,6 +276,10 @@ namespace SquirrelCli
                             ico.Save(fs);
                         }
                     }
+
+                    // copy other images to root (used by setup)
+                    if (setupIcon != null) File.Copy(setupIcon, Path.Combine(pkgPath, "setup.ico"), true);
+                    if (backgroundGif != null) File.Copy(backgroundGif, Path.Combine(pkgPath, "splashimage" + Path.GetExtension(backgroundGif)));
                 });
 
                 processed.Add(rp.ReleasePackageFile);
@@ -310,18 +315,7 @@ namespace SquirrelCli
             var newestReleasePath = Path.Combine(di.FullName, newestFullRelease.Filename);
 
             Log.Info($"Creating Setup bundle");
-            var infosave = new BundledSetupInfo() {
-                AppId = bundledzp.Id,
-                AppFriendlyName = bundledzp.ProductName,
-                BundledPackageBytes = File.ReadAllBytes(newestReleasePath),
-                BundledPackageName = Path.GetFileName(newestReleasePath),
-                RequiredFrameworks = requiredFrameworks.Select(r => r.Id).ToArray(),
-            };
-
-            if (setupIcon != null) infosave.SetupIconBytes = File.ReadAllBytes(setupIcon);
-            if (backgroundGif != null) infosave.SplashImageBytes = File.ReadAllBytes(backgroundGif);
-
-            infosave.WriteToFile(targetSetupExe);
+            SetupBundle.CreatePackageBundle(targetSetupExe, newestReleasePath);
             options.SignPEFile(targetSetupExe);
 
             if (!String.IsNullOrEmpty(options.msi)) {

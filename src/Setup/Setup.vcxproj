@@ -87,10 +87,14 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bundle_marker.cpp" />
+    <ClCompile Include="platform_util.cpp" />
     <ClCompile Include="Setup.cpp" />
     <ClCompile Include="unzip.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bundle_marker.h" />
+    <ClInclude Include="platform_util.h" />
     <ClInclude Include="unzip.h" />
   </ItemGroup>
   <ItemGroup>

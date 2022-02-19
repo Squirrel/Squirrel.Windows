@@ -8,16 +8,18 @@ namespace Squirrel.NuGet
 {
     internal interface IPackageFile : IFrameworkTargetable
     {
+        Uri Key { get; }
         string Path { get; }
         string EffectivePath { get; }
         string TargetFramework { get; }
         bool IsLibFile();
         bool IsContentFile();
-        Stream GetEntryStream(Stream archiveStream);
+        //Stream GetEntryStream(Stream archiveStream);
     }
 
     internal class ZipPackageFile : IPackageFile, IEquatable<ZipPackageFile>
     {
+        public Uri Key { get; }
         public string EffectivePath { get; }
         public string TargetFramework { get; }
         public string Path { get; }
@@ -31,22 +33,21 @@ namespace Squirrel.NuGet
             }
         }
 
-        private readonly Uri _entryKey;
 
         public ZipPackageFile(Uri relpath)
         {
-            _entryKey = relpath;
+            Key = relpath;
             Path = NugetUtil.GetPath(relpath);
             TargetFramework = NugetUtil.ParseFrameworkNameFromFilePath(Path, out var effectivePath);
             EffectivePath = effectivePath;
         }
 
-        public Stream GetEntryStream(Stream archiveStream)
-        {
-            using var zip = ZipArchive.Open(archiveStream, new() { LeaveStreamOpen = true });
-            var entry = zip.Entries.FirstOrDefault(f => new Uri(f.Key, UriKind.Relative) == _entryKey);
-            return entry?.OpenEntryStream();
-        }
+        //public Stream GetEntryStream(Stream archiveStream)
+        //{
+        //    using var zip = ZipArchive.Open(archiveStream, new() { LeaveStreamOpen = true });
+        //    var entry = zip.Entries.FirstOrDefault(f => new Uri(f.Key, UriKind.Relative) == _entryKey);
+        //    return entry?.OpenEntryStream();
+        //}
 
         public bool IsLibFile() => IsFileInTopDirectory(NugetUtil.LibDirectory);
         public bool IsContentFile() => IsFileInTopDirectory(NugetUtil.ContentDirectory);

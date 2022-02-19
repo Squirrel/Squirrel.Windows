@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
+    <ProjectReference Include="..\Squirrel.Shared\Squirrel.Shared.csproj" />
   </ItemGroup>
 
 </Project>

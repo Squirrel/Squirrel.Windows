@@ -60,6 +60,8 @@ namespace Squirrel.Update.Windows
             _signal = new ManualResetEvent(false);
 
             try {
+                // we only accept a byte array and convert to memorystream because
+                // gdi needs to seek and get length which is not supported in DeflateStream
                 if (iconBytes?.Length > 0) _icon = new Icon(new MemoryStream(iconBytes));
                 if (splashBytes?.Length > 0) _img = (Bitmap) Bitmap.FromStream(new MemoryStream(splashBytes));
             } catch (Exception ex) {

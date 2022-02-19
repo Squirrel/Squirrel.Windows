@@ -93,9 +93,8 @@ namespace SquirrelCli
         public string baseUrl { get; private set; }
         public string framework { get; private set; }
         public string splashImage { get; private set; }
-        public string updateIcon { get; private set; }
+        public string icon { get; private set; }
         public string appIcon { get; private set; }
-        public string setupIcon { get; private set; }
         public bool noDelta { get; private set; }
         public bool allowUnaware { get; private set; }
         public string msi { get; private set; }
@@ -113,8 +112,7 @@ namespace SquirrelCli
             Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
             Add("f=|framework=", "List of required {RUNTIMES} to install during setup\nexample: 'net6,vcredist143'", v => framework = v);
             Add("s=|splashImage=", "{PATH} to image/gif displayed during installation", v => splashImage = v);
-            Add("i=|icon=", "{PATH} to .ico for Setup.exe and Update.exe",
-                (v) => { updateIcon = v; setupIcon = v; });
+            Add("i=|icon=", "{PATH} to .ico for Setup.exe and Update.exe", v => icon = v);
             Add("appIcon=", "{PATH} to .ico for 'Apps and Features' list", v => appIcon = v);
             Add("msi=", "Compile a .msi machine-wide deployment tool with the specified {BITNESS}. (either 'x86' or 'x64')", v => msi = v.ToLower());
         }
@@ -127,8 +125,7 @@ namespace SquirrelCli
         protected virtual void ValidateInternal(bool checkPackage)
         {
             IsValidFile(nameof(appIcon), ".ico");
-            IsValidFile(nameof(setupIcon), ".ico");
-            IsValidFile(nameof(updateIcon), ".ico");
+            IsValidFile(nameof(icon), ".ico");
             IsValidFile(nameof(splashImage));
             IsValidUrl(nameof(baseUrl));
 

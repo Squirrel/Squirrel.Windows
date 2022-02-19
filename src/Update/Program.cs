@@ -120,7 +120,10 @@ namespace Squirrel.Update
         static async Task Setup(string setupPath, bool silentInstall, bool checkInstall)
         {
             Log.Info($"Extracting bundled app data from '{setupPath}'.");
-            var info = BundledSetupInfo.ReadFromFile(setupPath);
+
+            using var pkgStream = Shared.SetupBundle.ReadPackageBundle(setupPath);
+            var zp = new ZipPackage(pkgStream, true);
+            var appname = zp.ProductName;
 
             if (checkInstall) {
                 // CS: migrated from MachineInstaller.cpp
@@ -136,14 +139,14 @@ namespace Squirrel.Update
                 // bailing out
 
                 // C:\Users\Username\AppData\Local\$pkgName
-                var localadinstall = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), info.AppId);
+                var localadinstall = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), zp.Id);
                 if (Directory.Exists(localadinstall)) {
                     Log.Info($"App install detected at '{localadinstall}', exiting...");
                     return;
                 }
 
                 // C:\ProgramData\$pkgName\$username
-                var programdatainstall = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), info.AppId, Environment.UserName);
+                var programdatainstall = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), zp.Id, Environment.UserName);
                 if (Directory.Exists(programdatainstall)) {
                     Log.Info($"App install detected at '{programdatainstall}', exiting...");
                     return;
@@ -154,16 +157,15 @@ namespace Squirrel.Update
             }
 
             using var _t = Utility.WithTempDirectory(out var tempFolder);
-            ISplashWindow splash = new Windows.User32SplashWindow(info.AppFriendlyName, silentInstall, info.SetupIconBytes, info.SplashImageBytes);
+            ISplashWindow splash = new Windows.User32SplashWindow(appname, silentInstall, zp.SetupIconBytes, zp.SetupSplashBytes);
 
             // verify that this package can be installed on this cpu architecture
-            var zp = new ZipPackage(new MemoryStream(info.BundledPackageBytes));
             if (AssemblyRuntimeInfo.Architecture == RuntimeCpu.X86 && zp.MachineArchitecture == RuntimeCpu.X64) {
                 splash.ShowErrorDialog("Incompatible System", "The current operating system uses the x86 cpu architecture, but this package requires an x64 system.");
                 return;
             }
 
-            var missingFrameworks = info.RequiredFrameworks
+            var missingFrameworks = zp.RuntimeDependencies
                 .Select(f => Runtimes.GetRuntimeByName(f))
                 .Where(f => f != null)
                 .Where(f => !f.CheckIsInstalled().Result)
@@ -172,9 +174,9 @@ namespace Squirrel.Update
             // prompt user to install missing dependencies
             if (missingFrameworks.Any()) {
                 string message = missingFrameworks.Length > 1
-                    ? $"{info.AppFriendlyName} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
+                    ? $"{appname} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
                       $"Would you like to install these now?"
-                    : $"{info.AppFriendlyName} requires {missingFrameworks.First().DisplayName} installed to continue, would you like to install it now?";
+                    : $"{appname} requires {missingFrameworks.First().DisplayName} installed to continue, would you like to install it now?";
 
                 if (!splash.ShowQuestionDialog("Missing System Components", message)) {
                     return; // user cancelled install
@@ -215,11 +217,16 @@ namespace Squirrel.Update
                 }
             }
 
-            // setup package source directory
             Log.Info($"Starting package install from directory " + tempFolder);
             splash.SetProgressIndeterminate();
-            string packagePath = Path.Combine(tempFolder, info.BundledPackageName);
-            File.WriteAllBytes(packagePath, info.BundledPackageBytes);
+
+            // copy package to directory
+            string packagePath = Path.Combine(tempFolder, zp.FullReleaseFilename);
+            pkgStream.Position = 0;
+            using (var writeStream = File.Open(packagePath, FileMode.Create, FileAccess.ReadWrite))
+                pkgStream.CopyTo(writeStream);
+
+            // create RELEASES file for UpdateManager to read
             var entry = ReleaseEntry.GenerateFromFile(packagePath);
             ReleaseEntry.WriteReleaseFile(new[] { entry }, Path.Combine(tempFolder, "RELEASES"));
 

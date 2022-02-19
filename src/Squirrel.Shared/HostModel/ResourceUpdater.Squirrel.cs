@@ -7,7 +7,7 @@ namespace Microsoft.NET.HostModel
 #if NET5_0_OR_GREATER
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
-    internal partial class ResourceUpdater
+    public partial class ResourceUpdater
     {
         public ResourceUpdater(string peFile, bool bDeleteExistingResources)
         {

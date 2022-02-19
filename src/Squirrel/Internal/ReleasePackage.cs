@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
@@ -36,12 +36,7 @@ namespace Squirrel
         public string InputPackageFile { get; protected set; }
         public string ReleasePackageFile { get; protected set; }
 
-        public string SuggestedReleaseFileName {
-            get {
-                var zp = new ZipPackage(InputPackageFile);
-                return String.Format("{0}-{1}-full.nupkg", zp.Id, zp.Version);
-            }
-        }
+        public string SuggestedReleaseFileName => new ZipPackage(InputPackageFile).FullReleaseFilename;
 
         public SemanticVersion Version => ReleaseEntry.ParseEntryFileName(InputPackageFile).Version;
 

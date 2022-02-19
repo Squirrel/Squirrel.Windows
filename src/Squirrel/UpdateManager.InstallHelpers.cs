@@ -24,7 +24,7 @@ namespace Squirrel
             }
 
             const string uninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
-            public async Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
+            public Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
             {
                 this.Log().Info($"Writing uninstaller registry entry");
                 var releaseContent = File.ReadAllText(Path.Combine(rootAppDirectory, "packages", "RELEASES"), Encoding.UTF8);
@@ -45,14 +45,9 @@ namespace Squirrel
                 // we will try to find an "app.ico" from the package, write it to the local app dir, and then 
                 // use it for the uninstaller icon. If an app.ico does not exist, it will use a SquirrelAwareApp exe icon instead.
                 try {
-                    var appIconEntry = zp.Files
-                        .FirstOrDefault(f => f.IsLibFile() && f.EffectivePath.Equals("app.ico", StringComparison.InvariantCultureIgnoreCase));
-                    if (appIconEntry != null) {
+                    if (zp.AppIconBytes != null) {
                         var targetIco = Path.Combine(rootAppDirectory, "app.ico");
-                        using (var pkgStream = File.OpenRead(pkgPath))
-                        using (var iconStream = appIconEntry.GetEntryStream(pkgStream))
-                        using (var targetStream = File.Open(targetIco, FileMode.Create, FileAccess.Write))
-                            await iconStream.CopyToAsync(targetStream).ConfigureAwait(false);
+                        File.WriteAllBytes(targetIco, zp.AppIconBytes);
                         this.Log().Info($"File '{targetIco}' is being used for uninstall icon.");
                         key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
                     } else {
@@ -101,7 +96,7 @@ namespace Squirrel
                     key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.DWord);
                 }
 
-                return key;
+                return Task.FromResult(key);
             }
 
             public void KillAllProcessesBelongingToPackage()

@@ -13,7 +13,7 @@ namespace Microsoft.NET.HostModel
     /// in a PE image. It currently only works on Windows, because it
     /// requires various kernel32 APIs.
     /// </summary>
-    internal partial class ResourceUpdater : IDisposable
+    public partial class ResourceUpdater : IDisposable
     {
         private sealed class Kernel32
         {
