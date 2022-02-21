@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -175,7 +175,6 @@ namespace Squirrel.Update.Windows
             try {
                 // this is also set in the manifest, but this won't hurt anything and can help if the manifest got replaced with something else.
                 ThreadDpiScalingContext.SetCurrentThreadScalingMode(ThreadScalingMode.PerMonitorV2Aware);
-
                 _threadId = GetCurrentThreadId();
                 CreateWindow();
             } catch (Exception ex) {
@@ -213,22 +212,28 @@ namespace Squirrel.Update.Windows
                 if (!GetMonitorInfo(hMonitor, ref mi)) throw new Win32Exception();
                 GetDpiForMonitor(hMonitor, MONITOR_DPI_TYPE.MDT_DEFAULT, out var dpiX, out var dpiY).ThrowIfFailed();
 
+                _uizoom = dpiX / 96d; // ui ignores image dpi, just takes screen dpi
+
                 // calculate scaling factor for image. If the image does not have embedded dpi information, we default to 96
                 double dpiRatioX = dpiX / 96d;
                 double dpiRatioY = dpiY / 96d;
-                var embeddedDpi = _img.PropertyIdList.Any(p => p == PropertyTagPixelPerUnitX || p == PropertyTagPixelPerUnitY);
-                if (embeddedDpi) {
-                    dpiRatioX = dpiX / _img.HorizontalResolution;
-                    dpiRatioY = dpiY / _img.VerticalResolution;
-                }
-                _uizoom = dpiX / 96d; // ui ignores image dpi, just takes screen dpi
+
+                // CS: this is ideal for allowing people to embed high-res images, but I don't 
+                // know that people use this, and it's likely to cause issues when some
+                // programs inevitably fuck this up and developers don't know what's going on.
+                // I should probably just allow a --highDpiSplash option or something.
+                //var embeddedDpi = _img.PropertyIdList.Any(p => p == PropertyTagPixelPerUnitX || p == PropertyTagPixelPerUnitY);
+                //if (embeddedDpi) {
+                //    dpiRatioX = dpiX / _img.HorizontalResolution;
+                //    dpiRatioY = dpiY / _img.VerticalResolution;
+                //}
 
                 // calculate ideal window position & size, adjusted for image DPI and screen DPI
                 w = (int) Math.Round(_img.Width * dpiRatioX);
                 h = (int) Math.Round(_img.Height * dpiRatioY);
                 x = (mi.rcWork.Width - w) / 2;
                 y = (mi.rcWork.Height - h) / 2;
-                this.Log().Info($"Image dpi is {_img.HorizontalResolution} ({(embeddedDpi ? "embedded" : "default")}), screen dpi is {dpiX}. Rendering image at [{x},{y},{w},{h}]");
+                this.Log().Info($"Image dpi is {_img.HorizontalResolution}, screen dpi is {dpiX}. Rendering image at [{x},{y},{w},{h}]");
             } catch (Exception ex) {
                 this.Log().WarnException("Unable to calculate splash dpi scaling", ex);
                 RECT rcArea = default;
