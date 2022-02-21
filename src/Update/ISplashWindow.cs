@@ -9,6 +9,7 @@ namespace Squirrel.Update
         void Hide();
         void SetProgressIndeterminate();
         void SetProgress(ulong completed, ulong total);
+        void SetMessage(string message);
         void ShowErrorDialog(string title, string message);
         void ShowInfoDialog(string title, string message);
         bool ShowQuestionDialog(string title, string message);

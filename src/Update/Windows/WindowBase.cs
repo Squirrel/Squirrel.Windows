@@ -26,6 +26,8 @@ namespace Squirrel.Update.Windows
 
         public abstract void SetProgressIndeterminate();
 
+        public abstract void SetMessage(string message);
+
         public abstract void Show();
 
         public virtual void ShowErrorDialog(string title, string message)

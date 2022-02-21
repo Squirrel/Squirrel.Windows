@@ -2,7 +2,6 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Squirrel.SimpleSplat;
@@ -107,6 +106,11 @@ namespace Squirrel.Update.Windows
             _taskbarList3?.SetProgressValue(h, completed, total);
             _progress = completed / (double) total;
             InvalidateRect(_hwnd, null, false);
+        }
+
+        public override void SetMessage(string message)
+        {
+            // TODO: where to show the message in this splash window?
         }
 
         public override void Dispose()

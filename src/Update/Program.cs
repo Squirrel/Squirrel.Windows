@@ -1,4 +1,4 @@
-﻿using Squirrel.SimpleSplat;
+using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -187,6 +187,7 @@ namespace Squirrel.Update
                 // iterate through each missing dependency and download/run the installer.
                 foreach (var f in missingFrameworks) {
                     var localPath = Path.Combine(tempFolder, f.Id + ".exe");
+                    splash.SetMessage($"Downloading {f.DisplayName}...");
                     await f.DownloadToFile(localPath, e => splash.SetProgress((ulong) e, 100));
                     splash.SetProgressIndeterminate();
 
@@ -217,6 +218,7 @@ namespace Squirrel.Update
                 }
             }
 
+            splash.SetMessage("Extracting package...");
             Log.Info($"Starting package install from directory " + tempFolder);
             splash.SetProgressIndeterminate();
 
@@ -237,6 +239,7 @@ namespace Squirrel.Update
                 else splash.SetProgress((ulong) p, 90);
             };
 
+            splash.SetMessage(null);
             await Install(silentInstall, progressSource, tempFolder);
             splash.Dispose();
         }

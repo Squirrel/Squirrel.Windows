@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Squirrel.SimpleSplat;
 using Vanara.PInvoke;
@@ -57,6 +58,24 @@ namespace Squirrel.Update.Windows
                     SendMessage(_hwnd, (uint) TaskDialogMessage.TDM_SET_PROGRESS_BAR_POS, (IntPtr) 0); // clear current progress bar
                     SendMessage(_hwnd, (uint) TaskDialogMessage.TDM_SET_MARQUEE_PROGRESS_BAR, (IntPtr) 1); // enable marque mode
                     SendMessage(_hwnd, (uint) TaskDialogMessage.TDM_SET_PROGRESS_BAR_MARQUEE, (IntPtr) 1, (IntPtr) 0); // turn on marque animation
+                }
+            }
+        }
+
+        public override unsafe void SetMessage(string message)
+        {
+            lock (_lock) {
+                if (Handle == IntPtr.Zero) return;
+                if (String.IsNullOrWhiteSpace(message)) {
+                    var arr = stackalloc byte[2];
+                    SendMessage(_hwnd, (uint) TaskDialogMessage.TDM_SET_ELEMENT_TEXT, (IntPtr) 0, (IntPtr) arr);
+                } else {
+                    var hg = Marshal.StringToHGlobalUni(message);
+                    try {
+                        SendMessage(_hwnd, (uint) TaskDialogMessage.TDM_SET_ELEMENT_TEXT, (IntPtr) 0, hg);
+                    } finally {
+                        Marshal.FreeHGlobal(hg);
+                    }
                 }
             }
         }

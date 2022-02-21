@@ -55,6 +55,9 @@ namespace Squirrel.Update
         public void SetProgressIndeterminate()
             => LogThrow("Failed to set progress indeterminate.", () => _window?.SetProgressIndeterminate());
 
+        public void SetMessage(string message)
+            => LogThrow("Failed to set progress indeterminate.", () => _window?.SetMessage(message));
+
         public void Show()
             => LogThrow("Failed to show window.", () => _window?.Show());
 
@@ -69,7 +72,11 @@ namespace Squirrel.Update
 
         private void LogThrow(string msg, Action act)
         {
-            try { act(); } catch (Exception ex) { this.Log().ErrorException(msg, ex); }
+            try {
+                act();
+            } catch (Exception ex) {
+                this.Log().ErrorException(msg, ex);
+            }
         }
 
         private T LogThrow<T>(string msg, Func<T> act, T errRet)
