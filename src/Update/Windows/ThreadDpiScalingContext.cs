@@ -9,7 +9,7 @@ using static Vanara.PInvoke.SHCore;
 
 namespace Squirrel.Update.Windows
 {
-    public enum ThreadScalingMode
+    internal enum ThreadScalingMode
     {
         Unaware,
         SystemAware,
@@ -18,7 +18,7 @@ namespace Squirrel.Update.Windows
         UnawareGdiScaled,
     }
 
-    public static class ThreadDpiScalingContext
+    internal static class ThreadDpiScalingContext
     {
         private static readonly DPI_AWARENESS_CONTEXT DPI_AWARENESS_CONTEXT_UNAWARE = new DPI_AWARENESS_CONTEXT((IntPtr)(-1));
         private static readonly DPI_AWARENESS_CONTEXT DPI_AWARENESS_CONTEXT_SYSTEM_AWARE = new DPI_AWARENESS_CONTEXT((IntPtr)(-2));

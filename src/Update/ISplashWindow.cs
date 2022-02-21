@@ -1,12 +1,12 @@
 ﻿using System;
+using Squirrel.SimpleSplat;
 
 namespace Squirrel.Update
 {
-    internal interface ISplashWindow : IDisposable
+    internal interface ISplashWindow : IDisposable, IEnableLogger
     {
         void Show();
         void Hide();
-        void SetNoProgress();
         void SetProgressIndeterminate();
         void SetProgress(ulong completed, ulong total);
         void ShowErrorDialog(string title, string message);

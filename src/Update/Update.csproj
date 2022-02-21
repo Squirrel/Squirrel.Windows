@@ -26,6 +26,7 @@
     <PackageReference Include="NLog" Version="5.0.0-rc2" />
     <PackageReference Include="Vanara.PInvoke.User32" Version="3.3.15" />
     <PackageReference Include="Vanara.PInvoke.SHCore" Version="3.3.15" />
+    <PackageReference Include="Vanara.PInvoke.ComCtl32" Version="3.3.15" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,6 +36,7 @@
     <TrimmableAssembly Include="Vanara.PInvoke.Shared" />
     <TrimmableAssembly Include="Vanara.PInvoke.SHCore" />
     <TrimmableAssembly Include="Vanara.PInvoke.User32" />
+    <TrimmableAssembly Include="Vanara.PInvoke.ComCtl32" />
   </ItemGroup>
 
   <!-- Allow netframework binaries to be built explicitly using the command line -->

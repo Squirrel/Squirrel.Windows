@@ -2,7 +2,6 @@
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -24,11 +23,9 @@ using static Vanara.PInvoke.User32.WindowStylesEx;
 
 namespace Squirrel.Update.Windows
 {
-    internal unsafe class User32SplashWindow : ISplashWindow
+    internal unsafe class User32SplashWindow : WindowBase
     {
-        public IntPtr Handle => _hwnd != null ? _hwnd.DangerousGetHandle() : IntPtr.Zero;
-
-        static IFullLogger Log = SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(User32SplashWindow));
+        public override IntPtr Handle => _hwnd != null ? _hwnd.DangerousGetHandle() : IntPtr.Zero;
 
         private SafeHWND _hwnd;
         private Exception _error;
@@ -40,8 +37,6 @@ namespace Squirrel.Update.Windows
 
         private readonly ManualResetEvent _signal;
         private readonly Bitmap _img;
-        private readonly string _appName;
-        private readonly bool _silent;
         private readonly Icon _icon;
 
         private const int OPERATION_TIMEOUT = 5000;
@@ -53,25 +48,12 @@ namespace Squirrel.Update.Windows
         private const int PropertyTagPixelPerUnitX = 0x5111;
         private const int PropertyTagPixelPerUnitY = 0x5112;
 
-        public User32SplashWindow(string appName, bool silent, byte[] iconBytes, byte[] splashBytes)
+        public User32SplashWindow(string appName, Icon icon, Bitmap bitmap)
+            : base(appName)
         {
-            _appName = appName;
-            _silent = silent;
             _signal = new ManualResetEvent(false);
-
-            try {
-                // we only accept a byte array and convert to memorystream because
-                // gdi needs to seek and get length which is not supported in DeflateStream
-                if (iconBytes?.Length > 0) _icon = new Icon(new MemoryStream(iconBytes));
-                if (splashBytes?.Length > 0) _img = (Bitmap) Bitmap.FromStream(new MemoryStream(splashBytes));
-            } catch (Exception ex) {
-                Log.WarnException("Unable to load splash image", ex);
-            }
-
-            if (_silent || _img == null) {
-                // can not show splash window without an image
-                return;
-            }
+            _icon = icon;
+            _img = bitmap;
 
             try {
                 var tbl = (ITaskbarList3) new CTaskbarList();
@@ -79,13 +61,15 @@ namespace Squirrel.Update.Windows
                 _taskbarList3 = tbl;
             } catch (Exception ex) {
                 // failure to load the COM taskbar progress feature should not break this entire window
-                Log.WarnException("Unable to load ITaskbarList3, progress will not be shown in taskbar", ex);
+                this.Log().WarnException("Unable to load ITaskbarList3, progress will not be shown in taskbar", ex);
             }
 
             _thread = new Thread(ThreadProc);
             _thread.IsBackground = true;
+            _thread.SetApartmentState(ApartmentState.STA);
             _thread.Start();
-            if (!_signal.WaitOne()) {
+
+            if (!_signal.WaitOne(OPERATION_TIMEOUT)) {
                 if (_error != null) throw _error;
                 else throw new Exception("Timeout waiting for splash window to open");
             }
@@ -94,28 +78,19 @@ namespace Squirrel.Update.Windows
             SetProgressIndeterminate();
         }
 
-        public void Show()
+        public override void Show()
         {
             if (_thread == null) return;
             ShowWindow(_hwnd, SW_SHOW);
         }
 
-        public void Hide()
+        public override void Hide()
         {
             if (_thread == null) return;
             ShowWindow(_hwnd, SW_HIDE);
         }
 
-        public void SetNoProgress()
-        {
-            if (_thread == null) return;
-            var h = _hwnd.DangerousGetHandle();
-            _taskbarList3?.SetProgressState(h, ThumbnailProgressState.NoProgress);
-            _progress = 0;
-            InvalidateRect(_hwnd, null, false);
-        }
-
-        public void SetProgressIndeterminate()
+        public override void SetProgressIndeterminate()
         {
             if (_thread == null) return;
             var h = _hwnd.DangerousGetHandle();
@@ -124,7 +99,7 @@ namespace Squirrel.Update.Windows
             InvalidateRect(_hwnd, null, false);
         }
 
-        public void SetProgress(ulong completed, ulong total)
+        public override void SetProgress(ulong completed, ulong total)
         {
             if (_thread == null) return;
             var h = _hwnd.DangerousGetHandle();
@@ -134,55 +109,7 @@ namespace Squirrel.Update.Windows
             InvalidateRect(_hwnd, null, false);
         }
 
-        public void ShowErrorDialog(string title, string message)
-        {
-            if (_silent) {
-                Log.Info("User err suppressed (updater in silent mode): " + message);
-            } else {
-                Log.Info("User shown err: " + message);
-                User32MessageBox.Show(
-                    Handle,
-                    message,
-                    _appName + " - " + title,
-                    User32MessageBox.MessageBoxButtons.OK,
-                    User32MessageBox.MessageBoxIcon.Error);
-            }
-        }
-
-        public void ShowInfoDialog(string title, string message)
-        {
-            if (_silent) {
-                Log.Info("User message suppressed (updater in silent mode): " + message);
-            } else {
-                Log.Info("User shown message: " + message);
-                User32MessageBox.Show(
-                    Handle,
-                    message,
-                    _appName + " - " + title,
-                    User32MessageBox.MessageBoxButtons.OK,
-                    User32MessageBox.MessageBoxIcon.Information);
-            }
-        }
-
-        public bool ShowQuestionDialog(string title, string message)
-        {
-            if (_silent) {
-                Log.Info("User prompt suppressed (updater in silent mode): '" + message + "' -- Automatically answering Cancel.");
-                return false;
-            } else {
-                var result = User32MessageBox.Show(
-                    Handle,
-                    message,
-                    _appName + " - " + title,
-                    User32MessageBox.MessageBoxButtons.OKCancel,
-                    User32MessageBox.MessageBoxIcon.Question,
-                    User32MessageBox.MessageBoxResult.Cancel);
-                Log.Info("User prompted: '" + message + "' -- User answered " + result.ToString());
-                return User32MessageBox.MessageBoxResult.OK == result;
-            }
-        }
-
-        public void Dispose()
+        public override void Dispose()
         {
             if (_thread == null) return;
             PostThreadMessage(_threadId, (uint) WM_QUIT, IntPtr.Zero, IntPtr.Zero);
@@ -192,8 +119,6 @@ namespace Squirrel.Update.Windows
             _threadId = 0;
             _hwnd = null;
             _signal.Reset();
-            _icon.Dispose();
-            _img.Dispose();
         }
 
         private IDisposable StartGifAnimation()
@@ -206,7 +131,7 @@ namespace Squirrel.Update.Windows
                 var pDimensionIDs = _img.FrameDimensionsList;
                 var frameDimension = new FrameDimension(pDimensionIDs[0]);
                 var frameCount = _img.GetFrameCount(frameDimension);
-                Log.Info($"There were {frameCount} frames detected in the splash image ({(frameCount > 1 ? "it's animated" : "it's not animated")}).");
+                this.Log().Info($"There were {frameCount} frames detected in the splash image ({(frameCount > 1 ? "it's animated" : "it's not animated")}).");
                 if (frameCount > 1) {
                     var delayProperty = _img.GetPropertyItem(PropertyTagFrameDelay);
                     gif = new Thread(() => {
@@ -236,7 +161,7 @@ namespace Squirrel.Update.Windows
                 }
             } catch (Exception e) {
                 // errors starting a gif should not break the splash window
-                Log.ErrorException("Failed to start GIF animation.", e);
+                this.Log().ErrorException("Failed to start GIF animation.", e);
             }
 
             return Disposable.Create(() => {
@@ -303,9 +228,9 @@ namespace Squirrel.Update.Windows
                 h = (int) Math.Round(_img.Height * dpiRatioY);
                 x = (mi.rcWork.Width - w) / 2;
                 y = (mi.rcWork.Height - h) / 2;
-                Log.Info($"Image dpi is {_img.HorizontalResolution} ({(embeddedDpi ? "embedded" : "default")}), screen dpi is {dpiX}. Rendering image at [{x},{y},{w},{h}]");
+                this.Log().Info($"Image dpi is {_img.HorizontalResolution} ({(embeddedDpi ? "embedded" : "default")}), screen dpi is {dpiX}. Rendering image at [{x},{y},{w},{h}]");
             } catch (Exception ex) {
-                Log.WarnException("Unable to calculate splash dpi scaling", ex);
+                this.Log().WarnException("Unable to calculate splash dpi scaling", ex);
                 RECT rcArea = default;
                 SystemParametersInfo(SPI_GETWORKAREA, 0, new IntPtr(&rcArea), 0);
                 w = _img.Width;
@@ -317,7 +242,7 @@ namespace Squirrel.Update.Windows
             _hwnd = CreateWindowEx(
                 /*WS_EX_TOOLWINDOW |*/ WS_EX_TOPMOST,
                 WINDOW_CLASS_NAME,
-                _appName + " Setup",
+                AppName + " Setup",
                 WS_CLIPCHILDREN | WS_POPUP,
                 x, y, w, h,
                 HWND.NULL,

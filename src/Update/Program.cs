@@ -157,7 +157,7 @@ namespace Squirrel.Update
             }
 
             using var _t = Utility.WithTempDirectory(out var tempFolder);
-            ISplashWindow splash = new Windows.User32SplashWindow(appname, silentInstall, zp.SetupIconBytes, zp.SetupSplashBytes);
+            ISplashWindow splash = new ComposedWindow(appname, silentInstall, zp.SetupIconBytes, zp.SetupSplashBytes);
 
             // verify that this package can be installed on this cpu architecture
             if (AssemblyRuntimeInfo.Architecture == RuntimeCpu.X86 && zp.MachineArchitecture == RuntimeCpu.X64) {
