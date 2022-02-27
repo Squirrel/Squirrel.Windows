@@ -181,18 +181,22 @@ namespace SquirrelCli
         public virtual void Execute(string[] args)
         {
             if (args.Length == 0)
-                throw new OptionValidationException("Must specify a command to execute.");
+                throw new OptionValidationException("No arguments provided. Must specify a command to execute.");
 
+            var commands = this.Where(k => !String.IsNullOrWhiteSpace(k.Command));
             CommandAction cmd = null;
-            foreach (var k in this.Where(k => !String.IsNullOrWhiteSpace(k.Command)).OrderByDescending(k => k.Command.Length)) {
+            foreach (var k in commands.OrderByDescending(k => k.Command.Length)) {
                 if (args[0].Equals(k.Command, StringComparison.InvariantCultureIgnoreCase)) {
                     cmd = k;
                     break;
                 }
             }
 
-            if (cmd == null)
-                throw new OptionValidationException($"Command '{args[0]}' does not exist.");
+            if (cmd == null) {
+                throw new OptionValidationException(
+                    $"Command '{args[0]}' does not exist. First argument must be one of the following: "
+                    + String.Join(", ", commands.Select(s => s.Command)) + ".");
+            }
 
             cmd.Execute(args.Skip(1));
         }

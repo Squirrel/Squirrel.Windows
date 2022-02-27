@@ -26,47 +26,54 @@ namespace SquirrelCli
 {
     class Program : IEnableLogger
     {
+#pragma warning disable CS0436 // Type conflicts with imported type
+        public static string DisplayVersion => ThisAssembly.AssemblyInformationalVersion;
+        public static string FileVersion => ThisAssembly.AssemblyFileVersion;
+#pragma warning restore CS0436 // Type conflicts with imported type
+
         public static int Main(string[] args)
         {
             var logger = new ConsoleLogger();
-            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(Squirrel.SimpleSplat.ILogger));
+            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(ILogger));
+
+            bool help = false;
+            bool verbose = false;
+            var globalOptions = new OptionSet() {
+                { "h|?|help", "Ignores all other arguments and shows help text", _ => help = true },
+                { "verbose", "Print extra diagnostic logging", _ => verbose = true },
+            };
 
             var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
+            string sqUsage =
+                $"Squirrel {DisplayVersion}, tool for creating and deploying Squirrel releases" + Environment.NewLine +
+                $"Usage: {exeName} [verb] [--option:value]";
+
             var commands = new CommandSet {
                 "",
-#pragma warning disable CS0436 // Type conflicts with imported type
-                $"Squirrel ({ThisAssembly.AssemblyInformationalVersion}) command line tool for creating and deploying Squirrel releases",
-#pragma warning restore CS0436 // Type conflicts with imported type
-                $"Usage: {exeName} [verb] [--option:value]",
+                sqUsage,
                 "",
-                "Package Authoring:",
+                "[ Global Options ]",
+                globalOptions.GetHelpText().TrimEnd(),
+                "",
+                "[ Package Authoring ]",
                 { "pack", "Creates a Squirrel release from a folder containing application files", new PackOptions(), Pack },
                 { "releasify", "Take an existing nuget package and convert it into a Squirrel release", new ReleasifyOptions(), Releasify },
                 "",
-                "Package Deployment / Syncing:",
-                { "b2-down", "Download recent releases from BackBlaze B2", new SyncBackblazeOptions(), o => new BackblazeRepository(o).DownloadRecentPackages().Wait() },
-                { "b2-up", "Upload releases to BackBlaze B2", new SyncBackblazeOptions(), o => new BackblazeRepository(o).UploadMissingPackages().Wait() },
-                { "http-down", "Download recent releases from an HTTP source", new SyncHttpOptions(), o => new SimpleWebRepository(o).DownloadRecentPackages().Wait() },
-                //{ "http-up", "sync", new SyncHttpOptions(), o => new SimpleWebRepository(o).UploadMissingPackages().Wait() },
-                { "github-down", "Download recent releases from GitHub", new SyncGithubOptions(), o => new GitHubRepository(o).DownloadRecentPackages().Wait() },
-                //{ "github-up", "sync", new SyncGithubOptions(), o => new GitHubRepository(o).UploadMissingPackages().Wait() },
-                { "s3-down", "Download recent releases from a S3 bucket", new SyncS3Options(), o => new S3Repository(o).DownloadRecentPackages().Wait() },
-                { "s3-up", "Upload recent releases to a S3 bucket", new SyncS3Options(), o => new S3Repository(o).UploadMissingPackages().Wait() },
+                "[ Package Deployment / Syncing ]",
+                { "b2-down", "Download recent releases from BackBlaze B2", new SyncBackblazeOptions(), o => Download(new BackblazeRepository(o)) },
+                { "b2-up", "Upload releases to BackBlaze B2", new SyncBackblazeOptions(), o => Upload(new BackblazeRepository(o)) },
+                { "http-down", "Download recent releases from an HTTP source", new SyncHttpOptions(), o => Download(new SimpleWebRepository(o)) },
+                { "github-down", "Download recent releases from GitHub", new SyncGithubOptions(), o => Download(new GitHubRepository(o)) },
+                { "s3-down", "Download recent releases from a S3 bucket", new SyncS3Options(), o => Download(new S3Repository(o)) },
+                { "s3-up", "Upload recent releases to a S3 bucket", new SyncS3Options(), o => Upload(new S3Repository(o)) },
                 //"",
-                //"Examples:",
+                //"[ Examples ]",
                 //$"    {exeName} pack ",
                 //$"        ",
             };
 
-
             try {
-                // check for help/verbose argument
-                bool help = false;
-                bool verbose = false;
-                new OptionSet() {
-                    { "h|?|help", _ => help = true },
-                    { "verbose", _ => verbose = true },
-                }.Parse(args);
+                globalOptions.Parse(args);
 
                 if (verbose) {
                     logger.Level = LogLevel.Debug;
@@ -74,22 +81,37 @@ namespace SquirrelCli
 
                 if (help) {
                     commands.WriteHelp();
-                    return -1;
+                    return 0;
                 } else {
                     // parse cli and run command
                     commands.Execute(args);
                 }
+
                 return 0;
+            } catch (Exception ex) when (ex is OptionValidationException || ex is OptionException) {
+                // if the arguments fail to validate, print argument help
+                Console.WriteLine();
+                logger.Write(ex.Message, LogLevel.Error);
+                commands.WriteHelp();
+                Console.WriteLine();
+                logger.Write(ex.Message, LogLevel.Error);
+                return -1;
             } catch (Exception ex) {
+                // for other errors, just print the error and short usage instructions
                 Console.WriteLine();
                 logger.Write(ex.ToString(), LogLevel.Error);
                 Console.WriteLine();
-                commands.WriteHelp();
+                Console.WriteLine(sqUsage);
+                Console.WriteLine($" > '{exeName} -h' to see program help.");
                 return -1;
             }
         }
 
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
+
+        static void Upload<T>(T repo) where T : IPackageRepository => repo.UploadMissingPackages().Wait();
+
+        static void Download<T>(T repo) where T : IPackageRepository => repo.DownloadRecentPackages().Wait();
 
         static void Pack(PackOptions options)
         {
@@ -396,10 +418,12 @@ namespace SquirrelCli
         }
     }
 
-    class ConsoleLogger : Squirrel.SimpleSplat.ILogger
+    class ConsoleLogger : ILogger
     {
-        readonly object gate = 42;
         public LogLevel Level { get; set; } = LogLevel.Info;
+
+        private readonly object gate = new object();
+
         public void Write(string message, LogLevel logLevel)
         {
             if (logLevel < Level) {
@@ -409,11 +433,9 @@ namespace SquirrelCli
             lock (gate) {
                 string lvl = logLevel.ToString().Substring(0, 4).ToUpper();
                 if (logLevel == LogLevel.Error || logLevel == LogLevel.Fatal) {
-                    Utility.ConsoleWriteWithColor($"[{lvl}] {message}\r\n", ConsoleColor.Red);
-                    Console.WriteLine();
+                    Utility.ConsoleWriteWithColor($"[{lvl}] {message}{Environment.NewLine}", ConsoleColor.Red);
                 } else if (logLevel == LogLevel.Warn) {
-                    Utility.ConsoleWriteWithColor($"[{lvl}] {message}\r\n", ConsoleColor.Yellow);
-                    Console.WriteLine();
+                    Utility.ConsoleWriteWithColor($"[{lvl}] {message}{Environment.NewLine}", ConsoleColor.Yellow);
                 } else {
                     Console.WriteLine($"[{lvl}] {message}");
                 }

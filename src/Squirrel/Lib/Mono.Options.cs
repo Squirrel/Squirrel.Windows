@@ -1173,6 +1173,13 @@ namespace Mono.Options
 		private const int Description_FirstWidth  = LineWidth - OptionWidth;
 		private const int Description_RemWidth    = LineWidth - OptionWidth - 2;
 
+        public string GetHelpText()
+        {
+            using var tw = new StringWriter();
+            WriteOptionDescriptions(tw);
+            return tw.ToString ();
+        }
+
 		public void WriteOptionDescriptions (TextWriter o)
 		{
 			foreach (Option p in this) {
