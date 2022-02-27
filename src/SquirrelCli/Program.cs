@@ -147,7 +147,7 @@ namespace SquirrelCli
             // normalize and validate that the provided frameworks are supported 
             var requiredFrameworks = Runtimes.ParseDependencyString(options.framework);
             if (requiredFrameworks.Any())
-                Log.Info("Package dependencies resolved as: " + String.Join(", ", requiredFrameworks.Select(r => r.Id)));
+                Log.Info("Package dependencies (from '--framework' argument) resolved as: " + String.Join(", ", requiredFrameworks.Select(r => r.Id)));
 
             using var ud = Utility.WithTempDirectory(out var tempDir);
 
