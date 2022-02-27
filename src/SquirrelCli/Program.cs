@@ -247,6 +247,7 @@ namespace SquirrelCli
                         .Where(x => !x.Name.Contains("squirrel.exe", StringComparison.InvariantCultureIgnoreCase))
                         .Where(x => Utility.IsFileTopLevelInPackage(x.FullName, pkgPath))
                         .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
+                        .ToArray() // materialize the IEnumerable so we never end up creating stubs for stubs
                         .ForEach(x => createExecutableStubForExe(x.FullName));
 
                     // sign all exe's in this package
