@@ -231,6 +231,24 @@ namespace SquirrelCli
                             "Please publish your application to a folder without ClickOnce.");
                     }
 
+                    // warning if the installed SquirrelLib version is not the same as Squirrel.exe
+                    StringFileInfo sqLib = null;
+                    try {
+                        var myFileVersion = new SemanticVersion(FileVersion).Version;
+                        sqLib = Directory.EnumerateFiles(libDir, "SquirrelLib.dll")
+                            .Select(f => { StringFileInfo.ReadVersionInfo(f, out var fi); return fi; })
+                            .FirstOrDefault(fi => fi.FileVersion != myFileVersion);
+                    } catch (Exception ex) {
+                        Log.WarnException("Error validating SquirrelLib version in package.", ex);
+                    }
+                    if (sqLib != null) {
+                        Log.Warn(
+                            $"SquirrelLib.dll {sqLib.FileVersion} is installed in provided package, " +
+                            $"but current Squirrel.exe version is {DisplayVersion} ({FileVersion}). " +
+                            $"The LIB version and CLI tool version must be the same to build releases " +
+                            $"or the application may fail to update properly.");
+                    }
+
                     // record architecture of squirrel aware binaries so setup can fast fail if unsupported
                     var peparsed = awareExes.ToDictionary(path => path, path => new PeNet.PeFile(path));
                     var pearchs = peparsed
