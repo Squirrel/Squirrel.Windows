@@ -247,8 +247,7 @@ namespace SquirrelCli
                         .Where(x => !x.Name.Contains("squirrel.exe", StringComparison.InvariantCultureIgnoreCase))
                         .Where(x => Utility.IsFileTopLevelInPackage(x.FullName, pkgPath))
                         .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
-                        .ForEachAsync(x => createExecutableStubForExe(x.FullName))
-                        .Wait();
+                        .ForEach(x => createExecutableStubForExe(x.FullName));
 
                     // sign all exe's in this package
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
@@ -376,17 +375,23 @@ namespace SquirrelCli
             }
         }
 
-        static async Task createExecutableStubForExe(string exeToCopy)
+        static void createExecutableStubForExe(string exeToCopy)
         {
-            var target = Path.Combine(
-                Path.GetDirectoryName(exeToCopy),
-                Path.GetFileNameWithoutExtension(exeToCopy) + "_ExecutionStub.exe");
+            try {
+                var target = Path.Combine(
+                    Path.GetDirectoryName(exeToCopy),
+                    Path.GetFileNameWithoutExtension(exeToCopy) + "_ExecutionStub.exe");
 
-            await Utility.CopyToAsync(HelperExe.StubExecutablePath, target);
+                Utility.Retry(() => File.Copy(HelperExe.StubExecutablePath, target, true));
 
-            using var writer = new Microsoft.NET.HostModel.ResourceUpdater(target, true);
-            writer.AddResourcesFromPEImage(exeToCopy);
-            writer.Update();
+                Utility.Retry(() => {
+                    using var writer = new Microsoft.NET.HostModel.ResourceUpdater(target, true);
+                    writer.AddResourcesFromPEImage(exeToCopy);
+                    writer.Update();
+                });
+            } catch (Exception ex) {
+                Log.ErrorException($"Error creating StubExecutable and copying resources for '{exeToCopy}'. This stub may or may not work properly.", ex);
+            }
         }
     }
 
