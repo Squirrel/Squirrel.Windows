@@ -199,7 +199,14 @@ namespace SquirrelCli
                         throw new ArgumentException(
                             "There are no SquirreAwareApp's in the provided package. Please mark an exe " +
                             "as aware using the assembly manifest, or use the '--allowUnaware' argument " +
-                            "to skip this validation and create a package anyway (at your own risk).");
+                            "to skip this validation and create a package anyway (not recommended).");
+                    }
+
+                    // fail the release if this is a clickonce application
+                    if (Directory.EnumerateFiles(libDir, "*.application").Any(f => File.ReadAllText(f).Contains("clickonce"))) {
+                        throw new ArgumentException(
+                            "Squirrel does not support building releases for ClickOnce applications. " +
+                            "Please publish your application to a folder without ClickOnce.");
                     }
 
                     // record architecture of squirrel aware binaries so setup can fast fail if unsupported
