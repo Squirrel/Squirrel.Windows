@@ -2,11 +2,13 @@
 #include <versionhelpers.h>
 #include <string>
 #include <functional>
+#include <fstream>
 #include "unzip.h"
 #include "bundle_marker.h"
 #include "platform_util.h"
 
 using namespace std;
+namespace fs = std::filesystem;
 
 // https://stackoverflow.com/a/874160/184746
 bool hasEnding(std::wstring const& fullString, std::wstring const& ending)
@@ -55,30 +57,35 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         return 0;
     }
 
-    wstring myPath = util::get_current_process_path();
     wstring updaterPath = util::get_temp_file_path(L"exe");
+    wstring packagePath = util::get_temp_file_path(L"nupkg");
+    uint8_t* memAddr = 0;
 
     try {
-        // locate bundled package
-        BYTE* memAddr = util::mmap_read(myPath, 0);
-        int64_t packageOffset, packageLength;
-        bundle_marker_t::header_offset(&packageOffset, &packageLength);
-        BYTE* pkgStart = memAddr + packageOffset;
-        if (packageOffset == 0 || packageLength == 0) {
-            util::munmap(memAddr);
-            util::show_error_dialog(L"An error occurred while running setup. The embedded package was not found. Please contact the application author.");
-            return 0;
+        // locate bundled package and map to memory
+        memAddr = util::mmap_read(util::get_current_process_path(), 0);
+        if (!memAddr) {
+            throw new wstring(L"Unable to map executable to memory");
         }
 
-        // extract Squirrel installer
+        int64_t packageOffset, packageLength;
+        bundle_marker_t::header_offset(&packageOffset, &packageLength);
+        uint8_t* pkgStart = memAddr + packageOffset;
+        if (packageOffset == 0 || packageLength == 0) {
+            throw wstring(L"The embedded package was not found");
+        }
+
+        // extract Squirrel installer from package
         std::function<bool(ZIPENTRY&)> endsWithSquirrel([](ZIPENTRY& z) {
             return hasEnding(std::wstring(z.name), L"Squirrel.exe");
         });
         unzipSingleFile(pkgStart, packageLength, updaterPath, endsWithSquirrel);
-        util::munmap(memAddr);
+
+        // extract whole package
+        std::ofstream(packagePath, std::ios::binary).write((char*)pkgStart, packageLength);
 
         // run installer and forward our command line arguments
-        wstring cmd = L"\"" + updaterPath + L"\" --setup \"" + myPath + L"\" " + pCmdLine;
+        wstring cmd = L"\"" + updaterPath + L"\" --setup \"" + packagePath + L"\" " + pCmdLine;
         util::wexec(cmd.c_str());
     }
     catch (wstring wsx) {
@@ -95,7 +102,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         util::show_error_dialog(L"An unknown error occurred while running setup. Please contact the application author.");
     }
 
-    // clean-up after ourselves
+    // clean-up resources
+    if(memAddr) util::munmap(memAddr);
     DeleteFile(updaterPath.c_str());
+    DeleteFile(packagePath.c_str());
     return 0;
 }

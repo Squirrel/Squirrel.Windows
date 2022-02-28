@@ -1,4 +1,4 @@
-using Squirrel.SimpleSplat;
+﻿using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -121,8 +121,8 @@ namespace Squirrel.Update
         {
             Log.Info($"Extracting bundled app data from '{setupPath}'.");
 
-            using var pkgStream = Shared.SetupBundle.ReadPackageBundle(setupPath);
-            var zp = new ZipPackage(pkgStream, true);
+            using var fs = File.OpenRead(setupPath);
+            var zp = new ZipPackage(fs, true);
             var appname = zp.ProductName;
 
             if (checkInstall) {
@@ -224,9 +224,9 @@ namespace Squirrel.Update
 
             // copy package to directory
             string packagePath = Path.Combine(tempFolder, zp.FullReleaseFilename);
-            pkgStream.Position = 0;
+            fs.Position = 0;
             using (var writeStream = File.Open(packagePath, FileMode.Create, FileAccess.ReadWrite))
-                pkgStream.CopyTo(writeStream);
+                fs.CopyTo(writeStream);
 
             // create RELEASES file for UpdateManager to read
             var entry = ReleaseEntry.GenerateFromFile(packagePath);
