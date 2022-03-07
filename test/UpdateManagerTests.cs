@@ -336,7 +336,7 @@ namespace Squirrel.Tests
             [Fact]
             public void CurrentlyInstalledVersionDoesNotThrow()
             {
-                using var fixture = new UpdateManager(null);
+                using var fixture = new UpdateManager();
                 Assert.Null(fixture.CurrentlyInstalledVersion());
                 Assert.False(fixture.IsInstalledApp);
             }

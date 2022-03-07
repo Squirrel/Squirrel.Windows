@@ -10,6 +10,7 @@ using Microsoft.Win32;
 using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
 using Squirrel.Shell;
+using Squirrel.Sources;
 
 namespace Squirrel
 {
@@ -28,8 +29,8 @@ namespace Squirrel
         /// <summary>True if the current executable is inside the target <see cref="AppDirectory"/>.</summary>
         public bool IsInstalledApp => isUpdateExeAvailable() ? Utility.IsFileInDirectory(AssemblyRuntimeInfo.EntryExePath, AppDirectory) : false;
 
-        /// <summary>The url to use when checking for or downloading updates.</summary>
-        protected string _updateUrlOrPath;
+        /// <summary>The directory packages and temp files are stored in.</summary>
+        protected string PackagesDirectory => Utility.PackageDirectoryForAppDir(AppDirectory);
 
         /// <summary>The application name provided in constructor, or null.</summary>
         protected readonly string _applicationIdOverride;
@@ -37,8 +38,8 @@ namespace Squirrel
         /// <summary>The path to the local app data folder on this machine.</summary>
         protected readonly string _localAppDataDirectoryOverride;
 
-        /// <summary>The <see cref="IFileDownloader"/> to use when downloading data from the internet.</summary>
-        protected readonly IFileDownloader _urlDownloader;
+        /// <summary>The <see cref="IUpdateSource"/> responsible for retrieving updates from a package repository.</summary>
+        protected readonly IUpdateSource _updateSource;
 
         private readonly object _lockobj = new object();
         private IDisposable _updateLock;
@@ -46,7 +47,10 @@ namespace Squirrel
 
         /// <summary>
         /// Create a new instance of <see cref="UpdateManager"/> to check for and install updates. 
-        /// Do not forget to dispose this class!
+        /// Do not forget to dispose this class! This constructor is just a shortcut for
+        /// <see cref="UpdateManager(IUpdateSource, string, string)"/>, and will automatically create
+        /// a <see cref="SimpleFileSource"/> or a <see cref="SimpleWebSource"/> depending on 
+        /// whether 'urlOrPath' is a filepath or a URL, respectively.
         /// </summary>
         /// <param name="urlOrPath">
         /// The URL where your update packages or stored, or a local package repository directory.
@@ -70,35 +74,45 @@ namespace Squirrel
             string applicationIdOverride = null,
             string localAppDataDirectoryOverride = null,
             IFileDownloader urlDownloader = null)
+            : this(CreateSourceFromString(urlOrPath, urlDownloader), applicationIdOverride, localAppDataDirectoryOverride)
+        { }
+
+        /// <summary>
+        /// Create a new instance of <see cref="UpdateManager"/> to check for and install updates. 
+        /// Do not forget to dispose this class!
+        /// </summary>
+        /// <param name="updateSource">
+        /// The source of your update packages. This can be a web server (<see cref="SimpleWebSource"/>),
+        /// a local directory (<see cref="SimpleFileSource"/>), a GitHub repository (<see cref="GithubSource"/>),
+        /// or a custom location.
+        /// </param>
+        /// <param name="applicationIdOverride">
+        /// The Id of your application should correspond with the 
+        /// appdata directory name, and the Id used with Squirrel releasify/pack.
+        /// If left null/empty, UpdateManger will attempt to determine the current application Id  
+        /// from the installed app location, or throw if the app is not currently installed during certain 
+        /// operations.
+        /// </param>
+        /// <param name="localAppDataDirectoryOverride">
+        /// Provide a custom location for the system LocalAppData, it will be used 
+        /// instead of <see cref="Environment.SpecialFolder.LocalApplicationData"/>.
+        /// </param>
+        public UpdateManager(
+            IUpdateSource updateSource, 
+            string applicationIdOverride = null, 
+            string localAppDataDirectoryOverride = null)
         {
-            _updateUrlOrPath = urlOrPath;
+            _updateSource = updateSource;
             _applicationIdOverride = applicationIdOverride;
             _localAppDataDirectoryOverride = localAppDataDirectoryOverride;
-            _urlDownloader = urlDownloader ?? Utility.CreateDefaultDownloader();
         }
+
+        internal UpdateManager() { }
 
         /// <summary>Clean up UpdateManager resources</summary>
         ~UpdateManager()
         {
             Dispose();
-        }
-
-        /// <inheritdoc/>
-        public virtual async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null, UpdaterIntention intention = UpdaterIntention.Update)
-        {
-            var checkForUpdate = new CheckForUpdateImpl(AppDirectory);
-
-            await acquireUpdateLock().ConfigureAwait(false);
-            return await checkForUpdate.CheckForUpdate(intention, Utility.LocalReleaseFileForAppDir(AppDirectory), _updateUrlOrPath, ignoreDeltaUpdates, progress, _urlDownloader).ConfigureAwait(false);
-        }
-
-        /// <inheritdoc/>
-        public virtual async Task DownloadReleases(IEnumerable<ReleaseEntry> releasesToDownload, Action<int> progress = null)
-        {
-            var downloadReleases = new DownloadReleasesImpl(AppDirectory);
-            await acquireUpdateLock().ConfigureAwait(false);
-
-            await downloadReleases.DownloadReleases(_updateUrlOrPath, releasesToDownload, progress, _urlDownloader).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
@@ -313,6 +327,15 @@ namespace Squirrel
 
             // if neither of the above are true, we're probably not installed yet, so return the real appdata directory
             return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        }
+
+        private static IUpdateSource CreateSourceFromString(string urlOrPath, IFileDownloader urlDownloader)
+        {
+            if (Utility.IsHttpUrl(urlOrPath)) {
+                return new SimpleWebSource(urlOrPath, urlDownloader ?? Utility.CreateDefaultDownloader());
+            } else {
+                return new SimpleFileSource(new DirectoryInfo(urlOrPath));
+            }
         }
 
         private Task<IDisposable> acquireUpdateLock()

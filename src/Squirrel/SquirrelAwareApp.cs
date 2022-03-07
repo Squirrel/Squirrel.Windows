@@ -121,7 +121,7 @@ namespace Squirrel
             // functions which acquire a lock are exposed to the consumer.
             // also this means the "urlOrPath" param will never be used, 
             // so we can pass null safely.
-            var um = new UpdateManager(null);
+            var um = new UpdateManager();
             um.Dispose();
 
             // in the fastExitLookup arguments, we run the squirrel hook and then exit the process
