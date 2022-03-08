@@ -367,7 +367,7 @@ namespace SquirrelCli
 
             if (!String.IsNullOrEmpty(options.msi)) {
                 bool x64 = options.msi.Equals("x64");
-                var msiPath = createMsiPackage(targetSetupExe, new ZipPackage(package), x64).Result;
+                var msiPath = createMsiPackage(targetSetupExe, bundledzp, x64).Result;
                 options.SignPEFile(msiPath);
             }
 
@@ -387,7 +387,7 @@ namespace SquirrelCli
                 { "Id", package.Id },
                 { "Title", package.ProductName },
                 { "Author", package.ProductCompany },
-                { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
+                { "Version", package.Version.Version.ToString() },
                 { "Summary", package.ProductDescription },
                 { "Codepage", $"{culture}" },
                 { "Platform", packageAs64Bit ? "x64" : "x86" },
