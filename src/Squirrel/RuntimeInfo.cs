@@ -176,6 +176,13 @@ namespace Squirrel
             {
                 MinVersion = new SemanticVersion(minversion);
                 CpuArchitecture = architecture;
+                if (minversion.Major == 6 && minversion.Build < 0) {
+                    Log.Warn(
+                        $"Automatically upgrading minimum dotnet version from net{minversion} to net6.0.2, " +
+                        $"see more at https://github.com/dotnet/core/issues/7176. " +
+                        $"If you would like to stop this behavior, please specify '--framework net6.0.0'");
+                    MinVersion = new SemanticVersion(6, 0, 2);
+                }
             }
 
             internal DotnetInfo(string minversion, RuntimeCpu architecture)
