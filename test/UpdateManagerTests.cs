@@ -341,6 +341,16 @@ namespace Squirrel.Tests
                 Assert.False(fixture.IsInstalledApp);
             }
 
+            [Fact]
+            public void SetModelIdDoesNotThrow()
+            {
+                using (var fixture = new UpdateManager(null))
+                    fixture.SetProcessAppUserModelId();
+
+                using (var fixture2 = new UpdateManager(null, "TestASD"))
+                    fixture2.SetProcessAppUserModelId();
+            }
+
             [Theory]
             [InlineData(0, 0, 25, 0)]
             [InlineData(12, 0, 25, 3)]
