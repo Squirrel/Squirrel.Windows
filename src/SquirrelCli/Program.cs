@@ -367,7 +367,7 @@ namespace SquirrelCli
 
             if (!String.IsNullOrEmpty(options.msi)) {
                 bool x64 = options.msi.Equals("x64");
-                var msiPath = createMsiPackage(targetSetupExe, new ZipPackage(package), x64).Result;
+                var msiPath = createMsiPackage(targetSetupExe, bundledzp, x64).Result;
                 options.SignPEFile(msiPath);
             }
 
@@ -381,13 +381,19 @@ namespace SquirrelCli
             var setupExeDir = Path.GetDirectoryName(setupExe);
             var setupName = Path.GetFileNameWithoutExtension(setupExe);
             var culture = CultureInfo.GetCultureInfo(package.Language ?? "").TextInfo.ANSICodePage;
-
             var templateText = File.ReadAllText(HelperExe.WixTemplatePath);
+
+            // WiX Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or
+            // periods(.). Every identifier must begin with either a letter or an underscore.
+            var wixId = Regex.Replace(package.Id, @"[^\w\.]", "_");
+            if (Char.GetUnicodeCategory(wixId[0]) == UnicodeCategory.DecimalDigitNumber)
+                wixId = "_" + wixId;
+
             var templateData = new Dictionary<string, string> {
-                { "Id", package.Id },
+                { "Id", wixId },
                 { "Title", package.ProductName },
                 { "Author", package.ProductCompany },
-                { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
+                { "Version", package.Version.Version.ToString() },
                 { "Summary", package.ProductDescription },
                 { "Codepage", $"{culture}" },
                 { "Platform", packageAs64Bit ? "x64" : "x86" },

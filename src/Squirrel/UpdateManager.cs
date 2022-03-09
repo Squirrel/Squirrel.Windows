@@ -204,15 +204,27 @@ namespace Squirrel
         /// <inheritdoc/>
         public void SetProcessAppUserModelId()
         {
-            var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(AppDirectory));
-            var thisRelease = Utility.FindCurrentVersion(releases);
-
-            var zf = new ZipPackage(Path.Combine(
-                Utility.PackageDirectoryForAppDir(AppDirectory),
-                thisRelease.Filename));
+            if (_applicationIdOverride == null && !IsInstalledApp) {
+                // can't set model id if we don't know the package id.
+                return;
+            }
 
             var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
-            var appUserModelId = Utility.GetAppUserModelId(zf.Id, exeName);
+
+            string appUserModelId;
+            if (_applicationIdOverride != null) {
+                appUserModelId = Utility.GetAppUserModelId(_applicationIdOverride, exeName);
+            } else {
+                var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(AppDirectory));
+                var thisRelease = Utility.FindCurrentVersion(releases);
+
+                var zf = new ZipPackage(Path.Combine(
+                    Utility.PackageDirectoryForAppDir(AppDirectory),
+                    thisRelease.Filename));
+
+                appUserModelId = Utility.GetAppUserModelId(zf.Id, exeName);
+            }
+
             NativeMethods.SetCurrentProcessExplicitAppUserModelID(appUserModelId);
         }
 

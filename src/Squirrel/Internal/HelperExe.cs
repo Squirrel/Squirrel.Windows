@@ -97,7 +97,7 @@ namespace Squirrel
                 if (processResult.Item1 != 0) {
                     var msg = String.Format(
                         "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
-                        "candle.exe", candleParams, processResult.Item2);
+                        "candle.exe", Utility.ArgsToCommandLine(candleParams), processResult.Item2);
 
                     throw new Exception(msg);
                 }
@@ -109,7 +109,7 @@ namespace Squirrel
                 if (processResult.Item1 != 0) {
                     var msg = String.Format(
                         "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
-                        "light.exe", lightParams, processResult.Item2);
+                        "light.exe", Utility.ArgsToCommandLine(lightParams), processResult.Item2);
 
                     throw new Exception(msg);
                 }
