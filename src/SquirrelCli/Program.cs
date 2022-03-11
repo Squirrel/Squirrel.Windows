@@ -27,7 +27,7 @@ namespace SquirrelCli
     class Program : IEnableLogger
     {
 #pragma warning disable CS0436 // Type conflicts with imported type
-        public static string DisplayVersion => ThisAssembly.AssemblyInformationalVersion;
+        public static string DisplayVersion => ThisAssembly.AssemblyInformationalVersion + (ThisAssembly.IsPublicRelease ? "" : " (prerelease)");
         public static string FileVersion => ThisAssembly.AssemblyFileVersion;
 #pragma warning restore CS0436 // Type conflicts with imported type
 
