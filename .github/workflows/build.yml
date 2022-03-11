@@ -1,0 +1,33 @@
+name: Build Squirrel (Windows)
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0
+      - name: "Install NGBV"
+        run: dotnet tool install --tool-path . nbgv
+      - name: Restore Dependencies
+        run: dotnet restore
+      - name: Build
+        shell: pwsh
+        run: .\build.ps1
+      - name: Create NuGet Package
+        shell: pwsh
+        run: .\pack.ps1
+      - name: Test
+        run: dotnet test test\Squirrel.Tests.csproj --no-build --no-restore --verbosity normal
+      - name: "Upload Tools"
+        uses: actions/upload-artifact@v3
+        with:
+          path: .\build\SquirrelTools*.zip
+          if-no-files-found: error
+      - name: "Upload NuGet Package"
+        uses: actions/upload-artifact@v3
+        with:
+          path: .\build\Clowd.Squirrel*.nupkg
+          if-no-files-found: error
