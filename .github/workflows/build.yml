@@ -13,8 +13,6 @@ jobs:
           dotnet-version: 6.0.*
       - name: "Install NGBV"
         run: dotnet tool install --tool-path . nbgv
-      - name: Restore Dependencies
-        run: dotnet restore
       - name: Build
         shell: pwsh
         run: .\build.ps1
@@ -22,7 +20,7 @@ jobs:
         shell: pwsh
         run: .\pack.ps1
       - name: Test
-        run: dotnet test test\Squirrel.Tests.csproj --no-build --no-restore --verbosity normal
+        run: dotnet test test\Squirrel.Tests.csproj --verbosity normal
       - name: "Upload Tools"
         uses: actions/upload-artifact@v3
         with:
