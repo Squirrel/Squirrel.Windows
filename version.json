@@ -1,5 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
-  "version": "2.8-pre",
-  "gitCommitIdShortFixedLength": 6
+  "version": "2.8",
+  "gitCommitIdShortFixedLength": 6,
+  "publicReleaseRefSpec": [
+    "^refs/heads/master$"
+  ]
 }
