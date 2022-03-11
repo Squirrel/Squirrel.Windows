@@ -2,6 +2,11 @@
 $MSBuildPath = (&"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe) | Out-String
 $MSBuildPath = $MSBuildPath.Trim();
 
+# This variable is null in github actions
+if ($PSScriptRoot -eq $null) {
+    $PSScriptRoot = "."
+}
+
 # Stop the script if an error occurs
 $ErrorActionPreference = "Stop"
 $In = "$PSScriptRoot\build\Release\"
