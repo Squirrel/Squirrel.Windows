@@ -122,9 +122,9 @@ namespace Squirrel
             }
         }
 
-        public static IFileDownloader CreateDefaultDownloader()
+        public static Sources.IFileDownloader CreateDefaultDownloader()
         {
-            return new HttpClientFileDownloader();
+            return new Sources.HttpClientFileDownloader();
         }
 
         public static async Task CopyToAsync(string from, string to)
@@ -170,6 +170,30 @@ namespace Squirrel
 
                     retries--;
                     Thread.Sleep(retryDelay);
+                }
+            }
+        }
+
+        public static async Task RetryAsync(this Func<Task> block, int retries = 4, int retryDelay = 250)
+        {
+            while (true) {
+                try {
+                    await block().ConfigureAwait(false);
+                } catch {
+                    if (retries-- == 0) throw;
+                    await Task.Delay(retryDelay).ConfigureAwait(false);
+                }
+            }
+        }
+
+        public static async Task<T> RetryAsync<T>(this Func<Task<T>> block, int retries = 4, int retryDelay = 250)
+        {
+            while (true) {
+                try {
+                    return await block().ConfigureAwait(false);
+                } catch {
+                    if (retries-- == 0) throw;
+                    await Task.Delay(retryDelay).ConfigureAwait(false);
                 }
             }
         }

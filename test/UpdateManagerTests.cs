@@ -336,7 +336,7 @@ namespace Squirrel.Tests
             [Fact]
             public void CurrentlyInstalledVersionDoesNotThrow()
             {
-                using var fixture = new UpdateManager(null);
+                using var fixture = new UpdateManager();
                 Assert.Null(fixture.CurrentlyInstalledVersion());
                 Assert.False(fixture.IsInstalledApp);
             }
@@ -344,10 +344,10 @@ namespace Squirrel.Tests
             [Fact]
             public void SetModelIdDoesNotThrow()
             {
-                using (var fixture = new UpdateManager(null))
+                using (var fixture = new UpdateManager())
                     fixture.SetProcessAppUserModelId();
 
-                using (var fixture2 = new UpdateManager(null, "TestASD"))
+                using (var fixture2 = new UpdateManager("", "TestASD"))
                     fixture2.SetProcessAppUserModelId();
             }
 

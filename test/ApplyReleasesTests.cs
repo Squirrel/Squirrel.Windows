@@ -15,19 +15,19 @@ using Xunit;
 
 namespace Squirrel.Tests
 {
-    public class FakeUrlDownloader : IFileDownloader
+    public class FakeUrlDownloader : Sources.IFileDownloader
     {
-        public Task<byte[]> DownloadBytes(string url, string auth)
+        public Task<byte[]> DownloadBytes(string url, string auth, string acc)
         {
             return Task.FromResult(new byte[0]);
         }
 
-        public Task DownloadFile(string url, string targetFile, Action<int> progress, string auth)
+        public Task DownloadFile(string url, string targetFile, Action<int> progress, string auth, string acc)
         {
             return Task.CompletedTask;
         }
 
-        public Task<string> DownloadString(string url, string auth)
+        public Task<string> DownloadString(string url, string auth, string acc)
         {
             return Task.FromResult("");
         }
