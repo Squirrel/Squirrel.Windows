@@ -43,7 +43,7 @@ namespace SquirrelCli
                 { "verbose", "Print extra diagnostic logging", _ => verbose = true },
             };
 
-            var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
+            var exeName = Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
             string sqUsage =
                 $"Squirrel {DisplayVersion}, tool for creating and deploying Squirrel releases" + Environment.NewLine +
                 $"Usage: {exeName} [verb] [--option:value]";

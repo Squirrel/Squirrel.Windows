@@ -376,7 +376,7 @@ namespace Squirrel
                 // If we're running in the context of Update.exe, we can't 
                 // update ourselves. Instead, ask the new Update.exe to do it
                 // once we exit
-                var ourLocation = AssemblyRuntimeInfo.EntryExePath;
+                var ourLocation = SquirrelRuntimeInfo.EntryExePath;
                 if (ourLocation != null && Path.GetFileName(ourLocation).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
                     var appName = targetDir.Parent.Name;
 

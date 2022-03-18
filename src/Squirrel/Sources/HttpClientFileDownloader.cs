@@ -15,7 +15,7 @@ namespace Squirrel.Sources
         /// <summary>
         /// The User-Agent sent with Squirrel requests
         /// </summary>
-        public static ProductInfoHeaderValue UserAgent => new("Squirrel", AssemblyRuntimeInfo.ExecutingAssemblyName.Version.ToString());
+        public static ProductInfoHeaderValue UserAgent => new("Squirrel", SquirrelRuntimeInfo.ExecutingAssemblyName.Version.ToString());
 
         /// <inheritdoc />
         public virtual async Task DownloadFile(string url, string targetFile, Action<int> progress, string authorization, string accept)

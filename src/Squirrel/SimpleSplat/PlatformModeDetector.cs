@@ -47,7 +47,7 @@ namespace Squirrel.SimpleSplat
                 "XDESPROC.EXE",
             };
 
-            var exeName = (new FileInfo(AssemblyRuntimeInfo.EntryExePath)).Name.ToUpperInvariant();
+            var exeName = (new FileInfo(SquirrelRuntimeInfo.EntryExePath)).Name.ToUpperInvariant();
 
             if (designEnvironments.Any(x => x.Contains(exeName))) {
                 return true;

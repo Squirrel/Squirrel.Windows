@@ -16,7 +16,7 @@ namespace Squirrel.Update
         {
             var dir = saveInTemp ?
                    Utility.GetTempDirectory(null).FullName :
-                   AssemblyRuntimeInfo.BaseDirectory;
+                   SquirrelRuntimeInfo.BaseDirectory;
 
             string name, archivename;
             if (saveInTemp || action == UpdateAction.Unset) {

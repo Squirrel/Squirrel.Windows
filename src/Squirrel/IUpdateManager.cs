@@ -253,7 +253,7 @@ namespace Squirrel
         public static void CreateShortcutForThisExe(this IAppTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.CreateShortcutsForExecutable(
-                Path.GetFileName(AssemblyRuntimeInfo.EntryExePath),
+                Path.GetFileName(SquirrelRuntimeInfo.EntryExePath),
                 location,
                 Environment.CommandLine.Contains("squirrel-install") == false,
                 null,  // shortcut arguments 
@@ -266,7 +266,7 @@ namespace Squirrel
         public static void RemoveShortcutForThisExe(this IAppTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.RemoveShortcutsForExecutable(
-                Path.GetFileName(AssemblyRuntimeInfo.EntryExePath),
+                Path.GetFileName(SquirrelRuntimeInfo.EntryExePath),
                 location);
         }
     }

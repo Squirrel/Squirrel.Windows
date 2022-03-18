@@ -27,7 +27,7 @@ namespace Squirrel
         public string AppDirectory => Path.Combine(_localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), AppId);
 
         /// <summary>True if the current executable is inside the target <see cref="AppDirectory"/>.</summary>
-        public bool IsInstalledApp => isUpdateExeAvailable() ? Utility.IsFileInDirectory(AssemblyRuntimeInfo.EntryExePath, AppDirectory) : false;
+        public bool IsInstalledApp => isUpdateExeAvailable() ? Utility.IsFileInDirectory(SquirrelRuntimeInfo.EntryExePath, AppDirectory) : false;
 
         /// <summary>The directory packages and temp files are stored in.</summary>
         protected string PackagesDirectory => Utility.PackageDirectoryForAppDir(AppDirectory);
@@ -185,7 +185,7 @@ namespace Squirrel
         public SemanticVersion CurrentlyInstalledVersion(string executable = null)
         {
             try {
-                executable = executable ?? AssemblyRuntimeInfo.EntryExePath;
+                executable = executable ?? SquirrelRuntimeInfo.EntryExePath;
 
                 if (!Utility.IsFileInDirectory(executable, AppDirectory))
                     return null;
@@ -209,7 +209,7 @@ namespace Squirrel
                 return;
             }
 
-            var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
+            var exeName = Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
 
             string appUserModelId;
             if (_applicationIdOverride != null) {
@@ -272,7 +272,7 @@ namespace Squirrel
             //    launching a different version than we started with (this is why
             //    we take the app's *name* rather than a full path)
 
-            exeToStart = exeToStart ?? Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
+            exeToStart = exeToStart ?? Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
@@ -306,7 +306,7 @@ namespace Squirrel
             //    launching a different version than we started with (this is why
             //    we take the app's *name* rather than a full path)
 
-            exeToStart = exeToStart ?? Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
+            exeToStart = exeToStart ?? Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
@@ -326,14 +326,14 @@ namespace Squirrel
         private static string GetLocalAppDataDirectory(string assemblyLocation = null)
         {
             // if we're installed and running as update.exe in the app folder, the app directory root is one folder up
-            if (AssemblyRuntimeInfo.IsSingleFile && Path.GetFileName(AssemblyRuntimeInfo.EntryExePath).Equals("Update.exe", StringComparison.OrdinalIgnoreCase)) {
-                var oneFolderUpFromAppFolder = Path.Combine(Path.GetDirectoryName(AssemblyRuntimeInfo.EntryExePath), "..");
+            if (SquirrelRuntimeInfo.IsSingleFile && Path.GetFileName(SquirrelRuntimeInfo.EntryExePath).Equals("Update.exe", StringComparison.OrdinalIgnoreCase)) {
+                var oneFolderUpFromAppFolder = Path.Combine(Path.GetDirectoryName(SquirrelRuntimeInfo.EntryExePath), "..");
                 return Path.GetFullPath(oneFolderUpFromAppFolder);
             }
 
             // if update exists above us, we're running from within a version directory, and the appdata folder is two above us
-            if (File.Exists(Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..", "Update.exe"))) {
-                var twoFoldersUpFromAppFolder = Path.Combine(Path.GetDirectoryName(AssemblyRuntimeInfo.EntryExePath), "..\\..");
+            if (File.Exists(Path.Combine(SquirrelRuntimeInfo.BaseDirectory, "..", "Update.exe"))) {
+                var twoFoldersUpFromAppFolder = Path.Combine(Path.GetDirectoryName(SquirrelRuntimeInfo.EntryExePath), "..\\..");
                 return Path.GetFullPath(twoFoldersUpFromAppFolder);
             }
 
@@ -421,7 +421,7 @@ namespace Squirrel
 
         private static string getUpdateExe()
         {
-            var ourPath = AssemblyRuntimeInfo.EntryExePath;
+            var ourPath = SquirrelRuntimeInfo.EntryExePath;
 
             // Are we update.exe?
             if (ourPath != null &&
@@ -431,7 +431,7 @@ namespace Squirrel
                 return Path.GetFullPath(ourPath);
             }
 
-            var updateDotExe = Path.Combine(AssemblyRuntimeInfo.BaseDirectory, "..\\Update.exe");
+            var updateDotExe = Path.Combine(SquirrelRuntimeInfo.BaseDirectory, "..\\Update.exe");
             var target = new FileInfo(updateDotExe);
 
             if (!target.Exists)

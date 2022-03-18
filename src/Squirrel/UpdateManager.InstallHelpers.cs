@@ -101,7 +101,7 @@ namespace Squirrel
 
             public void KillAllProcessesBelongingToPackage()
             {
-                var ourExePath = AssemblyRuntimeInfo.EntryExePath;
+                var ourExePath = SquirrelRuntimeInfo.EntryExePath;
 
                 Utility.EnumerateProcesses()
                     .Where(x => {

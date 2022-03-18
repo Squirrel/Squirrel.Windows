@@ -35,10 +35,10 @@ namespace Squirrel
         static HelperExe()
         {
 #if DEBUG
-            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "build", "publish");
-            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor");
-            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "7zip");
-            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix");
+            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "build", "publish");
+            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor");
+            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "7zip");
+            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix");
 #else
             AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "bin");
 #endif

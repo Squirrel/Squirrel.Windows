@@ -38,8 +38,8 @@ namespace Squirrel.Sources
 
             var args = new Dictionary<string, string>();
 
-            if (AssemblyRuntimeInfo.SystemArchitecture != RuntimeCpu.Unknown) {
-                args.Add("arch", AssemblyRuntimeInfo.SystemArchitecture.ToString().ToLower());
+            if (SquirrelRuntimeInfo.SystemArchitecture != RuntimeCpu.Unknown) {
+                args.Add("arch", SquirrelRuntimeInfo.SystemArchitecture.ToString().ToLower());
             }
 
             if (latestLocalRelease != null) {

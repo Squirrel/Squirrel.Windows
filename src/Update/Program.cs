@@ -160,7 +160,7 @@ namespace Squirrel.Update
             ISplashWindow splash = new ComposedWindow(appname, silentInstall, zp.SetupIconBytes, zp.SetupSplashBytes);
 
             // verify that this package can be installed on this cpu architecture
-            if (AssemblyRuntimeInfo.SystemArchitecture == RuntimeCpu.x86 && zp.MachineArchitecture == RuntimeCpu.amd64) {
+            if (SquirrelRuntimeInfo.SystemArchitecture == RuntimeCpu.x86 && zp.MachineArchitecture == RuntimeCpu.amd64) {
                 splash.ShowErrorDialog("Incompatible System", "The current operating system uses the x86 cpu architecture, but this package requires an x64 system.");
                 return;
             }
@@ -246,7 +246,7 @@ namespace Squirrel.Update
 
         static async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
         {
-            sourceDirectory = sourceDirectory ?? AssemblyRuntimeInfo.BaseDirectory;
+            sourceDirectory = sourceDirectory ?? SquirrelRuntimeInfo.BaseDirectory;
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
 
             Log.Info("Starting install, writing to {0}", sourceDirectory);
@@ -288,7 +288,7 @@ namespace Squirrel.Update
                 Directory.CreateDirectory(mgr.AppDirectory);
 
                 var updateTarget = Path.Combine(mgr.AppDirectory, "Update.exe");
-                Log.ErrorIfThrows(() => File.Copy(AssemblyRuntimeInfo.EntryExePath, updateTarget, true),
+                Log.ErrorIfThrows(() => File.Copy(SquirrelRuntimeInfo.EntryExePath, updateTarget, true),
                     "Failed to copy Update.exe to " + updateTarget);
 
                 await mgr.FullInstall(silentInstall, progressSource.Raise);
@@ -340,7 +340,7 @@ namespace Squirrel.Update
         static async Task UpdateSelf()
         {
             waitForParentToExit();
-            var src = AssemblyRuntimeInfo.EntryExePath;
+            var src = SquirrelRuntimeInfo.EntryExePath;
             var updateDotExeForOurPackage = Path.Combine(
                 Path.GetDirectoryName(src),
                 "..", "Update.exe");
@@ -406,9 +406,9 @@ namespace Squirrel.Update
                 mgr.RemoveUninstallerRegistryEntry();
 
                 // if this exe is in the app directory, starts a process that will wait 3 seconds and then delete this exe
-                if (Utility.IsFileInDirectory(AssemblyRuntimeInfo.EntryExePath, mgr.AppDirectory)) {
+                if (Utility.IsFileInDirectory(SquirrelRuntimeInfo.EntryExePath, mgr.AppDirectory)) {
                     Process.Start(new ProcessStartInfo() {
-                        Arguments = "/C choice /C Y /N /D Y /T 3 & Del \"" + AssemblyRuntimeInfo.EntryExePath + "\"",
+                        Arguments = "/C choice /C Y /N /D Y /T 3 & Del \"" + SquirrelRuntimeInfo.EntryExePath + "\"",
                         WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true, FileName = "cmd.exe"
                     });
                 }
@@ -455,7 +455,7 @@ namespace Squirrel.Update
             }
 
             // Find the latest installed version's app dir
-            var appDir = AssemblyRuntimeInfo.BaseDirectory;
+            var appDir = SquirrelRuntimeInfo.BaseDirectory;
             var releases = ReleaseEntry.ParseReleaseFile(
                 File.ReadAllText(Utility.LocalReleaseFileForAppDir(appDir), Encoding.UTF8));
 
@@ -489,7 +489,7 @@ namespace Squirrel.Update
 
             // Do not run an unsigned EXE if we ourselves are signed. 
             // Maybe TODO: check that it's signed with the same certificate as us?
-            if (AuthenticodeTools.IsTrusted(AssemblyRuntimeInfo.EntryExePath) && !AuthenticodeTools.IsTrusted(targetExe.FullName)) {
+            if (AuthenticodeTools.IsTrusted(SquirrelRuntimeInfo.EntryExePath) && !AuthenticodeTools.IsTrusted(targetExe.FullName)) {
                 Log.Error("File {0} is not trusted, and will not be run from a trusted context.", targetExe);
                 throw new ArgumentException();
             }
@@ -532,7 +532,7 @@ namespace Squirrel.Update
 
         static string getAppNameFromDirectory(string path = null)
         {
-            path = path ?? AssemblyRuntimeInfo.BaseDirectory;
+            path = path ?? SquirrelRuntimeInfo.BaseDirectory;
             return (new DirectoryInfo(path)).Name;
         }
 

@@ -27,7 +27,7 @@ namespace Squirrel
     /// Convenience class which provides runtime information about the current executing process, 
     /// in a way that is safe in older and newer versions of the framework.
     /// </summary>
-    public static class AssemblyRuntimeInfo
+    public static class SquirrelRuntimeInfo
     {
         /// <summary> The path on disk of the entry assembly. </summary>
         public static string EntryExePath { get; }
@@ -47,7 +47,7 @@ namespace Squirrel
         /// <summary> The name of the current OS - eg. 'windows', 'linux', or 'osx'. </summary>
         public static string SystemOsName { get; private set; }
 
-        static AssemblyRuntimeInfo()
+        static SquirrelRuntimeInfo()
         {
             EntryExePath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
             BaseDirectory = AppContext.BaseDirectory;

@@ -31,7 +31,7 @@ namespace Squirrel.Update
 
         private OptionSet Parse(string[] args)
         {
-            var exeName = Path.GetFileName(AssemblyRuntimeInfo.EntryExePath);
+            var exeName = Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
             var opts = new OptionSet() {
                 "",
 #pragma warning disable CS0436 // Type conflicts with imported type
