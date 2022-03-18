@@ -36,9 +36,11 @@ namespace Squirrel.Sources
         {
             var uri = Utility.AppendPathToUri(BaseUri, "RELEASES");
 
-            var args = new Dictionary<string, string> {
-                { "arch", AssemblyRuntimeInfo.Architecture.ToString().ToLower() }
-            };
+            var args = new Dictionary<string, string>();
+
+            if (AssemblyRuntimeInfo.SystemArchitecture != RuntimeCpu.Unknown) {
+                args.Add("arch", AssemblyRuntimeInfo.SystemArchitecture.ToString().ToLower());
+            }
 
             if (latestLocalRelease != null) {
                 args.Add("id", latestLocalRelease.PackageName);

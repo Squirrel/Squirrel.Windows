@@ -160,7 +160,7 @@ namespace Squirrel.Update
             ISplashWindow splash = new ComposedWindow(appname, silentInstall, zp.SetupIconBytes, zp.SetupSplashBytes);
 
             // verify that this package can be installed on this cpu architecture
-            if (AssemblyRuntimeInfo.Architecture == RuntimeCpu.X86 && zp.MachineArchitecture == RuntimeCpu.X64) {
+            if (AssemblyRuntimeInfo.SystemArchitecture == RuntimeCpu.x86 && zp.MachineArchitecture == RuntimeCpu.amd64) {
                 splash.ShowErrorDialog("Incompatible System", "The current operating system uses the x86 cpu architecture, but this package requires an x64 system.");
                 return;
             }

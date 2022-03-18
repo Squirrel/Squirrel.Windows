@@ -16,11 +16,11 @@ namespace Squirrel
         /// <summary> Unknown or unsupported </summary>
         Unknown = 0,
         /// <summary> Intel x86 </summary>
-        X86 = 0x014c,
+        x86 = 0x014c,
         /// <summary> x64 / Amd64 </summary>
-        X64 = 0x8664,
-        // <summary> Arm64 </summary>
-        // Arm64 = 0xAA64,
+        amd64 = 0x8664,
+        /// <summary> Arm64 </summary>
+        arm64 = 0xAA64,
     }
 
     /// <summary>
@@ -41,8 +41,11 @@ namespace Squirrel
         /// <summary> Check if the current application is a published SingleFileBundle. </summary>
         public static bool IsSingleFile { get; }
 
-        /// <summary> The machine architecture, regardless of the current process / binary architecture. </summary>
-        public static RuntimeCpu Architecture { get; private set; }
+        /// <summary> The current machine architecture, ignoring the current process / pe architecture. </summary>
+        public static RuntimeCpu SystemArchitecture { get; private set; }
+
+        /// <summary> The name of the current OS - eg. 'windows', 'linux', or 'osx'. </summary>
+        public static string SystemOsName { get; private set; }
 
         static AssemblyRuntimeInfo()
         {
@@ -50,16 +53,17 @@ namespace Squirrel
             BaseDirectory = AppContext.BaseDirectory;
 
             // if Assembly.Location does not exist, we're almost certainly bundled into a dotnet SingleFile
-            // is there a better way to check for this?
+            // TODO: there is a better way to check this - we can scan the currently executing binary for a
+            // SingleFile bundle marker.
             var assyPath = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly())?.Location;
             if (String.IsNullOrEmpty(assyPath) || !File.Exists(assyPath))
                 IsSingleFile = true;
 
-#if !NETFRAMEWORK
+#if NETFRAMEWORK
+            CheckArchitectureWindows();
+#else
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-#endif
                 CheckArchitectureWindows();
-#if !NETFRAMEWORK
             } else {
                 CheckArchitectureOther();
             }
@@ -74,6 +78,8 @@ namespace Squirrel
 
         private static void CheckArchitectureWindows()
         {
+            SystemOsName = "windows";
+
             // find the actual OS architecture. We can't rely on the framework alone for this on Windows
             // because Wow64 virtualisation is good enough to trick us to believing we're running natively
             // in some cases unless we use functions that are not virtualized (such as IsWow64Process2)
@@ -81,14 +87,14 @@ namespace Squirrel
             try {
                 if (IsWow64Process2(GetCurrentProcess(), out var _, out var nativeMachine)) {
                     if (Utility.TryParseEnumU16<RuntimeCpu>(nativeMachine, out var val)) {
-                        Architecture = val;
+                        SystemArchitecture = val;
                     }
                 }
             } catch {
                 // don't care if this function is missing
             }
 
-            if (Architecture != RuntimeCpu.Unknown) {
+            if (SystemArchitecture != RuntimeCpu.Unknown) {
                 return;
             }
 
@@ -99,21 +105,21 @@ namespace Squirrel
 
             if (!String.IsNullOrEmpty(pf64compat)) {
                 switch (pf64compat) {
-                //case "ARM64":
-                //    Architecture = RuntimeCpu.Arm64;
-                //    break;
+                case "ARM64":
+                    SystemArchitecture = RuntimeCpu.arm64;
+                    break;
                 case "AMD64":
-                    Architecture = RuntimeCpu.X64;
+                    SystemArchitecture = RuntimeCpu.amd64;
                     break;
                 }
             }
 
-            if (Architecture != RuntimeCpu.Unknown) {
+            if (SystemArchitecture != RuntimeCpu.Unknown) {
                 return;
             }
 
 #if NETFRAMEWORK
-            Architecture = Environment.Is64BitOperatingSystem ? RuntimeCpu.X64 : RuntimeCpu.X86;
+            SystemArchitecture = Environment.Is64BitOperatingSystem ? RuntimeCpu.amd64 : RuntimeCpu.x86;
 #else
             CheckArchitectureOther();
 #endif
@@ -122,10 +128,18 @@ namespace Squirrel
 #if !NETFRAMEWORK
         private static void CheckArchitectureOther()
         {
-            Architecture = RuntimeInformation.OSArchitecture switch {
-                InteropArchitecture.X86 => RuntimeCpu.X86,
-                InteropArchitecture.X64 => RuntimeCpu.X64,
-                //InteropArchitecture.Arm64 => RuntimeCpu.Arm64,
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                SystemOsName = "windows";
+            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                SystemOsName = "linux";
+            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
+                SystemOsName = "osx";
+            }
+
+            SystemArchitecture = RuntimeInformation.OSArchitecture switch {
+                InteropArchitecture.X86 => RuntimeCpu.x86,
+                InteropArchitecture.X64 => RuntimeCpu.amd64,
+                InteropArchitecture.Arm64 => RuntimeCpu.arm64,
                 _ => RuntimeCpu.Unknown,
             };
         }
