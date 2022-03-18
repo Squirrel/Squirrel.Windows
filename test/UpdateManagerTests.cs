@@ -172,7 +172,7 @@ namespace Squirrel.Tests
 
                     // check for an update
                     UpdateInfo updateInfo;
-                    using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeUrlDownloader())) {
+                    using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeDownloader())) {
                         updateInfo = await mgr.CheckForUpdate();
                     }
 
@@ -217,7 +217,7 @@ namespace Squirrel.Tests
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
                     UpdateInfo updateInfo;
-                    using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeUrlDownloader())) {
+                    using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeDownloader())) {
                         updateInfo = await mgr.CheckForUpdate();
                     }
 
@@ -258,7 +258,7 @@ namespace Squirrel.Tests
                     await fixture.updateLocalReleasesFile();
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
-                    using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeUrlDownloader())) {
+                    using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeDownloader())) {
                         UpdateInfo updateInfo;
                         updateInfo = await mgr.CheckForUpdate();
                         Assert.True(updateInfo.ReleasesToApply.First().IsDelta);

@@ -15,24 +15,6 @@ using Xunit;
 
 namespace Squirrel.Tests
 {
-    public class FakeUrlDownloader : Sources.IFileDownloader
-    {
-        public Task<byte[]> DownloadBytes(string url, string auth, string acc)
-        {
-            return Task.FromResult(new byte[0]);
-        }
-
-        public Task DownloadFile(string url, string targetFile, Action<int> progress, string auth, string acc)
-        {
-            return Task.CompletedTask;
-        }
-
-        public Task<string> DownloadString(string url, string auth, string acc)
-        {
-            return Task.FromResult("");
-        }
-    }
-
     public class ApplyReleasesTests : IEnableLogger
     {
         [Fact]
@@ -481,7 +463,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.1.0.0-delta.nupkg"
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
-                var urlDownloader = new FakeUrlDownloader();
+                var urlDownloader = new FakeDownloader();
                 var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.0.0.0-full.nupkg"));

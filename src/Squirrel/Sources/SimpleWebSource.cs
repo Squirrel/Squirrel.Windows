@@ -57,14 +57,22 @@ namespace Squirrel.Sources
         /// <inheritdoc />
         public virtual Task DownloadReleaseEntry(ReleaseEntry releaseEntry, string localFile, Action<int> progress)
         {
-            var baseUri = Utility.EnsureTrailingSlash(BaseUri);
+            if (releaseEntry == null) throw new ArgumentNullException(nameof(releaseEntry));
+            if (localFile == null) throw new ArgumentNullException(nameof(localFile));
 
-            var uri = Utility.AppendPathToUri(new Uri(releaseEntry.BaseUrl), releaseEntry.Filename).ToString();
+
+            var releaseUri = releaseEntry.BaseUrl == null
+                ? releaseEntry.Filename
+                : Utility.AppendPathToUri(new Uri(releaseEntry.BaseUrl), releaseEntry.Filename).ToString();
+
             if (!String.IsNullOrEmpty(releaseEntry.Query)) {
-                uri += releaseEntry.Query;
+                releaseUri += releaseEntry.Query;
             }
 
-            var source = new Uri(baseUri, uri).AbsolutePath;
+            // releaseUri can be a relative url (eg. "MyPackage.nupkg") or it can be an 
+            // absolute url (eg. "https://example.com/MyPackage.nupkg"). In the former case
+            var sourceBaseUri = Utility.EnsureTrailingSlash(BaseUri);
+            var source = new Uri(sourceBaseUri, releaseUri).ToString();
 
             this.Log().Info($"Downloading '{releaseEntry.Filename}' from '{source}'.");
             return Downloader.DownloadFile(source, localFile, progress);

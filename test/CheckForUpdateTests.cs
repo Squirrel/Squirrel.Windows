@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 
@@ -122,6 +123,25 @@ namespace Squirrel.Tests
         public void IfLocalAndRemoteAreEqualThenDoNothing()
         {
             throw new NotImplementedException();
+        }
+
+        [Theory]
+        [InlineData(@"94689fede03fed7ab59c24337673a27837f0c3ec MyCoolApp-1.0.nupkg 1004502", "MyCoolApp", null)]
+        [InlineData(@"0000000000000000000000000000000000000000  https://www.test.org/Folder/MyCoolApp-1.2-delta.nupkg?query=param  1231953", "MyCoolApp", "https://www.test.org/Folder")]
+        public async Task WebSourceRequestsExpectedUrls(string releaseEntry, string releaseName, string baseUrl)
+        {
+            baseUrl = baseUrl ?? "https://example.com/files";
+            var dl = new FakeDownloader();
+            var source = new Sources.SimpleWebSource("https://example.com/files", dl);
+
+            dl.MockedResponseBytes = Encoding.UTF8.GetBytes(releaseEntry);
+            var releases = await source.GetReleaseFeed(null, null);
+            Assert.True(releases.Count() == 1);
+            Assert.Equal(releaseName, releases[0].PackageName);
+            Assert.Equal("https://example.com/files/RELEASES", new Uri(dl.LastUrl).GetLeftPart(UriPartial.Path));
+
+            await source.DownloadReleaseEntry(releases[0], "test", null);
+            Assert.Equal(baseUrl + "/" + releases[0].Filename, new Uri(dl.LastUrl).GetLeftPart(UriPartial.Path));
         }
     }
 }
