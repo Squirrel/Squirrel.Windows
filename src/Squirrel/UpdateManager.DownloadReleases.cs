@@ -15,6 +15,9 @@ namespace Squirrel
             // lock will be held until this class is disposed
             await acquireUpdateLock().ConfigureAwait(false);
 
+            if (_updateSource == null)
+                throw new InvalidOperationException("Cannot download updates if no update source / url was provided in the construction of UpdateManager.");
+
             progress = progress ?? (_ => { });
             var packagesDirectory = PackagesDirectory;
 

@@ -74,7 +74,7 @@ namespace Squirrel
             string applicationIdOverride = null,
             string localAppDataDirectoryOverride = null,
             IFileDownloader urlDownloader = null)
-            : this(CreateSourceFromString(urlOrPath, urlDownloader), applicationIdOverride, localAppDataDirectoryOverride)
+            : this(CreateSource(urlOrPath, urlDownloader), applicationIdOverride, localAppDataDirectoryOverride)
         { }
 
         /// <summary>
@@ -98,8 +98,8 @@ namespace Squirrel
         /// instead of <see cref="Environment.SpecialFolder.LocalApplicationData"/>.
         /// </param>
         public UpdateManager(
-            IUpdateSource updateSource, 
-            string applicationIdOverride = null, 
+            IUpdateSource updateSource,
+            string applicationIdOverride = null,
             string localAppDataDirectoryOverride = null)
         {
             _updateSource = updateSource;
@@ -341,8 +341,12 @@ namespace Squirrel
             return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         }
 
-        private static IUpdateSource CreateSourceFromString(string urlOrPath, IFileDownloader urlDownloader)
+        private static IUpdateSource CreateSource(string urlOrPath, IFileDownloader urlDownloader)
         {
+            if (String.IsNullOrWhiteSpace(urlOrPath)) {
+                return null;
+            }
+
             if (Utility.IsHttpUrl(urlOrPath)) {
                 return new SimpleWebSource(urlOrPath, urlDownloader ?? Utility.CreateDefaultDownloader());
             } else {

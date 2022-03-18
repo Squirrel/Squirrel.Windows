@@ -20,6 +20,9 @@ namespace Squirrel
             // lock will be held until this class is disposed
             await acquireUpdateLock().ConfigureAwait(false);
 
+            if (_updateSource == null)
+                throw new InvalidOperationException("Cannot check for updates if no update source / url was provided in the construction of UpdateManager.");
+
             progress = progress ?? (_ => { });
             var localReleases = Enumerable.Empty<ReleaseEntry>();
             var stagingId = intention == UpdaterIntention.Install ? null : getOrCreateStagedUserId();
