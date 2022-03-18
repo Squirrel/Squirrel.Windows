@@ -19,7 +19,7 @@ namespace Squirrel.Tests.TestHelpers
         public static string GetPath(params string[] paths)
         {
             var ret = GetIntegrationTestRootDirectory();
-            return (new FileInfo(paths.Aggregate (ret, Path.Combine))).FullName;
+            return (new FileInfo(paths.Aggregate(ret, Path.Combine))).FullName;
         }
 
         public static string GetIntegrationTestRootDirectory()
@@ -35,7 +35,7 @@ namespace Squirrel.Tests.TestHelpers
 
         public static bool SkipTestOnXPAndVista()
         {
-            int osVersion = Environment.OSVersion.Version.Major*100 + Environment.OSVersion.Version.Minor;
+            int osVersion = Environment.OSVersion.Version.Major * 100 + Environment.OSVersion.Version.Minor;
             return (osVersion < 601);
         }
 
@@ -85,10 +85,10 @@ namespace Squirrel.Tests.TestHelpers
                 File.WriteAllText(nuspecPath, nuspec.Replace("0.1.0", version), Encoding.UTF8);
 
                 File.Copy(
-                    IntegrationTestHelper.GetPath("fixtures", "PublishSingleFileAwareApp.exe"), 
+                    IntegrationTestHelper.GetPath("fixtures", "PublishSingleFileAwareApp.exe"),
                     Path.Combine(targetDir, "SquirrelAwareApp.exe"));
                 File.Copy(
-                    IntegrationTestHelper.GetPath("fixtures", "NotSquirrelAwareApp.exe"), 
+                    IntegrationTestHelper.GetPath("fixtures", "NotSquirrelAwareApp.exe"),
                     Path.Combine(targetDir, "NotSquirrelAwareApp.exe"));
 
                 new SquirrelCli.NugetConsole().Pack(nuspecPath, targetDir, targetDir);

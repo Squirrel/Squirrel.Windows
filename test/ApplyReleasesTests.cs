@@ -227,8 +227,7 @@ namespace Squirrel.Tests
         public void ThrowsWhenOnlyDeltaReleasesAreAvailable()
         {
             string tempDir;
-            using (Utility.WithTempDirectory(out tempDir))
-            {
+            using (Utility.WithTempDirectory(out tempDir)) {
                 var appDir = Directory.CreateDirectory(Path.Combine(tempDir, "theApp"));
                 var packages = Path.Combine(appDir.FullName, "packages");
                 Directory.CreateDirectory(packages);
@@ -352,8 +351,7 @@ namespace Squirrel.Tests
         {
             string tempDir;
 
-            using (Utility.WithTempDirectory(out tempDir))
-            {
+            using (Utility.WithTempDirectory(out tempDir)) {
                 string appDir = Path.Combine(tempDir, "theApp");
                 string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
@@ -469,8 +467,8 @@ namespace Squirrel.Tests
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.1.0.0-delta.nupkg"));
 
-                var resultObs = (Task<ReleaseEntry>)fixture.GetType().GetMethod("createFullPackagesFromDeltas", BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Invoke(fixture, new object[] { new[] {deltaEntry}, baseEntry, null });
+                var resultObs = (Task<ReleaseEntry>) fixture.GetType().GetMethod("createFullPackagesFromDeltas", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(fixture, new object[] { new[] { deltaEntry }, baseEntry, null });
 
                 var result = await resultObs;
                 var zp = new ZipPackage(Path.Combine(tempDir, "theApp", "packages", result.Filename));
@@ -503,7 +501,7 @@ namespace Squirrel.Tests
                 Thread.Sleep(1000);
             }
         }
-        
+
         [Fact]
         public void UnshimOurselvesSmokeTest()
         {

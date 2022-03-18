@@ -120,24 +120,22 @@ namespace Squirrel.Tests.TestHelpers
 
         static string ToSafeString(this char c)
         {
-            if (Char.IsControl(c) || Char.IsWhiteSpace(c))
-            {
-                switch (c)
-                {
-                    case '\r':
-                        return @"\r";
-                    case '\n':
-                        return @"\n";
-                    case '\t':
-                        return @"\t";
-                    case '\a':
-                        return @"\a";
-                    case '\v':
-                        return @"\v";
-                    case '\f':
-                        return @"\f";
-                    default:
-                        return String.Format("\\u{0:X};", (int)c);
+            if (Char.IsControl(c) || Char.IsWhiteSpace(c)) {
+                switch (c) {
+                case '\r':
+                    return @"\r";
+                case '\n':
+                    return @"\n";
+                case '\t':
+                    return @"\t";
+                case '\a':
+                    return @"\a";
+                case '\v':
+                    return @"\v";
+                case '\f':
+                    return @"\f";
+                default:
+                    return String.Format("\\u{0:X};", (int) c);
                 }
             }
             return c.ToString(CultureInfo.InvariantCulture);

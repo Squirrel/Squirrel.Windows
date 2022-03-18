@@ -36,7 +36,7 @@ namespace Squirrel.Tests
                         await mgr.CreateUninstallerRegistryEntry();
                         var regKey = await mgr.CreateUninstallerRegistryEntry();
 
-                        Assert.False(String.IsNullOrWhiteSpace((string)regKey.GetValue("DisplayName")));
+                        Assert.False(String.IsNullOrWhiteSpace((string) regKey.GetValue("DisplayName")));
 
                         mgr.RemoveUninstallerRegistryEntry();
                     }
@@ -116,8 +116,7 @@ namespace Squirrel.Tests
             public async Task SpecialCharactersInitialInstallTest()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir))
-                {
+                using (Utility.WithTempDirectory(out tempDir)) {
                     var remotePackageDir = Directory.CreateDirectory(Path.Combine(tempDir, "remotePackages"));
                     var localAppDir = Path.Combine(tempDir, "theApp");
 
@@ -125,8 +124,7 @@ namespace Squirrel.Tests
                         "SpecialCharacters-0.1.0-full.nupkg",
                     }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(remotePackageDir.FullName, x)));
 
-                    using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", tempDir))
-                    {
+                    using (var fixture = new UpdateManager(remotePackageDir.FullName, "theApp", tempDir)) {
                         await fixture.FullInstall();
                     }
 
@@ -146,8 +144,7 @@ namespace Squirrel.Tests
             public async Task WhenBothFilesAreInSyncNoUpdatesAreApplied()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir))
-                {
+                using (Utility.WithTempDirectory(out tempDir)) {
                     var appDir = Path.Combine(tempDir, "theApp");
                     var localPackages = Path.Combine(appDir, "packages");
                     var remotePackages = Path.Combine(tempDir, "releases");
@@ -165,7 +162,7 @@ namespace Squirrel.Tests
                     });
 
                     var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
-                        
+
                     // sync both release files
                     await fixture.updateLocalReleasesFile();
                     ReleaseEntry.BuildReleasesFile(remotePackages);
@@ -185,8 +182,7 @@ namespace Squirrel.Tests
             public async Task WhenRemoteReleasesDoNotHaveDeltasNoUpdatesAreApplied()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir))
-                {
+                using (Utility.WithTempDirectory(out tempDir)) {
                     var appDir = Path.Combine(tempDir, "theApp");
                     var localPackages = Path.Combine(appDir, "packages");
                     var remotePackages = Path.Combine(tempDir, "releases");
@@ -230,8 +226,7 @@ namespace Squirrel.Tests
             public async Task WhenTwoRemoteUpdatesAreAvailableChoosesDeltaVersion()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir))
-                {
+                using (Utility.WithTempDirectory(out tempDir)) {
                     var appDir = Path.Combine(tempDir, "theApp");
                     var localPackages = Path.Combine(appDir, "packages");
                     var remotePackages = Path.Combine(tempDir, "releases");
@@ -375,8 +370,7 @@ namespace Squirrel.Tests
                 var progress = new List<int>();
 
                 // 3 % (3 stages), check for updates
-                foreach (var step in new [] { 0, 33, 66, 100 })
-                {
+                foreach (var step in new[] { 0, 33, 66, 100 }) {
                     progress.Add(UpdateManager.CalculateProgress(step, 0, 3));
 
                     Assert.InRange(progress.Last(), 0, 3);
@@ -385,8 +379,7 @@ namespace Squirrel.Tests
                 Assert.Equal(3, progress.Last());
 
                 // 3 - 30 %, download releases
-                for (var step = 0; step <= 100; step++)
-                {
+                for (var step = 0; step <= 100; step++) {
                     progress.Add(UpdateManager.CalculateProgress(step, 3, 30));
 
                     Assert.InRange(progress.Last(), 3, 30);
@@ -395,8 +388,7 @@ namespace Squirrel.Tests
                 Assert.Equal(30, progress.Last());
 
                 // 30 - 100 %, apply releases
-                for (var step = 0; step <= 100; step++)
-                {
+                for (var step = 0; step <= 100; step++) {
                     progress.Add(UpdateManager.CalculateProgress(step, 30, 100));
 
                     Assert.InRange(progress.Last(), 30, 100);
