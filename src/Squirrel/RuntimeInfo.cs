@@ -199,7 +199,7 @@ namespace Squirrel
             {
                 switch (CpuArchitecture) {
 
-                case RuntimeCpu.amd64: return Task.FromResult(CheckIsInstalledX64());
+                case RuntimeCpu.x64: return Task.FromResult(CheckIsInstalledX64());
                 case RuntimeCpu.x86: return Task.FromResult(CheckIsInstalledX86());
                 default: return Task.FromResult(false);
 
@@ -209,7 +209,7 @@ namespace Squirrel
             /// <inheritdoc/>
             public override Task<bool> CheckIsSupported()
             {
-                if (CpuArchitecture == RuntimeCpu.amd64 && !Environment.Is64BitOperatingSystem)
+                if (CpuArchitecture == RuntimeCpu.x64 && !Environment.Is64BitOperatingSystem)
                     return Task.FromResult(false);
 
                 // TODO use IsWindowsVersionOrGreater function to verify it can be installed on this machine
@@ -266,7 +266,7 @@ namespace Squirrel
                 var latest = await GetLatestDotNetVersion(DotnetRuntimeType.WindowsDesktop, $"{MinVersion.Major}.{MinVersion.Minor}").ConfigureAwait(false);
                 var architecture = CpuArchitecture switch {
                     RuntimeCpu.x86 => "x86",
-                    RuntimeCpu.amd64 => "x64",
+                    RuntimeCpu.x64 => "x64",
                     _ => throw new ArgumentOutOfRangeException(nameof(CpuArchitecture)),
                 };
 
@@ -426,7 +426,7 @@ namespace Squirrel
             /// <inheritdoc/>
             public override Task<bool> CheckIsSupported()
             {
-                if (CpuArchitecture == RuntimeCpu.amd64 && !Environment.Is64BitOperatingSystem)
+                if (CpuArchitecture == RuntimeCpu.x64 && !Environment.Is64BitOperatingSystem)
                     return Task.FromResult(false);
 
                 // TODO use IsWindowsVersionOrGreater function to verify it can be installed on this machine
@@ -454,7 +454,7 @@ namespace Squirrel
                                 // these entries do not get added into the correct registry hive, so we need to determine
                                 // the cpu architecture from the name. I hate this but what can I do?
                                 if (name.Contains("x64") && Environment.Is64BitOperatingSystem) {
-                                    results.Add((v, RuntimeCpu.amd64));
+                                    results.Add((v, RuntimeCpu.x64));
                                 } else {
                                     results.Add((v, RuntimeCpu.x86));
                                 }
@@ -494,7 +494,7 @@ namespace Squirrel
                 // https://docs.microsoft.com/en-us/cpp/porting/binary-compat-2015-2017?view=msvc-170
                 return Task.FromResult(CpuArchitecture switch {
                     RuntimeCpu.x86 => "https://aka.ms/vs/17/release/vc_redist.x86.exe",
-                    RuntimeCpu.amd64 => "https://aka.ms/vs/17/release/vc_redist.x64.exe",
+                    RuntimeCpu.x64 => "https://aka.ms/vs/17/release/vc_redist.x64.exe",
                     _ => throw new ArgumentOutOfRangeException(nameof(CpuArchitecture)),
                 });
             }

@@ -38,51 +38,51 @@ namespace Squirrel
         /// <summary> Runtime for .NET Core 3.1 Desktop Runtime (x86) </summary>
         public static readonly DotnetInfo DOTNETCORE31_X86 = new("3.1", RuntimeCpu.x86); // eg. netcoreapp3.1-x86
         /// <summary> Runtime for .NET Core 3.1 Desktop Runtime (x64) </summary>
-        public static readonly DotnetInfo DOTNETCORE31_X64 = new("3.1", RuntimeCpu.amd64); // eg. netcoreapp3.1-x64
+        public static readonly DotnetInfo DOTNETCORE31_X64 = new("3.1", RuntimeCpu.x64); // eg. netcoreapp3.1-x64
         /// <summary> Runtime for .NET 5.0 Desktop Runtime (x86) </summary>
         public static readonly DotnetInfo DOTNET5_X86 = new("5.0", RuntimeCpu.x86); // eg. net5.0.14-x86
         /// <summary> Runtime for .NET 5.0 Desktop Runtime (x64) </summary>
-        public static readonly DotnetInfo DOTNET5_X64 = new("5.0", RuntimeCpu.amd64); // eg. net5
+        public static readonly DotnetInfo DOTNET5_X64 = new("5.0", RuntimeCpu.x64); // eg. net5
         /// <summary> Runtime for .NET 6.0 Desktop Runtime (x86) </summary>
         public static readonly DotnetInfo DOTNET6_X86 = new("6.0.2", RuntimeCpu.x86); // eg. net6-x86
         /// <summary> Runtime for .NET 6.0 Desktop Runtime (x64) </summary>
-        public static readonly DotnetInfo DOTNET6_X64 = new("6.0.2", RuntimeCpu.amd64); // eg. net6.0.2
+        public static readonly DotnetInfo DOTNET6_X64 = new("6.0.2", RuntimeCpu.x64); // eg. net6.0.2
 
 
         /// <summary> Runtime for Visual C++ 2010 Redistributable (x86) </summary>
         public static readonly VCRedist00 VCREDIST100_X86 = new("vcredist100-x86", "Visual C++ 2010 Redistributable (x86)", new(10, 00, 40219), RuntimeCpu.x86,
             "https://download.microsoft.com/download/C/6/D/C6D0FD4E-9E53-4897-9B91-836EBA2AACD3/vcredist_x86.exe");
         /// <summary> Runtime for Visual C++ 2010 Redistributable (x64) </summary>
-        public static readonly VCRedist00 VCREDIST100_X64 = new("vcredist100-x64", "Visual C++ 2010 Redistributable (x64)", new(10, 00, 40219), RuntimeCpu.amd64,
+        public static readonly VCRedist00 VCREDIST100_X64 = new("vcredist100-x64", "Visual C++ 2010 Redistributable (x64)", new(10, 00, 40219), RuntimeCpu.x64,
             "https://download.microsoft.com/download/A/8/0/A80747C3-41BD-45DF-B505-E9710D2744E0/vcredist_x64.exe");
         /// <summary> Runtime for Visual C++ 2012 Redistributable (x86) </summary>
         public static readonly VCRedist00 VCREDIST110_X86 = new("vcredist110-x86", "Visual C++ 2012 Redistributable (x86)", new(11, 00, 61030), RuntimeCpu.x86,
             "https://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x86.exe");
         /// <summary> Runtime for Visual C++ 2012 Redistributable (x64) </summary>
-        public static readonly VCRedist00 VCREDIST110_X64 = new("vcredist110-x64", "Visual C++ 2012 Redistributable (x64)", new(11, 00, 61030), RuntimeCpu.amd64,
+        public static readonly VCRedist00 VCREDIST110_X64 = new("vcredist110-x64", "Visual C++ 2012 Redistributable (x64)", new(11, 00, 61030), RuntimeCpu.x64,
             "https://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe");
         /// <summary> Runtime for Visual C++ 2013 Redistributable (x86) </summary>
         public static readonly VCRedist00 VCREDIST120_X86 = new("vcredist120-x86", "Visual C++ 2013 Redistributable (x86)", new(12, 00, 40664), RuntimeCpu.x86,
             "https://aka.ms/highdpimfc2013x86enu");
         /// <summary> Runtime for Visual C++ 2013 Redistributable (x64) </summary>
-        public static readonly VCRedist00 VCREDIST120_X64 = new("vcredist120-x64", "Visual C++ 2013 Redistributable (x64)", new(12, 00, 40664), RuntimeCpu.amd64,
+        public static readonly VCRedist00 VCREDIST120_X64 = new("vcredist120-x64", "Visual C++ 2013 Redistributable (x64)", new(12, 00, 40664), RuntimeCpu.x64,
             "https://aka.ms/highdpimfc2013x64enu");
         /// <summary> Runtime for Visual C++ 2015 Redistributable (x86) </summary>
         public static readonly VCRedist14 VCREDIST140_X86 = new("vcredist140-x86", "Visual C++ 2015 Redistributable (x86)", new(14, 00, 23506), RuntimeCpu.x86);
         /// <summary> Runtime for Visual C++ 2015 Redistributable (x64) </summary>
-        public static readonly VCRedist14 VCREDIST140_X64 = new("vcredist140-x64", "Visual C++ 2015 Redistributable (x64)", new(14, 00, 23506), RuntimeCpu.amd64);
+        public static readonly VCRedist14 VCREDIST140_X64 = new("vcredist140-x64", "Visual C++ 2015 Redistributable (x64)", new(14, 00, 23506), RuntimeCpu.x64);
         /// <summary> Runtime for Visual C++ 2017 Redistributable (x86) </summary>
         public static readonly VCRedist14 VCREDIST141_X86 = new("vcredist141-x86", "Visual C++ 2017 Redistributable (x86)", new(14, 15, 26706), RuntimeCpu.x86);
         /// <summary> Runtime for Visual C++ 2017 Redistributable (x64) </summary>
-        public static readonly VCRedist14 VCREDIST141_X64 = new("vcredist141-x64", "Visual C++ 2017 Redistributable (x64)", new(14, 15, 26706), RuntimeCpu.amd64);
+        public static readonly VCRedist14 VCREDIST141_X64 = new("vcredist141-x64", "Visual C++ 2017 Redistributable (x64)", new(14, 15, 26706), RuntimeCpu.x64);
         /// <summary> Runtime for Visual C++ 2019 Redistributable (x86) </summary>
         public static readonly VCRedist14 VCREDIST142_X86 = new("vcredist142-x86", "Visual C++ 2019 Redistributable (x86)", new(14, 20, 27508), RuntimeCpu.x86);
         /// <summary> Runtime for Visual C++ 2019 Redistributable (x64) </summary>
-        public static readonly VCRedist14 VCREDIST142_X64 = new("vcredist142-x64", "Visual C++ 2019 Redistributable (x64)", new(14, 20, 27508), RuntimeCpu.amd64);
+        public static readonly VCRedist14 VCREDIST142_X64 = new("vcredist142-x64", "Visual C++ 2019 Redistributable (x64)", new(14, 20, 27508), RuntimeCpu.x64);
         /// <summary> Runtime for Visual C++ 2022 Redistributable (x86) </summary>
         public static readonly VCRedist14 VCREDIST143_X86 = new("vcredist143-x86", "Visual C++ 2022 Redistributable (x86)", new(14, 30, 30704), RuntimeCpu.x86);
         /// <summary> Runtime for Visual C++ 2022 Redistributable (x64) </summary>
-        public static readonly VCRedist14 VCREDIST143_X64 = new("vcredist143-x64", "Visual C++ 2022 Redistributable (x64)", new(14, 30, 30704), RuntimeCpu.amd64);
+        public static readonly VCRedist14 VCREDIST143_X64 = new("vcredist143-x64", "Visual C++ 2022 Redistributable (x64)", new(14, 30, 30704), RuntimeCpu.x64);
 
         /// <summary> An array of all the currently supported runtimes </summary>
         public static readonly RuntimeInfo[] All;

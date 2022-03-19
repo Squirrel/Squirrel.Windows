@@ -21,7 +21,7 @@ namespace Squirrel
         /// <summary> Intel x86 </summary>
         x86 = 0x014c,
         /// <summary> x64 / Amd64 </summary>
-        amd64 = 0x8664,
+        x64 = 0x8664,
         /// <summary> Arm64 </summary>
         arm64 = 0xAA64,
     }
@@ -111,7 +111,7 @@ namespace Squirrel
             // because of emulation support. Arm64 generally supports x86/x64 emulation, and x64
             // often supports x86 emulation, so we want to pick the least compatible architecture
             // for the package.
-            var archOrder = new[] { RuntimeCpu.arm64, RuntimeCpu.amd64, RuntimeCpu.x86 };
+            var archOrder = new[] { RuntimeCpu.arm64, RuntimeCpu.x64, RuntimeCpu.x86 };
 
             var pkg = archOrder.FirstOrDefault(o => pearchs.Contains(o));
             if (pkg == RuntimeCpu.arm64) {
@@ -137,10 +137,10 @@ namespace Squirrel
                     if (architecture == RuntimeCpu.x86) return true;
                     // x64 virtualisation is only avaliable on windows 11
                     // https://stackoverflow.com/questions/69038560/detect-windows-11-with-net-framework-or-windows-api
-                    if (architecture == RuntimeCpu.amd64 && Environment.OSVersion.Version.Build >= 22000) return true;
+                    if (architecture == RuntimeCpu.x64 && Environment.OSVersion.Version.Build >= 22000) return true;
                 }
-                if (SystemArchitecture == RuntimeCpu.amd64) {
-                    if (architecture == RuntimeCpu.amd64) return true;
+                if (SystemArchitecture == RuntimeCpu.x64) {
+                    if (architecture == RuntimeCpu.x64) return true;
                     if (architecture == RuntimeCpu.x86) return true;
                 }
                 if (SystemArchitecture == RuntimeCpu.x86) {
@@ -186,7 +186,7 @@ namespace Squirrel
                     SystemArchitecture = RuntimeCpu.arm64;
                     break;
                 case "AMD64":
-                    SystemArchitecture = RuntimeCpu.amd64;
+                    SystemArchitecture = RuntimeCpu.x64;
                     break;
                 }
             }
@@ -196,7 +196,7 @@ namespace Squirrel
             }
 
 #if NETFRAMEWORK
-            SystemArchitecture = Environment.Is64BitOperatingSystem ? RuntimeCpu.amd64 : RuntimeCpu.x86;
+            SystemArchitecture = Environment.Is64BitOperatingSystem ? RuntimeCpu.x64 : RuntimeCpu.x86;
 #else
             CheckArchitectureOther();
 #endif
@@ -215,7 +215,7 @@ namespace Squirrel
 
             SystemArchitecture = RuntimeInformation.OSArchitecture switch {
                 InteropArchitecture.X86 => RuntimeCpu.x86,
-                InteropArchitecture.X64 => RuntimeCpu.amd64,
+                InteropArchitecture.X64 => RuntimeCpu.x64,
                 InteropArchitecture.Arm64 => RuntimeCpu.arm64,
                 _ => RuntimeCpu.Unknown,
             };

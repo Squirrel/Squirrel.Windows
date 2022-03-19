@@ -39,7 +39,7 @@ namespace Squirrel.Sources
             var args = new Dictionary<string, string>();
 
             if (SquirrelRuntimeInfo.SystemArchitecture != RuntimeCpu.Unknown) {
-                args.Add("arch", SquirrelRuntimeInfo.SystemArchitecture.ToString().ToLower());
+                args.Add("arch", SquirrelRuntimeInfo.SystemArchitecture.ToString());
             }
 
             if (SquirrelRuntimeInfo.SystemOsName != null) {
