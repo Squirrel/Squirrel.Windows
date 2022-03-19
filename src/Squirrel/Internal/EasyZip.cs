@@ -18,10 +18,10 @@ namespace Squirrel
 
         public static void ExtractZipToDirectory(string inputFile, string outputDirectory)
         {
-            Log.Info($"Extracting '{inputFile}' to '{outputDirectory}'...");
             if (Extract7z(inputFile, outputDirectory))
                 return;
 
+            Log.Info($"Extracting '{inputFile}' to '{outputDirectory}' using SharpCompress...");
             using var archive = ZipArchive.Open(inputFile);
             archive.WriteToDirectory(outputDirectory, new() {
                 PreserveFileTime = false,
@@ -32,10 +32,10 @@ namespace Squirrel
 
         public static void CreateZipFromDirectory(string outputFile, string directoryToCompress)
         {
-            Log.Info($"Compressing '{directoryToCompress}' to '{outputFile}'...");
             if (Compress7z(outputFile, directoryToCompress))
                 return;
 
+            Log.Info($"Compressing '{directoryToCompress}' to '{outputFile}' using SharpCompress...");
             using var archive = ZipArchive.Create();
             archive.AddAllFromDirectory(directoryToCompress);
             archive.SaveTo(outputFile, CompressionType.Deflate);
@@ -47,7 +47,7 @@ namespace Squirrel
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return false;
 #endif
-
+            Log.Info($"Extracting '{zipFilePath}' to '{outFolder}' using 7z...");
             try {
                 var args = String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder);
                 var psi = Utility.CreateProcessStartInfo(HelperExe.SevenZipPath, args);
@@ -67,7 +67,7 @@ namespace Squirrel
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return false;
 #endif
-
+            Log.Info($"Compressing '{inFolder}' to '{zipFilePath}' using 7z...");
             try {
                 var args = String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath);
                 var psi = Utility.CreateProcessStartInfo(HelperExe.SevenZipPath, args, inFolder);
