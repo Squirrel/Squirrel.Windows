@@ -149,15 +149,15 @@ namespace Squirrel.Tests
                 // All the other files should be diffs and shasums
                 deltaPkgFiles
                     .Where(x => !newFilesAdded.Any(y => x.Path.ToLowerInvariant().Contains(y)))
-                    .All(x => x.Path.ToLowerInvariant().EndsWith("diff") || x.Path.ToLowerInvariant().EndsWith("shasum"))
+                    .All(x => x.Path.ToLowerInvariant().EndsWith("bsdiff") || x.Path.ToLowerInvariant().EndsWith("shasum"))
                     .ShouldBeTrue();
 
                 // Every .diff file should have a shasum file
-                deltaPkg.Files.Any(x => x.Path.ToLowerInvariant().EndsWith(".diff")).ShouldBeTrue();
+                deltaPkg.Files.Any(x => x.Path.ToLowerInvariant().EndsWith(".bsdiff")).ShouldBeTrue();
                 deltaPkg.Files
-                    .Where(x => x.Path.ToLowerInvariant().EndsWith(".diff"))
+                    .Where(x => x.Path.ToLowerInvariant().EndsWith(".bsdiff"))
                     .ForEach(x => {
-                        var lookingFor = x.Path.Replace(".diff", ".shasum");
+                        var lookingFor = x.Path.Replace(".bsdiff", ".shasum");
                         this.Log().Info("Looking for corresponding shasum file: {0}", lookingFor);
                         deltaPkg.Files.Any(y => y.Path == lookingFor).ShouldBeTrue();
                     });
