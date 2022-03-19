@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Squirrel.Tests
 {
-    public class DownloadReleasesTests : IEnableLogger
+    public class DownloadReleasesTests
     {
         [Fact(Skip = "Rewrite this to be an integration test")]
         public void ChecksumShouldFailIfFilesAreMissing()

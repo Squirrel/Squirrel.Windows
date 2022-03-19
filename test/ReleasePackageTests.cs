@@ -11,11 +11,16 @@ using System.Xml.Linq;
 using Squirrel.SimpleSplat;
 using Xunit;
 using Squirrel.NuGet;
+using Xunit.Abstractions;
 
 namespace Squirrel.Tests
 {
-    public class CreateReleasePackageTests : IEnableLogger
+    public class CreateReleasePackageTests : TestLoggingBase
     {
+        public CreateReleasePackageTests(ITestOutputHelper log) : base(log)
+        {
+        }
+
         [Theory]
         [InlineData("1.2.3")]
         [InlineData("1.2.3-alpha13")]

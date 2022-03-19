@@ -8,15 +8,18 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Squirrel.NuGet;
-using Squirrel.SimpleSplat;
-using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Squirrel.Tests
 {
-    public class ApplyReleasesTests : IEnableLogger
+    public class ApplyReleasesTests : TestLoggingBase
     {
+        public ApplyReleasesTests(ITestOutputHelper log) : base(log)
+        {
+        }
+
         [Fact]
         public async Task CleanInstallRunsSquirrelAwareAppsWithInstallFlag()
         {

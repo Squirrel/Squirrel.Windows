@@ -10,11 +10,16 @@ using Squirrel.Tests.TestHelpers;
 using Xunit;
 using Squirrel.Shell;
 using System.Collections.Generic;
+using Xunit.Abstractions;
 
 namespace Squirrel.Tests
 {
-    public class UtilityTests : IEnableLogger
+    public class UtilityTests : TestLoggingBase
     {
+        public UtilityTests(ITestOutputHelper log) : base(log)
+        {
+        }
+
         [Theory]
         [InlineData("file.txt", "file.txt")]
         [InlineData("file", "file")]

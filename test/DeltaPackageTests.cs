@@ -7,11 +7,16 @@ using Squirrel;
 using Squirrel.SimpleSplat;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Squirrel.Tests
 {
-    public class ApplyDeltaPackageTests : IEnableLogger
+    public class ApplyDeltaPackageTests : TestLoggingBase
     {
+        public ApplyDeltaPackageTests(ITestOutputHelper log) : base(log)
+        {
+        }
+
         [Fact]
         public void ApplyDeltaPackageSmokeTest()
         {

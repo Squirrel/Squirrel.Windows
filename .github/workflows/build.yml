@@ -20,7 +20,7 @@ jobs:
         shell: pwsh
         run: .\pack.ps1
       - name: Test
-        run: dotnet test test\Squirrel.Tests.csproj --verbosity normal
+        run: dotnet test test\Squirrel.Tests.csproj -l "console;verbosity=detailed"
       - name: "Upload Tools"
         uses: actions/upload-artifact@v3
         with:
