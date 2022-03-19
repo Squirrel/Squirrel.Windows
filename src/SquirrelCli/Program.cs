@@ -252,9 +252,6 @@ namespace SquirrelCli
                     // parse the PE header of every squirrel aware app
                     var peparsed = awareExes.ToDictionary(path => path, path => new PeNet.PeFile(path));
 
-                    // check dependencies of squirrel aware binaries for potential issues
-                    peparsed.ForEach(kvp => DotnetUtil.CheckDotnetReferences(kvp.Key, kvp.Value, requiredFrameworks));
-
                     // record architecture of squirrel aware binaries so setup can fast fail if unsupported
                     RuntimeCpu parseMachine(PeNet.Header.Pe.MachineType machine)
                     {
@@ -270,7 +267,7 @@ namespace SquirrelCli
                     if (awareExes.Count > 0) {
                         Log.Info($"There are {awareExes.Count} SquirrelAwareApp's. Binaries will be executed during install/update/uninstall hooks.");
                         foreach (var pe in peArch) {
-                            Log.Info($"SquirrelAwareApp '{pe.Name}' (arch: {pe.Architecture})");
+                            Log.Info($"  Detected SquirrelAwareApp '{pe.Name}' (arch: {pe.Architecture})");
                         }
                     } else {
                         Log.Warn("There are no SquirrelAwareApp's. No hooks will be executed during install/update/uninstall. " +
@@ -278,8 +275,11 @@ namespace SquirrelCli
                     }
 
                     var pkgarch = SquirrelRuntimeInfo.SelectPackageArchitecture(peArch.Select(f => f.Architecture));
-                    Log.Write($"Package Architecture (detected from SquirrelAwareApp's): {pkgarch}",
+                    Log.Write($"Program: Package Architecture (detected from SquirrelAwareApp's): {pkgarch}",
                         pkgarch == RuntimeCpu.Unknown ? LogLevel.Warn : LogLevel.Info);
+
+                    // check dependencies of squirrel aware binaries for potential issues
+                    peparsed.ForEach(kvp => DotnetUtil.CheckDotnetReferences(kvp.Key, kvp.Value, requiredFrameworks));
 
                     // store the runtime dependencies and the package architecture in nuspec (read by installer)
                     ZipPackage.SetSquirrelMetadata(nuspecPath, pkgarch, requiredFrameworks.Select(r => r.Id));
