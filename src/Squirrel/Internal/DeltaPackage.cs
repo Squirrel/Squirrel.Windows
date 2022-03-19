@@ -169,7 +169,7 @@ namespace Squirrel
                         continue;
                     }
 
-                    this.Log().Info($"Processed {processed}/{newLibFiles.Length} files. {fChanged} patched, {fNew} new, {fSame} unchanged.");
+                    this.Log().Info($"Processed {processed}/{newLibFiles.Length} files. {fChanged} patched, {fSame} unchanged, {fNew} new.");
                     prevCount = processed;
                 }
 
@@ -180,7 +180,7 @@ namespace Squirrel
                 EasyZip.CreateZipFromDirectory(outputFile, tempInfo.FullName);
 
                 this.Log().Info($"Successfully created delta package for {basePackage.Version} -> {newPackage.Version}.");
-                this.Log().Info($"{newLibFiles.Length} files processed. {fChanged} patched, {fNew} new, {fSame} unchanged, {baseLibFiles.Count} removed.");
+                this.Log().Info($"{newLibFiles.Length} files processed. {fChanged} patched, {fSame} unchanged, {fNew} new, {baseLibFiles.Count} removed.");
             }
 
             return new ReleasePackage(outputFile);
