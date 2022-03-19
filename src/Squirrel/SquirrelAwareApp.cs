@@ -29,50 +29,6 @@ namespace Squirrel
     public static class SquirrelAwareApp
     {
         /// <summary>
-        /// This overload is obsolete and will be removed in a future version. 
-        /// See <see cref="HandleEvents(SquirrelHook, SquirrelHook, SquirrelHook, SquirrelHook, SquirrelRunHook, string[])" />
-        /// </summary>
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-        [Obsolete("Use the HandleEvents overload which provides a SemanticVersion as the argument")]
-        public static void HandleEvents(
-            Action<Version> onInitialInstall = null,
-            Action<Version> onAppUpdate = null,
-            Action<Version> onAppObsoleted = null,
-            Action<Version> onAppUninstall = null,
-            Action onFirstRun = null,
-            string[] arguments = null)
-        {
-            Action<Version> defaultBlock = (v => { });
-            var args = arguments ?? Environment.GetCommandLineArgs().Skip(1).ToArray();
-            if (args.Length == 0) return;
-
-            var lookup = new[] {
-                new { Key = "--squirrel-install", Value = onInitialInstall ?? defaultBlock },
-                new { Key = "--squirrel-updated", Value = onAppUpdate ?? defaultBlock },
-                new { Key = "--squirrel-obsolete", Value = onAppObsoleted ?? defaultBlock },
-                new { Key = "--squirrel-uninstall", Value = onAppUninstall ?? defaultBlock },
-            }.ToDictionary(k => k.Key, v => v.Value);
-
-            if (args[0] == "--squirrel-firstrun") {
-                (onFirstRun ?? (() => { }))();
-                return;
-            }
-
-            if (args.Length != 2) return;
-
-            if (!lookup.ContainsKey(args[0])) return;
-            var version = new SemanticVersion(args[1]).Version;
-
-            try {
-                lookup[args[0]](version);
-                if (!ModeDetector.InUnitTestRunner()) Environment.Exit(0);
-            } catch (Exception ex) {
-                LogHost.Default.ErrorException("Failed to handle Squirrel events", ex);
-                if (!ModeDetector.InUnitTestRunner()) Environment.Exit(-1);
-            }
-        }
-
-        /// <summary>
         /// Call this method as early as possible in app startup. This method
         /// will dispatch to your methods to set up your app. Depending on the
         /// parameter, your app will exit after this method is called, which 
