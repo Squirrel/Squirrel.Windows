@@ -40,7 +40,7 @@ namespace Squirrel
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "7zip");
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix");
 #else
-            AddSearchPath(AssemblyRuntimeInfo.BaseDirectory, "bin");
+            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "bin");
 #endif
         }
 
