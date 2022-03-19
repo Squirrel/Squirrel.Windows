@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Squirrel.SimpleSplat;
 
 #if !NETFRAMEWORK
 using InteropArchitecture = System.Runtime.InteropServices.Architecture;
@@ -47,6 +50,17 @@ namespace Squirrel
         /// <summary> The name of the current OS - eg. 'windows', 'linux', or 'osx'. </summary>
         public static string SystemOsName { get; private set; }
 
+        /// <summary> True if executing on a Windows platform. </summary>
+        public static bool IsWindows => SystemOsName == "windows";
+
+        /// <summary> True if executing on a Linux platform. </summary>
+        public static bool IsLinux => SystemOsName == "linux";
+
+        /// <summary> True if executing on a MacOS / OSX platform. </summary>
+        public static bool IsOSX => SystemOsName == "osx";
+
+        private static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(SquirrelRuntimeInfo));
+
         static SquirrelRuntimeInfo()
         {
             EntryExePath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
@@ -75,6 +89,69 @@ namespace Squirrel
 
         [DllImport("kernel32")]
         private static extern IntPtr GetCurrentProcess();
+
+        /// <summary>
+        /// Given a list of machine architectures, this function will try to select the best 
+        /// architecture for a Squirrel package to maximize compatibility.
+        /// </summary>
+        public static RuntimeCpu SelectPackageArchitecture(IEnumerable<RuntimeCpu> peparsed)
+        {
+            var pearchs = peparsed
+                .Where(m => m != RuntimeCpu.Unknown)
+                .Distinct()
+                .ToArray();
+
+            if (pearchs.Length > 1) {
+                Log.Warn(
+                    "Multiple squirrel aware binaries were detected with different machine architectures. " +
+                    "This could result in the application failing to install or run.");
+            }
+
+            // CS: the first will be selected for the "package" architecture. this order is important,
+            // because of emulation support. Arm64 generally supports x86/x64 emulation, and x64
+            // often supports x86 emulation, so we want to pick the least compatible architecture
+            // for the package.
+            var archOrder = new[] { RuntimeCpu.arm64, RuntimeCpu.amd64, RuntimeCpu.x86 };
+
+            var pkg = archOrder.FirstOrDefault(o => pearchs.Contains(o));
+            if (pkg == RuntimeCpu.arm64) {
+                Log.Warn("arm64 support in Squirrel has not been tested and may have bugs.");
+            }
+
+            return pkg;
+        }
+
+        /// <summary>
+        /// Checks a given package architecture against the current executing OS to detect
+        /// if it can be properly installed and run.
+        /// </summary>
+        public static bool? IsPackageCompatibleWithCurrentOS(RuntimeCpu architecture)
+        {
+            if (SystemArchitecture == RuntimeCpu.Unknown || architecture == RuntimeCpu.Unknown)
+                return null;
+
+            if (IsWindows) {
+                if (SystemArchitecture == RuntimeCpu.arm64) {
+                    // x86 can be virtualized on windows arm64
+                    if (architecture == RuntimeCpu.arm64) return true;
+                    if (architecture == RuntimeCpu.x86) return true;
+                    // x64 virtualisation is only avaliable on windows 11
+                    // https://stackoverflow.com/questions/69038560/detect-windows-11-with-net-framework-or-windows-api
+                    if (architecture == RuntimeCpu.amd64 && Environment.OSVersion.Version.Build >= 22000) return true;
+                }
+                if (SystemArchitecture == RuntimeCpu.amd64) {
+                    if (architecture == RuntimeCpu.amd64) return true;
+                    if (architecture == RuntimeCpu.x86) return true;
+                }
+                if (SystemArchitecture == RuntimeCpu.x86) {
+                    if (architecture == RuntimeCpu.x86) return true;
+                }
+            } else {
+                throw new NotImplementedException("This check currently only supports Windows.");
+            }
+
+            return false;
+        }
 
         private static void CheckArchitectureWindows()
         {

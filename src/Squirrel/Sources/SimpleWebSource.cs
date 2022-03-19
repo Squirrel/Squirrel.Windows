@@ -42,6 +42,10 @@ namespace Squirrel.Sources
                 args.Add("arch", SquirrelRuntimeInfo.SystemArchitecture.ToString().ToLower());
             }
 
+            if (SquirrelRuntimeInfo.SystemOsName != null) {
+                args.Add("os", SquirrelRuntimeInfo.SystemOsName);
+            }
+
             if (latestLocalRelease != null) {
                 args.Add("id", latestLocalRelease.PackageName);
                 args.Add("localVersion", latestLocalRelease.Version.ToString());

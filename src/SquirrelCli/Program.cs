@@ -249,35 +249,39 @@ namespace SquirrelCli
                             $"or the application may fail to update properly.");
                     }
 
-                    // record architecture of squirrel aware binaries so setup can fast fail if unsupported
+                    // parse the PE header of every squirrel aware app
                     var peparsed = awareExes.ToDictionary(path => path, path => new PeNet.PeFile(path));
-                    var pearchs = peparsed
-                        .Select(pe => pe.Value?.ImageNtHeaders?.FileHeader?.Machine ?? 0)
-                        .Select(machine => { Utility.TryParseEnumU16<RuntimeCpu>((ushort) machine, out var cpu); return cpu; })
-                        .Where(m => m != RuntimeCpu.Unknown)
-                        .Distinct()
-                        .ToArray();
 
-                    if (pearchs.Length > 1) {
-                        Log.Warn("Multiple squirrel aware binaries were detected with different machine architectures: " + String.Join(", ", pearchs));
-                    }
-
-                    // check dependencies for squirrel aware binaries 
+                    // check dependencies of squirrel aware binaries for potential issues
                     peparsed.ForEach(kvp => DotnetUtil.CheckDotnetReferences(kvp.Key, kvp.Value, requiredFrameworks));
 
-                    // CS: the first will be selected for the "package" architecture. this order is important,
-                    // because of emulation support. Arm64 generally supports x86/x64 emulation, and x64
-                    // often supports x86 emulation, so we want to pick the least compatible architecture
-                    // for the package.
-                    var archOrder = new[] { /*RuntimeCpu.Arm64,*/ RuntimeCpu.amd64, RuntimeCpu.x86 };
-                    var pkgarch = archOrder.FirstOrDefault(o => pearchs.Contains(o));
-
-                    if (pkgarch == RuntimeCpu.Unknown) {
-                        Log.Warn("Unable to detect package machine architecture from SquirrelAware binaries.");
-                    } else {
-                        Log.Info($"Package architecture: {pkgarch} (implicit, from a SquirrelAware binary)");
+                    // record architecture of squirrel aware binaries so setup can fast fail if unsupported
+                    RuntimeCpu parseMachine(PeNet.Header.Pe.MachineType machine)
+                    {
+                        Utility.TryParseEnumU16<RuntimeCpu>((ushort) machine, out var cpu);
+                        return cpu;
                     }
 
+                    var peArch = from pe in peparsed
+                                 let machine = pe.Value?.ImageNtHeaders?.FileHeader?.Machine ?? 0
+                                 let arch = parseMachine(machine)
+                                 select new { Name = Path.GetFileName(pe.Key), Architecture = arch };
+
+                    if (awareExes.Count > 0) {
+                        Log.Info($"There are {awareExes.Count} SquirrelAwareApp's. Binaries will be executed during install/update/uninstall hooks.");
+                        foreach (var pe in peArch) {
+                            Log.Info($"SquirrelAwareApp '{pe.Name}' (arch: {pe.Architecture})");
+                        }
+                    } else {
+                        Log.Warn("There are no SquirrelAwareApp's. No hooks will be executed during install/update/uninstall. " +
+                            "Shortcuts will be created for every binary in package.");
+                    }
+
+                    var pkgarch = SquirrelRuntimeInfo.SelectPackageArchitecture(peArch.Select(f => f.Architecture));
+                    Log.Write($"Package Architecture (detected from SquirrelAwareApp's): {pkgarch}",
+                        pkgarch == RuntimeCpu.Unknown ? LogLevel.Warn : LogLevel.Info);
+
+                    // store the runtime dependencies and the package architecture in nuspec (read by installer)
                     ZipPackage.SetSquirrelMetadata(nuspecPath, pkgarch, requiredFrameworks.Select(r => r.Id));
 
                     // create stub executable for all exe's in this package (except Squirrel!)
