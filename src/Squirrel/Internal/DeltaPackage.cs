@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
@@ -12,6 +12,9 @@ using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 using SharpCompress.Compressors.Deflate;
+using System.Threading.Tasks;
+using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace Squirrel
 {
@@ -21,9 +24,6 @@ namespace Squirrel
         ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile);
     }
 
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
     internal class DeltaPackageBuilder : IEnableLogger, IDeltaPackageBuilder
     {
         readonly string localAppDirectory;
@@ -65,7 +65,11 @@ namespace Squirrel
                 var baseTempInfo = new DirectoryInfo(baseTempPath);
                 var tempInfo = new DirectoryInfo(tempPath);
 
-                this.Log().Info("Extracting {0} and {1} into {2}",
+                const int numParallel = 4;
+
+                this.Log().Info($"Creating delta for {basePackage.Version} -> {newPackage.Version} with {numParallel} parallel threads.");
+
+                this.Log().Debug("Extracting {0} and {1} into {2}",
                     basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
 
                 EasyZip.ExtractZipToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName);
@@ -80,13 +84,103 @@ namespace Squirrel
                     .ToDictionary(k => k.FullName.Replace(baseTempInfo.FullName, ""), v => v.FullName);
 
                 var newLibDir = tempInfo.GetDirectories().First(x => x.Name.ToLowerInvariant() == "lib");
+                var newLibFiles = newLibDir.GetAllFilesRecursively().ToArray();
 
-                foreach (var libFile in newLibDir.GetAllFilesRecursively()) {
-                    createDeltaForSingleFile(libFile, tempInfo, baseLibFiles);
+                int fNew = 0, fSame = 0, fChanged = 0;
+
+                bool bytesAreIdentical(ReadOnlySpan<byte> a1, ReadOnlySpan<byte> a2)
+                {
+                    return a1.SequenceEqual(a2);
                 }
+
+                void createDeltaForSingleFile(FileInfo targetFile, DirectoryInfo workingDirectory, Dictionary<string, string> baseFileListing)
+                {
+                    // NB: There are three cases here that we'll handle:
+                    //
+                    // 1. Exists only in new => leave it alone, we'll use it directly.
+                    // 2. Exists in both old and new => write a dummy file so we know
+                    //    to keep it.
+                    // 3. Exists in old but changed in new => create a delta file
+                    //
+                    // The fourth case of "Exists only in old => delete it in new"
+                    // is handled when we apply the delta package
+                    var relativePath = targetFile.FullName.Replace(workingDirectory.FullName, "");
+
+                    if (!baseFileListing.ContainsKey(relativePath)) {
+                        this.Log().Debug("{0} not found in base package, marking as new", relativePath);
+                        fNew++;
+                        return;
+                    }
+
+                    var oldFilePath = baseFileListing[relativePath];
+                    baseFileListing.Remove(relativePath);
+
+                    var oldData = File.ReadAllBytes(oldFilePath);
+                    var newData = File.ReadAllBytes(targetFile.FullName);
+
+                    if (bytesAreIdentical(oldData, newData)) {
+                        this.Log().Debug("{0} hasn't changed, writing dummy file", relativePath);
+                        File.Create(targetFile.FullName + ".bsdiff").Dispose();
+                        File.Create(targetFile.FullName + ".shasum").Dispose();
+                        targetFile.Delete();
+                        fSame++;
+                        return;
+                    }
+
+                    this.Log().Debug("Delta patching {0} => {1}", oldFilePath, targetFile.FullName);
+
+                    try {
+                        using (FileStream of = File.Create(targetFile.FullName + ".bsdiff")) {
+                            BinaryPatchUtility.Create(oldData, newData, of);
+                        }
+                        var rl = ReleaseEntry.GenerateFromFile(new MemoryStream(newData), targetFile.Name + ".shasum");
+                        File.WriteAllText(targetFile.FullName + ".shasum", rl.EntryAsString, Encoding.UTF8);
+                        targetFile.Delete();
+                        fChanged++;
+                    } catch (Exception ex) {
+                        this.Log().DebugException(String.Format("We couldn't create a delta for {0}", targetFile.Name), ex);
+                        Utility.DeleteFileOrDirectoryHardOrGiveUp(targetFile.FullName + ".bsdiff");
+                        Utility.DeleteFileOrDirectoryHardOrGiveUp(targetFile.FullName + ".diff");
+                        Utility.DeleteFileOrDirectoryHardOrGiveUp(targetFile.FullName + ".shasum");
+                        throw;
+                    }
+                }
+
+                var tResult = Task.Run(() => {
+                    Parallel.ForEach(newLibFiles, new ParallelOptions() { MaxDegreeOfParallelism = numParallel }, (f) => {
+                        try {
+                            createDeltaForSingleFile(f, tempInfo, baseLibFiles);
+                        } catch (Exception ex) {
+                            this.Log().WarnException($"Unable to create delta for '{f}', retrying...", ex);
+                            createDeltaForSingleFile(f, tempInfo, baseLibFiles);
+                        }
+                    });
+                });
+
+                int prevCount = 0;
+                while (!tResult.IsCompleted) {
+                    // sleep for 3 seconds (in 100ms intervals)
+                    for (int i = 0; i < 30 && !tResult.IsCompleted; i++)
+                        Thread.Sleep(100);
+
+                    int processed = fNew + fChanged + fSame;
+                    if (prevCount == processed) {
+                        // if there has been no progress, do not print another message
+                        continue;
+                    }
+
+                    this.Log().Info($"Processed {processed}/{newLibFiles.Length} files. {fChanged} patched, {fNew} new, {fSame} unchanged.");
+                    prevCount = processed;
+                }
+
+                if (tResult.Exception != null)
+                    throw new Exception("Unable to create delta package.", tResult.Exception);
 
                 ReleasePackage.addDeltaFilesToContentTypes(tempInfo.FullName);
                 EasyZip.CreateZipFromDirectory(outputFile, tempInfo.FullName);
+
+                this.Log().Info($"Successfully created delta package for {basePackage.Version} -> {newPackage.Version}.");
+                this.Log().Info($"{newLibFiles.Length} files processed. {fChanged} patched, {fNew} new, {fSame} unchanged, {baseLibFiles.Count} removed.");
             }
 
             return new ReleasePackage(outputFile);
@@ -177,75 +271,6 @@ namespace Squirrel
             return new ReleasePackage(outputFile);
         }
 
-        void createDeltaForSingleFile(FileInfo targetFile, DirectoryInfo workingDirectory, Dictionary<string, string> baseFileListing)
-        {
-            // NB: There are three cases here that we'll handle:
-            //
-            // 1. Exists only in new => leave it alone, we'll use it directly.
-            // 2. Exists in both old and new => write a dummy file so we know
-            //    to keep it.
-            // 3. Exists in old but changed in new => create a delta file
-            //
-            // The fourth case of "Exists only in old => delete it in new"
-            // is handled when we apply the delta package
-            var relativePath = targetFile.FullName.Replace(workingDirectory.FullName, "");
-
-            if (!baseFileListing.ContainsKey(relativePath)) {
-                this.Log().Info("{0} not found in base package, marking as new", relativePath);
-                return;
-            }
-
-            var oldData = File.ReadAllBytes(baseFileListing[relativePath]);
-            var newData = File.ReadAllBytes(targetFile.FullName);
-
-            if (bytesAreIdentical(oldData, newData)) {
-                this.Log().Debug("{0} hasn't changed, writing dummy file", relativePath);
-
-                File.Create(targetFile.FullName + ".diff").Dispose();
-                File.Create(targetFile.FullName + ".shasum").Dispose();
-                targetFile.Delete();
-                return;
-            }
-
-            this.Log().Info("Delta patching {0} => {1}", baseFileListing[relativePath], targetFile.FullName);
-            var msDelta = new MsDeltaCompression();
-
-            if (targetFile.Extension.Equals(".exe", StringComparison.OrdinalIgnoreCase) ||
-                targetFile.Extension.Equals(".dll", StringComparison.OrdinalIgnoreCase) ||
-                targetFile.Extension.Equals(".node", StringComparison.OrdinalIgnoreCase)) {
-                try {
-                    msDelta.CreateDelta(baseFileListing[relativePath], targetFile.FullName, targetFile.FullName + ".diff");
-                    goto exit;
-                } catch (Exception) {
-                    this.Log().Warn("We couldn't create a delta for {0}, attempting to create bsdiff", targetFile.Name);
-                }
-            }
-
-            try {
-                using (FileStream of = File.Create(targetFile.FullName + ".bsdiff")) {
-                    BinaryPatchUtility.Create(oldData, newData, of);
-
-                    // NB: Create a dummy corrupt .diff file so that older 
-                    // versions which don't understand bsdiff will fail out
-                    // until they get upgraded, instead of seeing the missing
-                    // file and just removing it.
-                    File.WriteAllText(targetFile.FullName + ".diff", "1");
-                }
-            } catch (Exception ex) {
-                this.Log().WarnException(String.Format("We really couldn't create a delta for {0}", targetFile.Name), ex);
-                Utility.DeleteFileOrDirectoryHardOrGiveUp(targetFile.FullName + ".bsdiff");
-                Utility.DeleteFileOrDirectoryHardOrGiveUp(targetFile.FullName + ".diff");
-                return;
-            }
-
-        exit:
-
-            var rl = ReleaseEntry.GenerateFromFile(new MemoryStream(newData), targetFile.Name + ".shasum");
-            File.WriteAllText(targetFile.FullName + ".shasum", rl.EntryAsString, Encoding.UTF8);
-            targetFile.Delete();
-        }
-
-
         void applyDiffToFile(string deltaPath, string relativeFilePath, string workingDirectory)
         {
             var inputFile = Path.Combine(deltaPath, relativeFilePath);
@@ -264,16 +289,23 @@ namespace Squirrel
                 if (relativeFilePath.EndsWith(".bsdiff", StringComparison.InvariantCultureIgnoreCase)) {
                     using (var of = File.OpenWrite(tempTargetFile))
                     using (var inf = File.OpenRead(finalTarget)) {
-                        this.Log().Info("Applying BSDiff to {0}", relativeFilePath);
+                        this.Log().Info("Applying bsdiff to {0}", relativeFilePath);
                         BinaryPatchUtility.Apply(inf, () => File.OpenRead(inputFile), of);
                     }
 
                     verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
                 } else if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
-                    this.Log().Info("Applying MSDiff to {0}", relativeFilePath);
-                    var msDelta = new MsDeltaCompression();
-                    msDelta.ApplyDelta(inputFile, finalTarget, tempTargetFile);
+                    this.Log().Info("Applying msdiff to {0}", relativeFilePath);
 
+#if NETFRAMEWORK
+                    if (true) {
+#else
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+#endif
+                        MsDeltaCompression.ApplyDelta(inputFile, finalTarget, tempTargetFile);
+                    } else {
+                        throw new InvalidOperationException("msdiff is not supported on non-windows platforms.");
+                    }
                     verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
                 } else {
                     using (var of = File.OpenWrite(tempTargetFile))
@@ -311,24 +343,6 @@ namespace Squirrel
                     expectedReleaseEntry.SHA1, actualReleaseEntry.SHA1);
                 throw new ChecksumFailedException() { Filename = relativeFilePath };
             }
-        }
-
-        bool bytesAreIdentical(byte[] oldData, byte[] newData)
-        {
-            if (oldData == null || newData == null) {
-                return oldData == newData;
-            }
-            if (oldData.LongLength != newData.LongLength) {
-                return false;
-            }
-
-            for (long i = 0; i < newData.LongLength; i++) {
-                if (oldData[i] != newData[i]) {
-                    return false;
-                }
-            }
-
-            return true;
         }
     }
 }
