@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -67,7 +68,7 @@ namespace Squirrel
                 var stringsToWrite = new[] {
                     new { Key = "DisplayName", Value = zp.ProductName },
                     new { Key = "DisplayVersion", Value = zp.Version.ToString() },
-                    new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyyMMdd") },
+                    new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture) },
                     new { Key = "InstallLocation", Value = rootAppDirectory },
                     new { Key = "Publisher", Value = zp.ProductCompany },
                     new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
