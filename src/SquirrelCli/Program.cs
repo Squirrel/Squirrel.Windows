@@ -288,9 +288,8 @@ namespace SquirrelCli
                     Log.Info("Creating stub executables");
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
-                        .Where(x => !x.Name.Contains("squirrel.exe", StringComparison.InvariantCultureIgnoreCase))
+                        .Where(x => !x.Name.Equals("squirrel.exe", StringComparison.InvariantCultureIgnoreCase))
                         .Where(x => Utility.IsFileTopLevelInPackage(x.FullName, pkgPath))
-                        .Where(x => Utility.ExecutableUsesWin32Subsystem(x.FullName))
                         .ToArray() // materialize the IEnumerable so we never end up creating stubs for stubs
                         .ForEach(x => createExecutableStubForExe(x.FullName));
 
