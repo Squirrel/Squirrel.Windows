@@ -95,7 +95,7 @@ namespace Squirrel.Sources
         /// </summary>
         protected virtual string AccessToken { get; }
 
-        /// <summary>  </summary>
+        /// <summary> The Bearer token used in the request. </summary>
         protected virtual string Authorization => String.IsNullOrWhiteSpace(AccessToken) ? null : "Bearer " + AccessToken;
 
         /// <inheritdoc cref="GithubSource" />
