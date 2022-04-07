@@ -314,17 +314,20 @@ namespace Squirrel.Tests
                 }
             }
 
-            [Theory]
-            [InlineData("C:\\Foo\\Bar\\Test.exe", default(string))]
-            [InlineData("%LocalAppData%\\theApp\\app-1.0.0.1\\Test.exe", "1.0.0.1")]
-            [InlineData("%LocalAppData%\\aDifferentApp\\app-1.0.0.1\\Test.exe", default(string))]
-            public void CurrentlyInstalledVersionTests(string input, string expectedVersion)
+            [Fact]
+            public void IsInstalledHandlesInvalidDirectoryStructure()
             {
-                input = Environment.ExpandEnvironmentVariables(input);
-                var expected = expectedVersion != null ? new SemanticVersion(expectedVersion) : default(SemanticVersion);
-
-                using (var fixture = new UpdateManager("http://lol", "theApp")) {
-                    Assert.Equal(expected, fixture.CurrentlyInstalledVersion(input));
+                using (Utility.WithTempDirectory(out var tempDir)) {
+                    Directory.CreateDirectory(Path.Combine(tempDir, "theApp"));
+                    Directory.CreateDirectory(Path.Combine(tempDir, "theApp", "app-1.0.1"));
+                    Directory.CreateDirectory(Path.Combine(tempDir, "theApp", "wrongDir"));
+                    File.WriteAllText(Path.Combine(tempDir, "theApp", "Update.exe"), "1");
+                    using (var fixture = new UpdateManager("http://lol", "theApp", tempDir)) {
+                        Assert.Null(fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "app.exe")));
+                        Assert.Null(fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "app.exe")));
+                        Assert.Null(fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "wrongDir", "app.exe")));
+                        Assert.Equal(new SemanticVersion(1, 0, 1, 9), fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "app-1.0.1.9", "app.exe")));
+                    }
                 }
             }
 

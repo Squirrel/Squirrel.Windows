@@ -27,7 +27,7 @@ namespace Squirrel
         public string AppDirectory => Path.Combine(_localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), AppId);
 
         /// <summary>True if the current executable is inside the target <see cref="AppDirectory"/>.</summary>
-        public bool IsInstalledApp => isUpdateExeAvailable() ? Utility.IsFileInDirectory(SquirrelRuntimeInfo.EntryExePath, AppDirectory) : false;
+        public bool IsInstalledApp => CurrentlyInstalledVersion() != null;
 
         /// <summary>The directory packages and temp files are stored in.</summary>
         protected string PackagesDirectory => Utility.PackageDirectoryForAppDir(AppDirectory);
@@ -184,21 +184,34 @@ namespace Squirrel
         /// <inheritdoc/>
         public SemanticVersion CurrentlyInstalledVersion(string executable = null)
         {
+            string appDir;
             try {
-                executable = executable ?? SquirrelRuntimeInfo.EntryExePath;
-
-                if (!Utility.IsFileInDirectory(executable, AppDirectory))
-                    return null;
-
-                var appDirName = executable.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                    .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
-
-                if (appDirName == null) return null;
-                return new SemanticVersion(appDirName.Substring(4));
+                appDir = AppDirectory;
             } catch (InvalidOperationException) {
                 // app is not installed, see getUpdateExe()
                 return null;
             }
+
+            executable = Path.GetFullPath(executable ?? SquirrelRuntimeInfo.EntryExePath);
+
+            // check if the application to check is in the correct application directory
+            if (!Utility.IsFileInDirectory(executable, appDir))
+                return null;
+
+            // check if Update.exe exists in the expected relative location
+            var baseDir = Path.GetDirectoryName(executable);
+            if (!File.Exists(Path.Combine(baseDir, "..\\Update.exe")))
+                return null;
+
+            var exePathWithoutAppDir = executable.Substring(appDir.Length);
+            var appDirName = exePathWithoutAppDir.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
+
+            // check if we are inside an 'app-{ver}' directory and extract version
+            if (appDirName == null)
+                return null;
+
+            return new SemanticVersion(appDirName.Substring(4));
         }
 
         /// <inheritdoc/>
