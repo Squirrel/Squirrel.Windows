@@ -50,6 +50,32 @@ void unzipSingleFile(BYTE* zipBuf, DWORD cZipBuf, wstring fileLocation, std::fun
     if (!unzipSuccess) throw wstring(L"Unable to extract embedded package (predicate not found).");
 }
 
+// Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
+wstring pretty_bytes(uint64_t bytes)
+{
+    wchar_t buf[128];
+    const wchar_t* suffixes[7];
+    suffixes[0] = L"B";
+    suffixes[1] = L"KB";
+    suffixes[2] = L"MB";
+    suffixes[3] = L"GB";
+    suffixes[4] = L"TB";
+    suffixes[5] = L"PB";
+    suffixes[6] = L"EB";
+    uint64_t s = 0; // which suffix to use
+    double count = bytes;
+    while (count >= 1000 && s < 7) {
+        s++;
+        count /= 1000;
+    }
+    if (count - floor(count) == 0.0)
+        swprintf(buf, 128, L"%d %s", (int)count, suffixes[s]);
+    else
+        swprintf(buf, 128, L"%.1f %s", count, suffixes[s]);
+
+    return wstring(buf);
+}
+
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
     if (!IsWindows7SP1OrGreater()) {
@@ -65,7 +91,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         // locate bundled package and map to memory
         memAddr = util::mmap_read(util::get_current_process_path(), 0);
         if (!memAddr) {
-            throw new wstring(L"Unable to map executable to memory");
+            throw wstring(L"Unable to map executable to memory");
         }
 
         int64_t packageOffset, packageLength;
@@ -73,6 +99,16 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         uint8_t* pkgStart = memAddr + packageOffset;
         if (packageOffset == 0 || packageLength == 0) {
             throw wstring(L"The embedded package was not found");
+        }
+
+        // rough check for sufficient disk space before extracting anything
+        // required space is size of compressed nupkg, size of extracted app, 
+        // and squirrel overheads (incl temp files). the constant 0.38 is a
+        // aggressive estimate on what the compression ratio might be.
+        int64_t squirrelOverhead = 50 * 1000 * 1000; 
+        int64_t requiredSpace = squirrelOverhead + packageLength + (packageLength / (double)0.38);
+        if (!util::check_diskspace(requiredSpace)) {
+            throw wstring(L"Insufficient disk space. This application requires at least " + pretty_bytes(requiredSpace) + L" free space to be installed");
         }
 
         // extract Squirrel installer from package

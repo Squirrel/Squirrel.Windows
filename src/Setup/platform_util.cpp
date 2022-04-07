@@ -1,5 +1,6 @@
 #include "platform_util.h"
 #include <windows.h>
+#include <shlobj_core.h>
 #include <tchar.h>
 #include <string>
 
@@ -16,19 +17,24 @@ wstring get_filename_from_path(wstring& path)
     return path.substr(idx + 1);
 }
 
-// https://stackoverflow.com/a/17387176/184746
-void throwLastWin32Error(wstring addedInfo)
+void throwWin32Error(HRESULT hr, wstring addedInfo)
 {
-    DWORD errorMessageID = ::GetLastError();
-    if (errorMessageID == 0) {
+    if (hr == 0) {
         return;
     }
 
+    // https://stackoverflow.com/a/17387176/184746
+    // https://stackoverflow.com/a/455533/184746
     LPWSTR messageBuffer = nullptr;
     size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                                NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&messageBuffer, 0, NULL);
+                                NULL, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&messageBuffer, 0, NULL);
 
     wstring message(messageBuffer, size);
+
+    if (messageBuffer) {
+        LocalFree(messageBuffer);
+        messageBuffer = nullptr;
+    }
 
     if (addedInfo.empty()) {
         throw message;
@@ -36,6 +42,11 @@ void throwLastWin32Error(wstring addedInfo)
     else {
         throw wstring(addedInfo + L" \n" + message);
     }
+}
+
+void throwLastWin32Error(wstring addedInfo)
+{
+    throwWin32Error(::GetLastError(), addedInfo);
 }
 
 std::wstring util::get_temp_file_path(wstring extension)
@@ -51,6 +62,20 @@ std::wstring util::get_temp_file_path(wstring extension)
         tempFile += L"." + extension;
 
     return tempFile;
+}
+
+bool util::check_diskspace(uint64_t requiredSpace)
+{
+    TCHAR szPath[MAX_PATH];
+    auto hr = SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, szPath);
+    if (FAILED(hr))
+        throwWin32Error(hr, L"Unable to locate %localappdata%.");
+
+    ULARGE_INTEGER freeSpace;
+    if (!GetDiskFreeSpaceEx(szPath, 0, 0, &freeSpace))
+        throwLastWin32Error(L"Unable to verify sufficient available free space on disk.");
+
+    return freeSpace.QuadPart > requiredSpace;
 }
 
 std::wstring util::get_current_process_path()
