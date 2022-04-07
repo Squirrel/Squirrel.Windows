@@ -387,7 +387,7 @@ namespace Squirrel
 
             bool delta = Path.GetFileNameWithoutExtension(fileName).EndsWith("-delta", StringComparison.OrdinalIgnoreCase);
 
-            var nameAndVer = _suffixRegex.Replace(fileName, "");
+            var nameAndVer = _suffixRegex.Replace(Path.GetFileName(fileName), "");
 
             var match = _versionStartRegex.Match(nameAndVer);
             if (!match.Success)
