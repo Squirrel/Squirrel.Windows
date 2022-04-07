@@ -103,18 +103,25 @@ namespace Squirrel.Sources
         }
 
         /// <summary>
-        /// Creates a new <see cref="HttpClient"/> for every request. Override this
-        /// function to add a custom proxy or other http configuration.
+        /// Creates a new <see cref="HttpClientHandler"/> with default settings, used for
+        /// new <see cref="HttpClient"/>'s. Override this function to add client certificates,
+        /// proxy configurations, cookies, or change other http behaviors.
         /// </summary>
-        protected virtual HttpClient CreateHttpClient(string authorization, string accept)
+        protected virtual HttpClientHandler CreateHttpClientHandler()
         {
-            var handler = new HttpClientHandler() {
+            return new HttpClientHandler() {
                 AllowAutoRedirect = true,
                 MaxAutomaticRedirections = 10,
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             };
+        }
 
-            var client = new HttpClient(handler, true);
+        /// <summary>
+        /// Creates a new <see cref="HttpClient"/> for every request.
+        /// </summary>
+        protected virtual HttpClient CreateHttpClient(string authorization, string accept)
+        {
+            var client = new HttpClient(CreateHttpClientHandler(), true);
             client.DefaultRequestHeaders.UserAgent.Add(UserAgent);
 
             if (authorization != null)
