@@ -33,11 +33,11 @@ namespace Squirrel.Update
                     FileName = Path.Combine(dir, name),
                     Layout = new NLog.Layouts.SimpleLayout("${longdate} [${level:uppercase=true}] - ${message}"),
                     ArchiveFileName = Path.Combine(dir, archivename),
-                    ArchiveAboveSize = 4_000_000 /* 4 MB */,
+                    ArchiveAboveSize = 2_000_000 /* 2 MB */,
                     ArchiveNumbering = ArchiveNumberingMode.Sequence,
                     ConcurrentWrites = true, // should allow multiple processes to use the same file
                     KeepFileOpen = true,
-                    MaxArchiveFiles = 3 /* MAX 16mb of log data per "action" */,
+                    MaxArchiveFiles = 2 /* MAX 6mb of log data per "action" */,
                 },
                 NLog.LogLevel.Debug
             );
