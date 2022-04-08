@@ -1,4 +1,4 @@
-using Squirrel.SimpleSplat;
+﻿using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -81,7 +81,22 @@ namespace Squirrel.Update
 
             switch (opt.updateAction) {
             case UpdateAction.Setup:
-                Setup(opt.target, opt.silentInstall, opt.checkInstall).Wait();
+                try {
+                    Setup(opt.target, opt.silentInstall, opt.checkInstall).Wait();
+                } catch (Exception ex) when (!opt.silentInstall && !opt.checkInstall) {
+                    // when not in silent mode, we should endeavor to show a message.
+                    // we will also exit code 0, so Setup.exe does not think
+                    // it was an outright crash and show another error dialog.
+                    Log.FatalException("Encountered fatal unhandled exception.", ex);
+                    Windows.User32MessageBox.Show(
+                        IntPtr.Zero,
+                        "Setup encountered fatal error: " + ex.Message + Environment.NewLine
+                        + "There may be more detailed information in '%localappdata%\\SquirrelClowdTemp\\Squirrel.log'. "
+                        + "Please contact the application author.",
+                        "Setup Error",
+                        Windows.User32MessageBox.MessageBoxButtons.OK,
+                        Windows.User32MessageBox.MessageBoxIcon.Error);
+                }
                 break;
             case UpdateAction.Install:
                 var progressSource = new ProgressSource();
