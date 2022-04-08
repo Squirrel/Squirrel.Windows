@@ -106,7 +106,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         // and squirrel overheads (incl temp files). the constant 0.38 is a
         // aggressive estimate on what the compression ratio might be.
         int64_t squirrelOverhead = 50 * 1000 * 1000; 
-        int64_t requiredSpace = squirrelOverhead + packageLength + (packageLength / (double)0.38);
+        int64_t requiredSpace = squirrelOverhead + (packageLength * 3) + (packageLength / (double)0.38);
         if (!util::check_diskspace(requiredSpace)) {
             throw wstring(L"Insufficient disk space. This application requires at least " + pretty_bytes(requiredSpace) + L" free space to be installed");
         }
