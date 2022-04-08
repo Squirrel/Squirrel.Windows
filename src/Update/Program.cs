@@ -1,4 +1,4 @@
-﻿using Squirrel.SimpleSplat;
+using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -157,7 +157,7 @@ namespace Squirrel.Update
             }
 
             using var _t = Utility.WithTempDirectory(out var tempFolder);
-            ISplashWindow splash = new ComposedWindow(appname, silentInstall, zp.SetupIconBytes, zp.SetupSplashBytes);
+            using ISplashWindow splash = new ComposedWindow(appname, silentInstall, zp.SetupIconBytes, zp.SetupSplashBytes);
 
             // verify that this package can be installed on this cpu architecture
             if (SquirrelRuntimeInfo.IsPackageCompatibleWithCurrentOS(zp.MachineArchitecture) == false) {
@@ -243,7 +243,6 @@ namespace Squirrel.Update
 
             splash.SetMessage(null);
             await Install(silentInstall, progressSource, tempFolder);
-            splash.Dispose();
         }
 
         static async Task Install(bool silentInstall, ProgressSource progressSource, string sourceDirectory = null)
