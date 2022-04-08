@@ -113,7 +113,7 @@ void util::wexec(const wchar_t* cmd)
     if (dwExitCode != 0) {
         throw wstring(L"Process exited with error code: " 
             + to_wstring((int32_t)dwExitCode) 
-            + L". There may be additional logs available at '%localappdata%\\SquirrelClowdTemp\\Squirrel.log'.");
+            + L". There may be more detailed information in '%localappdata%\\SquirrelClowdTemp\\Squirrel.log'.");
     }
 }
 

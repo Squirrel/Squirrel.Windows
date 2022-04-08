@@ -91,8 +91,7 @@ namespace Squirrel.Update
                     Windows.User32MessageBox.Show(
                         IntPtr.Zero,
                         "Setup encountered fatal error: " + ex.Message + Environment.NewLine
-                        + "There may be more detailed information in '%localappdata%\\SquirrelClowdTemp\\Squirrel.log'. "
-                        + "Please contact the application author.",
+                        + "There may be more detailed information in '%localappdata%\\SquirrelClowdTemp\\Squirrel.log'.",
                         "Setup Error",
                         Windows.User32MessageBox.MessageBoxButtons.OK,
                         Windows.User32MessageBox.MessageBoxIcon.Error);
