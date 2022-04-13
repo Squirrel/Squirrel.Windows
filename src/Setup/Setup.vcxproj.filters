@@ -18,24 +18,24 @@
     <ClCompile Include="Setup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="unzip.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="bundle_marker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="platform_util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="miniz.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="unzip.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="bundle_marker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="platform_util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="miniz.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

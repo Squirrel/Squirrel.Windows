@@ -1,54 +1,12 @@
 #include <windows.h>
 #include <versionhelpers.h>
 #include <string>
-#include <functional>
 #include <fstream>
-#include "unzip.h"
 #include "bundle_marker.h"
 #include "platform_util.h"
 
 using namespace std;
 namespace fs = std::filesystem;
-
-// https://stackoverflow.com/a/874160/184746
-bool hasEnding(std::wstring const& fullString, std::wstring const& ending)
-{
-    if (fullString.length() >= ending.length()) {
-        return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-    }
-    return false;
-}
-
-void unzipSingleFile(BYTE* zipBuf, DWORD cZipBuf, wstring fileLocation, std::function<bool(ZIPENTRY&)>& predicate)
-{
-    HZIP zipFile = OpenZip(zipBuf, cZipBuf, NULL);
-
-    bool unzipSuccess = false;
-
-    ZRESULT zr;
-    int index = 0;
-    do {
-        ZIPENTRY zentry;
-        zr = GetZipItem(zipFile, index, &zentry);
-        if (zr != ZR_OK && zr != ZR_MORE) {
-            break;
-        }
-
-        if (predicate(zentry)) {
-            auto zaunz = UnzipItem(zipFile, index, fileLocation.c_str());
-            if (zaunz == ZR_OK) {
-                unzipSuccess = true;
-            }
-            break;
-        }
-
-        index++;
-    } while (zr == ZR_MORE || zr == ZR_OK);
-
-    CloseZip(zipFile);
-
-    if (!unzipSuccess) throw wstring(L"Unable to extract embedded package (Squirrel.exe not found).");
-}
 
 // Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
 wstring pretty_bytes(uint64_t bytes)
@@ -111,13 +69,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
             throw wstring(L"Insufficient disk space. This application requires at least " + pretty_bytes(requiredSpace) + L" free space to be installed.");
         }
 
-        // extract Squirrel installer from package
-        std::function<bool(ZIPENTRY&)> endsWithSquirrel([](ZIPENTRY& z) {
-            return hasEnding(std::wstring(z.name), L"Squirrel.exe");
-        });
-        unzipSingleFile(pkgStart, packageLength, updaterPath, endsWithSquirrel);
-
-        // extract whole package
+        // extract Update.exe and embedded nuget package
+        util::extractUpdateExe(pkgStart, packageLength, updaterPath);
         std::ofstream(packagePath, std::ios::binary).write((char*)pkgStart, packageLength);
 
         // run installer and forward our command line arguments
