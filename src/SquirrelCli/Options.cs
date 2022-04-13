@@ -98,6 +98,7 @@ namespace SquirrelCli
         public bool noDelta { get; private set; }
         public bool allowUnaware { get; private set; }
         public string msi { get; private set; }
+        public string debugSetupExe { get; private set; }
 
         public ReleasifyOptions()
         {
@@ -106,6 +107,8 @@ namespace SquirrelCli
             Add("allowUnaware", "Allows building packages without a SquirrelAwareApp (disabled by default)", v => allowUnaware = true, true);
             Add("addSearchPath=", "Add additional search directories when looking for helper exe's such as Setup.exe, Update.exe, etc",
                 v => HelperExe.AddSearchPath(v), true);
+            Add("debugSetupExe=", "Uses the Setup.exe at this {PATH} to create the bundle, and then replaces it with the bundle. " +
+                "Used for locally debugging Setup.exe with a real bundle attached.", v => debugSetupExe = v, true);
 
             // public arguments
             InsertAt(1, "p=|package=", "{PATH} to a '.nupkg' package to releasify", v => package = v);

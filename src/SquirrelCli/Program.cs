@@ -216,13 +216,22 @@ namespace SquirrelCli
 
                     var awareExes = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(libDir);
 
-                    // unless the validation has been disabled, do not allow the creation of packages without a SquirrelAwareApp inside
+                    // unless the validation has been disabled, do not allow the creation of packages
+                    // without a SquirrelAwareApp inside
                     if (!options.allowUnaware && !awareExes.Any()) {
                         throw new ArgumentException(
                             "There are no SquirreAwareApp's in the provided package. Please mark an exe " +
                             "as aware using the assembly manifest, or use the '--allowUnaware' argument " +
                             "to skip this validation and create a package anyway (not recommended).");
                     }
+
+                    // warning if there are long paths (>200 char) in this package. 260 is max path
+                    // but with the %localappdata% + user name + app name this can add up quickly.
+                    // eg. 'C:\Users\SamanthaJones\AppData\Local\Application\app-1.0.1\' is 60 characters.
+                    Directory.EnumerateFiles(libDir, "*", SearchOption.AllDirectories)
+                        .Select(f => f.Substring(libDir.Length).Trim(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
+                        .Where(f => f.Length >= 200)
+                        .ForEach(f => Log.Warn($"File in package exceeds 200 characters ({f.Length}) and is likely to cause issues on some systems: '{f}'."));
 
                     // fail the release if this is a clickonce application
                     if (Directory.EnumerateFiles(libDir, "*.application").Any(f => File.ReadAllText(f).Contains("clickonce"))) {
@@ -358,7 +367,7 @@ namespace SquirrelCli
 
             var bundledzp = new ZipPackage(package);
             var targetSetupExe = Path.Combine(di.FullName, $"{bundledzp.Id}Setup.exe");
-            File.Copy(HelperExe.SetupPath, targetSetupExe, true);
+            File.Copy(options.debugSetupExe ?? HelperExe.SetupPath, targetSetupExe, true);
             Utility.Retry(() => HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, bundledzp, setupIcon).Wait());
 
             var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
@@ -367,6 +376,14 @@ namespace SquirrelCli
             Log.Info($"Creating Setup bundle");
             SetupBundle.CreatePackageBundle(targetSetupExe, newestReleasePath);
             options.SignPEFile(targetSetupExe);
+
+            Log.Info($"Setup bundle created at '{targetSetupExe}'.");
+
+            // this option is used for debugging a local Setup.exe
+            if (options.debugSetupExe != null) {
+                File.Copy(targetSetupExe, options.debugSetupExe, true);
+                Log.Warn($"DEBUG OPTION: Setup bundle copied on top of '{options.debugSetupExe}'. Recompile before creating a new bundle.");
+            }
 
             if (!String.IsNullOrEmpty(options.msi)) {
                 bool x64 = options.msi.Equals("x64");
