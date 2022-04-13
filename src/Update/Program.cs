@@ -749,8 +749,8 @@ namespace Squirrel.Update
             }
 
             // Debug Mode (i.e. in vendor)
-            var debugPath = Path.Combine(ourPath, "..", "..", "..", "vendor", "wix", "candle.exe");
-            if (File.Exists(debugPath)) {
+            var debugPath = Path.Combine(ourPath, "..", "..", "..", "vendor", "wix");
+            if (File.Exists(Path.Combine(debugPath, "candle.exe"))) {
                 return Path.GetFullPath(debugPath);
             }
 
