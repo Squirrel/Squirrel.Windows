@@ -279,3 +279,29 @@ void util::extractUpdateExe(void* zipBuf, size_t cZipBuf, wstring fileLocation)
     });
     extractSingleFile(zipBuf, cZipBuf, fileLocation, endsWithSquirrel);
 }
+
+// Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
+wstring util::pretty_bytes(uint64_t bytes)
+{
+    wchar_t buf[128];
+    const wchar_t* suffixes[7];
+    suffixes[0] = L"B";
+    suffixes[1] = L"KB";
+    suffixes[2] = L"MB";
+    suffixes[3] = L"GB";
+    suffixes[4] = L"TB";
+    suffixes[5] = L"PB";
+    suffixes[6] = L"EB";
+    uint64_t s = 0; // which suffix to use
+    double count = bytes;
+    while (count >= 1000 && s < 7) {
+        s++;
+        count /= 1000;
+    }
+    if (count - floor(count) == 0.0)
+        swprintf(buf, 128, L"%d %s", (int)count, suffixes[s]);
+    else
+        swprintf(buf, 128, L"%.1f %s", count, suffixes[s]);
+
+    return wstring(buf);
+}

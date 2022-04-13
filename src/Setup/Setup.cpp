@@ -6,33 +6,6 @@
 #include "platform_util.h"
 
 using namespace std;
-namespace fs = std::filesystem;
-
-// Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
-wstring pretty_bytes(uint64_t bytes)
-{
-    wchar_t buf[128];
-    const wchar_t* suffixes[7];
-    suffixes[0] = L"B";
-    suffixes[1] = L"KB";
-    suffixes[2] = L"MB";
-    suffixes[3] = L"GB";
-    suffixes[4] = L"TB";
-    suffixes[5] = L"PB";
-    suffixes[6] = L"EB";
-    uint64_t s = 0; // which suffix to use
-    double count = bytes;
-    while (count >= 1000 && s < 7) {
-        s++;
-        count /= 1000;
-    }
-    if (count - floor(count) == 0.0)
-        swprintf(buf, 128, L"%d %s", (int)count, suffixes[s]);
-    else
-        swprintf(buf, 128, L"%.1f %s", count, suffixes[s]);
-
-    return wstring(buf);
-}
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
@@ -66,7 +39,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         int64_t squirrelOverhead = 50 * 1000 * 1000;
         int64_t requiredSpace = squirrelOverhead + (packageLength * 3) + (packageLength / (double)0.38);
         if (!util::check_diskspace(requiredSpace)) {
-            throw wstring(L"Insufficient disk space. This application requires at least " + pretty_bytes(requiredSpace) + L" free space to be installed.");
+            throw wstring(L"Insufficient disk space. This application requires at least " + util::pretty_bytes(requiredSpace) + L" free space to be installed.");
         }
 
         // extract Update.exe and embedded nuget package
