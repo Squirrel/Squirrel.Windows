@@ -231,7 +231,7 @@ namespace SquirrelCli
                     Directory.EnumerateFiles(libDir, "*", SearchOption.AllDirectories)
                         .Select(f => f.Substring(libDir.Length).Trim(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar))
                         .Where(f => f.Length >= 200)
-                        .ForEach(f => Log.Warn($"File in package exceeds 200 characters ({f.Length}) and is likely to cause issues on some systems: '{f}'."));
+                        .ForEach(f => Log.Warn($"File path in package exceeds 200 characters ({f.Length}) and may cause issues on Windows: '{f}'."));
 
                     // fail the release if this is a clickonce application
                     if (Directory.EnumerateFiles(libDir, "*.application").Any(f => File.ReadAllText(f).Contains("clickonce"))) {
