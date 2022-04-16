@@ -545,6 +545,7 @@ namespace Squirrel.Update
             }
         }
 
+
         static string getAppNameFromDirectory(string path = null)
         {
             path = path ?? SquirrelRuntimeInfo.BaseDirectory;
