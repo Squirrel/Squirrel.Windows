@@ -18,19 +18,19 @@
 
     <dependencies>
       <group targetFramework=".NETFramework4.6.1">
-        <dependency id="SharpCompress" version="0.30.1" />
+        <dependency id="SharpCompress" version="0.31.0" />
         <dependency id="System.ValueTuple" version="4.5.0" />
       </group>
       <group targetFramework="net5.0">
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
-        <dependency id="SharpCompress" version="0.30.1" />
+        <dependency id="SharpCompress" version="0.31.0" />
       </group>
       <group targetFramework="net6.0">
-        <dependency id="SharpCompress" version="0.30.1" />
+        <dependency id="SharpCompress" version="0.31.0" />
       </group>
       <group targetFramework=".NETStandard2.0">
         <dependency id="Microsoft.Win32.Registry" version="5.0.0" />
-        <dependency id="SharpCompress" version="0.30.1" />
+        <dependency id="SharpCompress" version="0.31.0" />
       </group>
     </dependencies>
     <frameworkAssemblies>
