@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
@@ -65,12 +65,12 @@ namespace Squirrel
                 var baseTempInfo = new DirectoryInfo(baseTempPath);
                 var tempInfo = new DirectoryInfo(tempPath);
 
-                const int numParallel = 4;
+                int numParallel = Math.Max(Environment.ProcessorCount - 1, 2);
 
                 this.Log().Info($"Creating delta for {basePackage.Version} -> {newPackage.Version} with {numParallel} parallel threads.");
 
                 this.Log().Debug("Extracting {0} and {1} into {2}",
-                    basePackage.ReleasePackageFile, newPackage.ReleasePackageFile, tempPath);
+                    Path.GetFileName(basePackage.ReleasePackageFile), Path.GetFileName(newPackage.ReleasePackageFile), tempPath);
 
                 EasyZip.ExtractZipToDirectory(basePackage.ReleasePackageFile, baseTempInfo.FullName);
                 EasyZip.ExtractZipToDirectory(newPackage.ReleasePackageFile, tempInfo.FullName);
