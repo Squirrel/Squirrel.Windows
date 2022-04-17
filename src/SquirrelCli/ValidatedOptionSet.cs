@@ -106,6 +106,14 @@ namespace SquirrelCli
                     throw new OptionValidationException(propertyName, "Must start with http or https and be a valid URI.");
         }
 
+        protected virtual int ParseIntArg(string propertyName, string propertyValue)
+        {
+            if (int.TryParse(propertyValue, out var value))
+                return value;
+
+            throw new OptionValidationException(propertyName, "Must be a valid integer.");
+        }
+
         public abstract void Validate();
 
         public virtual void WriteOptionDescriptions()

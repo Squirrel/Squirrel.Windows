@@ -27,10 +27,10 @@ namespace SquirrelCli.Sources
             _options = options;
             if (options.region != null) {
                 var r = RegionEndpoint.GetBySystemName(options.region);
-                _client = new AmazonS3Client(_options.key, _options.secret, r);
-            } else if (options.endpointUrl != null) {
-                var config = new AmazonS3Config() { ServiceURL = _options.endpointUrl };
-                _client = new AmazonS3Client(_options.key, _options.secret, config);
+                _client = new AmazonS3Client(_options.keyId, _options.secret, r);
+            } else if (options.endpoint != null) {
+                var config = new AmazonS3Config() { ServiceURL = _options.endpoint };
+                _client = new AmazonS3Client(_options.keyId, _options.secret, config);
             } else {
                 throw new InvalidOperationException("Missing endpoint");
             }
@@ -69,52 +69,186 @@ namespace SquirrelCli.Sources
 
         public async Task UploadMissingPackages()
         {
+            Log.Info($"Uploading releases from '{_options.releaseDir}' to S3 bucket '{_options.bucket}'"
+                + (String.IsNullOrWhiteSpace(_prefix) ? "" : " with prefix '" + _prefix + "'"));
+
             var releasesDir = new DirectoryInfo(_options.releaseDir);
 
-            var files = releasesDir.GetFiles();
-            var setupFile = files.Where(f => f.FullName.EndsWith("Setup.exe")).SingleOrDefault();
-            var releasesFile = files.Where(f => f.Name == "RELEASES").SingleOrDefault();
-            var filesWithoutSpecial = files.Except(new[] { setupFile, releasesFile });
+            // locate files to upload
+            var files = releasesDir.GetFiles("*", SearchOption.TopDirectoryOnly);
+            var msiFile = files.Where(f => f.FullName.EndsWith(".msi", StringComparison.InvariantCultureIgnoreCase)).SingleOrDefault();
+            var setupFile = files.Where(f => f.FullName.EndsWith("Setup.exe", StringComparison.InvariantCultureIgnoreCase))
+                .ContextualSingle("release directory", "Setup.exe file");
+            var releasesFile = files.Where(f => f.Name.Equals("RELEASES", StringComparison.InvariantCultureIgnoreCase))
+                .ContextualSingle("release directory", "RELEASES file");
+            var nupkgFiles = files.Where(f => f.FullName.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase)).ToArray();
 
-            foreach (var f in filesWithoutSpecial) {
-                string key = _prefix + f.Name;
-                string deleteOldVersionId = null;
+            // apply retention policy. count '-full' versions only, then also remove corresponding delta packages
+            var releaseEntries = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesFile.FullName))
+                .OrderBy(k => k.Version)
+                .ThenBy(k => !k.IsDelta)
+                .ToArray();
 
-                try {
-                    var metadata = await _client.GetObjectMetadataAsync(_options.bucket, key);
-                    var md5 = GetFileMD5Checksum(f.FullName);
-                    var stored = metadata?.ETag?.Trim().Trim('"');
+            var fullCount = releaseEntries.Where(r => !r.IsDelta).Count();
+            if (_options.keepMaxReleases > 0 && fullCount > _options.keepMaxReleases) {
+                Log.Info($"Retention Policy: {fullCount - _options.keepMaxReleases} releases will be removed from RELEASES file.");
 
-                    if (stored != null) {
-                        if (stored.Equals(md5, StringComparison.InvariantCultureIgnoreCase)) {
-                            Log.Info($"Skipping '{f.FullName}', matching file exists in remote.");
-                            continue;
-                        } else if (_options.overwrite) {
-                            Log.Info($"File '{f.FullName}' exists in remote, replacing...");
-                            deleteOldVersionId = metadata.VersionId;
-                        } else {
-                            Log.Warn($"File '{f.FullName}' exists in remote and checksum does not match. Use 'overwrite' argument to replace remote file.");
-                            continue;
-                        }
-                    }
-                } catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound) {
-                    // we don't care if the file does not exist, we're uploading!
+                var fullReleases = releaseEntries
+                    .OrderByDescending(k => k.Version)
+                    .Where(k => !k.IsDelta)
+                    .Take(_options.keepMaxReleases)
+                    .ToArray();
+
+                var deltaReleases = releaseEntries
+                    .OrderByDescending(k => k.Version)
+                    .Where(k => k.IsDelta)
+                    .Where(k => fullReleases.Any(f => f.Version == k.Version))
+                    .Where(k => k.Version != fullReleases.Last().Version) // ignore delta packages for the oldest full package
+                    .ToArray();
+
+                Log.Info($"Total number of packages in remote after retention: {fullReleases.Length} full, {deltaReleases.Length} delta.");
+                fullCount = fullReleases.Length;
+
+                releaseEntries = fullReleases
+                    .Concat(deltaReleases)
+                    .OrderBy(k => k.Version)
+                    .ThenBy(k => !k.IsDelta)
+                    .ToArray();
+                ReleaseEntry.WriteReleaseFile(releaseEntries, releasesFile.FullName);
+            } else {
+                Log.Info($"There are currently {fullCount} full releases in RELEASES file.");
+            }
+
+            // we need to upload things in a certain order. If we upload 'RELEASES' first, for example, a client
+            // might try to request a nupkg that does not yet exist.
+
+            // upload nupkg's first
+            foreach (var f in nupkgFiles) {
+                if (!releaseEntries.Any(r => r.Filename.Equals(f.Name, StringComparison.InvariantCultureIgnoreCase))) {
+                    Log.Warn($"Upload file '{f.Name}' skipped (not in RELEASES file)");
+                    continue;
+                }
+                await UploadFile(f, _options.overwrite);
+            }
+
+            // next upload setup files
+            await UploadFile(setupFile, true);
+            if (msiFile != null) await UploadFile(msiFile, true);
+
+            // upload RELEASES
+            await UploadFile(releasesFile, true);
+
+            // ignore dead package cleanup if there is no retention policy
+            if (_options.keepMaxReleases > 0) {
+
+                // remove any dead packages (not in RELEASES) as they are undiscoverable anyway
+                Log.Info("Searching for remote dead packages (not in RELEASES file)");
+
+                var objects = await ListBucketContentsAsync(_client, _options.bucket).ToArrayAsync();
+                var deadObjectKeys = objects
+                    .Select(o => o.Key)
+                    .Where(o => o.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase))
+                    .Where(o => o.StartsWith(_prefix, StringComparison.InvariantCultureIgnoreCase))
+                    .Select(o => o.Substring(_prefix.Length))
+                    .Where(o => !o.Contains('/')) // filters out objects in folders if _prefix is empty
+                    .Where(o => !releaseEntries.Any(r => r.Filename.Equals(o, StringComparison.InvariantCultureIgnoreCase)))
+                    .ToArray();
+
+                Log.Info($"Found {deadObjectKeys.Length} dead packages.");
+                foreach (var objKey in deadObjectKeys) {
+                    await RetryAsync(() => _client.DeleteObjectAsync(new DeleteObjectRequest { BucketName = _options.bucket, Key = objKey }),
+                        "Deleting dead package: " + objKey);
+                }
+            }
+
+            Log.Info("Done");
+
+            var endpoint = new Uri(_options.endpoint ?? RegionEndpoint.GetBySystemName(_options.region).GetEndpointForService("s3").Hostname);
+            var baseurl = $"https://{_options.bucket}.{endpoint.Host}/{_prefix}";
+            Log.Info($"Bucket URL:  {baseurl}");
+            Log.Info($"Setup URL:   {baseurl}{setupFile.Name}");
+        }
+
+        private static async IAsyncEnumerable<S3Object> ListBucketContentsAsync(IAmazonS3 client, string bucketName)
+        {
+            var request = new ListObjectsV2Request {
+                BucketName = bucketName,
+                MaxKeys = 100,
+            };
+
+            ListObjectsV2Response response;
+            do {
+                response = await client.ListObjectsV2Async(request);
+                foreach (var obj in response.S3Objects) {
+                    yield return obj;
                 }
 
-                var req = new PutObjectRequest {
-                    BucketName = _options.bucket,
-                    FilePath = f.FullName,
-                    Key = key,
-                };
+                // If the response is truncated, set the request ContinuationToken
+                // from the NextContinuationToken property of the response.
+                request.ContinuationToken = response.NextContinuationToken;
+            }
+            while (response.IsTruncated);
+        }
 
-                Log.Info("Uploading " + f.Name);
-                var resp = await _client.PutObjectAsync(req);
-                if ((int) resp.HttpStatusCode >= 300 || (int) resp.HttpStatusCode < 200)
-                    throw new Exception("Failed to upload with status code " + resp.HttpStatusCode);
+        private async Task UploadFile(FileInfo f, bool overwriteRemote)
+        {
+            string key = _prefix + f.Name;
+            string deleteOldVersionId = null;
 
-                if (deleteOldVersionId != null) {
-                    Log.Info("Deleting old version of " + f.Name);
-                    await _client.DeleteObjectAsync(_options.bucket, key, deleteOldVersionId);
+            // try to detect an existing remote file of the same name
+            try {
+                var metadata = await _client.GetObjectMetadataAsync(_options.bucket, key);
+                var md5 = GetFileMD5Checksum(f.FullName);
+                var stored = metadata?.ETag?.Trim().Trim('"');
+
+                if (stored != null) {
+                    if (stored.Equals(md5, StringComparison.InvariantCultureIgnoreCase)) {
+                        Log.Info($"Upload file '{f.Name}' skipped (already exists in remote)");
+                        return;
+                    } else if (overwriteRemote) {
+                        Log.Info($"File '{f.Name}' exists in remote, replacing...");
+                        deleteOldVersionId = metadata.VersionId;
+                    } else {
+                        Log.Warn($"File '{f.Name}' exists in remote and checksum does not match local file. Use 'overwrite' argument to replace remote file.");
+                        return;
+                    }
+                }
+            } catch {
+                // don't care if this check fails. worst case, we end up re-uploading a file that
+                // already exists. storage providers should prefer the newer file of the same name.
+            }
+
+            var req = new PutObjectRequest {
+                BucketName = _options.bucket,
+                FilePath = f.FullName,
+                Key = key,
+            };
+
+            await RetryAsync(() => _client.PutObjectAsync(req), "Uploading " + f.Name);
+
+            if (deleteOldVersionId != null) {
+                await RetryAsync(() => _client.DeleteObjectAsync(_options.bucket, key, deleteOldVersionId),
+                    "Removing old version of " + f.Name,
+                    throwIfFail: false);
+            }
+        }
+
+        private async Task RetryAsync(Func<Task> block, string message, bool throwIfFail = true, bool showMessageFirst = true)
+        {
+            int ctry = 0;
+            while (true) {
+                try {
+                    if (showMessageFirst || ctry > 0)
+                        Log.Info((ctry > 0 ? $"(retry {ctry}) " : "") + message);
+                    await block().ConfigureAwait(false);
+                    return;
+                } catch (Exception ex) {
+                    if (ctry++ > 2) {
+                        if (throwIfFail) throw;
+                        else return;
+                    }
+                    Log.Error($"Error: {ex.Message}, retrying in 1 second.");
+                    await Task.Delay(1000).ConfigureAwait(false);
                 }
             }
         }

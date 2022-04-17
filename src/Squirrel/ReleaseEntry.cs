@@ -356,6 +356,17 @@ namespace Squirrel
             return String.Format("{0:F0}%", percentage * 100.0);
         }
 
+        /// <inheritdoc />
+        public override string ToString()
+        {
+            return Filename;
+        }
+
+        /// <inheritdoc />
+        public override int GetHashCode()
+        {
+            return Filename.GetHashCode();
+        }
 
         /// <summary>
         /// Given a list of releases and a specified release package, returns the release package
