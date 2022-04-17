@@ -7,7 +7,7 @@
     <id>Clowd.Squirrel</id>
     <title>Squirrel for Windows</title>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>An installation and update framework for Windows applications</description>
+    <description>Quick and easy installer and automatic updates for desktop applications</description>
     <copyright>Copyright © Caelan Sayler 2021</copyright>
     <authors>Anaïs Betts, Caelan Sayler, GitHub, others</authors>
     <owners>Caelan Sayler</owners>
