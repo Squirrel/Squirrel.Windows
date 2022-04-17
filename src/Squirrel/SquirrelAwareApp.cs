@@ -62,7 +62,6 @@ namespace Squirrel
         {
             SquirrelHook defaultBlock = ((v, t) => { });
             var args = arguments ?? Environment.GetCommandLineArgs().Skip(1).ToArray();
-            if (args.Length == 0) return;
 
             var fastExitlookup = new[] {
                 new { Key = "--squirrel-install", Value = onInitialInstall ?? defaultBlock },
@@ -81,7 +80,7 @@ namespace Squirrel
             um.Dispose();
 
             // in the fastExitLookup arguments, we run the squirrel hook and then exit the process
-            if (fastExitlookup.ContainsKey(args[0]) && args.Length >= 2) {
+            if (args.Length >= 2 && fastExitlookup.ContainsKey(args[0])) {
                 var version = new SemanticVersion(args[1]);
                 try {
                     fastExitlookup[args[0]](version, um);
@@ -93,7 +92,7 @@ namespace Squirrel
             }
 
             // otherwise we execute the 'everyrun' hook with the firstRun parameter.
-            bool firstRun = args[0] == "--squirrel-firstrun";
+            bool firstRun = args.Length >= 1 && args[0] == "--squirrel-firstrun";
             onEveryRun?.Invoke(um.CurrentlyInstalledVersion(), um, firstRun);
         }
     }
