@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
@@ -172,7 +173,12 @@ namespace SquirrelCli.Sources
 
             Log.Info("Done");
 
-            var endpoint = new Uri(_options.endpoint ?? RegionEndpoint.GetBySystemName(_options.region).GetEndpointForService("s3").Hostname);
+            var endpointHost = _options.endpoint ?? RegionEndpoint.GetBySystemName(_options.region).GetEndpointForService("s3").Hostname;
+
+            if (Regex.IsMatch(endpointHost, @"^https?:\/\/", RegexOptions.IgnoreCase)) {
+                endpointHost = new Uri(endpointHost, UriKind.Absolute).Host;
+            }
+
             var baseurl = $"https://{_options.bucket}.{endpoint.Host}/{_prefix}";
             Log.Info($"Bucket URL:  {baseurl}");
             Log.Info($"Setup URL:   {baseurl}{setupFile.Name}");
