@@ -47,9 +47,18 @@ namespace SquirrelCli.Sources
                 releasesDir.Create();
 
             var releasesPath = Path.Combine(releasesDir.FullName, "RELEASES");
-            Log.Info("Downloading RELEASES");
-            using (var obj = await _client.GetObjectAsync(_options.bucket, _prefix + "RELEASES"))
-                await obj.WriteResponseStreamToFileAsync(releasesPath, false, CancellationToken.None);
+
+            Log.Info($"Downloading latest release to '{_options.releaseDir}' from S3 bucket '{_options.bucket}'"
+                + (String.IsNullOrWhiteSpace(_prefix) ? "" : " with prefix '" + _prefix + "'"));
+
+            try {
+                Log.Info("Downloading RELEASES");
+                using (var obj = await _client.GetObjectAsync(_options.bucket, _prefix + "RELEASES"))
+                    await obj.WriteResponseStreamToFileAsync(releasesPath, false, CancellationToken.None);
+            } catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound) {
+                Log.Warn("RELEASES file not found. No releases to download.");
+                return;
+            }
 
             var releasesToDownload = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesPath))
                 .Where(x => !x.IsDelta)
