@@ -179,7 +179,7 @@ namespace SquirrelCli.Sources
                 endpointHost = new Uri(endpointHost, UriKind.Absolute).Host;
             }
 
-            var baseurl = $"https://{_options.bucket}.{endpoint.Host}/{_prefix}";
+            var baseurl = $"https://{_options.bucket}.{endpointHost}/{_prefix}";
             Log.Info($"Bucket URL:  {baseurl}");
             Log.Info($"Setup URL:   {baseurl}{setupFile.Name}");
         }
