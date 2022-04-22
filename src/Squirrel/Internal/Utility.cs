@@ -435,7 +435,8 @@ namespace Squirrel
                 } else if (Directory.Exists(path)) {
                     DeleteFsiTree(new DirectoryInfo(path));
                 } else {
-                    Log().Warn($"Cannot delete '{path}' if it does not exist.");
+                    if (throwOnFailure)
+                        Log().Warn($"Cannot delete '{path}' if it does not exist.");
                 }
             } catch (Exception ex) {
                 Log().ErrorException($"Unable to delete '{path}'", ex);

@@ -294,13 +294,14 @@ namespace SquirrelCli
                     ZipPackage.SetSquirrelMetadata(nuspecPath, pkgarch, requiredFrameworks.Select(r => r.Id));
 
                     // create stub executable for all exe's in this package (except Squirrel!)
-                    Log.Info("Creating stub executables");
-                    new DirectoryInfo(pkgPath).GetAllFilesRecursively()
+                    var exesToCreateStubFor = new DirectoryInfo(pkgPath).GetAllFilesRecursively()
                         .Where(x => x.Name.EndsWith(".exe", StringComparison.InvariantCultureIgnoreCase))
                         .Where(x => !x.Name.Equals("squirrel.exe", StringComparison.InvariantCultureIgnoreCase))
                         .Where(x => Utility.IsFileTopLevelInPackage(x.FullName, pkgPath))
-                        .ToArray() // materialize the IEnumerable so we never end up creating stubs for stubs
-                        .ForEach(x => createExecutableStubForExe(x.FullName));
+                        .ToArray(); // materialize the IEnumerable so we never end up creating stubs for stubs
+
+                    Log.Info($"Creating {exesToCreateStubFor.Length} stub executables");
+                    exesToCreateStubFor.ForEach(x => createExecutableStubForExe(x.FullName));
 
                     // sign all exe's in this package
                     new DirectoryInfo(pkgPath).GetAllFilesRecursively()
