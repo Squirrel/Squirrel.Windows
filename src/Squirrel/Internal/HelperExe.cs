@@ -98,7 +98,6 @@ namespace Squirrel
                     var msg = String.Format(
                         "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
                         "candle.exe", Utility.ArgsToCommandLine(candleParams), processResult.Item2);
-
                     throw new Exception(msg);
                 }
 
@@ -110,7 +109,6 @@ namespace Squirrel
                     var msg = String.Format(
                         "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
                         "light.exe", Utility.ArgsToCommandLine(lightParams), processResult.Item2);
-
                     throw new Exception(msg);
                 }
             } finally {
@@ -122,15 +120,11 @@ namespace Squirrel
         {
             var args = new[] { Path.GetFullPath(exePath), "--set-icon", iconPath };
             var processResult = await Utility.InvokeProcessAsync(RceditPath, args, CancellationToken.None).ConfigureAwait(false);
-
             if (processResult.ExitCode != 0) {
                 var msg = String.Format(
                     "Failed to modify resources, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
                     RceditPath, args, processResult.StdOutput);
-
                 throw new Exception(msg);
-            } else {
-                Console.WriteLine(processResult.StdOutput);
             }
         }
 
@@ -154,15 +148,11 @@ namespace Squirrel
             }
 
             var processResult = await Utility.InvokeProcessAsync(RceditPath, args, CancellationToken.None).ConfigureAwait(false);
-
             if (processResult.ExitCode != 0) {
                 var msg = String.Format(
                     "Failed to modify resources, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
                     RceditPath, args, processResult.StdOutput);
-
                 throw new Exception(msg);
-            } else {
-                Console.WriteLine(processResult.StdOutput);
             }
         }
     }
