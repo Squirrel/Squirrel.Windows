@@ -469,11 +469,15 @@ namespace SquirrelCli
 
         private readonly object gate = new object();
 
+        private readonly string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
         public void Write(string message, LogLevel logLevel)
         {
             if (logLevel < Level) {
                 return;
             }
+
+            message = message.Replace(localAppData, "%localappdata%", StringComparison.InvariantCultureIgnoreCase);
 
             lock (gate) {
                 string lvl = logLevel.ToString().Substring(0, 4).ToUpper();
