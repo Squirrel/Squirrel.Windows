@@ -7,7 +7,7 @@ $ErrorActionPreference = "Stop"
 # get current git version
 Write-Host "Retrieving current version from nbgv" -ForegroundColor Magenta
 $gitVerJson = (&nbgv get-version -f json) | ConvertFrom-Json
-$version = $gitVerJson.NuGetPackageVersion
+$version = $gitVerJson.SemVer1
 $public = $gitVerJson.PublicRelease
 
 # build nuget package
