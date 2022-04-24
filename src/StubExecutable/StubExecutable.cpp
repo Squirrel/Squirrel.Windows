@@ -1,120 +1,159 @@
-// StubExecutable.cpp : Defines the entry point for the application.
-//
-
-#include "stdafx.h"
-#include "semver200.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <tchar.h>
+#include <string>
+#include <sstream>
+#include <vector>
 
 using namespace std;
 
-wchar_t* FindRootAppDir()
+void throwLastWin32Error(wstring addedInfo)
 {
-    wchar_t* ourDirectory = new wchar_t[MAX_PATH];
+    HRESULT hr = GetLastError();
+    if (hr == 0) return;
 
-    GetModuleFileName(GetModuleHandle(NULL), ourDirectory, MAX_PATH);
-    wchar_t* lastSlash = wcsrchr(ourDirectory, L'\\');
-    if (!lastSlash) {
-        delete[] ourDirectory;
-        return NULL;
+    // https://stackoverflow.com/a/17387176/184746
+    // https://stackoverflow.com/a/455533/184746
+    LPWSTR messageBuffer = nullptr;
+    size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                NULL, hr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&messageBuffer, 0, NULL);
+
+    wstring message(messageBuffer, size);
+
+    if (messageBuffer) {
+        LocalFree(messageBuffer);
+        messageBuffer = nullptr;
     }
 
-    // Null-terminate the string at the slash so now it's a directory
-    *lastSlash = 0x0;
-    return ourDirectory;
+    if (addedInfo.empty()) throw message;
+    else throw wstring(addedInfo + L" " + message);
 }
 
-wchar_t* FindOwnExecutableName()
+wstring getProcessPath()
 {
-    wchar_t* ourDirectory = new wchar_t[MAX_PATH];
-
-    GetModuleFileName(GetModuleHandle(NULL), ourDirectory, MAX_PATH);
-    wchar_t* lastSlash = wcsrchr(ourDirectory, L'\\');
-    if (!lastSlash) {
-        delete[] ourDirectory;
-        return NULL;
-    }
-
-    wchar_t* ret = _wcsdup(lastSlash + 1);
-    delete[] ourDirectory;
-    return ret;
+    wchar_t ourFile[MAX_PATH];
+    HMODULE hMod = GetModuleHandle(NULL);
+    GetModuleFileName(hMod, ourFile, _countof(ourFile));
+    return wstring(ourFile);
 }
 
-std::wstring FindLatestAppDir()
+void wexec(const wchar_t* cmd)
 {
-    std::wstring ourDir;
-    ourDir.assign(FindRootAppDir());
+    LPTSTR szCmdline = _tcsdup(cmd); // https://stackoverflow.com/a/10044348/184746
 
-    ourDir += L"\\app-*";
+    STARTUPINFO si = { 0 };
+    si.cb = sizeof(STARTUPINFO);
+    si.wShowWindow = SW_SHOW;
+    si.dwFlags = STARTF_USESHOWWINDOW;
 
-    WIN32_FIND_DATA fileInfo = { 0 };
-    HANDLE hFile = FindFirstFile(ourDir.c_str(), &fileInfo);
-    if (hFile == INVALID_HANDLE_VALUE) {
-        return NULL;
+    PROCESS_INFORMATION pi = { 0 };
+    if (!CreateProcess(NULL, szCmdline, NULL, NULL, false, 0, NULL, NULL, &si, &pi)) {
+        throwLastWin32Error(L"Unable to start process.");
     }
 
-    version::Semver200_version acc("0.0.0");
-    std::wstring acc_s;
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+}
 
-    do {
-        std::wstring appVer = fileInfo.cFileName;
-        appVer = appVer.substr(4);   // Skip 'app-'
-        if (!(fileInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+vector<wchar_t> commandChars{ L' ', L'"', L'\n', L'\t', L'\v' };
+wstring argsToCommandLine(const vector<wstring>& args)
+{
+    wstringstream ss;
+    for (unsigned int i = 0; i < args.size(); i++) {
+        auto& arg = args[i];
+        if (arg.empty()) continue;
+        if (ss.tellp() > 0) ss << L" ";
+
+        bool ctrlChar = false;
+        for (unsigned int n = 0; n < commandChars.size(); n++) {
+            if (arg.find(commandChars[n]) != wstring::npos) {
+                // there is a control char in this argument
+                ctrlChar = true;
+                break;
+            }
+        }
+
+        if (!ctrlChar) {
+            ss << arg;
             continue;
         }
 
-        
-#pragma warning( disable : 4244 ) // warning - conversion from 'wchar_t' to 'const _Elem', possible loss of data
-        std::string s(appVer.begin(), appVer.end());
-
-        version::Semver200_version thisVer(s);
-
-        if (thisVer > acc) {
-            acc = thisVer;
-            acc_s = appVer;
+        // need to surround with quotes and escape all the control characters
+        ss << L"\"";
+        for (unsigned int c = 0; c < arg.size(); c++) {
+            int backslashes = 0;
+            while (c < arg.size() && arg[c] == L'\\') {
+                c++;
+                backslashes++;
+            }
+            if (c == arg.size()) {
+                ss << wstring(backslashes * 2, '\\');
+                break;
+            }
+            else if (arg[c] == '"') {
+                ss << wstring(backslashes * 2 + 1, '\\');
+                ss << L"\"";
+            }
+            else {
+                ss << wstring(backslashes, '\\');
+                ss << arg[c];
+            }
         }
-    } while (FindNextFile(hFile, &fileInfo));
-
-    if (acc == version::Semver200_version("0.0.0")) {
-        return NULL;
+        ss << L"\"";
     }
-
-    ourDir.assign(FindRootAppDir());
-    std::wstringstream ret;
-    ret << ourDir << L"\\app-" << acc_s;
-
-    FindClose(hFile);
-    return ret.str();
+    return ss.str();
 }
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+// https://stackoverflow.com/a/3418285/184746
+bool replace(std::wstring& str, const std::wstring& from, const std::wstring& to)
 {
-    std::wstring appName;
-    appName.assign(FindOwnExecutableName());
+    size_t start_pos = str.find(from);
+    if (start_pos == std::wstring::npos)
+        return false;
+    str.replace(start_pos, from.length(), to);
+    return true;
+}
 
-    std::wstring workingDir(FindLatestAppDir());
-    std::wstring fullPath(workingDir + L"\\" + appName);
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+{
+    try {
+        wstring myexepath = getProcessPath();
+        wstring arguments(lpCmdLine);
+        bool dryRun = replace(arguments, L"--stub-dry-run", L"");
 
-    STARTUPINFO si = { 0 };
-    PROCESS_INFORMATION pi = { 0 };
+        auto lastSlash = myexepath.find_last_of(L'\\');
+        if (lastSlash == wstring::npos) {
+            throw wstring(L"Unable to find/parse running exe file path (no backslash).");
+        }
 
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = nCmdShow;
+        wstring mydirectory = myexepath.substr(0, lastSlash);
+        wstring myname = myexepath.substr(lastSlash + 1);
+        if (myname.empty() || mydirectory.empty()) {
+            throw wstring(L"Unable to find/parse running exe file path (empty).");
+        }
 
-    std::wstring cmdLine(L"\"");
-    cmdLine += fullPath;
-    cmdLine += L"\" ";
-    cmdLine += lpCmdLine;
+        wstring updatepath = mydirectory + L"\\Update.exe";
 
-    wchar_t* lpCommandLine = _wcsdup(cmdLine.c_str());
-    wchar_t* lpCurrentDirectory = _wcsdup(workingDir.c_str());
-    if (!CreateProcess(NULL, lpCommandLine, NULL, NULL, true, 0, NULL, lpCurrentDirectory, &si, &pi)) {
-        return -1;
+        vector<wstring> nargs{};
+        nargs.push_back(updatepath);
+        nargs.emplace_back(L"--processStart");
+        nargs.push_back(myname);
+
+        if (!arguments.empty()) {
+            nargs.emplace_back(L"--process-start-args");
+            nargs.push_back(arguments);
+        }
+
+        wstring cmd = argsToCommandLine(nargs);
+
+        if (dryRun) MessageBox(0, cmd.c_str(), L"Stub Test Run", MB_OK);
+        else wexec(cmd.c_str());
     }
-
-    AllowSetForegroundWindow(pi.dwProcessId);
-    WaitForInputIdle(pi.hProcess, 5 * 1000);
-    return 0;
+    catch (wstring err) {
+        wstring message = L"Stub: " + err;
+        MessageBox(0, message.c_str(), L"Stub Failed", MB_OK | MB_ICONERROR);
+    }
+    catch (...) {
+        MessageBox(0, L"An unknown error has occurred.", L"Stub Failed", MB_OK | MB_ICONERROR);
+    }
 }

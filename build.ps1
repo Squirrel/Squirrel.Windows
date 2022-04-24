@@ -21,7 +21,7 @@ foreach ($Folder in $Folders) {
 }
 
 # Build Squirrel C++ with msbuild as dotnet can't
-&"$MSBuildPath" /verbosity:minimal /restore /p:Configuration=Release
+&"$MSBuildPath" /verbosity:minimal /restore /p:Configuration=Release /p:Platform=x86
 
 # Build single-exe packaged projects
 # New-Item -Path "$Out" -Name "win-x86" -ItemType "directory"
