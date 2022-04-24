@@ -293,7 +293,7 @@ wstring util::pretty_bytes(uint64_t bytes)
     suffixes[5] = L"PB";
     suffixes[6] = L"EB";
     uint64_t s = 0; // which suffix to use
-    double count = bytes;
+    double count = (double)bytes;
     while (count >= 1000 && s < 7) {
         s++;
         count /= 1000;
