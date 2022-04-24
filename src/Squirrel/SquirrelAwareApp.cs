@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using NuGet.Versioning;
 using Squirrel.SimpleSplat;
 
 namespace Squirrel
@@ -81,7 +82,7 @@ namespace Squirrel
 
             // in the fastExitLookup arguments, we run the squirrel hook and then exit the process
             if (args.Length >= 2 && fastExitlookup.ContainsKey(args[0])) {
-                var version = new SemanticVersion(args[1]);
+                var version = NuGetVersion.Parse(args[1]);
                 try {
                     fastExitlookup[args[0]](version, um);
                     if (!ModeDetector.InUnitTestRunner()) Environment.Exit(0);

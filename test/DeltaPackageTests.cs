@@ -8,6 +8,7 @@ using Squirrel.SimpleSplat;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 using Xunit.Abstractions;
+using NuGet.Versioning;
 
 namespace Squirrel.Tests
 {
@@ -67,7 +68,7 @@ namespace Squirrel.Tests
                 var result = new ZipPackage(outFile);
 
                 result.Id.ShouldEqual("slack");
-                result.Version.ShouldEqual(new SemanticVersion("1.2.0"));
+                result.Version.ShouldEqual(SemanticVersion.Parse("1.2.0"));
             } finally {
                 if (File.Exists(outFile)) {
                     File.Delete(outFile);

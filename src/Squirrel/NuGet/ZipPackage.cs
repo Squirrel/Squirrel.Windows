@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
+using NuGet.Versioning;
 using SharpCompress.Archives.Zip;
 
 namespace Squirrel.NuGet
@@ -200,7 +201,7 @@ namespace Squirrel.NuGet
                 Id = value;
                 break;
             case "version":
-                Version = new SemanticVersion(value);
+                Version = NuGetVersion.Parse(value);
                 break;
             case "authors":
                 Authors = getCommaDelimitedValue(value);

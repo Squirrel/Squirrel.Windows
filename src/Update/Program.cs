@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Squirrel.NuGet;
 using Squirrel.Lib;
 using static Squirrel.Runtimes.RuntimeInstallResult;
+using NuGet.Versioning;
 
 namespace Squirrel.Update
 {
@@ -484,7 +485,7 @@ namespace Squirrel.Update
                 .OrderByDescending(x => x.Version)
                 .SelectMany(x => new[] {
                     Utility.AppDirForRelease(appDir, x),
-                    Utility.AppDirForVersion(appDir, new SemanticVersion(x.Version.Version.Major, x.Version.Version.Minor, x.Version.Version.Build, ""))
+                    Utility.AppDirForVersion(appDir, new SemanticVersion(x.Version.Major, x.Version.Minor, x.Version.Patch, ""))
                 })
                 .FirstOrDefault(x => Directory.Exists(x));
 

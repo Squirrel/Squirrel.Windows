@@ -3,6 +3,7 @@
 
 using Microsoft.NET.HostModel.AppHost;
 using Microsoft.NET.HostModel.Bundle;
+using NuGet.Versioning;
 using Squirrel;
 using Squirrel.SimpleSplat;
 using System;
@@ -103,7 +104,7 @@ namespace SquirrelCli
                 }
 
                 foreach (var f in lookup) {
-                    var fver = new SemanticVersion(f.Value.MajorVersion, f.Value.MinorVersion, f.Value.BuildNumber, f.Value.RevisionNumber);
+                    var fver = new NuGetVersion(f.Value.MajorVersion, f.Value.MinorVersion, f.Value.BuildNumber, f.Value.RevisionNumber);
                     if (fver > runtime.MinVersion) {
                         Log.Warn($"{name} references {f.Key},Version={fver} - which is higher than the current runtime version ({runtime.MinVersion}).");
                     }

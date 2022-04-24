@@ -12,6 +12,7 @@ using Xunit;
 using System.Net;
 using Squirrel.NuGet;
 using System.Net.Http;
+using NuGet.Versioning;
 
 namespace Squirrel.Tests
 {
@@ -326,7 +327,7 @@ namespace Squirrel.Tests
                         Assert.Null(fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "app.exe")));
                         Assert.Null(fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "app.exe")));
                         Assert.Null(fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "wrongDir", "app.exe")));
-                        Assert.Equal(new SemanticVersion(1, 0, 1, 9), fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "app-1.0.1.9", "app.exe")));
+                        Assert.Equal(new SemanticVersion(1, 0, 9), fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "app-1.0.9", "app.exe")));
                     }
                 }
             }

@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Mono.Options;
+using NuGet.Versioning;
 using Squirrel;
 using Squirrel.Json;
 using Squirrel.Lib;
@@ -243,7 +244,7 @@ namespace SquirrelCli
                     // warning if the installed SquirrelLib version is not the same as Squirrel.exe
                     StringFileInfo sqLib = null;
                     try {
-                        var myFileVersion = new SemanticVersion(FileVersion).Version;
+                        var myFileVersion = new NuGetVersion(FileVersion).Version;
                         sqLib = Directory.EnumerateFiles(libDir, "SquirrelLib.dll")
                             .Select(f => { StringFileInfo.ReadVersionInfo(f, out var fi); return fi; })
                             .FirstOrDefault(fi => fi.FileVersion != myFileVersion);
@@ -414,7 +415,7 @@ namespace SquirrelCli
                 { "Id", wixId },
                 { "Title", package.ProductName },
                 { "Author", package.ProductCompany },
-                { "Version", package.Version.Version.ToString() },
+                { "Version", $"{package.Version.Major}.{package.Version.Minor}.{package.Version.Patch}.0" },
                 { "Summary", package.ProductDescription },
                 { "Codepage", $"{culture}" },
                 { "Platform", packageAs64Bit ? "x64" : "x86" },

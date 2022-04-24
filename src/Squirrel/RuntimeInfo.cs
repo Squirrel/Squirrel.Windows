@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
+using NuGet.Versioning;
 using Squirrel.SimpleSplat;
 using Squirrel.Sources;
 
@@ -166,7 +167,7 @@ namespace Squirrel
                 : $".NET Core {TrimVersion(MinVersion)} Desktop Runtime ({CpuArchitecture.ToString().ToLower()})";
 
             /// <summary> The minimum compatible version that must be installed. </summary>
-            public SemanticVersion MinVersion { get; }
+            public NuGetVersion MinVersion { get; }
 
             /// <summary> The CPU architecture of the runtime. This must match the RID of the app being deployed.
             /// For example, if the Squirrel app was deployed with 'win-x64', this must be X64 also. </summary>
@@ -175,14 +176,14 @@ namespace Squirrel
             /// <inheritdoc/>
             protected DotnetInfo(Version minversion, RuntimeCpu architecture)
             {
-                MinVersion = new SemanticVersion(minversion);
+                MinVersion = new NuGetVersion(minversion);
                 CpuArchitecture = architecture;
                 if (minversion.Major == 6 && minversion.Build < 0) {
                     Log.Warn(
                         $"Automatically upgrading minimum dotnet version from net{minversion} to net6.0.2, " +
                         $"see more at https://github.com/dotnet/core/issues/7176. " +
                         $"If you would like to stop this behavior, please specify '--framework net6.0.0'");
-                    MinVersion = new SemanticVersion(6, 0, 2);
+                    MinVersion = new NuGetVersion(6, 0, 2);
                 }
             }
 
@@ -254,8 +255,8 @@ namespace Squirrel
 
                 var dirs = Directory.EnumerateDirectories(directory)
                     .Select(d => Path.GetFileName(d))
-                    .Where(d => SemanticVersion.TryParse(d, out var _))
-                    .Select(d => SemanticVersion.Parse(d));
+                    .Where(d => NuGetVersion.TryParse(d, out var _))
+                    .Select(d => NuGetVersion.Parse(d));
 
                 return dirs.Any(v => v.Major == MinVersion.Major && v.Minor == MinVersion.Minor && v >= MinVersion);
             }
@@ -337,14 +338,14 @@ namespace Squirrel
             /// <summary>
             /// Converts a version structure into the shortest string possible, by trimming trailing zeros.
             /// </summary>
-            protected static string TrimVersion(SemanticVersion ver)
+            protected static string TrimVersion(NuGetVersion ver)
             {
                 string v = ver.Major.ToString();
-                if (ver.Minor > 0 || ver.Build > 0 || ver.Revision > 0) {
+                if (ver.Minor > 0 || ver.Patch > 0 || ver.Revision > 0) {
                     v += "." + ver.Minor;
                 }
-                if (ver.Build > 0 || ver.Revision > 0) {
-                    v += "." + ver.Build;
+                if (ver.Patch > 0 || ver.Revision > 0) {
+                    v += "." + ver.Patch;
                 }
                 if (ver.Revision > 0) {
                     v += "." + ver.Revision;
@@ -402,13 +403,13 @@ namespace Squirrel
         public abstract class VCRedistInfo : RuntimeInfo
         {
             /// <summary> The minimum compatible version that must be installed. </summary>
-            public SemanticVersion MinVersion { get; }
+            public NuGetVersion MinVersion { get; }
 
             /// <summary> The CPU architecture of the runtime. </summary>
             public RuntimeCpu CpuArchitecture { get; }
 
             /// <inheritdoc/>
-            public VCRedistInfo(string id, string displayName, SemanticVersion minVersion, RuntimeCpu cpuArchitecture) : base(id, displayName)
+            public VCRedistInfo(string id, string displayName, NuGetVersion minVersion, RuntimeCpu cpuArchitecture) : base(id, displayName)
             {
                 MinVersion = minVersion;
                 CpuArchitecture = cpuArchitecture;
@@ -439,9 +440,9 @@ namespace Squirrel
             /// Returns the list of currently installed VC++ redistributables, as reported by the
             /// Windows Programs &amp; Features dialog.
             /// </summary>
-            public static (SemanticVersion Ver, RuntimeCpu Cpu)[] GetInstalledVCVersions()
+            public static (NuGetVersion Ver, RuntimeCpu Cpu)[] GetInstalledVCVersions()
             {
-                List<(SemanticVersion Ver, RuntimeCpu Cpu)> results = new List<(SemanticVersion Ver, RuntimeCpu Cpu)>();
+                List<(NuGetVersion Ver, RuntimeCpu Cpu)> results = new List<(NuGetVersion Ver, RuntimeCpu Cpu)>();
 
                 void searchreg(RegistryKey view)
                 {
@@ -450,7 +451,7 @@ namespace Squirrel
                         var name = subKey.GetValue("DisplayName") as string;
                         if (name != null && name.Contains("Microsoft Visual C++") && name.Contains("Redistributable")) {
                             var version = subKey.GetValue("DisplayVersion") as string;
-                            if (SemanticVersion.TryParse(version, out var v)) {
+                            if (NuGetVersion.TryParse(version, out var v)) {
                                 // these entries do not get added into the correct registry hive, so we need to determine
                                 // the cpu architecture from the name. I hate this but what can I do?
                                 if (name.Contains("x64") && Environment.Is64BitOperatingSystem) {
@@ -481,7 +482,7 @@ namespace Squirrel
         public class VCRedist14 : VCRedistInfo
         {
             /// <inheritdoc/>
-            public VCRedist14(string id, string displayName, SemanticVersion minVersion, RuntimeCpu cpuArchitecture)
+            public VCRedist14(string id, string displayName, NuGetVersion minVersion, RuntimeCpu cpuArchitecture)
                 : base(id, displayName, minVersion, cpuArchitecture)
             {
             }
@@ -507,7 +508,7 @@ namespace Squirrel
             public string DownloadUrl { get; }
 
             /// <inheritdoc/>
-            public VCRedist00(string id, string displayName, SemanticVersion minVersion, RuntimeCpu cpuArchitecture, string downloadUrl)
+            public VCRedist00(string id, string displayName, NuGetVersion minVersion, RuntimeCpu cpuArchitecture, string downloadUrl)
                 : base(id, displayName, minVersion, cpuArchitecture)
             {
                 DownloadUrl = downloadUrl;

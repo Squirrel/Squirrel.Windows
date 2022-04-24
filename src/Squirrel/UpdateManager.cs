@@ -11,6 +11,7 @@ using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
 using Squirrel.Shell;
 using Squirrel.Sources;
+using NuGet.Versioning;
 
 namespace Squirrel
 {
@@ -211,7 +212,7 @@ namespace Squirrel
             if (appDirName == null)
                 return null;
 
-            return new SemanticVersion(appDirName.Substring(4));
+            return NuGetVersion.Parse(appDirName.Substring(4));
         }
 
         /// <inheritdoc/>

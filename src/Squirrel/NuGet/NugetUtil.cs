@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
+using NuGet.Versioning;
 
 namespace Squirrel.NuGet
 {
@@ -28,12 +29,12 @@ namespace Squirrel.NuGet
 
         public static void ThrowIfVersionNotSemverCompliant(string version)
         {
-            if (SemanticVersion.TryParseStrict(version, out var parsed)) {
-                if (parsed < new SemanticVersion(0, 0, 1, 0)) {
+            if (SemanticVersion.TryParse(version, out var parsed)) {
+                if (parsed < new SemanticVersion(0, 0, 1)) {
                     throw new Exception($"Invalid package version '{version}', it must be >= 0.0.1.");
                 }
             } else {
-                throw new Exception($"Invalid package version '{version}', it must be a 3-part SemVer compliant version string.");
+                throw new Exception($"Invalid package version '{version}', it must be a 3-part SemVer2 compliant version string.");
             }
         }
 

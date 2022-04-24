@@ -12,6 +12,7 @@ using Squirrel.SimpleSplat;
 using Xunit;
 using Squirrel.NuGet;
 using Xunit.Abstractions;
+using NuGet.Versioning;
 
 namespace Squirrel.Tests
 {
@@ -30,7 +31,7 @@ namespace Squirrel.Tests
         public void SemanticVersionParsesValidVersion(string ver)
         {
             NugetUtil.ThrowIfVersionNotSemverCompliant(ver);
-            Assert.True(SemanticVersion.TryParseStrict(ver, out var _));
+            Assert.True(SemanticVersion.TryParse(ver, out var _));
         }
 
         [Theory]

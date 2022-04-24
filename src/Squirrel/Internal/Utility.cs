@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
+using NuGet.Versioning;
 
 namespace Squirrel
 {
@@ -505,7 +506,7 @@ namespace Squirrel
 
         public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
         {
-            return Path.Combine(rootAppDirectory, "app-" + entry.Version.ToString());
+            return AppDirForVersion(rootAppDirectory, entry.Version);
         }
 
         public static string AppDirForVersion(string rootAppDirectory, SemanticVersion version)

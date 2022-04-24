@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="SharpCompress" Version="0.31.0" />
+    <PackageReference Include="NuGet.Versioning" Version="6.1.0" />
   </ItemGroup>
 
   <ItemGroup Condition=" $(TargetFramework) == 'netstandard2.0' OR $(TargetFramework) == 'net5.0' ">

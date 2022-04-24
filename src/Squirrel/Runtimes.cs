@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using NuGet.Versioning;
 using Squirrel.SimpleSplat;
 
 namespace Squirrel
@@ -138,7 +139,7 @@ namespace Squirrel
                             Log.ErrorException($"Unable to verify version for runtime '{f}'", ex);
                         }
 
-                        if (latest != null && SemanticVersion.Parse(latest) < dni.MinVersion) {
+                        if (latest != null && NuGetVersion.Parse(latest) < dni.MinVersion) {
                             throw new Exception($"For runtime string '{f}', version provided ({dni.MinVersion}) is greater than the latest available version ({latest}).");
                         }
                     }

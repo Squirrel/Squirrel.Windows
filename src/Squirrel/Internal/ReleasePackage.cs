@@ -11,6 +11,7 @@ using Squirrel.SimpleSplat;
 using System.Threading.Tasks;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Readers;
+using NuGet.Versioning;
 
 namespace Squirrel
 {

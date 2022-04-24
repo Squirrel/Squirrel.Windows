@@ -5,6 +5,7 @@ using System.IO.Packaging;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using NuGet.Versioning;
 using Squirrel.NuGet;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
@@ -48,7 +49,7 @@ namespace Squirrel.Tests
             var dyn = ExposedObject.From(zp);
 
             Assert.Equal("FullNuspec", zp.Id);
-            Assert.Equal(new SemanticVersion("1.0"), zp.Version);
+            Assert.Equal(SemanticVersion.Parse("1.0.0"), zp.Version);
             Assert.Equal(new[] { "Anaïs Betts", "Caelan Sayler" }, dyn.Authors);
             Assert.Equal(new Uri("https://github.com/clowd/Clowd.Squirrel"), zp.ProjectUrl);
             Assert.Equal(new Uri("https://user-images.githubusercontent.com/1287295/131249078-9e131e51-0b66-4dc7-8c0a-99cbea6bcf80.png"), zp.IconUrl);

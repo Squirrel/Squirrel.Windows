@@ -12,6 +12,7 @@ using Squirrel.SimpleSplat;
 using System.Threading;
 using Squirrel.Shell;
 using Microsoft.Win32;
+using NuGet.Versioning;
 
 namespace Squirrel
 {
@@ -133,7 +134,7 @@ namespace Squirrel
                 }
 
                 try {
-                    this.ErrorIfThrows(() => fixPinnedExecutables(new SemanticVersion(255, 255, 255, 255), true));
+                    this.ErrorIfThrows(() => fixPinnedExecutables(new SemanticVersion(255, 255, 255), true));
                 } catch { }
 
                 this.ErrorIfThrows(() => Utility.DeleteFileOrDirectoryHardOrGiveUp(rootAppDirectory),
@@ -680,7 +681,7 @@ namespace Squirrel
 
                 return rootDirectory.GetDirectories()
                     .Where(x => x.Name.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase))
-                    .Select(x => (x, new SemanticVersion(x.Name.Substring(4))));
+                    .Select(x => (x, (SemanticVersion)NuGetVersion.Parse(x.Name.Substring(4))));
             }
 
             DirectoryInfo getDirectoryForRelease(SemanticVersion releaseVersion)

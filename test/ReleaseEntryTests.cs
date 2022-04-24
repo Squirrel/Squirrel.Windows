@@ -5,6 +5,7 @@ using Squirrel;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
 using Squirrel.NuGet;
+using NuGet.Versioning;
 
 namespace Squirrel.Tests
 {
@@ -104,7 +105,7 @@ namespace Squirrel.Tests
         {
             var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
 
-            Assert.Equal(new SemanticVersion(new Version(major, minor, patch, revision), prerelease), fixture.Version);
+            Assert.Equal(new NuGetVersion(major, minor, patch, revision, prerelease, null), fixture.Version);
             Assert.Equal(isDelta, fixture.IsDelta);
         }
 
@@ -142,7 +143,7 @@ namespace Squirrel.Tests
         {
             var fixture = ReleaseEntry.ParseReleaseEntry(releaseEntry);
 
-            Assert.Equal(new SemanticVersion(new Version(major, minor, patch, revision), prerelease), fixture.Version);
+            Assert.Equal(new NuGetVersion(major, minor, patch, revision, prerelease, null), fixture.Version);
             Assert.Equal(isDelta, fixture.IsDelta);
 
             if (stagingPercentage.HasValue) {
@@ -198,7 +199,7 @@ namespace Squirrel.Tests
         [Fact]
         public void WhenMultipleReleaseMatchesReturnEarlierResult()
         {
-            var expected = new SemanticVersion("1.7.5-beta");
+            var expected = SemanticVersion.Parse("1.7.5-beta");
             var package = new ReleasePackage("Espera-1.7.6-beta.nupkg");
 
             var releaseEntries = new[] {
@@ -217,7 +218,7 @@ namespace Squirrel.Tests
         [Fact]
         public void WhenMultipleReleasesFoundReturnPreviousVersion()
         {
-            var expected = new SemanticVersion("1.7.6-beta");
+            var expected = SemanticVersion.Parse("1.7.6-beta");
             var input = new ReleasePackage("Espera-1.7.7-beta.nupkg");
 
             var releaseEntries = new[] {
@@ -236,7 +237,7 @@ namespace Squirrel.Tests
         [Fact]
         public void WhenMultipleReleasesFoundInOtherOrderReturnPreviousVersion()
         {
-            var expected = new SemanticVersion("1.7.6-beta");
+            var expected = SemanticVersion.Parse("1.7.6-beta");
             var input = new ReleasePackage("Espera-1.7.7-beta.nupkg");
 
             var releaseEntries = new[] {
@@ -256,9 +257,9 @@ namespace Squirrel.Tests
         public void WhenReleasesAreOutOfOrderSortByVersion()
         {
             var path = Path.GetTempFileName();
-            var firstVersion = new SemanticVersion("1.0.0");
-            var secondVersion = new SemanticVersion("1.1.0");
-            var thirdVersion = new SemanticVersion("1.2.0");
+            var firstVersion = SemanticVersion.Parse("1.0.0");
+            var secondVersion = SemanticVersion.Parse("1.1.0");
+            var thirdVersion = SemanticVersion.Parse("1.2.0");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-delta.nupkg")),
@@ -284,20 +285,20 @@ namespace Squirrel.Tests
         }
 
         [Fact]
-        public void WhenPreReleasesAreOutOfOrderSortByNumericSuffix()
+        public void WhenPreReleasesAreOutOfOrderSortByNumericSuffixSemVer2()
         {
             var path = Path.GetTempFileName();
-            var firstVersion = new SemanticVersion("1.1.9-beta105");
-            var secondVersion = new SemanticVersion("1.2.0-beta9");
-            var thirdVersion = new SemanticVersion("1.2.0-beta10");
-            var fourthVersion = new SemanticVersion("1.2.0-beta100");
+            var firstVersion = SemanticVersion.Parse("1.1.9-beta.105");
+            var secondVersion = SemanticVersion.Parse("1.2.0-beta.9");
+            var thirdVersion = SemanticVersion.Parse("1.2.0-beta.10");
+            var fourthVersion = SemanticVersion.Parse("1.2.0-beta.100");
 
             var releaseEntries = new[] {
-                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta1-full.nupkg")),
-                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta9-full.nupkg")),
-                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta100-full.nupkg")),
-                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.1.9-beta105-full.nupkg")),
-                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta10-full.nupkg"))
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta.1-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta.9-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta.100-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.1.9-beta.105-full.nupkg")),
+                ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.2.0-beta.10-full.nupkg"))
             };
 
             ReleaseEntry.WriteReleaseFile(releaseEntries, path);

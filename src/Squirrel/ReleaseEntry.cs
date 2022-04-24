@@ -10,6 +10,7 @@ using Squirrel.SimpleSplat;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using NuGet.Versioning;
 
 namespace Squirrel
 {
@@ -408,7 +409,7 @@ namespace Squirrel
             var name = nameAndVer.Substring(0, verIdx);
             var version = nameAndVer.Substring(verIdx + 1);
 
-            var semVer = new SemanticVersion(version);
+            var semVer = NuGetVersion.Parse(version);
             return (name, semVer, delta);
         }
     }
