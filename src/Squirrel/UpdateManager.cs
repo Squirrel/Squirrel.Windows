@@ -211,27 +211,8 @@ namespace Squirrel
         /// however you'd like.</remarks>
         public static void RestartApp(string exeToStart = null, string arguments = null)
         {
-            // NB: Here's how this method works:
-            //
-            // 1. We're going to pass the *name* of our EXE and the params to 
-            //    Update.exe
-            // 2. Update.exe is going to grab our PID (via getting its parent), 
-            //    then wait for us to exit.
-            // 3. We exit cleanly, dropping any single-instance mutexes or 
-            //    whatever.
-            // 4. Update.exe unblocks, then we launch the app again, possibly 
-            //    launching a different version than we started with (this is why
-            //    we take the app's *name* rather than a full path)
-
-            exeToStart = exeToStart ?? Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
-            var argsArg = arguments != null ?
-                String.Format("-a \"{0}\"", arguments) : "";
-
-            Process.Start(getUpdateExe(), String.Format("--forceLatest --processStartAndWait \"{0}\" {1}", exeToStart, argsArg));
-
-            // NB: We have to give update.exe some time to grab our PID, but
-            // we can't use WaitForInputIdle because we probably don't have
-            // whatever WaitForInputIdle considers a message loop.
+            restartProcess(exeToStart, arguments);
+            // NB: We have to give update.exe some time to grab our PID
             Thread.Sleep(500);
             Environment.Exit(0);
         }
@@ -244,7 +225,31 @@ namespace Squirrel
         /// the current executable. </param>
         /// <param name="arguments">Arguments to start the exe with</param>
         /// <returns>The Update.exe process that is waiting for this process to exit</returns>
-        public static async Task<Process> RestartAppWhenExited(string exeToStart = null, string arguments = null)
+        public static Process RestartAppWhenExited(string exeToStart = null, string arguments = null)
+        {
+            var process = restartProcess(exeToStart, arguments);
+            // NB: We have to give update.exe some time to grab our PID
+            Thread.Sleep(500);
+            return process;
+        }
+
+        /// <summary>
+        /// Launch Update.exe and ask it to wait until this process exits before starting
+        /// a new process. Used to re-start your app with the latest version after an update.
+        /// </summary>
+        /// <param name="exeToStart">The file *name* (not full path) of the exe to start, or null to re-launch 
+        /// the current executable. </param>
+        /// <param name="arguments">Arguments to start the exe with</param>
+        /// <returns>The Update.exe process that is waiting for this process to exit</returns>
+        public static async Task<Process> RestartAppWhenExitedAsync(string exeToStart = null, string arguments = null)
+        {
+            var process = restartProcess(exeToStart, arguments);
+            // NB: We have to give update.exe some time to grab our PID
+            await Task.Delay(500).ConfigureAwait(false);
+            return process;
+        }
+
+        private static Process restartProcess(string exeToStart = null, string arguments = null)
         {
             // NB: Here's how this method works:
             //
@@ -258,14 +263,19 @@ namespace Squirrel
             //    we take the app's *name* rather than a full path)
 
             exeToStart = exeToStart ?? Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
-            var argsArg = arguments != null ?
-                String.Format("-a \"{0}\"", arguments) : "";
 
-            var updateProcess = Process.Start(getUpdateExe(), String.Format("--forceLatest --processStartAndWait \"{0}\" {1}", exeToStart, argsArg));
+            List<string> args = new() {
+                "--forceLatest",
+                "--processStartAndWait",
+                exeToStart,
+            };
 
-            await Task.Delay(500).ConfigureAwait(false);
+            if (arguments != null) {
+                args.Add("-a");
+                args.Add(arguments);
+            }
 
-            return updateProcess;
+            return Process.Start(getUpdateExe(), Utility.ArgsToCommandLine(args));
         }
 
         private static string GetLocalAppDataDirectory(string assemblyLocation = null)
