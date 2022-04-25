@@ -119,10 +119,7 @@ namespace Squirrel
         /// <inheritdoc/>
         public async Task<string> ApplyReleases(UpdateInfo updateInfo, Action<int> progress = null)
         {
-            var applyReleases = new ApplyReleasesImpl(AppDirectory);
-            await acquireUpdateLock().ConfigureAwait(false);
-
-            return await applyReleases.ApplyReleases(updateInfo, false, false, progress).ConfigureAwait(false);
+            return await ApplyReleases(updateInfo, false, false, progress).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
@@ -130,42 +127,7 @@ namespace Squirrel
         {
             var updateInfo = await CheckForUpdate(intention: UpdaterIntention.Install).ConfigureAwait(false);
             await DownloadReleases(updateInfo.ReleasesToApply).ConfigureAwait(false);
-
-            var applyReleases = new ApplyReleasesImpl(AppDirectory);
-            await acquireUpdateLock().ConfigureAwait(false);
-
-            await applyReleases.ApplyReleases(updateInfo, silentInstall, true, progress).ConfigureAwait(false);
-        }
-
-        /// <inheritdoc/>
-        public async Task FullUninstall()
-        {
-            var applyReleases = new ApplyReleasesImpl(AppDirectory);
-            await acquireUpdateLock().ConfigureAwait(false);
-
-            this.KillAllExecutablesBelongingToPackage();
-            await applyReleases.FullUninstall().ConfigureAwait(false);
-        }
-
-        /// <inheritdoc/>
-        public Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
-        {
-            var installHelpers = new InstallHelperImpl(AppId, AppDirectory);
-            return installHelpers.CreateUninstallerRegistryEntry(uninstallCmd, quietSwitch);
-        }
-
-        /// <inheritdoc/>
-        public Task<RegistryKey> CreateUninstallerRegistryEntry()
-        {
-            var installHelpers = new InstallHelperImpl(AppId, AppDirectory);
-            return installHelpers.CreateUninstallerRegistryEntry();
-        }
-
-        /// <inheritdoc/>
-        public void RemoveUninstallerRegistryEntry()
-        {
-            var installHelpers = new InstallHelperImpl(AppId, AppDirectory);
-            installHelpers.RemoveUninstallerRegistryEntry();
+            await ApplyReleases(updateInfo, silentInstall, true, progress).ConfigureAwait(false);
         }
 
         /// <inheritdoc/>
@@ -222,13 +184,6 @@ namespace Squirrel
                 return null;
 
             return NuGetVersion.Parse(appDirName.Substring(4));
-        }
-
-        /// <inheritdoc/>
-        public void KillAllExecutablesBelongingToPackage()
-        {
-            var installHelpers = new InstallHelperImpl(AppId, AppDirectory);
-            installHelpers.KillAllProcessesBelongingToPackage();
         }
 
         /// <inheritdoc/>
