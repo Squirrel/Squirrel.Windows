@@ -82,52 +82,43 @@ namespace Squirrel
             var rootAppDirectory = AppDirectory;
             await acquireUpdateLock().ConfigureAwait(false);
 
+            this.Log().Info("Starting full uninstall");
             KillAllExecutablesBelongingToPackage();
 
-            var releases = Utility.GetAppVersionDirectories(rootAppDirectory).ToArray();
-            if (!releases.Any())
-                return;
+            try {
+                var releases = Utility.GetAppVersionDirectories(rootAppDirectory).ToArray();
+                if (releases.Any()) {
+                    var latest = releases.OrderByDescending(x => x.Version).FirstOrDefault();
+                    var currentRelease = new DirectoryInfo(latest.DirectoryPath);
+                    var currentVersion = latest.Version;
 
-            var latest = releases.OrderByDescending(x => x.Version).FirstOrDefault();
-            var currentRelease = new DirectoryInfo(latest.DirectoryPath);
-            var currentVersion = latest.Version;
-
-            this.Log().Info("Starting full uninstall");
-            if (currentRelease.Exists) {
-                try {
-                    var squirrelAwareApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName);
-
-                    if (isAppFolderDead(currentRelease.FullName)) throw new Exception("App folder is dead, but we're trying to uninstall it?");
-
-                    var allApps = currentRelease.EnumerateFiles()
-                        .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                        .Where(x => !x.Name.StartsWith("squirrel.", StringComparison.OrdinalIgnoreCase) && !x.Name.StartsWith("update.", StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-
-                    if (squirrelAwareApps.Count > 0) {
-                        await squirrelAwareApps.ForEachAsync(async exe => {
+                    if (currentRelease.Exists) {
+                        if (isAppFolderDead(currentRelease.FullName)) throw new Exception("App folder is dead, but we're trying to uninstall it?");
+                        var squirrelAwareApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(currentRelease.FullName);
+                        foreach (var exe in squirrelAwareApps) {
                             using (var cts = new CancellationTokenSource()) {
                                 cts.CancelAfter(10 * 1000);
-
                                 try {
                                     await Utility.InvokeProcessAsync(exe, new string[] { "--squirrel-uninstall", currentVersion.ToString() }, cts.Token).ConfigureAwait(false);
                                 } catch (Exception ex) {
                                     this.Log().ErrorException("Failed to run cleanup hook, continuing: " + exe, ex);
                                 }
                             }
-                        }, 1 /*at a time*/).ConfigureAwait(false);
-                    } else {
-                        //allApps.ForEach(x => RemoveShortcutsForExecutable(x.Name, ShortcutLocation.StartMenu | ShortcutLocation.Desktop));
+                        }
                     }
-                } catch (Exception ex) {
-                    this.Log().WarnException("Failed to run pre-uninstall hooks, uninstalling anyways", ex);
                 }
+            } catch (Exception ex) {
+                this.Log().WarnException("Unable to run uninstall hooks", ex);
             }
 
-            //try {
-            //    this.ErrorIfThrows(() => fixPinnedExecutables(new SemanticVersion(255, 255, 255), true));
-            //} catch { }
+            try {
+                RemoveAllShortcutsForPackage();
+                RemoveUninstallerRegistryEntry();
+            } catch (Exception ex) {
+                this.Log().WarnException("Unable to uninstall shortcuts or registry entry. Continuing anyway...", ex);
+            }
 
+            this.Log().Info("Deleting files in app directory: " + rootAppDirectory);
             this.ErrorIfThrows(() => Utility.DeleteFileOrDirectoryHardOrGiveUp(rootAppDirectory),
                 "Failed to delete app directory: " + rootAppDirectory);
 
@@ -140,6 +131,7 @@ namespace Squirrel
             }
 
             File.WriteAllText(Path.Combine(rootAppDirectory, ".dead"), " ");
+            this.Log().Info("Done full uninstall.");
         }
 
         Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release, Action<int> progressCallback)

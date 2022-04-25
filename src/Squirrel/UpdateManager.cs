@@ -131,22 +131,6 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
-        public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments = null, string icon = null)
-        {
-            throw new NotImplementedException();
-            //var installHelpers = new ApplyReleasesImpl(AppDirectory);
-            //installHelpers.CreateShortcutsForExecutable(exeName, locations, updateOnly, programArguments, icon);
-        }
-
-        /// <inheritdoc/>
-        public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
-        {
-            throw new NotImplementedException();
-            //var installHelpers = new ApplyReleasesImpl(AppDirectory);
-            //installHelpers.RemoveShortcutsForExecutable(exeName, locations);
-        }
-
-        /// <inheritdoc/>
         public SemanticVersion CurrentlyInstalledVersion(string executable = null)
         {
             string appDir;

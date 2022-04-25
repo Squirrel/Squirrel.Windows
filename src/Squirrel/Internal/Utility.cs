@@ -506,16 +506,6 @@ namespace Squirrel
             }
         }
 
-        public static string AppDirForRelease(string rootAppDirectory, ReleaseEntry entry)
-        {
-            return AppDirForVersion(rootAppDirectory, entry.Version);
-        }
-
-        public static string AppDirForVersion(string rootAppDirectory, SemanticVersion version)
-        {
-            return Path.Combine(rootAppDirectory, "app-" + version.ToString());
-        }
-
         public static string PackageDirectoryForAppDir(string rootAppDirectory)
         {
             return Path.Combine(rootAppDirectory, "packages");
@@ -912,16 +902,19 @@ namespace Squirrel
                 });
         }
 
-        public static IEnumerable<(SemanticVersion Version, string DirectoryPath, bool IsCurrent, bool HasNuspec)> GetAppVersionDirectories(string rootAppDir)
+        public record VersionDirInfo(IPackage Manifest, SemanticVersion Version, string DirectoryPath, bool IsCurrent, bool IsExecuting);
+
+        public static IEnumerable<VersionDirInfo> GetAppVersionDirectories(string rootAppDir)
         {
             foreach (var d in Directory.EnumerateDirectories(rootAppDir)) {
                 var directoryName = Path.GetFileName(d);
+                bool isExecuting = IsFileInDirectory(SquirrelRuntimeInfo.EntryExePath, d);
                 bool isCurrent = directoryName.Equals("current", StringComparison.InvariantCultureIgnoreCase);
                 var nuspec = Path.Combine(d, "mysqver");
                 if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out var manifest)) {
-                    yield return (manifest.Version, d, isCurrent, true);
+                    yield return new (manifest, manifest.Version, d, isCurrent, isExecuting);
                 } else if (directoryName.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase) && NuGetVersion.TryParse(directoryName.Substring(4), out var ver)) {
-                    yield return (ver, d, isCurrent, false);
+                    yield return new (null, ver, d, isCurrent, isExecuting);
                 }
             }
         }
@@ -938,7 +931,7 @@ namespace Squirrel
 
                 // if the latest ver is already current, or it does not support
                 // being in a current directory.
-                if (latestVer.IsCurrent || !latestVer.HasNuspec) {
+                if (latestVer.IsCurrent || latestVer.Manifest == null) {
                     return latestVer.DirectoryPath;
                 }
 
@@ -972,3 +965,10 @@ namespace Squirrel
         }
     }
 }
+
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
+namespace System.Runtime.CompilerServices
+{
+    internal static class IsExternalInit { }
+}
+#endif

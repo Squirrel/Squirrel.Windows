@@ -94,6 +94,7 @@ namespace Squirrel
         /// <inheritdoc/>
         public void RemoveUninstallerRegistryEntry()
         {
+            this.Log().Info("Removing uninstall registry entry");
             var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default).OpenSubKey(uninstallRegSubKey, true);
             key.DeleteSubKeyTree(AppId, false);
         }
