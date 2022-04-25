@@ -199,6 +199,11 @@ namespace Squirrel
                             LogHost.Default.Info("Rigging execution stub for {0} to {1}", decoded, fullTargetFile);
                         }
 
+                        if (parts.Last().Equals("app.ico", StringComparison.InvariantCultureIgnoreCase)) {
+                            failureIsOkay = true;
+                            fullTargetFile = Path.Combine(rootPackageFolder, "app.ico");
+                        }
+
                         try {
                             Utility.Retry(() => {
                                 if (reader.Entry.IsDirectory) {

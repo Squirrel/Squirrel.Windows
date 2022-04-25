@@ -24,9 +24,8 @@ namespace Squirrel
             this.Log().Info($"Writing uninstaller registry entry");
             var releaseContent = File.ReadAllText(Path.Combine(rootAppDirectory, "packages", "RELEASES"), Encoding.UTF8);
             var releases = ReleaseEntry.ParseReleaseFile(releaseContent);
-            var latest = releases.Where(x => !x.IsDelta).OrderByDescending(x => x.Version).First();
-
-            var pkgPath = Path.Combine(rootAppDirectory, "packages", latest.Filename);
+            var latest = Utility.FindCurrentVersion(releases);
+            var pkgPath = Path.Combine(Utility.PackageDirectoryForAppDir(rootAppDirectory), latest.Filename);
             var zp = new ZipPackage(pkgPath);
 
             // NB: Sometimes the Uninstall key doesn't exist
@@ -39,36 +38,21 @@ namespace Squirrel
 
             // we will try to find an "app.ico" from the package, write it to the local app dir, and then 
             // use it for the uninstaller icon. If an app.ico does not exist, it will use a SquirrelAwareApp exe icon instead.
-            try {
-                if (zp.AppIconBytes != null) {
-                    var targetIco = Path.Combine(rootAppDirectory, "app.ico");
-                    File.WriteAllBytes(targetIco, zp.AppIconBytes);
-                    this.Log().Info($"File '{targetIco}' is being used for uninstall icon.");
-                    key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
-                } else {
-                    // DisplayIcon can be a path to an exe instead of an ico if an icon was not provided.
-                    var appDir = new DirectoryInfo(Utility.AppDirForRelease(rootAppDirectory, latest));
-                    var appIconExe = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(appDir.FullName).FirstOrDefault()
-                        ?? appDir.GetFiles("*.exe").Select(x => x.FullName).FirstOrDefault();
-                    if (appIconExe != null) {
-                        this.Log().Info($"There was no icon found, will use '{appIconExe}' for uninstall icon.");
-                        key.SetValue("DisplayIcon", appIconExe, RegistryValueKind.String);
-                    }
-                }
-            } catch (Exception ex) {
-                this.Log().InfoException("Couldn't write uninstall icon, don't care", ex);
-            }
+
+            var targetIco = Path.Combine(rootAppDirectory, "app.ico");
+            if (File.Exists(targetIco))
+                key.SetValue("DisplayIcon", targetIco, RegistryValueKind.String);
 
             var stringsToWrite = new[] {
-                    new { Key = "DisplayName", Value = zp.ProductName },
-                    new { Key = "DisplayVersion", Value = zp.Version.ToString() },
-                    new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture) },
-                    new { Key = "InstallLocation", Value = rootAppDirectory },
-                    new { Key = "Publisher", Value = zp.ProductCompany },
-                    new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
-                    new { Key = "UninstallString", Value = uninstallCmd },
-                    new { Key = "URLUpdateInfo", Value = zp.ProjectUrl != null ? zp.ProjectUrl.ToString() : "", }
-                };
+                new { Key = "DisplayName", Value = zp.ProductName },
+                new { Key = "DisplayVersion", Value = zp.Version.ToString() },
+                new { Key = "InstallDate", Value = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture) },
+                new { Key = "InstallLocation", Value = rootAppDirectory },
+                new { Key = "Publisher", Value = zp.ProductCompany },
+                new { Key = "QuietUninstallString", Value = String.Format("{0} {1}", uninstallCmd, quietSwitch) },
+                new { Key = "UninstallString", Value = uninstallCmd },
+                new { Key = "URLUpdateInfo", Value = zp.ProjectUrl != null ? zp.ProjectUrl.ToString() : "", }
+            };
 
             // CS: very rough estimate of installed size. based on a few assumptions:
             // - zip generally achieves a ~62% compression ratio on this kind of data
@@ -78,11 +62,11 @@ namespace Squirrel
             var estimatedInstallInKb = compressedSizeInKb + (compressedSizeInKb / 0.38d * 2);
 
             var dwordsToWrite = new[] {
-                    new { Key = "EstimatedSize", Value = (int)estimatedInstallInKb },
-                    new { Key = "NoModify", Value = 1 },
-                    new { Key = "NoRepair", Value = 1 },
-                    new { Key = "Language", Value = 0x0409 },
-                };
+                new { Key = "EstimatedSize", Value = (int)estimatedInstallInKb },
+                new { Key = "NoModify", Value = 1 },
+                new { Key = "NoRepair", Value = 1 },
+                new { Key = "Language", Value = 0x0409 },
+            };
 
             foreach (var kvp in stringsToWrite) {
                 key.SetValue(kvp.Key, kvp.Value, RegistryValueKind.String);
