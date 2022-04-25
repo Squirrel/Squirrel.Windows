@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
-  "version": "2.10",
+  "version": "3.0-unstable",
   "gitCommitIdShortFixedLength": 6,
   "publicReleaseRefSpec": [
     "^refs/heads/master$"
