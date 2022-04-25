@@ -37,6 +37,8 @@ namespace Squirrel.NuGet
         public string ProductCopyright => Copyright ?? "Copyright © " + DateTime.Now.Year.ToString() + " " + ProductCompany;
         public string FullReleaseFilename => String.Format("{0}-{1}-full.nupkg", Id, Version);
 
+        public string FilePath { get; private set; }
+
         public string Id { get; private set; }
         public SemanticVersion Version { get; private set; }
         public Uri ProjectUrl { get; private set; }
@@ -56,6 +58,7 @@ namespace Squirrel.NuGet
         protected string Summary { get; private set; }
         protected string Copyright { get; private set; }
 
+
         private static readonly string[] ExcludePaths = new[] { "_rels", "package" };
 
         protected NuspecManifest() { }
@@ -65,7 +68,19 @@ namespace Squirrel.NuGet
             using var fs = File.OpenRead(filePath);
             var nu = new NuspecManifest();
             nu.ReadManifest(fs);
+            nu.FilePath = filePath;
             return nu;
+        }
+
+        public static bool TryParseFromFile(string filePath, out NuspecManifest manifest)
+        {
+            try {
+                manifest = ParseFromFile(filePath);
+                return true;
+            } catch {
+                manifest = null;
+                return false;
+            }
         }
 
         public static void SetSquirrelMetadata(string nuspecPath, RuntimeCpu architecture, IEnumerable<string> runtimes)

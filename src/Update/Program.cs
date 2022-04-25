@@ -124,7 +124,7 @@ namespace Squirrel.Update
                 Deshortcut(opt.target, opt.shortcutArgs);
                 break;
             case UpdateAction.ProcessStart:
-                ProcessStart(opt.processStart, opt.processStartArgs, opt.shouldWait);
+                ProcessStart(opt.processStart, opt.processStartArgs, opt.shouldWait, opt.forceLatest);
                 break;
             }
 
@@ -463,31 +463,14 @@ namespace Squirrel.Update
             }
         }
 
-        static void ProcessStart(string exeName, string arguments, bool shouldWait)
+        static void ProcessStart(string exeName, string arguments, bool shouldWait, bool forceLatest)
         {
             if (String.IsNullOrWhiteSpace(exeName)) {
                 ShowHelp();
                 return;
             }
 
-            // Find the latest installed version's app dir
-            var appDir = SquirrelRuntimeInfo.BaseDirectory;
-            var releases = ReleaseEntry.ParseReleaseFile(
-                File.ReadAllText(Utility.LocalReleaseFileForAppDir(appDir), Encoding.UTF8));
-
-            // NB: We add the hacked up version in here to handle a migration
-            // issue, where versions of Squirrel pre PR #450 will not understand
-            // prerelease tags, so it will end up writing the release name sans
-            // tags. However, the RELEASES file _will_ have them, so we need to look
-            // for directories that match both the real version, and the sanitized
-            // version, giving priority to the former.
-            var latestAppDir = releases
-                .OrderByDescending(x => x.Version)
-                .SelectMany(x => new[] {
-                    Utility.AppDirForRelease(appDir, x),
-                    Utility.AppDirForVersion(appDir, new SemanticVersion(x.Version.Major, x.Version.Minor, x.Version.Patch, ""))
-                })
-                .FirstOrDefault(x => Directory.Exists(x));
+            var latestAppDir = Utility.UpdateAndRetrieveCurrentFolder(SquirrelRuntimeInfo.BaseDirectory, forceLatest);
 
             // Check for the EXE name they want
             var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName.Replace("%20", " ")));

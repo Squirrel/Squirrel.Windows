@@ -23,6 +23,7 @@ namespace Squirrel.Update
         internal bool onlyUpdateShortcuts { get; private set; } = false;
         internal bool checkInstall { get; private set; } = false;
         internal bool silentInstall { get; private set; } = false;
+        internal bool forceLatest { get; private set; } = false;
 
         public StartupOption(string[] args)
         {
@@ -57,8 +58,9 @@ namespace Squirrel.Update
                 // hidden arguments, used internally by Squirrel and should not be used by Squirrel applications themselves
                 { "install=", "Install the app whose package is in the specified directory or url", v => { updateAction = UpdateAction.Install; target = v; }, true },
                 { "s|silent", "Silent install", _ => silentInstall = true, true},
-                { "processStart=", "Start an executable in the latest version of the app package", v => { updateAction = UpdateAction.ProcessStart; processStart = v; }, true},
-                { "processStartAndWait=", "Start an executable in the latest version of the app package", v => { updateAction = UpdateAction.ProcessStart; processStart = v; shouldWait = true; }, true},
+                { "processStart=", "Start an executable in the current version of the app package", v => { updateAction = UpdateAction.ProcessStart; processStart = v; }, true},
+                { "processStartAndWait=", "Start an executable in the current version of the app package", v => { updateAction = UpdateAction.ProcessStart; processStart = v; shouldWait = true; }, true},
+                { "forceLatest", "Force updates the current version junction", v => forceLatest = true},
                 { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                 { "setup=", "Does an initial install with the help of the Setup.exe resources", v => {  updateAction = UpdateAction.Setup; target = v; }, true },
                 { "checkInstall", "Will install the app silently if it is not currently installed. Used for machine-wide deployments", v => { checkInstall = true; }, true },

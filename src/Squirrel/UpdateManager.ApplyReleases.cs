@@ -431,9 +431,11 @@ namespace Squirrel
 
                 if (!isInitialInstall || silentInstall) return;
 
-                var firstRunParam = isInitialInstall ? "--squirrel-firstrun" : "";
+                // for the hooks we run in the 'app-{ver}' directories, but for finally starting the app we run from 'current' junction
+                var latestAppDir = Utility.UpdateAndRetrieveCurrentFolder(rootAppDirectory, true);
+                squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(latestAppDir);
                 squirrelApps
-                    .Select(exe => new ProcessStartInfo(exe, firstRunParam) { WorkingDirectory = Path.GetDirectoryName(exe) })
+                    .Select(exe => new ProcessStartInfo(exe, "--squirrel-firstrun") { WorkingDirectory = Path.GetDirectoryName(exe) })
                     .ForEach(info => Process.Start(info));
             }
 

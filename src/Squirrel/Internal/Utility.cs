@@ -14,6 +14,8 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using NuGet.Versioning;
+using Squirrel.Lib;
+using Squirrel.NuGet;
 
 namespace Squirrel
 {
@@ -875,6 +877,97 @@ namespace Squirrel
                 return ret;
             } finally {
                 gch.Free();
+            }
+        }
+
+#if NET5_0_OR_GREATER
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
+        public static void KillProcessesInDirectory(string directoryToKill)
+        {
+            var ourExePath = SquirrelRuntimeInfo.EntryExePath;
+            Utility.EnumerateProcesses()
+                .Where(x => {
+                    // Processes we can't query will have an empty process name,
+                    // we can't kill them anyways
+                    if (String.IsNullOrWhiteSpace(x.ProcessExePath)) return false;
+
+                    // Files that aren't in our root app directory are untouched
+                    if (!Utility.IsFileInDirectory(x.ProcessExePath, directoryToKill)) return false;
+
+                    // Never kill our own EXE
+                    if (ourExePath != null && x.ProcessExePath.Equals(ourExePath, StringComparison.OrdinalIgnoreCase)) return false;
+
+                    var name = Path.GetFileName(x.ProcessExePath).ToLowerInvariant();
+                    if (name == "squirrel.exe" || name == "update.exe") return false;
+
+                    return true;
+                })
+                .ForEach(x => {
+                    try {
+                        Process.GetProcessById(x.ProcessId).Kill();
+                    } catch (Exception ex) {
+                        Log().WarnException($"Unable to terminate process (pid.{x.ProcessId})", ex);
+                    }
+                });
+        }
+
+        public static IEnumerable<(SemanticVersion Version, string DirectoryPath, bool IsCurrent, bool HasNuspec)> GetAppVersionDirectories(string rootAppDir)
+        {
+            foreach (var d in Directory.EnumerateDirectories(rootAppDir)) {
+                var directoryName = Path.GetFileName(d);
+                bool isCurrent = directoryName.Equals("current", StringComparison.InvariantCultureIgnoreCase);
+                var nuspec = Path.Combine(d, "mysqver");
+                if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out var manifest)) {
+                    yield return (manifest.Version, d, isCurrent, true);
+                } else if (directoryName.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase) && NuGetVersion.TryParse(directoryName.Substring(4), out var ver)) {
+                    yield return (ver, d, isCurrent, false);
+                }
+            }
+        }
+
+#if NET5_0_OR_GREATER
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
+        public static string UpdateAndRetrieveCurrentFolder(string rootAppDir, bool force)
+        {
+            try {
+                var releases = GetAppVersionDirectories(rootAppDir).ToArray();
+                var latestVer = releases.OrderByDescending(m => m.Version).First();
+                var currentVer = releases.FirstOrDefault(f => f.IsCurrent);
+
+                // if the latest ver is already current, or it does not support
+                // being in a current directory.
+                if (latestVer.IsCurrent || !latestVer.HasNuspec) {
+                    return latestVer.DirectoryPath;
+                }
+
+                if (force) {
+                    Log().Info($"Killing running processes in '{rootAppDir}'.");
+                    KillProcessesInDirectory(rootAppDir);
+                }
+
+                // 'current' does exist, and it's wrong, so lets move it
+                if (currentVer != default) {
+                    var legacyVersionDir = Path.Combine(rootAppDir, "app-" + currentVer.Version);
+                    Log().Info($"Moving '{currentVer.DirectoryPath}' to '{legacyVersionDir}'.");
+                    Retry(() => Directory.Move(currentVer.DirectoryPath, legacyVersionDir));
+                }
+
+                // 'current' doesn't exist right now, lets move the latest version
+                var latestDir = Path.Combine(rootAppDir, "current");
+                Log().Info($"Moving '{latestVer.DirectoryPath}' to '{latestDir}'.");
+                Retry(() => Directory.Move(latestVer.DirectoryPath, latestDir));
+                return latestDir;
+            } catch (Exception e) {
+                var releases = GetAppVersionDirectories(rootAppDir).ToArray();
+                string fallback = releases.OrderByDescending(m => m.Version).First().DirectoryPath;
+                var currentVer = releases.FirstOrDefault(f => f.IsCurrent);
+                if (currentVer != default && Directory.Exists(currentVer.DirectoryPath)) {
+                    fallback = currentVer.DirectoryPath;
+                }
+                Log().WarnException("Unable to update 'current' directory. Running app in: " + fallback, e);
+                return fallback;
             }
         }
     }

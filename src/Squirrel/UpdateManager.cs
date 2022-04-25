@@ -297,7 +297,7 @@ namespace Squirrel
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
-            Process.Start(getUpdateExe(), String.Format("--processStartAndWait \"{0}\" {1}", exeToStart, argsArg));
+            Process.Start(getUpdateExe(), String.Format("--forceLatest --processStartAndWait \"{0}\" {1}", exeToStart, argsArg));
 
             // NB: We have to give update.exe some time to grab our PID, but
             // we can't use WaitForInputIdle because we probably don't have
@@ -331,7 +331,7 @@ namespace Squirrel
             var argsArg = arguments != null ?
                 String.Format("-a \"{0}\"", arguments) : "";
 
-            var updateProcess = Process.Start(getUpdateExe(), String.Format("--processStartAndWait {0} {1}", exeToStart, argsArg));
+            var updateProcess = Process.Start(getUpdateExe(), String.Format("--forceLatest --processStartAndWait \"{0}\" {1}", exeToStart, argsArg));
 
             await Task.Delay(500).ConfigureAwait(false);
 
