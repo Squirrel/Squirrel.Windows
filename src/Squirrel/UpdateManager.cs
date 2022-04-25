@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -203,6 +203,13 @@ namespace Squirrel
             var baseDir = Path.GetDirectoryName(executable);
             if (!File.Exists(Path.Combine(baseDir, "..\\Update.exe")))
                 return null;
+
+            // if a 'my version' file exists, use that instead.
+            var nuspec = Path.Combine(baseDir, "mysqver");
+            if (File.Exists(nuspec)) {
+                var package = NuspecManifest.ParseFromFile(nuspec);
+                return package.Version;
+            }
 
             var exePathWithoutAppDir = executable.Substring(appDir.Length);
             var appDirName = exePathWithoutAppDir.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)

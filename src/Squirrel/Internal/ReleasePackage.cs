@@ -171,6 +171,12 @@ namespace Squirrel
                         var percentage = (currentItem * 100d) / totalItems;
                         progress((int) percentage);
 
+                        // extract .nuspec to app directory as 'current.version'
+                        if (Path.GetExtension(reader.Entry.Key).Equals(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase)) {
+                            Utility.Retry(() => reader.WriteEntryToFile(Path.Combine(outFolder, "mysqver")));
+                            continue;
+                        }
+
                         var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
                         var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
 
