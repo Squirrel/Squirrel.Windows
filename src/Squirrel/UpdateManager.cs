@@ -171,15 +171,17 @@ namespace Squirrel
         /// <inheritdoc/>
         public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments = null, string icon = null)
         {
-            var installHelpers = new ApplyReleasesImpl(AppDirectory);
-            installHelpers.CreateShortcutsForExecutable(exeName, locations, updateOnly, programArguments, icon);
+            throw new NotImplementedException();
+            //var installHelpers = new ApplyReleasesImpl(AppDirectory);
+            //installHelpers.CreateShortcutsForExecutable(exeName, locations, updateOnly, programArguments, icon);
         }
 
         /// <inheritdoc/>
         public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
         {
-            var installHelpers = new ApplyReleasesImpl(AppDirectory);
-            installHelpers.RemoveShortcutsForExecutable(exeName, locations);
+            throw new NotImplementedException();
+            //var installHelpers = new ApplyReleasesImpl(AppDirectory);
+            //installHelpers.RemoveShortcutsForExecutable(exeName, locations);
         }
 
         /// <inheritdoc/>
@@ -220,33 +222,6 @@ namespace Squirrel
                 return null;
 
             return NuGetVersion.Parse(appDirName.Substring(4));
-        }
-
-        /// <inheritdoc/>
-        public void SetProcessAppUserModelId()
-        {
-            if (_applicationIdOverride == null && !IsInstalledApp) {
-                // can't set model id if we don't know the package id.
-                return;
-            }
-
-            var exeName = Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
-
-            string appUserModelId;
-            if (_applicationIdOverride != null) {
-                appUserModelId = Utility.GetAppUserModelId(_applicationIdOverride, exeName);
-            } else {
-                var releases = Utility.LoadLocalReleases(Utility.LocalReleaseFileForAppDir(AppDirectory));
-                var thisRelease = Utility.FindCurrentVersion(releases);
-
-                var zf = new ZipPackage(Path.Combine(
-                    Utility.PackageDirectoryForAppDir(AppDirectory),
-                    thisRelease.Filename));
-
-                appUserModelId = Utility.GetAppUserModelId(zf.Id, exeName);
-            }
-
-            NativeMethods.SetCurrentProcessExplicitAppUserModelID(appUserModelId);
         }
 
         /// <inheritdoc/>
@@ -336,12 +311,6 @@ namespace Squirrel
             await Task.Delay(500).ConfigureAwait(false);
 
             return updateProcess;
-        }
-
-        internal Dictionary<ShortcutLocation, ShellLink> GetShortcutsForExecutable(string exeName, ShortcutLocation locations, string programArguments = null)
-        {
-            var installHelpers = new ApplyReleasesImpl(AppDirectory);
-            return installHelpers.GetShortcutsForExecutable(exeName, locations, programArguments);
         }
 
         private static string GetLocalAppDataDirectory(string assemblyLocation = null)
