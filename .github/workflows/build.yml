@@ -11,6 +11,9 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 6.0.*
+          source-url: https://nuget.pkg.github.com/Clowd/index.json
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Install NGBV"
         run: dotnet tool install --tool-path . nbgv
       - name: Build
@@ -31,3 +34,6 @@ jobs:
         with:
           path: .\build\Clowd.Squirrel*.nupkg
           if-no-files-found: error
+      - name: Publish to GitHub Packages
+        if: {{ github.ref == 'ref/head/develop' }}
+        run: dotnet nuget push .\build\Clowd.Squirrel*.nupkg
