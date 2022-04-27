@@ -70,6 +70,9 @@ namespace Squirrel.Update
             Log.Info("Starting Squirrel Updater: " + String.Join(" ", args));
             Log.Info("Updater location is: " + SquirrelRuntimeInfo.EntryExePath);
 
+            // if the app runs this exe, we do not want to be locking the app directory
+            Environment.CurrentDirectory = SquirrelRuntimeInfo.BaseDirectory;
+
             if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
                 // NB: We're marked as Squirrel-aware, but we don't want to do
                 // anything in response to these events
