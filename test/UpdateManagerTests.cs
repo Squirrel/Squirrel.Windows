@@ -72,9 +72,7 @@ namespace Squirrel.Tests
                         "Squirrel.Core.1.1.0.0-full.nupkg",
                     }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
-
-                    await fixture.updateLocalReleasesFile();
+                    ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(appDir));
 
                     var releasePath = Path.Combine(packageDir.FullName, "RELEASES");
                     File.Exists(releasePath).ShouldBeTrue();
@@ -106,10 +104,11 @@ namespace Squirrel.Tests
                     var entries = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasePath, Encoding.UTF8));
                     entries.Count().ShouldEqual(1);
 
-                    new[] {
-                        "ReactiveUI.dll",
-                        "NSync.Core.dll",
-                    }.ForEach(x => File.Exists(Path.Combine(localAppDir, "app-1.0.0.0", x)).ShouldBeTrue());
+                    Assert.True(File.Exists(Path.Combine(localAppDir, "current", "ReactiveUI.dll")));
+                    Assert.True(File.Exists(Path.Combine(localAppDir, "current", "NSync.Core.dll")));
+
+                    var manifest = NuspecManifest.ParseFromFile(Path.Combine(localAppDir, "current", "mysqver"));
+                    Assert.Equal(new NuGetVersion(1, 0, 0, 0), manifest.Version);
                 }
             }
 
@@ -137,7 +136,7 @@ namespace Squirrel.Tests
 
                     new[] {
                         "file space name.txt"
-                    }.ForEach(x => File.Exists(Path.Combine(localAppDir, "app-0.1.0", x)).ShouldBeTrue());
+                    }.ForEach(x => File.Exists(Path.Combine(localAppDir, "current", x)).ShouldBeTrue());
                 }
             }
 
@@ -162,10 +161,8 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
-
                     // sync both release files
-                    await fixture.updateLocalReleasesFile();
+                    ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(appDir));
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
                     // check for an update
@@ -207,10 +204,8 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
-
                     // sync both release files
-                    await fixture.updateLocalReleasesFile();
+                    ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(appDir));
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
                     UpdateInfo updateInfo;
@@ -248,10 +243,8 @@ namespace Squirrel.Tests
                         File.Copy(path, Path.Combine(remotePackages, x));
                     });
 
-                    var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
-
                     // sync both release files
-                    await fixture.updateLocalReleasesFile();
+                    ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(appDir));
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
                     using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeDownloader())) {
@@ -338,16 +331,6 @@ namespace Squirrel.Tests
                 using var fixture = new UpdateManager();
                 Assert.Null(fixture.CurrentlyInstalledVersion());
                 Assert.False(fixture.IsInstalledApp);
-            }
-
-            [Fact]
-            public void SetModelIdDoesNotThrow()
-            {
-                using (var fixture = new UpdateManager())
-                    fixture.SetProcessAppUserModelId();
-
-                using (var fixture2 = new UpdateManager("", "TestASD"))
-                    fixture2.SetProcessAppUserModelId();
             }
 
             [Theory]

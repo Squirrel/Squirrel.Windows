@@ -22,10 +22,10 @@ namespace Squirrel
     public partial class UpdateManager : IUpdateManager
     {
         /// <summary>The unique Id of the application.</summary>
-        public string AppId => _applicationIdOverride ?? getInstalledApplicationName();
+        public virtual string AppId => _applicationIdOverride ?? getInstalledApplicationName();
 
         /// <inheritdoc/>
-        public string AppDirectory => Path.Combine(_localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), AppId);
+        public virtual string AppDirectory => Path.Combine(_localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), AppId);
 
         /// <inheritdoc/>
         public bool IsInstalledApp => CurrentlyInstalledVersion() != null;

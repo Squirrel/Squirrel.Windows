@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NuGet.Versioning;
 using Squirrel.NuGet;
 using Squirrel.Tests.TestHelpers;
 using Xunit;
@@ -14,6 +15,23 @@ using Xunit.Abstractions;
 
 namespace Squirrel.Tests
 {
+    class ApplyReleasesImpl : UpdateManager
+    {
+        public override string AppDirectory => rootDir;
+
+        private readonly string rootDir;
+
+        public ApplyReleasesImpl(string rootDir)
+        {
+            this.rootDir = rootDir;
+        }
+
+        public Task<string> ApplyReleasesPublic(UpdateInfo updateInfo, bool silentInstall, bool attemptingFullInstall, Action<int> progress = null)
+        {
+            return this.ApplyReleases(updateInfo, silentInstall, attemptingFullInstall, progress);
+        }
+    }
+
     public class ApplyReleasesTests : TestLoggingBase
     {
         public ApplyReleasesTests(ITestOutputHelper log) : base(log)
@@ -40,10 +58,10 @@ namespace Squirrel.Tests
                     // try to blow away a running process
                     await Task.Delay(1000);
 
-                    Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.1.0", "args2.txt")));
-                    Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "app-0.1.0", "args.txt")));
+                    Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "current", "args2.txt")));
+                    Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "current", "args.txt")));
 
-                    var text = File.ReadAllText(Path.Combine(tempDir, "theApp", "app-0.1.0", "args.txt"), Encoding.UTF8);
+                    var text = File.ReadAllText(Path.Combine(tempDir, "theApp", "current", "args.txt"), Encoding.UTF8);
                     Assert.Contains("firstrun", text);
                 }
             }
@@ -179,8 +197,15 @@ namespace Squirrel.Tests
                     await fixture.FullInstall();
                 }
 
-                Assert.True(Directory.Exists(Path.Combine(tempDir, pkgName, "app-0.1.0")));
+                //Assert.True(Directory.Exists(Path.Combine(tempDir, pkgName, "app-0.1.0")));
+                Assert.True(Directory.Exists(Path.Combine(tempDir, pkgName, "current")));
+
+                var version = Utility.GetAppVersionDirectories(Path.Combine(tempDir, pkgName)).Single();
+                Assert.True(version.IsCurrent);
+                Assert.Equal(new SemanticVersion(0, 1, 0), version.Manifest.Version);
+
                 await Task.Delay(1000);
+                Assert.True(File.ReadAllText(Path.Combine(version.DirectoryPath, "args.txt")).Contains("--squirrel-firstrun"));
 
                 // update top 0.2.0
                 IntegrationTestHelper.CreateFakeInstalledApp("0.2.0", remotePkgDir, "SquirrelInstalledAppWithDots.nuspec");
@@ -191,7 +216,13 @@ namespace Squirrel.Tests
                     await fixture.UpdateApp();
                 }
 
-                Assert.True(Directory.Exists(Path.Combine(tempDir, pkgName, "app-0.2.0")));
+                Utility.UpdateAndRetrieveCurrentFolder(Path.Combine(tempDir, pkgName), false);
+
+                var versions = Utility.GetAppVersionDirectories(Path.Combine(tempDir, pkgName)).ToArray();
+                Assert.Equal(2, versions.Count());
+                Assert.Equal(new SemanticVersion(0, 2, 0), versions.Single(s => s.IsCurrent).Version);
+
+                //Assert.True(Directory.Exists(Path.Combine(tempDir, pkgName, "app-0.2.0")));
                 await Task.Delay(1000);
 
                 // uninstall
@@ -267,7 +298,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.1.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
@@ -277,7 +308,7 @@ namespace Squirrel.Tests
 
                 var progress = new List<int>();
 
-                await fixture.ApplyReleases(updateInfo, false, false, progress.Add);
+                await fixture.ApplyReleasesPublic(updateInfo, false, false, progress.Add);
                 this.Log().Info("Progress: [{0}]", String.Join(",", progress));
 
                 progress
@@ -316,7 +347,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.2.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.2.0.0-full.nupkg"));
@@ -325,7 +356,7 @@ namespace Squirrel.Tests
                 updateInfo.ReleasesToApply.Contains(latestFullEntry).ShouldBeTrue();
 
                 var progress = new List<int>();
-                await fixture.ApplyReleases(updateInfo, false, false, progress.Add);
+                await fixture.ApplyReleasesPublic(updateInfo, false, false, progress.Add);
                 this.Log().Info("Progress: [{0}]", String.Join(",", progress));
 
                 progress
@@ -364,7 +395,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.3.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.3.0.0-full.nupkg"));
@@ -373,7 +404,7 @@ namespace Squirrel.Tests
                 updateInfo.ReleasesToApply.Contains(latestFullEntry).ShouldBeTrue();
 
                 var progress = new List<int>();
-                await fixture.ApplyReleases(updateInfo, false, false, progress.Add);
+                await fixture.ApplyReleasesPublic(updateInfo, false, false, progress.Add);
                 this.Log().Info("Progress: [{0}]", String.Join(",", progress));
 
                 progress
@@ -415,7 +446,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.1.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-delta.nupkg"));
@@ -426,7 +457,7 @@ namespace Squirrel.Tests
 
                 var progress = new List<int>();
 
-                await fixture.ApplyReleases(updateInfo, false, false, progress.Add);
+                await fixture.ApplyReleasesPublic(updateInfo, false, false, progress.Add);
                 this.Log().Info("Progress: [{0}]", String.Join(",", progress));
 
                 progress
@@ -465,13 +496,13 @@ namespace Squirrel.Tests
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
                 var urlDownloader = new FakeDownloader();
-                var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir);
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.1.0.0-delta.nupkg"));
 
-                var resultObs = (Task<ReleaseEntry>) fixture.GetType().GetMethod("createFullPackagesFromDeltas", BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Invoke(fixture, new object[] { new[] { deltaEntry }, baseEntry, null });
+                var resultObsMethod = typeof(UpdateManager).GetMethod("createFullPackagesFromDeltas", BindingFlags.NonPublic | BindingFlags.Instance);
+                var resultObs = (Task<ReleaseEntry>) resultObsMethod.Invoke(fixture, new object[] { new[] { deltaEntry }, baseEntry, null });
 
                 var result = await resultObs;
                 var zp = new ZipPackage(Path.Combine(tempDir, "theApp", "packages", result.Filename));
@@ -492,7 +523,7 @@ namespace Squirrel.Tests
                     await mgr.FullInstall();
                 }
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(Path.Combine(path, "theApp"));
+                var fixture = new ApplyReleasesImpl(Path.Combine(path, "theApp"));
                 fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup | ShortcutLocation.AppRoot, false, null, null);
 
                 // NB: COM is Weird.
@@ -505,39 +536,28 @@ namespace Squirrel.Tests
             }
         }
 
-        [Fact]
-        public void UnshimOurselvesSmokeTest()
-        {
-            // NB: This smoke test is really more of a manual test - try it
-            // by shimming Slack, then verifying the shim goes away
-            var appDir = Environment.ExpandEnvironmentVariables(@"%LocalAppData%\Slack");
-            var fixture = new UpdateManager.ApplyReleasesImpl(appDir);
+        //[Fact]
+        //public async Task GetShortcutsSmokeTest()
+        //{
+        //    string remotePkgPath;
+        //    string path;
 
-            fixture.unshimOurselves();
-        }
+        //    using (Utility.WithTempDirectory(out path)) {
+        //        using (Utility.WithTempDirectory(out remotePkgPath))
+        //        using (var mgr = new UpdateManager(remotePkgPath, "theApp", path)) {
+        //            IntegrationTestHelper.CreateFakeInstalledApp("1.0.0.1", remotePkgPath);
+        //            await mgr.FullInstall();
+        //        }
 
-        [Fact]
-        public async Task GetShortcutsSmokeTest()
-        {
-            string remotePkgPath;
-            string path;
+        //        var fixture = new ApplyReleasesImpl(Path.Combine(path, "theApp"));
+        //        var result = fixture.GetShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup, null);
 
-            using (Utility.WithTempDirectory(out path)) {
-                using (Utility.WithTempDirectory(out remotePkgPath))
-                using (var mgr = new UpdateManager(remotePkgPath, "theApp", path)) {
-                    IntegrationTestHelper.CreateFakeInstalledApp("1.0.0.1", remotePkgPath);
-                    await mgr.FullInstall();
-                }
+        //        Assert.Equal(3, result.Keys.Count);
 
-                var fixture = new UpdateManager.ApplyReleasesImpl(Path.Combine(path, "theApp"));
-                var result = fixture.GetShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup, null);
-
-                Assert.Equal(3, result.Keys.Count);
-
-                // NB: Squirrel-Aware first-run might still be running, slow
-                // our roll before blowing away the temp path
-                Thread.Sleep(1000);
-            }
-        }
+        //        // NB: Squirrel-Aware first-run might still be running, slow
+        //        // our roll before blowing away the temp path
+        //        Thread.Sleep(1000);
+        //    }
+        //}
     }
 }
