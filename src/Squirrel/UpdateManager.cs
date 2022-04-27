@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -24,10 +24,10 @@ namespace Squirrel
         /// <summary>The unique Id of the application.</summary>
         public string AppId => _applicationIdOverride ?? getInstalledApplicationName();
 
-        /// <summary>The directory the app is (or will be) installed in.</summary>
+        /// <inheritdoc/>
         public string AppDirectory => Path.Combine(_localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), AppId);
 
-        /// <summary>True if the current executable is inside the target <see cref="AppDirectory"/>.</summary>
+        /// <inheritdoc/>
         public bool IsInstalledApp => CurrentlyInstalledVersion() != null;
 
         /// <summary>The directory packages and temp files are stored in.</summary>
@@ -168,6 +168,64 @@ namespace Squirrel
                 return null;
 
             return NuGetVersion.Parse(appDirName.Substring(4));
+        }
+
+        /// <inheritdoc/>
+        public async Task<ReleaseEntry> UpdateApp(Action<int> progress = null)
+        {
+            progress = progress ?? (_ => { });
+            this.Log().Info("Starting automatic update");
+
+            bool ignoreDeltaUpdates = false;
+
+        retry:
+            var updateInfo = default(UpdateInfo);
+
+            try {
+                var localVersions = Utility.GetAppVersionDirectories(AppDirectory);
+                var currentVersion = CurrentlyInstalledVersion();
+
+                updateInfo = await this.ErrorIfThrows(() => CheckForUpdate(ignoreDeltaUpdates, x => progress(x / 3)),
+                    "Failed to check for updates").ConfigureAwait(false);
+
+                if (updateInfo == null || updateInfo.FutureReleaseEntry == null) {
+                    this.Log().Info("No update available.");
+                    return null;
+                }
+
+                if (currentVersion >= updateInfo.FutureReleaseEntry.Version) {
+                    this.Log().Info($"Current version {currentVersion} is up to date with remote.");
+                    return null;
+                }
+
+                if (localVersions.Any(v => v.Version == updateInfo.FutureReleaseEntry.Version)) {
+                    this.Log().Info("Update available, it is already downloaded.");
+                    return updateInfo.FutureReleaseEntry;
+                }
+
+                await this.ErrorIfThrows(() =>
+                    DownloadReleases(updateInfo.ReleasesToApply, x => progress(x / 3 + 33)),
+                    "Failed to download updates").ConfigureAwait(false);
+
+                await this.ErrorIfThrows(() =>
+                    ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
+                    "Failed to apply updates").ConfigureAwait(false);
+
+                await this.ErrorIfThrows(() =>
+                    CreateUninstallerRegistryEntry(),
+                    "Failed to set up uninstaller").ConfigureAwait(false);
+            } catch {
+                if (ignoreDeltaUpdates == false) {
+                    ignoreDeltaUpdates = true;
+                    goto retry;
+                }
+
+                throw;
+            }
+
+            return updateInfo.ReleasesToApply.Any() ?
+                updateInfo.ReleasesToApply.MaxBy(x => x.Version).Last() :
+                default(ReleaseEntry);
         }
 
         /// <inheritdoc/>
