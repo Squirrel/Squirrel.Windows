@@ -35,5 +35,5 @@ jobs:
           path: .\build\Clowd.Squirrel*.nupkg
           if-no-files-found: error
       - name: Publish to GitHub Packages
-        if: {{ github.ref == 'ref/head/develop' }}
+        if: ${{ github.ref == 'ref/head/develop' }}
         run: dotnet nuget push .\build\Clowd.Squirrel*.nupkg
