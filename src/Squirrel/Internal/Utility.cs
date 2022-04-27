@@ -945,14 +945,14 @@ namespace Squirrel
                 if (currentVer != default) {
                     legacyVersionDir = Path.Combine(rootAppDir, "app-" + currentVer.Version);
                     Log().Info($"Moving '{currentVer.DirectoryPath}' to '{legacyVersionDir}'.");
-                    Retry(() => Directory.Move(currentVer.DirectoryPath, legacyVersionDir), 8);
+                    Retry(() => Directory.Move(currentVer.DirectoryPath, legacyVersionDir));
                 }
 
 
                 // 'current' doesn't exist right now, lets move the latest version
                 var latestDir = Path.Combine(rootAppDir, "current");
                 Log().Info($"Moving '{latestVer.DirectoryPath}' to '{latestDir}'.");
-                Retry(() => Directory.Move(latestVer.DirectoryPath, latestDir), 8);
+                Retry(() => Directory.Move(latestVer.DirectoryPath, latestDir));
 
                 Log().Info("Running app in: " + latestDir);
                 return latestDir;
