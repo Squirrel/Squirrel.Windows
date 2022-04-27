@@ -912,9 +912,9 @@ namespace Squirrel
                 bool isCurrent = directoryName.Equals("current", StringComparison.InvariantCultureIgnoreCase);
                 var nuspec = Path.Combine(d, "mysqver");
                 if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out var manifest)) {
-                    yield return new (manifest, manifest.Version, d, isCurrent, isExecuting);
+                    yield return new(manifest, manifest.Version, d, isCurrent, isExecuting);
                 } else if (directoryName.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase) && NuGetVersion.TryParse(directoryName.Substring(4), out var ver)) {
-                    yield return new (null, ver, d, isCurrent, isExecuting);
+                    yield return new(null, ver, d, isCurrent, isExecuting);
                 }
             }
         }
@@ -941,16 +941,20 @@ namespace Squirrel
                 }
 
                 // 'current' does exist, and it's wrong, so lets move it
+                string legacyVersionDir = null;
                 if (currentVer != default) {
-                    var legacyVersionDir = Path.Combine(rootAppDir, "app-" + currentVer.Version);
+                    legacyVersionDir = Path.Combine(rootAppDir, "app-" + currentVer.Version);
                     Log().Info($"Moving '{currentVer.DirectoryPath}' to '{legacyVersionDir}'.");
-                    Retry(() => Directory.Move(currentVer.DirectoryPath, legacyVersionDir));
+                    Retry(() => Directory.Move(currentVer.DirectoryPath, legacyVersionDir), 8);
                 }
+
 
                 // 'current' doesn't exist right now, lets move the latest version
                 var latestDir = Path.Combine(rootAppDir, "current");
                 Log().Info($"Moving '{latestVer.DirectoryPath}' to '{latestDir}'.");
-                Retry(() => Directory.Move(latestVer.DirectoryPath, latestDir));
+                Retry(() => Directory.Move(latestVer.DirectoryPath, latestDir), 8);
+
+                Log().Info("Running app in: " + latestDir);
                 return latestDir;
             } catch (Exception e) {
                 var releases = GetAppVersionDirectories(rootAppDir).ToArray();
@@ -959,7 +963,8 @@ namespace Squirrel
                 if (currentVer != default && Directory.Exists(currentVer.DirectoryPath)) {
                     fallback = currentVer.DirectoryPath;
                 }
-                Log().WarnException("Unable to update 'current' directory. Running app in: " + fallback, e);
+                Log().WarnException("Unable to update 'current' directory", e);
+                Log().Info("Running app in: " + fallback);
                 return fallback;
             }
         }

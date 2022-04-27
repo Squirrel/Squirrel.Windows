@@ -31,15 +31,15 @@ namespace Squirrel
 
             progress(40);
 
-            //if (release == null) {
-            //    if (attemptingFullInstall) {
-            //        this.Log().Info("No release to install, running the app");
-            //        await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, false, true, silentInstall).ConfigureAwait(false);
-            //    }
+            if (release == null) {
+                if (attemptingFullInstall) {
+                    this.Log().Info("No release to install, running the app");
+                    await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, false, true, silentInstall).ConfigureAwait(false);
+                }
 
-            //    progress(100);
-            //    return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
-            //}
+                progress(100);
+                return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
+            }
 
             // Progress range: 40 -> 80
             var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release, x => progress(CalculateProgress(x, 40, 80))),

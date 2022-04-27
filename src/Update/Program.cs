@@ -68,6 +68,7 @@ namespace Squirrel.Update
         static int executeCommandLine(string[] args)
         {
             Log.Info("Starting Squirrel Updater: " + String.Join(" ", args));
+            Log.Info("Updater location is: " + SquirrelRuntimeInfo.EntryExePath);
 
             if (args.Any(x => x.StartsWith("/squirrel", StringComparison.OrdinalIgnoreCase))) {
                 // NB: We're marked as Squirrel-aware, but we don't want to do
@@ -470,6 +471,8 @@ namespace Squirrel.Update
                 return;
             }
 
+            if (shouldWait) waitForParentToExit();
+
             var latestAppDir = Utility.UpdateAndRetrieveCurrentFolder(SquirrelRuntimeInfo.BaseDirectory, forceLatest);
 
             // Check for the EXE name they want
@@ -492,8 +495,6 @@ namespace Squirrel.Update
                 Log.Error("File {0} is not trusted, and will not be run from a trusted context.", targetExe);
                 throw new ArgumentException();
             }
-
-            if (shouldWait) waitForParentToExit();
 
             try {
                 Log.Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");
