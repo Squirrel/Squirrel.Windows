@@ -49,7 +49,7 @@ namespace Squirrel
         /// in onInitialInstall.</param>
         /// <param name="onEveryRun">Called when your application is run normally,
         /// also indicates whether this is first time your app is run, so you can
-        /// show a welcome screen. Also see <see cref="IAppTools.SetProcessAppUserModelId"/>
+        /// show a welcome screen.
         /// which can be executed here.</param>
         /// <param name="arguments">Use in a unit-test runner to mock the 
         /// arguments. In your app, leave this as null.</param>
