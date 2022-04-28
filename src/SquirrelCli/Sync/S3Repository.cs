@@ -93,11 +93,38 @@ namespace SquirrelCli.Sources
                 .ContextualSingle("release directory", "RELEASES file");
             var nupkgFiles = files.Where(f => f.FullName.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase)).ToArray();
 
+            // we will merge the remote RELEASES file with the local one
+            string remoteReleasesContent = null;
+            try {
+                Log.Info("Downloading remote RELEASES file");
+                using (var obj = await _client.GetObjectAsync(_options.bucket, _prefix + "RELEASES"))
+                using (var sr = new StreamReader(obj.ResponseStream, Encoding.UTF8, true))
+                    remoteReleasesContent = await sr.ReadToEndAsync();
+                Log.Info("Merging remote and local RELEASES files");
+            } catch (AmazonS3Exception ex) when (ex.StatusCode == HttpStatusCode.NotFound) {
+                Log.Warn("No remote RELEASES found.");
+            }
+
+            var localReleases = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesFile.FullName));
+            var remoteReleases = ReleaseEntry.ParseReleaseFile(remoteReleasesContent);
+
             // apply retention policy. count '-full' versions only, then also remove corresponding delta packages
-            var releaseEntries = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesFile.FullName))
+            var releaseEntries = localReleases
+                .Concat(remoteReleases)
+                .DistinctBy(r => r.Filename) // will preserve the local entries because they appear first
                 .OrderBy(k => k.Version)
                 .ThenBy(k => !k.IsDelta)
                 .ToArray();
+
+            if (releaseEntries.Length == 0) {
+                Log.Warn("No releases found.");
+                return;
+            }
+
+            if (!releaseEntries.All(f => f.PackageName == releaseEntries.First().PackageName)) {
+                throw new Exception("There are mix-matched package Id's in local/remote RELEASES file. " +
+                    "Please fix the release files manually so there is only one consistent package Id present.");
+            }
 
             var fullCount = releaseEntries.Where(r => !r.IsDelta).Count();
             if (_options.keepMaxReleases > 0 && fullCount > _options.keepMaxReleases) {
@@ -110,7 +137,6 @@ namespace SquirrelCli.Sources
                     .ToArray();
 
                 var deltaReleases = releaseEntries
-                    .OrderByDescending(k => k.Version)
                     .Where(k => k.IsDelta)
                     .Where(k => fullReleases.Any(f => f.Version == k.Version))
                     .Where(k => k.Version != fullReleases.Last().Version) // ignore delta packages for the oldest full package
@@ -118,15 +144,10 @@ namespace SquirrelCli.Sources
 
                 Log.Info($"Total number of packages in remote after retention: {fullReleases.Length} full, {deltaReleases.Length} delta.");
                 fullCount = fullReleases.Length;
-
-                releaseEntries = fullReleases
-                    .Concat(deltaReleases)
-                    .OrderBy(k => k.Version)
-                    .ThenBy(k => !k.IsDelta)
-                    .ToArray();
-                ReleaseEntry.WriteReleaseFile(releaseEntries, releasesFile.FullName);
+                ReleaseEntry.WriteReleaseFile(fullReleases.Concat(deltaReleases), releasesFile.FullName);
             } else {
                 Log.Info($"There are currently {fullCount} full releases in RELEASES file.");
+                ReleaseEntry.WriteReleaseFile(releaseEntries, releasesFile.FullName);
             }
 
             // we need to upload things in a certain order. If we upload 'RELEASES' first, for example, a client
@@ -154,20 +175,25 @@ namespace SquirrelCli.Sources
                 // remove any dead packages (not in RELEASES) as they are undiscoverable anyway
                 Log.Info("Searching for remote dead packages (not in RELEASES file)");
 
-                var objects = await ListBucketContentsAsync(_client, _options.bucket).ToArrayAsync();
-                var deadObjectKeys = objects
-                    .Select(o => o.Key)
-                    .Where(o => o.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase))
-                    .Where(o => o.StartsWith(_prefix, StringComparison.InvariantCultureIgnoreCase))
-                    .Select(o => o.Substring(_prefix.Length))
-                    .Where(o => !o.Contains('/')) // filters out objects in folders if _prefix is empty
-                    .Where(o => !releaseEntries.Any(r => r.Filename.Equals(o, StringComparison.InvariantCultureIgnoreCase)))
-                    .ToArray();
+                var objects = await ListBucketContentsAsync(_client, _options.bucket, _prefix).ToArrayAsync();
 
-                Log.Info($"Found {deadObjectKeys.Length} dead packages.");
-                foreach (var objKey in deadObjectKeys) {
-                    await RetryAsync(() => _client.DeleteObjectAsync(new DeleteObjectRequest { BucketName = _options.bucket, Key = objKey }),
-                        "Deleting dead package: " + objKey);
+                var deadObjectQuery =
+                    from o in objects
+                    let key = o.Key
+                    where key.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase)
+                    where key.StartsWith(_prefix, StringComparison.InvariantCultureIgnoreCase)
+                    let fileName = key.Substring(_prefix.Length)
+                    where !fileName.Contains('/') // filters out objects in folders if _prefix is empty
+                    where !releaseEntries.Any(r => r.Filename.Equals(fileName, StringComparison.InvariantCultureIgnoreCase))
+                    orderby o.LastModified ascending
+                    select new { key, fileName, versionId = o.VersionId };
+
+                var deadObj = deadObjectQuery.ToArray();
+
+                Log.Info($"Found {deadObj.Length} dead packages.");
+                foreach (var s3obj in deadObj) {
+                    var req = new DeleteObjectRequest { BucketName = _options.bucket, Key = s3obj.key, VersionId = s3obj.versionId };
+                    await RetryAsync(() => _client.DeleteObjectAsync(req), "Deleting dead package: " + s3obj, throwIfFail: false);
                 }
             }
 
@@ -184,23 +210,25 @@ namespace SquirrelCli.Sources
             Log.Info($"Setup URL:   {baseurl}{setupFile.Name}");
         }
 
-        private static async IAsyncEnumerable<S3Object> ListBucketContentsAsync(IAmazonS3 client, string bucketName)
+        private static async IAsyncEnumerable<S3ObjectVersion> ListBucketContentsAsync(IAmazonS3 client, string bucketName, string prefix)
         {
-            var request = new ListObjectsV2Request {
+            var request = new ListVersionsRequest {
                 BucketName = bucketName,
                 MaxKeys = 100,
+                Prefix = prefix,
             };
 
-            ListObjectsV2Response response;
+            ListVersionsResponse response;
             do {
-                response = await client.ListObjectsV2Async(request);
-                foreach (var obj in response.S3Objects) {
+                response = await client.ListVersionsAsync(request);
+                foreach (var obj in response.Versions) {
                     yield return obj;
                 }
 
                 // If the response is truncated, set the request ContinuationToken
                 // from the NextContinuationToken property of the response.
-                request.ContinuationToken = response.NextContinuationToken;
+                request.KeyMarker = response.NextKeyMarker;
+                request.VersionIdMarker = response.NextVersionIdMarker;
             }
             while (response.IsTruncated);
         }
@@ -259,8 +287,12 @@ namespace SquirrelCli.Sources
                     return;
                 } catch (Exception ex) {
                     if (ctry++ > 2) {
-                        if (throwIfFail) throw;
-                        else return;
+                        if (throwIfFail) {
+                            throw;
+                        } else {
+                            Log.Error("Error: " + ex.Message + ", will not try again.");
+                            return;
+                        }
                     }
                     Log.Error($"Error: {ex.Message}, retrying in 1 second.");
                     await Task.Delay(1000).ConfigureAwait(false);
