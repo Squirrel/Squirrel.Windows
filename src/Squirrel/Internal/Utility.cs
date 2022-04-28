@@ -931,7 +931,8 @@ namespace Squirrel
 
                 // if the latest ver is already current, or it does not support
                 // being in a current directory.
-                if (latestVer.IsCurrent || latestVer.Manifest == null) {
+                if (latestVer.IsCurrent) {
+                    Log().Info($"Current directory already pointing to latest version.");
                     return latestVer.DirectoryPath;
                 }
 
@@ -940,14 +941,18 @@ namespace Squirrel
                     KillProcessesInDirectory(rootAppDir);
                 }
 
-                // 'current' does exist, and it's wrong, so lets move it
-                string legacyVersionDir = null;
+                // 'current' does exist, and it's wrong, so lets get rid of it
                 if (currentVer != default) {
-                    legacyVersionDir = Path.Combine(rootAppDir, "app-" + currentVer.Version);
+                    string legacyVersionDir = legacyVersionDir = Path.Combine(rootAppDir, "app-" + currentVer.Version);
                     Log().Info($"Moving '{currentVer.DirectoryPath}' to '{legacyVersionDir}'.");
                     Retry(() => Directory.Move(currentVer.DirectoryPath, legacyVersionDir));
                 }
 
+                // this directory does not support being named 'current'
+                if (latestVer.Manifest == null) {
+                    Log().Info($"Cannot promote {latestVer.Version} as current as it has no manifest");
+                    return latestVer.DirectoryPath;
+                }
 
                 // 'current' doesn't exist right now, lets move the latest version
                 var latestDir = Path.Combine(rootAppDir, "current");
