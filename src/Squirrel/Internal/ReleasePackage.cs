@@ -173,7 +173,7 @@ namespace Squirrel
 
                         // extract .nuspec to app directory as 'current.version'
                         if (Path.GetExtension(reader.Entry.Key).Equals(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase)) {
-                            Utility.Retry(() => reader.WriteEntryToFile(Path.Combine(outFolder, "mysqver")));
+                            Utility.Retry(() => reader.WriteEntryToFile(Path.Combine(outFolder, "current.version")));
                             continue;
                         }
 

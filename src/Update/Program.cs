@@ -186,11 +186,7 @@ namespace Squirrel.Update
                 return;
             }
 
-            var missingFrameworks = zp.RuntimeDependencies
-                .Select(f => Runtimes.GetRuntimeByName(f))
-                .Where(f => f != null)
-                .Where(f => !f.CheckIsInstalled().Result)
-                .ToArray();
+            var missingFrameworks = getMissingRuntimes(zp);
 
             // prompt user to install missing dependencies
             if (missingFrameworks.Any()) {
@@ -203,38 +199,8 @@ namespace Squirrel.Update
                     return; // user cancelled install
                 }
 
-                bool rebootRequired = false;
-
-                // iterate through each missing dependency and download/run the installer.
-                foreach (var f in missingFrameworks) {
-                    var localPath = Path.Combine(tempFolder, f.Id + ".exe");
-                    splash.SetMessage($"Downloading {f.DisplayName}...");
-                    await f.DownloadToFile(localPath, e => splash.SetProgress((ulong) e, 100));
-                    splash.SetProgressIndeterminate();
-
-                    // hide splash screen while the runtime installer is running so the user can see progress
-                    splash.Hide();
-                    var exitcode = await f.InvokeInstaller(localPath, silentInstall);
-                    splash.Show();
-
-                    if (exitcode == RestartRequired) {
-                        rebootRequired = true;
-                        continue;
-                    } else if (exitcode != InstallSuccess) {
-                        string rtmsg = exitcode switch {
-                            UserCancelled => $"User cancelled install of {f.DisplayName}. Setup can not continue and will now exit.",
-                            AnotherInstallInProgress => "Another installation is already in progress. Complete that installation before proceeding with this install.",
-                            SystemDoesNotMeetRequirements => $"This computer does not meet the system requirements for {f.DisplayName}.",
-                            _ => $"{f.DisplayName} installer exited with error code '{exitcode}'.",
-                        };
-                        splash.ShowErrorDialog($"Error installing {f.DisplayName}", rtmsg);
-                        return;
-                    }
-                }
-
-                if (rebootRequired) {
-                    // TODO: automatic restart setup after reboot
-                    splash.ShowInfoDialog("Restart required", $"A restart is required before Setup can continue.");
+                var success = await installMissingRuntimes(splash, missingFrameworks, silentInstall, tempFolder);
+                if (!success) {
                     return;
                 }
             }
@@ -499,6 +465,29 @@ namespace Squirrel.Update
                 throw new ArgumentException();
             }
 
+            // check that the app we're about to run has all of it's dependencies installed
+            var manifest = Utility.ReadManifestFromVersionDir(latestAppDir);
+            if (manifest != null && manifest.RuntimeDependencies?.Any() == true) {
+                var missingFrameworks = getMissingRuntimes(manifest);
+                if (missingFrameworks.Any()) {
+                    Log.Info("App has missing dependencies: " + String.Join(", ", missingFrameworks.Select(s => s.DisplayName)));
+                    var answer = Windows.User32MessageBox.Show(IntPtr.Zero, getMissingRuntimesMessage(manifest.ProductName, missingFrameworks),
+                        "Cannot start " + manifest.ProductName, Windows.User32MessageBox.MessageBoxButtons.OKCancel);
+
+                    if (answer != Windows.User32MessageBox.MessageBoxResult.OK) {
+                        Log.Info("User did not want to install dependencies. Aborting.");
+                        return;
+                    }
+
+                    using var splash = new ComposedWindow(manifest.ProductName, false, null, null);
+                    splash.Show();
+                    using var _ = Utility.WithTempDirectory(out var tempFolder);
+                    var success = installMissingRuntimes(splash, missingFrameworks, false, tempFolder).Result;
+                    if (!success) return;
+                }
+            }
+
+            // launch the EXE
             try {
                 Log.Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");
                 Process.Start(new ProcessStartInfo(targetExe.FullName, arguments ?? "") { WorkingDirectory = Path.GetDirectoryName(targetExe.FullName) });
@@ -531,6 +520,66 @@ namespace Squirrel.Update
             } finally {
                 if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
             }
+        }
+
+        static string getMissingRuntimesMessage(string appname, Runtimes.RuntimeInfo[] missingFrameworks)
+        {
+            return missingFrameworks.Length > 1
+                ? $"{appname} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
+                    $"Would you like to install these now?"
+                : $"{appname} requires {missingFrameworks.First().DisplayName} installed to continue, would you like to install it now?";
+        }
+
+        static Runtimes.RuntimeInfo[] getMissingRuntimes(NuspecManifest manifest)
+        {
+            if (manifest.RuntimeDependencies == null || !manifest.RuntimeDependencies.Any())
+                return new Runtimes.RuntimeInfo[0];
+
+            return manifest.RuntimeDependencies
+                .Select(f => Runtimes.GetRuntimeByName(f))
+                .Where(f => f != null)
+                .Where(f => !f.CheckIsInstalled().Result)
+                .ToArray();
+        }
+
+        static async Task<bool> installMissingRuntimes(ISplashWindow splash, Runtimes.RuntimeInfo[] missingFrameworks, bool silentInstall, string tempFolder)
+        {
+            bool rebootRequired = false;
+
+            // iterate through each missing dependency and download/run the installer.
+            foreach (var f in missingFrameworks) {
+                var localPath = Path.Combine(tempFolder, f.Id + ".exe");
+                splash.SetMessage($"Downloading {f.DisplayName}...");
+                await f.DownloadToFile(localPath, e => splash.SetProgress((ulong) e, 100));
+                splash.SetProgressIndeterminate();
+
+                // hide splash screen while the runtime installer is running so the user can see progress
+                splash.Hide();
+                var exitcode = await f.InvokeInstaller(localPath, silentInstall);
+                splash.Show();
+
+                if (exitcode == RestartRequired) {
+                    rebootRequired = true;
+                    continue;
+                } else if (exitcode != InstallSuccess) {
+                    string rtmsg = exitcode switch {
+                        UserCancelled => $"User cancelled install of {f.DisplayName}. Setup can not continue and will now exit.",
+                        AnotherInstallInProgress => "Another installation is already in progress. Complete that installation before proceeding with this install.",
+                        SystemDoesNotMeetRequirements => $"This computer does not meet the system requirements for {f.DisplayName}.",
+                        _ => $"{f.DisplayName} installer exited with error code '{exitcode}'.",
+                    };
+                    splash.ShowErrorDialog($"Error installing {f.DisplayName}", rtmsg);
+                    return false;
+                }
+            }
+
+            if (rebootRequired) {
+                // TODO: automatic restart setup after reboot
+                splash.ShowInfoDialog("Restart required", $"A restart is required before Setup can continue.");
+                return false;
+            }
+
+            return true;
         }
 
 

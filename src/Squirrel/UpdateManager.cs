@@ -153,10 +153,9 @@ namespace Squirrel
                 return null;
 
             // if a 'my version' file exists, use that instead.
-            var nuspec = Path.Combine(baseDir, "mysqver");
-            if (File.Exists(nuspec)) {
-                var package = NuspecManifest.ParseFromFile(nuspec);
-                return package.Version;
+            var manifest = Utility.ReadManifestFromVersionDir(baseDir);
+            if (manifest != null) {
+                return manifest.Version;
             }
 
             var exePathWithoutAppDir = executable.Substring(appDir.Length);

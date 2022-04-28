@@ -904,14 +904,29 @@ namespace Squirrel
 
         public record VersionDirInfo(IPackage Manifest, SemanticVersion Version, string DirectoryPath, bool IsCurrent, bool IsExecuting);
 
+        public static NuspecManifest ReadManifestFromVersionDir(string appVersionDir)
+        {
+            NuspecManifest manifest;
+
+            var nuspec = Path.Combine(appVersionDir, "mysqver");
+            if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
+                return manifest;
+
+            nuspec = Path.Combine(appVersionDir, "current.version");
+            if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
+                return manifest;
+
+            return null;
+        }
+
         public static IEnumerable<VersionDirInfo> GetAppVersionDirectories(string rootAppDir)
         {
             foreach (var d in Directory.EnumerateDirectories(rootAppDir)) {
                 var directoryName = Path.GetFileName(d);
                 bool isExecuting = IsFileInDirectory(SquirrelRuntimeInfo.EntryExePath, d);
                 bool isCurrent = directoryName.Equals("current", StringComparison.InvariantCultureIgnoreCase);
-                var nuspec = Path.Combine(d, "mysqver");
-                if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out var manifest)) {
+                var manifest = ReadManifestFromVersionDir(d);
+                if (manifest != null) {
                     yield return new(manifest, manifest.Version, d, isCurrent, isExecuting);
                 } else if (directoryName.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase) && NuGetVersion.TryParse(directoryName.Substring(4), out var ver)) {
                     yield return new(null, ver, d, isCurrent, isExecuting);
