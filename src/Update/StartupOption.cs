@@ -24,6 +24,7 @@ namespace Squirrel.Update
         internal bool checkInstall { get; private set; } = false;
         internal bool silentInstall { get; private set; } = false;
         internal bool forceLatest { get; private set; } = false;
+        internal long setupOffset { get; private set; } = 0;
 
         public StartupOption(string[] args)
         {
@@ -62,7 +63,8 @@ namespace Squirrel.Update
                 { "processStartAndWait=", "Start an executable in the current version of the app package", v => { updateAction = UpdateAction.ProcessStart; processStart = v; shouldWait = true; }, true},
                 { "forceLatest", "Force updates the current version junction", v => forceLatest = true},
                 { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
-                { "setup=", "Does an initial install with the help of the Setup.exe resources", v => {  updateAction = UpdateAction.Setup; target = v; }, true },
+                { "setup=", "Install the package at this location", v => {  updateAction = UpdateAction.Setup; target = v; }, true },
+                { "setupOffset=", "Offset where in setup package to start reading", v => { setupOffset = long.Parse(v); }, true },
                 { "checkInstall", "Will install the app silently if it is not currently installed. Used for machine-wide deployments", v => { checkInstall = true; }, true },
             };
 

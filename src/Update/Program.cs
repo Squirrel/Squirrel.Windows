@@ -15,7 +15,6 @@ using System.Threading.Tasks;
 using Squirrel.NuGet;
 using Squirrel.Lib;
 using static Squirrel.Runtimes.RuntimeInstallResult;
-using NuGet.Versioning;
 
 namespace Squirrel.Update
 {
@@ -87,7 +86,7 @@ namespace Squirrel.Update
             switch (opt.updateAction) {
             case UpdateAction.Setup:
                 try {
-                    Setup(opt.target, opt.silentInstall, opt.checkInstall).Wait();
+                    Setup(opt.target, opt.setupOffset, opt.silentInstall, opt.checkInstall).Wait();
                 } catch (Exception ex) when (!opt.silentInstall && !opt.checkInstall) {
                     // when not in silent mode, we should endeavor to show a message.
                     // we will also exit code 0, so Setup.exe does not think
@@ -136,11 +135,13 @@ namespace Squirrel.Update
             return 0;
         }
 
-        static async Task Setup(string setupPath, bool silentInstall, bool checkInstall)
+        static async Task Setup(string setupPath, long setupBundleOffset, bool silentInstall, bool checkInstall)
         {
             Log.Info($"Extracting bundled app data from '{setupPath}'.");
 
-            using var fs = File.OpenRead(setupPath);
+            using var fsFull = File.OpenRead(setupPath);
+            using var fs = new SubStream(fsFull, setupBundleOffset);
+
             var zp = new ZipPackage(fs, true);
             var appname = zp.ProductName;
 

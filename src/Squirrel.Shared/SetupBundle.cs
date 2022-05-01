@@ -80,13 +80,5 @@ namespace Squirrel.Shared
             if (!IsBundle(setupPath, out var offset, out var length))
                 throw new InvalidOperationException("Internal logic error writing setup bundle.");
         }
-
-        public static Stream ReadPackageBundle(string setupPath)
-        {
-            if (!IsBundle(setupPath, out var offset, out var length))
-                throw new InvalidOperationException("The provided executable has no embedded Squirrel package.");
-
-            return new SubStream(File.OpenRead(setupPath), offset, length, new SemaphoreSlim(1), false);
-        }
     }
 }
