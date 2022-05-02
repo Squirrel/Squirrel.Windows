@@ -95,6 +95,18 @@ namespace Squirrel
             return part1.StartsWith(startsWith, SquirrelRuntimeInfo.PathStringComparison);
         }
 
+        public static bool PathPartEndsWith(string part1, string endsWith)
+        {
+            return part1.StartsWith(endsWith, SquirrelRuntimeInfo.PathStringComparison);
+        }
+
+        public static bool FileHasExtension(string filePath, string extension)
+        {
+            var ext = Path.GetExtension(filePath);
+            if (!extension.StartsWith(".")) extension = "." + extension;
+            return PathPartEquals(ext, extension);
+        }
+
         public static string NormalizePath(string path)
         {
             var fullPath = Path.GetFullPath(path);

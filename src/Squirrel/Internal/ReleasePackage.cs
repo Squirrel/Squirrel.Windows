@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Readers;
 using NuGet.Versioning;
+using System.Runtime.Versioning;
 
 namespace Squirrel
 {
@@ -41,9 +42,7 @@ namespace Squirrel
 
         public SemanticVersion Version => ReleaseEntry.ParseEntryFileName(InputPackageFile).Version;
 
-#if NET5_0_OR_GREATER
-        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+        [SupportedOSPlatform("windows")]
         internal string CreateReleasePackage(string temporaryDirectory, string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, ZipPackage> contentsPostProcessHook = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(outputFile));
@@ -171,7 +170,7 @@ namespace Squirrel
                         progress((int) percentage);
 
                         // extract .nuspec to app directory as 'current.version'
-                        if (Path.GetExtension(reader.Entry.Key).Equals(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase)) {
+                        if (Utility.FileHasExtension(reader.Entry.Key, NugetUtil.ManifestExtension)) {
                             Utility.Retry(() => reader.WriteEntryToFile(Path.Combine(outFolder, "current.version")));
                             continue;
                         }
@@ -198,7 +197,7 @@ namespace Squirrel
                             LogHost.Default.Info("Rigging execution stub for {0} to {1}", decoded, fullTargetFile);
                         }
 
-                        if (parts.Last().Equals("app.ico", StringComparison.InvariantCultureIgnoreCase)) {
+                        if (Utility.PathPartEquals(parts.Last(), "app.ico")) {
                             failureIsOkay = true;
                             fullTargetFile = Path.Combine(rootPackageFolder, "app.ico");
                         }

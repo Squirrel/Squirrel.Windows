@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading;
 using System.Xml.Linq;
 using Squirrel.Lib;
@@ -9,9 +10,7 @@ using Squirrel.NuGet;
 
 namespace Squirrel
 {
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+    [SupportedOSPlatform("windows")]
     internal static class SquirrelAwareExecutableDetector
     {
         const string SQUIRREL_AWARE_KEY = "SquirrelAwareVersion";
@@ -21,7 +20,7 @@ namespace Squirrel
             var di = new DirectoryInfo(directory);
 
             return di.EnumerateFiles()
-                .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                .Where(x => Utility.FileHasExtension(x.Name, ".exe"))
                 .Select(x => x.FullName)
                 .Where(x => (GetSquirrelAwareVersion(x) ?? -1) >= minimumVersion)
                 .ToList();

@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 
 namespace Squirrel
 {
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+    [SupportedOSPlatform("windows")]
     internal static class NativeMethods
     {
         public static int GetParentProcessId()

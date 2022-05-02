@@ -94,9 +94,11 @@ namespace Squirrel
         [SupportedOSPlatformGuard("osx")]
         public static bool IsOSX => SystemOsName == "osx";
 
+        /// <summary> The <see cref="StringComparer"/> that should be used when comparing local file-system paths. </summary>
         public static StringComparer PathStringComparer =>
             IsWindows ? StringComparer.InvariantCultureIgnoreCase : StringComparer.InvariantCulture;
 
+        /// <summary> The <see cref="StringComparison"/> that should be used when comparing local file-system paths. </summary>
         public static StringComparison PathStringComparison =>
             IsWindows ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture;
 

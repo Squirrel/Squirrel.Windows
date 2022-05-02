@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using NuGet.Versioning;
@@ -204,15 +205,13 @@ namespace Squirrel
     /// <summary>
     /// Contains extension methods for <see cref="IUpdateManager"/> which provide simplified functionality
     /// </summary>
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
     public static class EasyModeMixin
     {
         /// <summary>
         /// Create a shortcut to the currently running executable at the specified locations. 
         /// See <see cref="IAppTools.CreateShortcutsForExecutable"/> to create a shortcut to a different program
         /// </summary>
+        [SupportedOSPlatform("windows")]
         public static void CreateShortcutForThisExe(this IAppTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.CreateShortcutsForExecutable(
@@ -226,6 +225,7 @@ namespace Squirrel
         /// <summary>
         /// Removes a shortcut for the currently running executable at the specified locations.
         /// </summary>
+        [SupportedOSPlatform("windows")]
         public static void RemoveShortcutForThisExe(this IAppTools This, ShortcutLocation location = ShortcutLocation.Desktop | ShortcutLocation.StartMenu)
         {
             This.RemoveShortcutsForExecutable(

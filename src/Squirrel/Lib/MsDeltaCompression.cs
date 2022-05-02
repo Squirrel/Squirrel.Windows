@@ -2,12 +2,11 @@
 
 using System;
 using System.ComponentModel;
+using System.Runtime.Versioning;
 
 namespace Squirrel
 {
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+    [SupportedOSPlatform("windows")]
     internal class MsDeltaCompression
     {
         //public void CreateDelta(string oldFilePath, string newFilePath, string deltaFilePath)

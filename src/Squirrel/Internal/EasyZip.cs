@@ -19,7 +19,8 @@ namespace Squirrel
 
         public static void ExtractZipToDirectory(string inputFile, string outputDirectory)
         {
-            if (Extract7z(inputFile, outputDirectory))
+            // 7z is faster, use it if it's available
+            if (SquirrelRuntimeInfo.IsWindows && Extract7z(inputFile, outputDirectory))
                 return;
 
             Log.Info($"Extracting '{inputFile}' to '{outputDirectory}' using SharpCompress...");
@@ -33,7 +34,8 @@ namespace Squirrel
 
         public static void CreateZipFromDirectory(string outputFile, string directoryToCompress)
         {
-            if (Compress7z(outputFile, directoryToCompress))
+            // 7z is faster, use it if it's available
+            if (SquirrelRuntimeInfo.IsWindows && Compress7z(outputFile, directoryToCompress))
                 return;
 
             Log.Info($"Compressing '{directoryToCompress}' to '{outputFile}' using SharpCompress...");
@@ -45,10 +47,6 @@ namespace Squirrel
 
         private static bool Extract7z(string zipFilePath, string outFolder)
         {
-#if !NETFRAMEWORK
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return false;
-#endif
             Log.Info($"Extracting '{zipFilePath}' to '{outFolder}' using 7z...");
             try {
                 var args = String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder);
@@ -65,10 +63,6 @@ namespace Squirrel
 
         private static bool Compress7z(string zipFilePath, string inFolder)
         {
-#if !NETFRAMEWORK
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                return false;
-#endif
             Log.Info($"Compressing '{inFolder}' to '{zipFilePath}' using 7z...");
             try {
                 var args = String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath);

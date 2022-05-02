@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,9 +12,7 @@ using Squirrel.SimpleSplat;
 
 namespace Squirrel
 {
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+    [SupportedOSPlatform("windows")]
     internal static class HelperExe
     {
         public static string SetupPath => FindHelperFile("Setup.exe");

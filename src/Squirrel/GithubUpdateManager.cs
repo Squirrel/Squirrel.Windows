@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
+using System.ComponentModel;
 using System.Threading.Tasks;
-using Squirrel.Json;
 using Squirrel.Sources;
 
 namespace Squirrel
@@ -15,9 +11,8 @@ namespace Squirrel
     /// for initialising <see cref="UpdateManager"/> with a <see cref="GithubSource"/>
     /// as the first argument.
     /// </summary>
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [Obsolete("Use 'new UpdateManager(new GithubSource(...))' instead")]
     public class GithubUpdateManager : UpdateManager
     {
         /// <inheritdoc cref="UpdateManager(string, string, string, IFileDownloader)"/>
@@ -66,7 +61,7 @@ namespace Squirrel
         /// This function is obsolete and will be removed in a future version,
         /// see the <see cref="GithubUpdateManager" /> class for a replacement.
         /// </summary>
-        [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         [Obsolete("Use 'new UpdateManager(new GithubSource(...))' instead")]
         public static Task<UpdateManager> GitHubUpdateManager(
             string repoUrl,

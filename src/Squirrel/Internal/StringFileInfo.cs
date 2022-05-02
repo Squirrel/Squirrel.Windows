@@ -5,15 +5,15 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Squirrel
 {
     // https://stackoverflow.com/a/43229358/184746
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+
+    [SupportedOSPlatform("windows")]
     internal class StringFileInfo
     {
         [DllImport("version.dll", CharSet = CharSet.Auto, SetLastError = true)]
