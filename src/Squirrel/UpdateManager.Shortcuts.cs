@@ -6,17 +6,17 @@ using System.Diagnostics;
 using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
 using Squirrel.Shell;
+using System.Runtime.Versioning;
 
 namespace Squirrel
 {
     public partial class UpdateManager
     {
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         public void CreateShortcutsForExecutable(string exeName, ShortcutLocation locations, bool updateOnly, string programArguments = null, string icon = null)
         {
-            var appDir = AppDirectory;
-            var releases = Utility.GetAppVersionDirectories(appDir).OrderByDescending(r => r.Version).ToArray();
-            var version = releases.FirstOrDefault(r => r.IsExecuting) ?? releases.First();
+            var version = _config.GetLatestVersion();
             var exePath = Path.Combine(version.DirectoryPath, exeName);
             FileVersionInfo info = File.Exists(exePath) ? FileVersionInfo.GetVersionInfo(exePath) : null;
 
@@ -40,12 +40,12 @@ namespace Squirrel
                 this.ErrorIfThrows(() => Utility.Retry(() => {
                     File.Delete(file);
 
-                    var target = Path.Combine(appDir, exeName); // stub exe
+                    var target = Path.Combine(_config.RootAppDir, exeName); // stub exe
                     using var sl = new ShellLink {
                         Target = target,
                         IconPath = icon ?? target,
                         IconIndex = 0,
-                        WorkingDirectory = appDir,
+                        WorkingDirectory = _config.RootAppDir,
                         Description = version.Manifest.ProductDescription,
                     };
 
@@ -66,21 +66,22 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         public void RemoveShortcutsForExecutable(string exeName, ShortcutLocation locations)
         {
             foreach (var lnk in EnumerateShortcutLocations(exeName, locations)) {
                 if (File.Exists(lnk)) {
                     this.Log().Info("Removing shortcut: " + lnk);
-                    Utility.DeleteFileOrDirectoryHardOrGiveUp(lnk);
+                    Utility.DeleteFileOrDirectoryHard(lnk, throwOnFailure: false);
                 }
             }
         }
 
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         protected void RemoveAllShortcutsForPackage()
         {
             this.Log().Info("Searching system and deleting all shortcuts for this package.");
-            var appDir = AppDirectory;
             var searchPaths = new[] {
                 Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
                 Environment.GetFolderPath(Environment.SpecialFolder.StartMenu),
@@ -93,7 +94,7 @@ namespace Squirrel
                 foreach (var shortcutPath in Directory.EnumerateFiles(rootPath, "*.lnk", SearchOption.AllDirectories)) {
                     try {
                         using var lnk = new ShellLink(shortcutPath);
-                        if (Utility.IsFileInDirectory(lnk.Target, appDir)) {
+                        if (Utility.IsFileInDirectory(lnk.Target, _config.RootAppDir)) {
                             this.Log().Info("Deleting shortcut: " + shortcutPath);
                             File.Delete(shortcutPath);
                         }
@@ -103,10 +104,10 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         protected IEnumerable<string> EnumerateShortcutLocations(string exeName, ShortcutLocation locations)
         {
-            var releases = Utility.GetAppVersionDirectories(AppDirectory).OrderByDescending(r => r.Version).ToArray();
-            var version = releases.FirstOrDefault(r => r.IsExecuting) ?? releases.First();
+            var version = _config.GetLatestVersion();
             var exePath = Path.Combine(version.DirectoryPath, exeName);
             FileVersionInfo info = File.Exists(exePath) ? FileVersionInfo.GetVersionInfo(exePath) : null;
 
@@ -117,6 +118,7 @@ namespace Squirrel
             }
         }
 
+        [SupportedOSPlatform("windows")]
         string linkTargetForVersionInfo(ShortcutLocation location, IPackage package, FileVersionInfo versionInfo, string exeName)
         {
             var possibleProductNames = new[] {
@@ -136,6 +138,7 @@ namespace Squirrel
             return getLinkTarget(location, pkgName, prodCompany);
         }
 
+        [SupportedOSPlatform("windows")]
         string getLinkTarget(ShortcutLocation location, string title, string productCompany, bool createDirectoryIfNecessary = true)
         {
             var dir = default(string);
@@ -154,7 +157,7 @@ namespace Squirrel
                 dir = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
                 break;
             case ShortcutLocation.AppRoot:
-                dir = AppDirectory;
+                dir = _config.RootAppDir;
                 break;
             }
 

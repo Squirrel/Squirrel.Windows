@@ -16,6 +16,7 @@ using System.Net;
 using NuGet.Versioning;
 using Squirrel.Lib;
 using Squirrel.NuGet;
+using System.Runtime.Versioning;
 
 namespace Squirrel
 {
@@ -79,6 +80,21 @@ namespace Squirrel
             return success;
         }
 
+        public static bool FullPathEquals(string path1, string path2)
+        {
+            return NormalizePath(path1).Equals(NormalizePath(path2), SquirrelRuntimeInfo.PathStringComparison);
+        }
+
+        public static bool PathPartEquals(string part1, string part2)
+        {
+            return part1.Equals(part2, SquirrelRuntimeInfo.PathStringComparison);
+        }
+
+        public static bool PathPartStartsWith(string part1, string startsWith)
+        {
+            return part1.StartsWith(startsWith, SquirrelRuntimeInfo.PathStringComparison);
+        }
+
         public static string NormalizePath(string path)
         {
             var fullPath = Path.GetFullPath(path);
@@ -90,7 +106,7 @@ namespace Squirrel
         {
             var normalizedDir = NormalizePath(directory) + Path.DirectorySeparatorChar;
             var normalizedFile = NormalizePath(file);
-            return normalizedFile.StartsWith(normalizedDir, StringComparison.OrdinalIgnoreCase);
+            return normalizedFile.StartsWith(normalizedDir, SquirrelRuntimeInfo.PathStringComparison);
         }
 
         public static IEnumerable<FileInfo> GetAllFilesRecursively(this DirectoryInfo rootPath)
@@ -219,6 +235,7 @@ namespace Squirrel
         ///     The string is only valid for passing directly to a process. If the target process is invoked by passing the
         ///     process name + arguments to cmd.exe then further escaping is required, to counteract cmd.exe's interpretation
         ///     of additional special characters. See <see cref="EscapeCmdExeMetachars"/>.</remarks>
+        [SupportedOSPlatform("windows")]
         public static string ArgsToCommandLine(IEnumerable<string> args)
         {
             var sb = new StringBuilder();
@@ -260,6 +277,7 @@ namespace Squirrel
         /// <summary>
         ///     Escapes all cmd.exe meta-characters by prefixing them with a ^. See <see cref="ArgsToCommandLine"/> for more
         ///     information.</summary>
+        [SupportedOSPlatform("windows")]
         public static string EscapeCmdExeMetachars(string command)
         {
             var result = new StringBuilder();
@@ -351,24 +369,8 @@ namespace Squirrel
                 }));
         }
 
-        static Lazy<string> directoryChars = new Lazy<string>(() => {
-            return "abcdefghijklmnopqrstuvwxyz" +
-                Enumerable.Range(0x03B0, 0x03FF - 0x03B0)   // Greek and Coptic
-                    .Concat(Enumerable.Range(0x0400, 0x04FF - 0x0400)) // Cyrillic
-                    .Aggregate(new StringBuilder(), (acc, x) => { acc.Append(Char.ConvertFromUtf32(x)); return acc; })
-                    .ToString();
-        });
-
-        internal static string tempNameForIndex(int index, string prefix)
-        {
-            if (index < directoryChars.Value.Length) {
-                return prefix + directoryChars.Value[index];
-            }
-
-            return prefix + directoryChars.Value[index % directoryChars.Value.Length] + tempNameForIndex(index / directoryChars.Value.Length, "");
-        }
-
-        public static DirectoryInfo GetTempDirectory(string localAppDirectory)
+        [SupportedOSPlatform("windows")]
+        public static string GetDefaultTempDirectory(string localAppDirectory)
         {
 #if DEBUG
             const string TEMP_ENV_VAR = "CLOWD_SQUIRREL_TEMP_DEBUG";
@@ -384,50 +386,37 @@ namespace Squirrel
             var di = new DirectoryInfo(tempDir);
             if (!di.Exists) di.Create();
 
-            return di;
+            return di.FullName;
         }
 
-        public static IDisposable WithTempDirectory(out string path, string localAppDirectory = null)
+        private static string getNextTempName(string tempDir)
         {
-            var di = GetTempDirectory(localAppDirectory);
-            var tempDir = default(DirectoryInfo);
-
-            var names = Enumerable.Range(0, 1 << 20).Select(x => tempNameForIndex(x, "temp"));
-
-            foreach (var name in names) {
-                var target = Path.Combine(di.FullName, name);
-
+            for (int i = 1; i < 100; i++) {
+                string name = "temp" + i;
+                var target = Path.Combine(tempDir, name);
                 if (!File.Exists(target) && !Directory.Exists(target)) {
-                    Directory.CreateDirectory(target);
-                    tempDir = new DirectoryInfo(target);
-                    break;
+                    return target;
                 }
             }
 
-            path = tempDir.FullName;
-
-            return Disposable.Create(() => DeleteFileOrDirectoryHardOrGiveUp(tempDir.FullName));
+            throw new Exception("Unable to find free temp path. Has the temp directory exceeded it's maximum number of items?");
         }
 
-        public static IDisposable WithTempFile(out string path, string localAppDirectory = null)
+        public static IDisposable GetTempDir(string tempDir, out string newTempDirectory)
         {
-            var di = GetTempDirectory(localAppDirectory);
-            var names = Enumerable.Range(0, 1 << 20).Select(x => tempNameForIndex(x, "temp"));
-
-            path = "";
-            foreach (var name in names) {
-                path = Path.Combine(di.FullName, name);
-
-                if (!File.Exists(path) && !Directory.Exists(path)) {
-                    break;
-                }
-            }
-
-            var thePath = path;
-            return Disposable.Create(() => File.Delete(thePath));
+            var disp = GetTempFileName(tempDir, out newTempDirectory);
+            Directory.CreateDirectory(newTempDirectory);
+            return disp;
         }
 
-        public static void DeleteFileOrDirectoryHard(string path, bool throwOnFailure = true)
+        public static IDisposable GetTempFileName(string tempDir, out string newTempFile)
+        {
+            var path = getNextTempName(tempDir);
+            newTempFile = path;
+            return Disposable.Create(() => DeleteFileOrDirectoryHard(path, throwOnFailure: false));
+        }
+
+        public static void DeleteFileOrDirectoryHard(string path, bool throwOnFailure = true, bool renameFirst = false)
         {
             Contract.Requires(!String.IsNullOrEmpty(path));
             Log().Debug("Starting to delete: {0}", path);
@@ -436,6 +425,12 @@ namespace Squirrel
                 if (File.Exists(path)) {
                     DeleteFsiVeryHard(new FileInfo(path));
                 } else if (Directory.Exists(path)) {
+                    if (renameFirst) {
+                        // if there are locked files in a directory, we will not attempt to delte it
+                        var oldPath = path + ".old";
+                        Directory.Move(path, oldPath);
+                        path = oldPath;
+                    }
                     DeleteFsiTree(new DirectoryInfo(path));
                 } else {
                     if (throwOnFailure)
@@ -447,8 +442,6 @@ namespace Squirrel
                     throw;
             }
         }
-
-        public static void DeleteFileOrDirectoryHardOrGiveUp(string path) => DeleteFileOrDirectoryHard(path, false);
 
         private static void DeleteFsiTree(FileSystemInfo fileSystemInfo)
         {
@@ -478,7 +471,7 @@ namespace Squirrel
         private static void DeleteFsiVeryHard(FileSystemInfo fileSystemInfo)
         {
             // don't try to delete the running process
-            if (fileSystemInfo.FullName.Equals(SquirrelRuntimeInfo.EntryExePath, StringComparison.InvariantCultureIgnoreCase))
+            if (FullPathEquals(fileSystemInfo.FullName, SquirrelRuntimeInfo.EntryExePath))
                 return;
 
             // try to remove "ReadOnly" attributes
@@ -506,15 +499,15 @@ namespace Squirrel
             }
         }
 
-        public static string PackageDirectoryForAppDir(string rootAppDirectory)
-        {
-            return Path.Combine(rootAppDirectory, "packages");
-        }
+        //public static string PackageDirectoryForAppDir(string rootAppDirectory)
+        //{
+        //    return Path.Combine(rootAppDirectory, "packages");
+        //}
 
-        public static string LocalReleaseFileForAppDir(string rootAppDirectory)
-        {
-            return Path.Combine(PackageDirectoryForAppDir(rootAppDirectory), "RELEASES");
-        }
+        //public static string LocalReleaseFileForAppDir(string rootAppDirectory)
+        //{
+        //    return Path.Combine(PackageDirectoryForAppDir(rootAppDirectory), "RELEASES");
+        //}
 
         public static IEnumerable<ReleaseEntry> LoadLocalReleases(string localReleaseFile)
         {
@@ -824,10 +817,8 @@ namespace Squirrel
             guid[right] = temp;
         }
 
-#if NET5_0_OR_GREATER
-        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
-        public static List<(string ProcessExePath, int ProcessId)> EnumerateProcesses()
+        [SupportedOSPlatform("windows")]
+        private static List<(string ProcessExePath, int ProcessId)> EnumerateProcessesWindows()
         {
             var pids = new int[2048];
             var gch = GCHandle.Alloc(pids, GCHandleType.Pinned);
@@ -870,23 +861,29 @@ namespace Squirrel
             }
         }
 
-#if NET5_0_OR_GREATER
-        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+        public static List<(string ProcessExePath, int ProcessId)> EnumerateProcesses()
+        {
+            IEnumerable<(string ProcessExePath, int ProcessId)> allRunningProcesses = SquirrelRuntimeInfo.IsWindows
+                ? EnumerateProcessesWindows()
+                : Process.GetProcesses().Select(p => (p.MainModule.FileName, p.Id));
+            return allRunningProcesses
+                .Where(x => !String.IsNullOrWhiteSpace(x.ProcessExePath)) // Processes we can't query will have an empty process name
+                .ToList();
+        }
+
+        public static List<(string ProcessExePath, int ProcessId)> EnumerateProcessesInDirectory(string directory)
+        {
+            return EnumerateProcesses()
+                .Where(x => Utility.IsFileInDirectory(x.ProcessExePath, directory))
+                .ToList();
+        }
+
         public static void KillProcessesInDirectory(string directoryToKill)
         {
-            var ourExePath = SquirrelRuntimeInfo.EntryExePath;
-            Utility.EnumerateProcesses()
+            EnumerateProcessesInDirectory(directoryToKill)
                 .Where(x => {
-                    // Processes we can't query will have an empty process name,
-                    // we can't kill them anyways
-                    if (String.IsNullOrWhiteSpace(x.ProcessExePath)) return false;
-
-                    // Files that aren't in our root app directory are untouched
-                    if (!Utility.IsFileInDirectory(x.ProcessExePath, directoryToKill)) return false;
-
                     // Never kill our own EXE
-                    if (ourExePath != null && x.ProcessExePath.Equals(ourExePath, StringComparison.OrdinalIgnoreCase)) return false;
+                    if (SquirrelRuntimeInfo.EntryExePath != null && x.ProcessExePath.Equals(SquirrelRuntimeInfo.EntryExePath, StringComparison.OrdinalIgnoreCase)) return false;
 
                     var name = Path.GetFileName(x.ProcessExePath).ToLowerInvariant();
                     if (name == "squirrel.exe" || name == "update.exe") return false;
@@ -902,8 +899,6 @@ namespace Squirrel
                 });
         }
 
-        public record VersionDirInfo(IPackage Manifest, SemanticVersion Version, string DirectoryPath, bool IsCurrent, bool IsExecuting);
-
         public static NuspecManifest ReadManifestFromVersionDir(string appVersionDir)
         {
             NuspecManifest manifest;
@@ -918,82 +913,5 @@ namespace Squirrel
 
             return null;
         }
-
-        public static IEnumerable<VersionDirInfo> GetAppVersionDirectories(string rootAppDir)
-        {
-            foreach (var d in Directory.EnumerateDirectories(rootAppDir)) {
-                var directoryName = Path.GetFileName(d);
-                bool isExecuting = IsFileInDirectory(SquirrelRuntimeInfo.EntryExePath, d);
-                bool isCurrent = directoryName.Equals("current", StringComparison.InvariantCultureIgnoreCase);
-                var manifest = ReadManifestFromVersionDir(d);
-                if (manifest != null) {
-                    yield return new(manifest, manifest.Version, d, isCurrent, isExecuting);
-                } else if (directoryName.StartsWith("app-", StringComparison.InvariantCultureIgnoreCase) && NuGetVersion.TryParse(directoryName.Substring(4), out var ver)) {
-                    yield return new(null, ver, d, isCurrent, isExecuting);
-                }
-            }
-        }
-
-#if NET5_0_OR_GREATER
-        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
-        public static string UpdateAndRetrieveCurrentFolder(string rootAppDir, bool force)
-        {
-            try {
-                var releases = GetAppVersionDirectories(rootAppDir).ToArray();
-                var latestVer = releases.OrderByDescending(m => m.Version).First();
-                var currentVer = releases.FirstOrDefault(f => f.IsCurrent);
-
-                // if the latest ver is already current, or it does not support
-                // being in a current directory.
-                if (latestVer.IsCurrent) {
-                    Log().Info($"Current directory already pointing to latest version.");
-                    return latestVer.DirectoryPath;
-                }
-
-                if (force) {
-                    Log().Info($"Killing running processes in '{rootAppDir}'.");
-                    KillProcessesInDirectory(rootAppDir);
-                }
-
-                // 'current' does exist, and it's wrong, so lets get rid of it
-                if (currentVer != default) {
-                    string legacyVersionDir = legacyVersionDir = Path.Combine(rootAppDir, "app-" + currentVer.Version);
-                    Log().Info($"Moving '{currentVer.DirectoryPath}' to '{legacyVersionDir}'.");
-                    Retry(() => Directory.Move(currentVer.DirectoryPath, legacyVersionDir));
-                }
-
-                // this directory does not support being named 'current'
-                if (latestVer.Manifest == null) {
-                    Log().Info($"Cannot promote {latestVer.Version} as current as it has no manifest");
-                    return latestVer.DirectoryPath;
-                }
-
-                // 'current' doesn't exist right now, lets move the latest version
-                var latestDir = Path.Combine(rootAppDir, "current");
-                Log().Info($"Moving '{latestVer.DirectoryPath}' to '{latestDir}'.");
-                Retry(() => Directory.Move(latestVer.DirectoryPath, latestDir));
-
-                Log().Info("Running app in: " + latestDir);
-                return latestDir;
-            } catch (Exception e) {
-                var releases = GetAppVersionDirectories(rootAppDir).ToArray();
-                string fallback = releases.OrderByDescending(m => m.Version).First().DirectoryPath;
-                var currentVer = releases.FirstOrDefault(f => f.IsCurrent);
-                if (currentVer != default && Directory.Exists(currentVer.DirectoryPath)) {
-                    fallback = currentVer.DirectoryPath;
-                }
-                Log().WarnException("Unable to update 'current' directory", e);
-                Log().Info("Running app in: " + fallback);
-                return fallback;
-            }
-        }
     }
 }
-
-#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
-namespace System.Runtime.CompilerServices
-{
-    internal static class IsExternalInit { }
-}
-#endif

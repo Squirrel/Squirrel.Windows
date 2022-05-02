@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Win32;
@@ -16,16 +17,18 @@ namespace Squirrel
         const string uninstallRegSubKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall";
 
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         public Task<RegistryKey> CreateUninstallerRegistryEntry(string uninstallCmd, string quietSwitch)
         {
-            var rootAppDirectory = AppDirectory;
-            var applicationName = AppId;
+            var rootAppDirectory = _config.RootAppDir;
+            var applicationName = _config.AppId;
 
             this.Log().Info($"Writing uninstaller registry entry");
-            var releaseContent = File.ReadAllText(Path.Combine(rootAppDirectory, "packages", "RELEASES"), Encoding.UTF8);
+
+            var releaseContent = File.ReadAllText(_config.ReleasesFilePath, Encoding.UTF8);
             var releases = ReleaseEntry.ParseReleaseFile(releaseContent);
             var latest = Utility.FindCurrentVersion(releases);
-            var pkgPath = Path.Combine(Utility.PackageDirectoryForAppDir(rootAppDirectory), latest.Filename);
+            var pkgPath = Path.Combine(_config.PackagesDir, latest.Filename);
             var zp = new ZipPackage(pkgPath);
 
             // NB: Sometimes the Uninstall key doesn't exist
@@ -79,24 +82,20 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
-        public void KillAllExecutablesBelongingToPackage()
-        {
-            Utility.KillProcessesInDirectory(AppDirectory);
-        }
-
-        /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         public Task<RegistryKey> CreateUninstallerRegistryEntry()
         {
-            var updateDotExe = Path.Combine(AppDirectory, "Update.exe");
+            var updateDotExe = Path.Combine(_config.RootAppDir, "Update.exe");
             return CreateUninstallerRegistryEntry(String.Format("\"{0}\" --uninstall", updateDotExe), "-s");
         }
 
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         public void RemoveUninstallerRegistryEntry()
         {
             this.Log().Info("Removing uninstall registry entry");
             var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default).OpenSubKey(uninstallRegSubKey, true);
-            key.DeleteSubKeyTree(AppId, false);
+            key.DeleteSubKeyTree(_config.AppId, false);
         }
     }
 }

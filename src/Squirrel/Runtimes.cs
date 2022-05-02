@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Versioning;
 using NuGet.Versioning;
 using Squirrel.SimpleSplat;
 
@@ -9,9 +10,7 @@ namespace Squirrel
     /// <summary>
     /// Contains static properties to access common supported runtimes, and a function to search for a runtime by name
     /// </summary>
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+    [SupportedOSPlatform("windows")]
     public static partial class Runtimes
     {
         /// <summary> Runtime for .NET Framework 4.5 </summary>

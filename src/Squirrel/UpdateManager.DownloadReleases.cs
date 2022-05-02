@@ -15,11 +15,11 @@ namespace Squirrel
             // lock will be held until this class is disposed
             await acquireUpdateLock().ConfigureAwait(false);
 
-            if (_updateSource == null)
+            if (_source == null)
                 throw new InvalidOperationException("Cannot download updates if no update source / url was provided in the construction of UpdateManager.");
 
             progress = progress ?? (_ => { });
-            var packagesDirectory = PackagesDirectory;
+            var packagesDirectory = _config.PackagesDir;
 
             double current = 0;
             double toIncrement = 100.0 / releasesToDownload.Count();
@@ -27,7 +27,7 @@ namespace Squirrel
             await releasesToDownload.ForEachAsync(async x => {
                 var targetFile = Path.Combine(packagesDirectory, x.Filename);
                 double component = 0;
-                await _updateSource.DownloadReleaseEntry(x, targetFile, p => {
+                await _source.DownloadReleaseEntry(x, targetFile, p => {
                     lock (progress) {
                         current -= component;
                         component = toIncrement / 100.0 * p;
@@ -41,7 +41,7 @@ namespace Squirrel
 
         void checksumPackage(ReleaseEntry downloadedRelease)
         {
-            var targetPackage = new FileInfo(Path.Combine(PackagesDirectory, downloadedRelease.Filename));
+            var targetPackage = new FileInfo(Path.Combine(_config.PackagesDir, downloadedRelease.Filename));
 
             if (!targetPackage.Exists) {
                 this.Log().Error("File {0} should exist but doesn't", targetPackage.FullName);

@@ -43,7 +43,7 @@ namespace Squirrel.Shared
             return bundleOffset != 0 && bundleLength != 0;
         }
 
-        public static void CreatePackageBundle(string setupPath, string packagePath)
+        public static long CreatePackageBundle(string setupPath, string packagePath)
         {
             long bundleOffset, bundleLength;
             using (var pkgStream = File.OpenRead(packagePath))
@@ -79,6 +79,8 @@ namespace Squirrel.Shared
 
             if (!IsBundle(setupPath, out var offset, out var length))
                 throw new InvalidOperationException("Internal logic error writing setup bundle.");
+
+            return bundleOffset;
         }
     }
 }

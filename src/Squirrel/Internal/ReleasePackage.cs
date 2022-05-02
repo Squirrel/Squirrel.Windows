@@ -44,7 +44,7 @@ namespace Squirrel
 #if NET5_0_OR_GREATER
         [System.Runtime.Versioning.SupportedOSPlatform("windows")]
 #endif
-        internal string CreateReleasePackage(string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, ZipPackage> contentsPostProcessHook = null)
+        internal string CreateReleasePackage(string temporaryDirectory, string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, ZipPackage> contentsPostProcessHook = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(outputFile));
             releaseNotesProcessor = releaseNotesProcessor ?? (x => (new Markdown()).Transform(x));
@@ -98,9 +98,8 @@ namespace Squirrel
 
             this.Log().Info("Creating release package: {0} => {1}", InputPackageFile, outputFile);
 
-            string tempPath = null;
 
-            using (Utility.WithTempDirectory(out tempPath, null)) {
+            using (Utility.GetTempDir(temporaryDirectory, out var tempPath)) {
                 var tempDir = new DirectoryInfo(tempPath);
 
                 extractZipWithEscaping(InputPackageFile, tempPath).Wait();

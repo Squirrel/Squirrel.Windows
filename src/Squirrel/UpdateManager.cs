@@ -6,41 +6,30 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Win32;
-using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
-using Squirrel.Shell;
 using Squirrel.Sources;
 using NuGet.Versioning;
+using System.Runtime.Versioning;
 
 namespace Squirrel
 {
     /// <inheritdoc cref="IUpdateManager"/>
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
     public partial class UpdateManager : IUpdateManager
     {
-        /// <summary>The unique Id of the application.</summary>
-        public virtual string AppId => _applicationIdOverride ?? getInstalledApplicationName();
+        ///// <summary>The unique Id of the application.</summary>
+        //public virtual string AppId => _config.AppId;
 
-        /// <inheritdoc/>
-        public virtual string AppDirectory => Path.Combine(_localAppDataDirectoryOverride ?? GetLocalAppDataDirectory(), AppId);
+        ///// <inheritdoc/>
+        //public virtual string AppDirectory => _config.RootAppDir;
 
         /// <inheritdoc/>
         public bool IsInstalledApp => CurrentlyInstalledVersion() != null;
 
-        /// <summary>The directory packages and temp files are stored in.</summary>
-        protected string PackagesDirectory => Utility.PackageDirectoryForAppDir(AppDirectory);
-
-        /// <summary>The application name provided in constructor, or null.</summary>
-        protected readonly string _applicationIdOverride;
-
-        /// <summary>The path to the local app data folder on this machine.</summary>
-        protected readonly string _localAppDataDirectoryOverride;
+        public UpdateConfig Config => _config;
 
         /// <summary>The <see cref="IUpdateSource"/> responsible for retrieving updates from a package repository.</summary>
-        protected readonly IUpdateSource _updateSource;
+        protected readonly IUpdateSource _source;
+        protected readonly UpdateConfig _config;
 
         private readonly object _lockobj = new object();
         private IDisposable _updateLock;
@@ -102,10 +91,20 @@ namespace Squirrel
             IUpdateSource updateSource,
             string applicationIdOverride = null,
             string localAppDataDirectoryOverride = null)
+            : this(updateSource, new UpdateConfig(applicationIdOverride, localAppDataDirectoryOverride))
+        { }
+
+        public UpdateManager(
+            string urlOrPath,
+            UpdateConfig config,
+            IFileDownloader urlDownloader = null)
+            : this(CreateSource(urlOrPath, urlDownloader), config)
+        { }
+
+        public UpdateManager(IUpdateSource source, UpdateConfig config)
         {
-            _updateSource = updateSource;
-            _applicationIdOverride = applicationIdOverride;
-            _localAppDataDirectoryOverride = localAppDataDirectoryOverride;
+            _source = source;
+            _config = config;
         }
 
         internal UpdateManager() { }
@@ -123,6 +122,7 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         public async Task FullInstall(bool silentInstall = false, Action<int> progress = null)
         {
             var updateInfo = await CheckForUpdate(intention: UpdaterIntention.Install).ConfigureAwait(false);
@@ -131,42 +131,9 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
-        public SemanticVersion CurrentlyInstalledVersion(string executable = null)
+        public SemanticVersion CurrentlyInstalledVersion()
         {
-            string appDir;
-            try {
-                appDir = AppDirectory;
-            } catch (InvalidOperationException) {
-                // app is not installed, see getUpdateExe()
-                return null;
-            }
-
-            executable = Path.GetFullPath(executable ?? SquirrelRuntimeInfo.EntryExePath);
-
-            // check if the application to check is in the correct application directory
-            if (!Utility.IsFileInDirectory(executable, appDir))
-                return null;
-
-            // check if Update.exe exists in the expected relative location
-            var baseDir = Path.GetDirectoryName(executable);
-            if (!File.Exists(Path.Combine(baseDir, "..\\Update.exe")))
-                return null;
-
-            // if a 'my version' file exists, use that instead.
-            var manifest = Utility.ReadManifestFromVersionDir(baseDir);
-            if (manifest != null) {
-                return manifest.Version;
-            }
-
-            var exePathWithoutAppDir = executable.Substring(appDir.Length);
-            var appDirName = exePathWithoutAppDir.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                .FirstOrDefault(x => x.StartsWith("app-", StringComparison.OrdinalIgnoreCase));
-
-            // check if we are inside an 'app-{ver}' directory and extract version
-            if (appDirName == null)
-                return null;
-
-            return NuGetVersion.Parse(appDirName.Substring(4));
+            return _config.CurrentlyInstalledVersion;
         }
 
         /// <inheritdoc/>
@@ -181,7 +148,7 @@ namespace Squirrel
             var updateInfo = default(UpdateInfo);
 
             try {
-                var localVersions = Utility.GetAppVersionDirectories(AppDirectory);
+                var localVersions = _config.GetVersions();
                 var currentVersion = CurrentlyInstalledVersion();
 
                 updateInfo = await this.ErrorIfThrows(() => CheckForUpdate(ignoreDeltaUpdates, x => progress(x / 3)),
@@ -228,6 +195,12 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
+        public void KillAllExecutablesBelongingToPackage()
+        {
+            Utility.KillProcessesInDirectory(_config.RootAppDir);
+        }
+
+        /// <inheritdoc/>
         public void Dispose()
         {
             lock (_lockobj) {
@@ -250,7 +223,7 @@ namespace Squirrel
         /// <remarks>See <see cref="RestartAppWhenExited(string, string)"/> for a version which does not
         /// exit the current process immediately, but instead allows you to exit the current process
         /// however you'd like.</remarks>
-        public static void RestartApp(string exeToStart = null, string arguments = null)
+        public void RestartApp(string exeToStart = null, string arguments = null)
         {
             restartProcess(exeToStart, arguments);
             // NB: We have to give update.exe some time to grab our PID
@@ -266,7 +239,7 @@ namespace Squirrel
         /// the current executable. </param>
         /// <param name="arguments">Arguments to start the exe with</param>
         /// <returns>The Update.exe process that is waiting for this process to exit</returns>
-        public static Process RestartAppWhenExited(string exeToStart = null, string arguments = null)
+        public Process RestartAppWhenExited(string exeToStart = null, string arguments = null)
         {
             var process = restartProcess(exeToStart, arguments);
             // NB: We have to give update.exe some time to grab our PID
@@ -282,7 +255,7 @@ namespace Squirrel
         /// the current executable. </param>
         /// <param name="arguments">Arguments to start the exe with</param>
         /// <returns>The Update.exe process that is waiting for this process to exit</returns>
-        public static async Task<Process> RestartAppWhenExitedAsync(string exeToStart = null, string arguments = null)
+        public async Task<Process> RestartAppWhenExitedAsync(string exeToStart = null, string arguments = null)
         {
             var process = restartProcess(exeToStart, arguments);
             // NB: We have to give update.exe some time to grab our PID
@@ -290,7 +263,7 @@ namespace Squirrel
             return process;
         }
 
-        private static Process restartProcess(string exeToStart = null, string arguments = null)
+        private Process restartProcess(string exeToStart = null, string arguments = null)
         {
             // NB: Here's how this method works:
             //
@@ -316,7 +289,7 @@ namespace Squirrel
                 args.Add(arguments);
             }
 
-            return Process.Start(getUpdateExe(), Utility.ArgsToCommandLine(args));
+            return Process.Start(_config.UpdateExePath, Utility.ArgsToCommandLine(args));
         }
 
         private static string GetLocalAppDataDirectory(string assemblyLocation = null)
@@ -358,7 +331,7 @@ namespace Squirrel
             }
 
             return Task.Run(() => {
-                var key = Utility.CalculateStreamSHA1(new MemoryStream(Encoding.UTF8.GetBytes(AppDirectory)));
+                var key = Utility.CalculateStreamSHA1(new MemoryStream(Encoding.UTF8.GetBytes(_config.RootAppDir)));
 
                 IDisposable theLock;
                 try {
@@ -397,44 +370,6 @@ namespace Squirrel
             var totalPercentage = (singleValue * percentageOfCurrentStep) + stepStartPercentage;
 
             return (int) totalPercentage;
-        }
-
-        private static string getInstalledApplicationName()
-        {
-            var fi = new FileInfo(getUpdateExe());
-            return fi.Directory.Name;
-        }
-
-        private static bool isUpdateExeAvailable()
-        {
-            try {
-                getUpdateExe();
-                return true;
-            } catch {
-                return false;
-            }
-        }
-
-        private static string getUpdateExe()
-        {
-            var ourPath = SquirrelRuntimeInfo.EntryExePath;
-
-            // Are we update.exe?
-            if (ourPath != null &&
-                Path.GetFileName(ourPath).Equals("update.exe", StringComparison.OrdinalIgnoreCase) &&
-                ourPath.IndexOf("app-", StringComparison.OrdinalIgnoreCase) == -1 &&
-                ourPath.IndexOf("SquirrelTemp", StringComparison.OrdinalIgnoreCase) == -1) {
-                return Path.GetFullPath(ourPath);
-            }
-
-            var updateDotExe = Path.Combine(SquirrelRuntimeInfo.BaseDirectory, "..\\Update.exe");
-            var target = new FileInfo(updateDotExe);
-
-            if (!target.Exists)
-                throw new InvalidOperationException(
-                    "This operation is only valid in an installed application (Update.exe was not found).\n" +
-                    "Check 'IsInstalledApp' or 'CurrentlyInstalledVersion()' before calling this function.");
-            return target.FullName;
         }
     }
 }

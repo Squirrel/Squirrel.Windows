@@ -16,27 +16,19 @@ namespace Squirrel
         /// <summary>
         /// The currently executing version of the application, or null if not currently installed.
         /// </summary>
-        [DataMember] public ReleaseEntry CurrentlyInstalledVersion { get; protected set; }
+        [DataMember] public ReleaseEntry LatestLocalReleaseEntry { get; protected set; }
 
         /// <summary>
-        /// The same as <see cref="CurrentlyInstalledVersion"/> if there are no updates available, otherwise
+        /// The same as <see cref="LatestLocalReleaseEntry"/> if there are no updates available, otherwise
         /// this will be the version that we are updating to.
         /// </summary>
         [DataMember] public ReleaseEntry FutureReleaseEntry { get; protected set; }
 
         /// <summary>
-        /// The list of versions between the <see cref="CurrentlyInstalledVersion"/> and <see cref="FutureReleaseEntry"/>.
+        /// The list of versions between the <see cref="LatestLocalReleaseEntry"/> and <see cref="FutureReleaseEntry"/>.
         /// These will all be applied in order.
         /// </summary>
         [DataMember] public List<ReleaseEntry> ReleasesToApply { get; protected set; }
-
-        /// <summary>
-        /// True if the currently executing program is not currently installed
-        /// </summary>
-        [IgnoreDataMember]
-        public bool IsBootstrapping {
-            get { return CurrentlyInstalledVersion == null; }
-        }
 
         /// <summary>
         /// Path to folder containing local/downloaded packages
@@ -50,11 +42,11 @@ namespace Squirrel
         protected UpdateInfo(ReleaseEntry currentlyInstalledVersion, IEnumerable<ReleaseEntry> releasesToApply, string packageDirectory)
         {
             // NB: When bootstrapping, CurrentlyInstalledVersion is null!
-            CurrentlyInstalledVersion = currentlyInstalledVersion;
+            LatestLocalReleaseEntry = currentlyInstalledVersion;
             ReleasesToApply = (releasesToApply ?? Enumerable.Empty<ReleaseEntry>()).ToList();
             FutureReleaseEntry = ReleasesToApply.Any() ?
                 ReleasesToApply.MaxBy(x => x.Version).FirstOrDefault() :
-                CurrentlyInstalledVersion;
+                LatestLocalReleaseEntry;
 
             this.PackageDirectory = packageDirectory;
         }

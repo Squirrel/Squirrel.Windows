@@ -143,7 +143,7 @@ namespace Squirrel
         bool IsInstalledApp { get; }
 
         /// <summary>The directory the app is (or will be) installed in.</summary>
-        string AppDirectory { get; }
+        //string AppDirectory { get; }
 
         /// <summary>
         /// Gets the currently installed version of the given executable, or if
@@ -153,7 +153,7 @@ namespace Squirrel
         /// executable</param>
         /// <returns>The running version, or null if this is not a Squirrel
         /// installed app (i.e. you're running from VS)</returns>
-        SemanticVersion CurrentlyInstalledVersion(string executable = null);
+        //SemanticVersion CurrentlyInstalledVersion(string executable = null);
 
         /// <summary>
         /// Creates an entry in Programs and Features based on the currently 

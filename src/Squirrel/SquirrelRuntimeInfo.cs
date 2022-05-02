@@ -4,10 +4,42 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Squirrel.SimpleSplat;
 
 #if !NETFRAMEWORK
+
 using InteropArchitecture = System.Runtime.InteropServices.Architecture;
+
+#endif
+
+#if !NET6_0_OR_GREATER
+
+namespace System.Runtime.Versioning
+{
+    internal class SupportedOSPlatformGuardAttribute : Attribute
+    {
+        public SupportedOSPlatformGuardAttribute(string platformName) { }
+    }
+}
+
+#endif
+
+#if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
+
+namespace System.Runtime.Versioning
+{
+    internal class SupportedOSPlatformAttribute : Attribute
+    {
+        public SupportedOSPlatformAttribute(string platformName) { }
+    }
+}
+
+namespace System.Runtime.CompilerServices
+{
+    internal static class IsExternalInit { }
+}
+
 #endif
 
 namespace Squirrel
@@ -51,13 +83,22 @@ namespace Squirrel
         public static string SystemOsName { get; private set; }
 
         /// <summary> True if executing on a Windows platform. </summary>
+        [SupportedOSPlatformGuard("windows")]
         public static bool IsWindows => SystemOsName == "windows";
 
         /// <summary> True if executing on a Linux platform. </summary>
+        [SupportedOSPlatformGuard("linux")]
         public static bool IsLinux => SystemOsName == "linux";
 
         /// <summary> True if executing on a MacOS / OSX platform. </summary>
+        [SupportedOSPlatformGuard("osx")]
         public static bool IsOSX => SystemOsName == "osx";
+
+        public static StringComparer PathStringComparer =>
+            IsWindows ? StringComparer.InvariantCultureIgnoreCase : StringComparer.InvariantCulture;
+
+        public static StringComparison PathStringComparison =>
+            IsWindows ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture;
 
         private static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(SquirrelRuntimeInfo));
 
@@ -72,7 +113,7 @@ namespace Squirrel
             var assyPath = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly())?.Location;
             if (String.IsNullOrEmpty(assyPath) || !File.Exists(assyPath))
                 IsSingleFile = true;
-
+            
 #if NETFRAMEWORK
             CheckArchitectureWindows();
 #else

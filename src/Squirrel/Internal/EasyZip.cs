@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using SharpCompress.Archives;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Common;
+using SharpCompress.Compressors.Deflate;
 using Squirrel.SimpleSplat;
 
 namespace Squirrel
@@ -37,6 +38,7 @@ namespace Squirrel
 
             Log.Info($"Compressing '{directoryToCompress}' to '{outputFile}' using SharpCompress...");
             using var archive = ZipArchive.Create();
+            archive.DeflateCompressionLevel = CompressionLevel.BestSpeed;
             archive.AddAllFromDirectory(directoryToCompress);
             archive.SaveTo(outputFile, CompressionType.Deflate);
         }

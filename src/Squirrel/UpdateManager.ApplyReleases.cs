@@ -7,12 +7,10 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
 using System.Threading;
-using Squirrel.Shell;
-using Microsoft.Win32;
-using NuGet.Versioning;
+using Squirrel.Bsdiff;
+using System.Runtime.Versioning;
 
 namespace Squirrel
 {
@@ -26,67 +24,65 @@ namespace Squirrel
 
             progress(0);
 
-            // Progress range: 00 -> 40
-            var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.CurrentlyInstalledVersion, new ApplyReleasesProgress(updateInfo.ReleasesToApply.Count, x => progress(CalculateProgress(x, 0, 40)))).ConfigureAwait(false);
+            // Progress range: 00 -> 60
+            // takes the latest local package, applies a series of delta to get the full package to update to
+            var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.LatestLocalReleaseEntry, new ApplyReleasesProgress(updateInfo.ReleasesToApply.Count, x => progress(CalculateProgress(x, 0, 60)))).ConfigureAwait(false);
 
-            progress(40);
+            progress(60);
 
             if (release == null) {
                 if (attemptingFullInstall) {
-                    this.Log().Info("No release to install, running the app");
-                    await invokePostInstall(updateInfo.CurrentlyInstalledVersion.Version, false, true, silentInstall).ConfigureAwait(false);
+                    throw new InvalidOperationException("No release was provided to install");
                 }
 
                 progress(100);
-                return getDirectoryForRelease(updateInfo.CurrentlyInstalledVersion.Version).FullName;
+                return _config.GetLatestVersion().DirectoryPath;
             }
 
-            // Progress range: 40 -> 80
-            var ret = await this.ErrorIfThrows(() => installPackageToAppDir(updateInfo, release, x => progress(CalculateProgress(x, 40, 80))),
+            // Progress range: 60 -> 80
+            // extracts the new package to a version dir (app-{ver}) inside VersionStagingDir
+            var newVersionStagingDir = await this.ErrorIfThrows(() => installPackageToStagingDir(updateInfo, release, x => progress(CalculateProgress(x, 60, 80))),
                 "Failed to install package to app dir").ConfigureAwait(false);
 
             progress(80);
 
-            var currentReleases = await this.ErrorIfThrows(() => updateLocalReleasesFile(),
-                "Failed to update local releases file").ConfigureAwait(false);
+            this.Log().Info("Updating local release file");
+            var currentReleases = await Task.Run(() => ReleaseEntry.BuildReleasesFile(_config.PackagesDir)).ConfigureAwait(false);
 
             progress(85);
 
-            var newVersion = currentReleases.MaxBy(x => x.Version).First().Version;
-            executeSelfUpdate(newVersion);
+            this.Log().Info("Running post-install hooks");
+            var currentVersionDir = await invokePostInstall(newVersionStagingDir, attemptingFullInstall, false, silentInstall).ConfigureAwait(false);
 
             progress(90);
 
-            await this.ErrorIfThrows(() => invokePostInstall(newVersion, attemptingFullInstall, false, silentInstall),
-                "Failed to invoke post-install").ConfigureAwait(false);
+            executeSelfUpdate(currentVersionDir);
 
             progress(95);
 
             try {
-                var currentVersion = updateInfo.CurrentlyInstalledVersion != null ?
-                    updateInfo.CurrentlyInstalledVersion.Version : null;
-
-                await cleanDeadVersions(currentVersion, newVersion).ConfigureAwait(false);
+                await cleanDeadVersions().ConfigureAwait(false);
             } catch (Exception ex) {
                 this.Log().WarnException("Failed to clean dead versions, continuing anyways", ex);
             }
 
             progress(100);
 
-            return ret;
+            return currentVersionDir;
         }
 
         /// <inheritdoc/>
+        [SupportedOSPlatform("windows")]
         public async Task FullUninstall()
         {
-            var rootAppDirectory = AppDirectory;
+            var rootAppDirectory = _config.RootAppDir;
             await acquireUpdateLock().ConfigureAwait(false);
 
             this.Log().Info("Starting full uninstall");
             KillAllExecutablesBelongingToPackage();
 
             try {
-                var releases = Utility.GetAppVersionDirectories(rootAppDirectory).ToArray();
+                var releases = _config.GetVersions().ToArray();
                 if (releases.Any()) {
                     var latest = releases.OrderByDescending(x => x.Version).FirstOrDefault();
                     var currentRelease = new DirectoryInfo(latest.DirectoryPath);
@@ -119,7 +115,7 @@ namespace Squirrel
             }
 
             this.Log().Info("Deleting files in app directory: " + rootAppDirectory);
-            this.ErrorIfThrows(() => Utility.DeleteFileOrDirectoryHardOrGiveUp(rootAppDirectory),
+            this.ErrorIfThrows(() => Utility.DeleteFileOrDirectoryHard(rootAppDirectory, throwOnFailure: false),
                 "Failed to delete app directory: " + rootAppDirectory);
 
             // NB: We drop this file here so that --checkInstall will ignore 
@@ -134,15 +130,15 @@ namespace Squirrel
             this.Log().Info("Done full uninstall.");
         }
 
-        Task<string> installPackageToAppDir(UpdateInfo updateInfo, ReleaseEntry release, Action<int> progressCallback)
+        Task<string> installPackageToStagingDir(UpdateInfo updateInfo, ReleaseEntry release, Action<int> progressCallback)
         {
             return Task.Run(async () => {
-                var target = getDirectoryForRelease(release.Version);
+                var target = new DirectoryInfo(_config.GetVersionStagingPath(release.Version));
 
                 // NB: This might happen if we got killed partially through applying the release
                 if (target.Exists) {
                     this.Log().Warn("Found partially applied release folder, killing it: " + target.FullName);
-                    Utility.DeleteFileOrDirectoryHardOrGiveUp(target.FullName);
+                    Utility.DeleteFileOrDirectoryHard(target.FullName, throwOnFailure: true, renameFirst: true);
                 }
 
                 target.Create();
@@ -151,7 +147,7 @@ namespace Squirrel
                 await ReleasePackage.ExtractZipForInstall(
                     Path.Combine(updateInfo.PackageDirectory, release.Filename),
                     target.FullName,
-                    AppDirectory,
+                    _config.RootAppDir,
                     progressCallback).ConfigureAwait(false);
 
                 return target.FullName;
@@ -160,7 +156,6 @@ namespace Squirrel
 
         async Task<ReleaseEntry> createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion, ApplyReleasesProgress progress)
         {
-            var rootAppDirectory = AppDirectory;
             Contract.Requires(releasesToApply != null);
 
             progress = progress ?? new ApplyReleasesProgress(releasesToApply.Count(), x => { });
@@ -191,12 +186,10 @@ namespace Squirrel
 
             // Smash together our base full package and the nearest delta
             var ret = await Task.Run(() => {
-                var basePkg = new ReleasePackage(Path.Combine(rootAppDirectory, "packages", currentVersion.Filename));
-                var deltaPkg = new ReleasePackage(Path.Combine(rootAppDirectory, "packages", releasesToApply.First().Filename));
+                var basePkg = new ReleasePackage(Path.Combine(_config.PackagesDir, currentVersion.Filename));
+                var deltaPkg = new ReleasePackage(Path.Combine(_config.PackagesDir, releasesToApply.First().Filename));
 
-                var deltaBuilder = new DeltaPackageBuilder(Directory.GetParent(rootAppDirectory).FullName);
-
-                return deltaBuilder.ApplyDeltaPackage(basePkg, deltaPkg,
+                return ApplyDeltaPackage(basePkg, deltaPkg,
                     Regex.Replace(deltaPkg.InputPackageFile, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
                     x => progress.ReportReleaseProgress(x));
             }).ConfigureAwait(false);
@@ -214,10 +207,9 @@ namespace Squirrel
             return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progress).ConfigureAwait(false);
         }
 
-        void executeSelfUpdate(SemanticVersion currentVersion)
+        void executeSelfUpdate(string newVersionDir)
         {
-            var targetDir = getDirectoryForRelease(currentVersion);
-            var newSquirrel = Path.Combine(targetDir.FullName, "Squirrel.exe");
+            var newSquirrel = Path.Combine(newVersionDir, "Squirrel.exe");
             if (!File.Exists(newSquirrel)) {
                 return;
             }
@@ -227,24 +219,22 @@ namespace Squirrel
             // once we exit
             var ourLocation = SquirrelRuntimeInfo.EntryExePath;
             if (ourLocation != null && Path.GetFileName(ourLocation).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
-                var appName = targetDir.Parent.Name;
-
                 Process.Start(newSquirrel, "--updateSelf=" + ourLocation);
                 return;
             }
 
             // If we're *not* Update.exe, this is easy, it's just a file copy
-            Utility.Retry(() =>
-                File.Copy(newSquirrel, Path.Combine(targetDir.Parent.FullName, "Update.exe"), true));
+            Utility.Retry(() => File.Copy(newSquirrel, _config.UpdateExePath, true));
         }
 
-        async Task invokePostInstall(SemanticVersion currentVersion, bool isInitialInstall, bool firstRunOnly, bool silentInstall)
+        async Task<string> invokePostInstall(string targetDir, bool isInitialInstall, bool firstRunOnly, bool silentInstall)
         {
-            var targetDir = getDirectoryForRelease(currentVersion);
-            var command = isInitialInstall ? "--squirrel-install" : "--squirrel-updated";
-            var args = new string[] { command, currentVersion.ToString() };
+            var versionInfo = _config.GetVersionInfoFromDirectory(targetDir);
 
-            var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir.FullName);
+            var command = isInitialInstall ? "--squirrel-install" : "--squirrel-updated";
+            var args = new string[] { command, versionInfo.Version.ToString() };
+
+            var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(targetDir);
 
             this.Log().Info("Squirrel Enabled Apps: [{0}]", String.Join(",", squirrelApps));
 
@@ -266,10 +256,10 @@ namespace Squirrel
             if (squirrelApps.Count == 0) {
                 this.Log().Warn("No apps are marked as Squirrel-aware! Going to run them all");
 
-                squirrelApps = targetDir.EnumerateFiles()
-                    .Where(x => x.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-                    .Where(x => !x.Name.StartsWith("squirrel.", StringComparison.OrdinalIgnoreCase))
-                    .Select(x => x.FullName)
+                squirrelApps = Directory.EnumerateFiles(targetDir)
+                    .Where(x => x.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                    .Where(x => !x.StartsWith("squirrel.", StringComparison.OrdinalIgnoreCase))
+                    .Select(x => Path.GetFullPath(x))
                     .ToList();
 
                 // Create shortcuts for apps automatically if they didn't
@@ -277,111 +267,87 @@ namespace Squirrel
                 //squirrelApps.ForEach(x => CreateShortcutsForExecutable(Path.GetFileName(x), ShortcutLocation.Desktop | ShortcutLocation.StartMenu, isInitialInstall == false, null, null));
             }
 
-            if (!isInitialInstall || silentInstall) return;
+            if (!isInitialInstall || silentInstall) return targetDir;
 
             // for the hooks we run in the 'app-{ver}' directories, but for finally starting the app we run from 'current' junction
-            var latestAppDir = Utility.UpdateAndRetrieveCurrentFolder(AppDirectory, true);
+            var latestAppDir = _config.UpdateAndRetrieveCurrentFolder(true);
             squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(latestAppDir);
             squirrelApps
                 .Select(exe => new ProcessStartInfo(exe, "--squirrel-firstrun") { WorkingDirectory = Path.GetDirectoryName(exe) })
                 .ForEach(info => Process.Start(info));
+
+            return latestAppDir;
         }
 
-        async Task cleanDeadVersions(SemanticVersion currentVersion, SemanticVersion newVersion, bool forceUninstall = false)
+        async Task cleanDeadVersions()
         {
-            var rootAppDirectory = AppDirectory;
-            if (newVersion == null) return;
+            var versions = _config.GetVersions().ToArray();
+            var latest = _config.GetLatestVersion(versions);
 
-            var di = new DirectoryInfo(AppDirectory);
-            if (!di.Exists) return;
+            List<string> toDelete = new List<string>();
 
-            this.Log().Info("cleanDeadVersions: checking for version {0}", newVersion);
+            // execute --obsolete hooks on any old non-dead folders
+            foreach (var v in versions) {
+                // don't delete current / latest versions
+                if (v.IsCurrent || v.IsExecuting) continue;
+                if (v.Version == latest.Version) continue;
 
-            string currentVersionFolder = null;
-            if (currentVersion != null) {
-                currentVersionFolder = getDirectoryForRelease(currentVersion).Name;
-                this.Log().Info("cleanDeadVersions: exclude current version folder {0}", currentVersionFolder);
-            }
+                toDelete.Add(v.DirectoryPath);
 
-            string newVersionFolder = null;
-            if (newVersion != null) {
-                newVersionFolder = getDirectoryForRelease(newVersion).Name;
-                this.Log().Info("cleanDeadVersions: exclude new version folder {0}", newVersionFolder);
-            }
+                // don't run hooks if the folder is already dead.
+                if (isAppFolderDead(v.DirectoryPath)) continue;
 
-            var toCleanup = di.GetDirectories()
-                .Where(x => x.Name.ToLowerInvariant().Contains("app-"))
-                .Where(x => x.Name != newVersionFolder && x.Name != currentVersionFolder)
-                .Where(x => !isAppFolderDead(x.FullName));
+                var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(v.DirectoryPath);
+                var args = new string[] { "--squirrel-obsolete", v.Version.ToString() };
 
-            if (forceUninstall == false) {
-                await toCleanup.ForEachAsync(async x => {
-                    var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(x.FullName);
-                    var args = new string[] { "--squirrel-obsolete", x.Name.Replace("app-", "") };
-
-                    if (squirrelApps.Count > 0) {
-                        // For each app, run the install command in-order and wait
-                        await squirrelApps.ForEachAsync(async exe => {
-                            using (var cts = new CancellationTokenSource()) {
-                                cts.CancelAfter(10 * 1000);
-
-                                try {
-                                    await Utility.InvokeProcessAsync(exe, args, cts.Token).ConfigureAwait(false);
-                                } catch (Exception ex) {
-                                    this.Log().ErrorException("Coudln't run Squirrel hook, continuing: " + exe, ex);
-                                }
+                if (squirrelApps.Count > 0) {
+                    // For each app, run the install command in-order and wait
+                    foreach (var exe in squirrelApps) {
+                        using (var cts = new CancellationTokenSource()) {
+                            cts.CancelAfter(10 * 1000);
+                            try {
+                                await Utility.InvokeProcessAsync(exe, args, cts.Token).ConfigureAwait(false);
+                            } catch (Exception ex) {
+                                this.Log().ErrorException("Coudln't run Squirrel hook, continuing: " + exe, ex);
                             }
-                        }, 1 /* at a time */).ConfigureAwait(false);
+                        }
                     }
-                }).ConfigureAwait(false);
+                }
+
+                // mark this as dead so we never run hooks again
+                markAppFolderAsDead(v.DirectoryPath);
             }
 
-            // Include dead folders in folders to :fire:
-            toCleanup = di.GetDirectories()
-                .Where(x => x.Name.ToLowerInvariant().Contains("app-"))
-                .Where(x => x.Name != newVersionFolder && x.Name != currentVersionFolder);
-
-            // Get the current process list in an attempt to not burn 
-            // directories which have running processes
             var runningProcesses = Utility.EnumerateProcesses();
 
-            // Finally, clean up the app-X.Y.Z directories
-            await toCleanup.ForEachAsync(x => {
-                try {
-                    if (runningProcesses.All(p => p.Item1 == null || !p.Item1.StartsWith(x.FullName, StringComparison.OrdinalIgnoreCase))) {
-                        Utility.DeleteFileOrDirectoryHardOrGiveUp(x.FullName);
-                    }
+            foreach (var dir in toDelete) {
+                // skip any directories with running processes
+                if (runningProcesses.Any(r => Utility.IsFileInDirectory(r.ProcessExePath, dir))) continue;
 
-                    if (Directory.Exists(x.FullName)) {
-                        // NB: If we cannot clean up a directory, we need to make 
-                        // sure that anyone finding it later won't attempt to run
-                        // Squirrel events on it. We'll mark it with a .dead file
-                        markAppFolderAsDead(x.FullName);
-                    }
-                } catch (UnauthorizedAccessException ex) {
-                    this.Log().WarnException("Couldn't delete directory: " + x.FullName, ex);
+                // try to delete dir, don't care if this fails
+                Utility.DeleteFileOrDirectoryHard(dir, throwOnFailure: false, renameFirst: true);
 
-                    // NB: Same deal as above
-                    markAppFolderAsDead(x.FullName);
-                }
-            }).ConfigureAwait(false);
-
-            // Clean up the packages directory too
-            var releasesFile = Utility.LocalReleaseFileForAppDir(rootAppDirectory);
-            var entries = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesFile, Encoding.UTF8));
-            var pkgDir = Utility.PackageDirectoryForAppDir(rootAppDirectory);
-            var releaseEntry = default(ReleaseEntry);
-
-            foreach (var entry in entries) {
-                if (entry.Version == newVersion) {
-                    releaseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(pkgDir, entry.Filename));
-                    continue;
-                }
-
-                File.Delete(Path.Combine(pkgDir, entry.Filename));
+                // if the folder exists, just double check that it's dead.
+                if (Directory.Exists(dir)) markAppFolderAsDead(dir);
             }
 
-            ReleaseEntry.WriteReleaseFile(new[] { releaseEntry }, releasesFile);
+            // Clean up the packages directory too, everything except latest full package
+            var localPackages = _config.GetLocalPackages();
+            var latestFullPackage = localPackages
+                .Where(p => !p.IsDelta)
+                .OrderByDescending(v => v.PackageVersion)
+                .FirstOrDefault();
+
+            if (latestFullPackage != default) {
+                foreach (var package in localPackages) {
+                    // don't delete the latest package
+                    if (package.PackageVersion == latestFullPackage.PackageVersion) continue;
+                    Utility.DeleteFileOrDirectoryHard(package.PackagePath, throwOnFailure: false);
+                }
+            }
+
+            // generate new RELEASES file
+            ReleaseEntry.BuildReleasesFile(_config.PackagesDir);
         }
 
         static void markAppFolderAsDead(string appFolderPath)
@@ -394,14 +360,134 @@ namespace Squirrel
             return File.Exists(Path.Combine(appFolderPath, ".dead"));
         }
 
-        internal async Task<List<ReleaseEntry>> updateLocalReleasesFile()
+        internal ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile, Action<int> progress = null)
         {
-            return await Task.Run(() => ReleaseEntry.BuildReleasesFile(PackagesDirectory)).ConfigureAwait(false);
+            progress = progress ?? (x => { });
+
+            Contract.Requires(deltaPackage != null);
+            Contract.Requires(!String.IsNullOrEmpty(outputFile) && !File.Exists(outputFile));
+
+            using (Utility.GetTempDir(_config.TempDir, out var deltaPath))
+            using (Utility.GetTempDir(_config.TempDir, out var workingPath)) {
+                EasyZip.ExtractZipToDirectory(deltaPackage.InputPackageFile, deltaPath);
+                progress(25);
+
+                EasyZip.ExtractZipToDirectory(basePackage.InputPackageFile, workingPath);
+                progress(50);
+
+                var pathsVisited = new List<string>();
+
+                var deltaPathRelativePaths = new DirectoryInfo(deltaPath).GetAllFilesRecursively()
+                    .Select(x => x.FullName.Replace(deltaPath + Path.DirectorySeparatorChar, ""))
+                    .ToArray();
+
+                // Apply all of the .diff files
+                deltaPathRelativePaths
+                    .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                    .Where(x => !x.EndsWith(".shasum", StringComparison.InvariantCultureIgnoreCase))
+                    .Where(x => !x.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase) ||
+                                !deltaPathRelativePaths.Contains(x.Replace(".diff", ".bsdiff")))
+                    .ForEach(file => {
+                        pathsVisited.Add(Regex.Replace(file, @"\.(bs)?diff$", "").ToLowerInvariant());
+                        applyDiffToFile(deltaPath, file, workingPath);
+                    });
+
+                progress(75);
+
+                // Delete all of the files that were in the old package but
+                // not in the new one.
+                new DirectoryInfo(workingPath).GetAllFilesRecursively()
+                    .Select(x => x.FullName.Replace(workingPath + Path.DirectorySeparatorChar, "").ToLowerInvariant())
+                    .Where(x => x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase) && !pathsVisited.Contains(x))
+                    .ForEach(x => {
+                        this.Log().Info("{0} was in old package but not in new one, deleting", x);
+                        File.Delete(Path.Combine(workingPath, x));
+                    });
+
+                progress(80);
+
+                // Update all the files that aren't in 'lib' with the delta
+                // package's versions (i.e. the nuspec file, etc etc).
+                deltaPathRelativePaths
+                    .Where(x => !x.StartsWith("lib", StringComparison.InvariantCultureIgnoreCase))
+                    .ForEach(x => {
+                        this.Log().Info("Updating metadata file: {0}", x);
+                        File.Copy(Path.Combine(deltaPath, x), Path.Combine(workingPath, x), true);
+                    });
+
+                this.Log().Info("Repacking into full package: {0}", outputFile);
+
+                EasyZip.CreateZipFromDirectory(outputFile, workingPath);
+
+                progress(100);
+            }
+
+            return new ReleasePackage(outputFile);
         }
 
-        DirectoryInfo getDirectoryForRelease(SemanticVersion releaseVersion)
+        void applyDiffToFile(string deltaPath, string relativeFilePath, string workingDirectory)
         {
-            return new DirectoryInfo(Path.Combine(AppDirectory, "app-" + releaseVersion));
+            var inputFile = Path.Combine(deltaPath, relativeFilePath);
+            var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @"\.(bs)?diff$", ""));
+
+            using var _d = Utility.GetTempFileName(_config.TempDir, out var tempTargetFile);
+
+            // NB: Zero-length diffs indicate the file hasn't actually changed
+            if (new FileInfo(inputFile).Length == 0) {
+                this.Log().Info("{0} exists unchanged, skipping", relativeFilePath);
+                return;
+            }
+
+            if (relativeFilePath.EndsWith(".bsdiff", StringComparison.InvariantCultureIgnoreCase)) {
+                using (var of = File.OpenWrite(tempTargetFile))
+                using (var inf = File.OpenRead(finalTarget)) {
+                    this.Log().Info("Applying bsdiff to {0}", relativeFilePath);
+                    BinaryPatchUtility.Apply(inf, () => File.OpenRead(inputFile), of);
+                }
+
+                verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
+            } else if (relativeFilePath.EndsWith(".diff", StringComparison.InvariantCultureIgnoreCase)) {
+                this.Log().Info("Applying msdiff to {0}", relativeFilePath);
+
+                if (SquirrelRuntimeInfo.IsWindows) {
+                    MsDeltaCompression.ApplyDelta(inputFile, finalTarget, tempTargetFile);
+                } else {
+                    throw new InvalidOperationException("msdiff is not supported on non-windows platforms.");
+                }
+                verifyPatchedFile(relativeFilePath, inputFile, tempTargetFile);
+            } else {
+                using (var of = File.OpenWrite(tempTargetFile))
+                using (var inf = File.OpenRead(inputFile)) {
+                    this.Log().Info("Adding new file: {0}", relativeFilePath);
+                    inf.CopyTo(of);
+                }
+            }
+
+            if (File.Exists(finalTarget)) File.Delete(finalTarget);
+
+            var targetPath = Directory.GetParent(finalTarget);
+            if (!targetPath.Exists) targetPath.Create();
+
+            File.Move(tempTargetFile, finalTarget);
+        }
+
+        void verifyPatchedFile(string relativeFilePath, string inputFile, string tempTargetFile)
+        {
+            var shaFile = Regex.Replace(inputFile, @"\.(bs)?diff$", ".shasum");
+            var expectedReleaseEntry = ReleaseEntry.ParseReleaseEntry(File.ReadAllText(shaFile, Encoding.UTF8));
+            var actualReleaseEntry = ReleaseEntry.GenerateFromFile(tempTargetFile);
+
+            if (expectedReleaseEntry.Filesize != actualReleaseEntry.Filesize) {
+                this.Log().Warn("Patched file {0} has incorrect size, expected {1}, got {2}", relativeFilePath,
+                    expectedReleaseEntry.Filesize, actualReleaseEntry.Filesize);
+                throw new ChecksumFailedException() { Filename = relativeFilePath };
+            }
+
+            if (expectedReleaseEntry.SHA1 != actualReleaseEntry.SHA1) {
+                this.Log().Warn("Patched file {0} has incorrect SHA1, expected {1}, got {2}", relativeFilePath,
+                    expectedReleaseEntry.SHA1, actualReleaseEntry.SHA1);
+                throw new ChecksumFailedException() { Filename = relativeFilePath };
+            }
         }
     }
 }

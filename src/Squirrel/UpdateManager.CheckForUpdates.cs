@@ -20,18 +20,17 @@ namespace Squirrel
             // lock will be held until this class is disposed
             await acquireUpdateLock().ConfigureAwait(false);
 
-            if (_updateSource == null)
+            if (_source == null)
                 throw new InvalidOperationException("Cannot check for updates if no update source / url was provided in the construction of UpdateManager.");
 
             progress = progress ?? (_ => { });
             var localReleases = Enumerable.Empty<ReleaseEntry>();
             var stagingId = intention == UpdaterIntention.Install ? null : getOrCreateStagedUserId();
             bool shouldInitialize = intention == UpdaterIntention.Install;
-            var localReleaseFile = Utility.LocalReleaseFileForAppDir(AppDirectory);
 
             if (intention != UpdaterIntention.Install) {
                 try {
-                    localReleases = Utility.LoadLocalReleases(localReleaseFile);
+                    localReleases = Utility.LoadLocalReleases(_config.ReleasesFilePath);
                 } catch (Exception ex) {
                     // Something has gone pear-shaped, let's start from scratch
                     this.Log().WarnException("Failed to load local releases, starting from scratch", ex);
@@ -47,7 +46,7 @@ namespace Squirrel
 
             progress(33);
 
-            var remoteReleases = await Utility.RetryAsync(() => _updateSource.GetReleaseFeed(stagingId, latestLocalRelease)).ConfigureAwait(false);
+            var remoteReleases = await Utility.RetryAsync(() => _source.GetReleaseFeed(stagingId, latestLocalRelease)).ConfigureAwait(false);
 
             progress(66);
 
@@ -60,17 +59,16 @@ namespace Squirrel
         void initializeClientAppDirectory()
         {
             // On bootstrap, we won't have any of our directories, create them
-            var pkgDir = PackagesDirectory;
+            var pkgDir = _config.PackagesDir;
             if (Directory.Exists(pkgDir)) {
-                Utility.DeleteFileOrDirectoryHardOrGiveUp(pkgDir);
+                Utility.DeleteFileOrDirectoryHard(pkgDir, throwOnFailure: false);
             }
-
             Directory.CreateDirectory(pkgDir);
         }
 
         UpdateInfo determineUpdateInfo(UpdaterIntention intention, IEnumerable<ReleaseEntry> localReleases, IEnumerable<ReleaseEntry> remoteReleases, bool ignoreDeltaUpdates)
         {
-            var packageDirectory = PackagesDirectory;
+            var packageDirectory = _config.PackagesDir;
             localReleases = localReleases ?? Enumerable.Empty<ReleaseEntry>();
 
             if (remoteReleases == null) {
@@ -116,7 +114,7 @@ namespace Squirrel
 
         internal Guid? getOrCreateStagedUserId()
         {
-            var stagedUserIdFile = Path.Combine(PackagesDirectory, ".betaId");
+            var stagedUserIdFile = _config.BetaIdFilePath;
             var ret = default(Guid);
 
             try {

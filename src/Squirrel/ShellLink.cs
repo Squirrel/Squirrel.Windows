@@ -11,9 +11,7 @@ namespace Squirrel.Shell
     /// <summary>
     /// Summary description for ShellLink.
     /// </summary>
-#if NET5_0_OR_GREATER
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
     public class ShellLink : IDisposable
     {
         [ComImport()]

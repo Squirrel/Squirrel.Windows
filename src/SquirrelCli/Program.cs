@@ -32,6 +32,8 @@ namespace SquirrelCli
         public static string FileVersion => ThisAssembly.AssemblyFileVersion;
 #pragma warning restore CS0436 // Type conflicts with imported type
 
+        public static string TempDir => Utility.GetDefaultTempDirectory(null);
+
         public static int Main(string[] args)
         {
             var logger = new ConsoleLogger();
@@ -120,7 +122,7 @@ namespace SquirrelCli
                 ? "" // no releaseNotes
                 : $"<releaseNotes>{SecurityElement.Escape(File.ReadAllText(options.releaseNotes))}</releaseNotes>";
 
-            using (Utility.WithTempDirectory(out var tmpDir)) {
+            using (Utility.GetTempDir(TempDir, out var tmp)) {
                 string nuspec = $@"
 <?xml version=""1.0"" encoding=""utf-8""?>
 <package>
@@ -137,12 +139,12 @@ namespace SquirrelCli
   </files>
 </package>
 ".Trim();
-                var nuspecPath = Path.Combine(tmpDir, options.packId + ".nuspec");
+                var nuspecPath = Path.Combine(tmp, options.packId + ".nuspec");
                 File.WriteAllText(nuspecPath, nuspec);
 
-                new NugetConsole().Pack(nuspecPath, options.packDirectory, tmpDir);
+                new NugetConsole().Pack(nuspecPath, options.packDirectory, tmp);
 
-                var nupkgPath = Directory.EnumerateFiles(tmpDir).Where(f => f.EndsWith(".nupkg")).FirstOrDefault();
+                var nupkgPath = Directory.EnumerateFiles(tmp).Where(f => f.EndsWith(".nupkg")).FirstOrDefault();
                 if (nupkgPath == null)
                     throw new Exception($"Failed to generate nupkg, unspecified error");
 
@@ -172,13 +174,13 @@ namespace SquirrelCli
             if (requiredFrameworks.Any())
                 Log.Info("Package dependencies (from '--framework' argument) resolved as: " + String.Join(", ", requiredFrameworks.Select(r => r.Id)));
 
-            using var ud = Utility.WithTempDirectory(out var tempDir);
+            using var ud = Utility.GetTempDir(TempDir, out var tempDir);
 
             // update icon for Update.exe if requested
             var bundledUpdatePath = HelperExe.UpdatePath(p => Microsoft.NET.HostModel.AppHost.HostWriter.IsBundle(p, out var _hz));
             var updatePath = Path.Combine(tempDir, "Update.exe");
             if (setupIcon != null) {
-                DotnetUtil.UpdateSingleFileBundleIcon(bundledUpdatePath, updatePath, setupIcon).Wait();
+                DotnetUtil.UpdateSingleFileBundleIcon(TempDir, bundledUpdatePath, updatePath, setupIcon).Wait();
             } else {
                 File.Copy(bundledUpdatePath, updatePath, true);
             }
@@ -209,7 +211,7 @@ namespace SquirrelCli
                 Log.Info("Creating release for package: " + file.FullName);
 
                 var rp = new ReleasePackage(file.FullName);
-                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
+                rp.CreateReleasePackage(TempDir, Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
                     var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
                         .ContextualSingle("package", "*.nuspec", "top level directory");
                     var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
@@ -349,7 +351,7 @@ namespace SquirrelCli
                 if (prev != null && generateDeltas) {
                     var deltaBuilder = new DeltaPackageBuilder();
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
-                        Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                        Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")), TempDir);
                     processed.Insert(0, dp.InputPackageFile);
                 }
             }
@@ -376,7 +378,8 @@ namespace SquirrelCli
             var newestReleasePath = Path.Combine(di.FullName, newestFullRelease.Filename);
 
             Log.Info($"Creating Setup bundle");
-            SetupBundle.CreatePackageBundle(targetSetupExe, newestReleasePath);
+            var bundleOffset = SetupBundle.CreatePackageBundle(targetSetupExe, newestReleasePath);
+            Log.Info("Bundle package offset is " + bundleOffset);
             options.SignPEFile(targetSetupExe);
 
             Log.Info($"Setup bundle created at '{targetSetupExe}'.");

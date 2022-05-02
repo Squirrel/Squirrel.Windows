@@ -119,9 +119,9 @@ namespace SquirrelCli
             return HostWriter.IsBundle(peFile, out var offset) && offset > 0;
         }
 
-        public static async Task UpdateSingleFileBundleIcon(string sourceFile, string destinationFile, string iconPath)
+        public static async Task UpdateSingleFileBundleIcon(string rootTempDir, string sourceFile, string destinationFile, string iconPath)
         {
-            using var d = Utility.WithTempDirectory(out var tmpdir);
+            using var _ = Utility.GetTempDir(rootTempDir, out var tmpdir);
             var sourceName = Path.GetFileNameWithoutExtension(sourceFile);
 
             // extract Update.exe to tmp dir

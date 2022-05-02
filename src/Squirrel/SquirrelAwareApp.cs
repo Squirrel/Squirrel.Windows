@@ -24,9 +24,7 @@ namespace Squirrel
     /// SquirrelAwareApp helps you to handle Squirrel app activation events
     /// correctly.
     /// </summary>
-#if NET5_0_OR_GREATER
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
     public static class SquirrelAwareApp
     {
         /// <summary>

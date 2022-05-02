@@ -22,6 +22,7 @@ namespace Squirrel.Update
     {
         static StartupOption opt;
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
+        static string TempDir => Utility.GetDefaultTempDirectory(null);
 
         [STAThread]
         public static int Main(string[] args)
@@ -41,7 +42,7 @@ namespace Squirrel.Update
             try {
                 opt = new StartupOption(args);
             } catch (Exception ex) {
-                var logp = new SetupLogLogger(true, UpdateAction.Unset) { Level = LogLevel.Info };
+                var logp = new SetupLogLogger(Utility.GetDefaultTempDirectory(null), false, UpdateAction.Unset) { Level = LogLevel.Info };
                 logp.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 throw;
             }
@@ -53,7 +54,9 @@ namespace Squirrel.Update
                 opt.updateAction == UpdateAction.Setup ||
                 opt.updateAction == UpdateAction.Install;
 
-            var logger = new SetupLogLogger(logToTemp, opt.updateAction) { Level = LogLevel.Info };
+            var logDir = logToTemp ? Utility.GetDefaultTempDirectory(null) : SquirrelRuntimeInfo.BaseDirectory;
+
+            var logger = new SetupLogLogger(logDir, !logToTemp, opt.updateAction) { Level = LogLevel.Info };
             SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
 
             try {
@@ -176,7 +179,7 @@ namespace Squirrel.Update
                 silentInstall = true;
             }
 
-            using var _t = Utility.WithTempDirectory(out var tempFolder);
+            using var _t = Utility.GetTempDir(TempDir, out var tempFolder);
             using ISplashWindow splash = new ComposedWindow(appname, silentInstall, zp.SetupIconBytes, zp.SetupSplashBytes);
 
             // verify that this package can be installed on this cpu architecture
@@ -257,32 +260,34 @@ namespace Squirrel.Update
             var ourAppName = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesPath, Encoding.UTF8))
                 .First().PackageName;
 
-            using (var mgr = new UpdateManager(sourceDirectory, ourAppName)) {
-                Log.Info("About to install to: " + mgr.AppDirectory);
-                if (Directory.Exists(mgr.AppDirectory)) {
-                    Log.Warn("Install path {0} already exists, burning it to the ground", mgr.AppDirectory);
 
-                    mgr.KillAllExecutablesBelongingToPackage();
-                    await Task.Delay(500);
+            using var mgr = new UpdateManager(sourceDirectory, ourAppName);
+            var rootAppDir = mgr.Config.RootAppDir;
 
-                    Log.ErrorIfThrows(() => Utility.Retry(() => Utility.DeleteFileOrDirectoryHard(mgr.AppDirectory)),
-                        "Failed to remove existing directory on full install, is the app still running???");
+            Log.Info("About to install to: " + rootAppDir);
+            if (Directory.Exists(rootAppDir)) {
+                Log.Warn("Install path {0} already exists, burning it to the ground", rootAppDir);
 
-                    Log.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(mgr.AppDirectory), 3),
-                        "Couldn't recreate app directory, perhaps Antivirus is blocking it");
-                }
+                mgr.KillAllExecutablesBelongingToPackage();
+                await Task.Delay(500);
 
-                Directory.CreateDirectory(mgr.AppDirectory);
+                Log.ErrorIfThrows(() => Utility.Retry(() => Utility.DeleteFileOrDirectoryHard(rootAppDir, throwOnFailure: true, renameFirst: true)),
+                    "Failed to remove existing directory on full install, is the app still running???");
 
-                var updateTarget = Path.Combine(mgr.AppDirectory, "Update.exe");
-                Log.ErrorIfThrows(() => File.Copy(SquirrelRuntimeInfo.EntryExePath, updateTarget, true),
-                    "Failed to copy Update.exe to " + updateTarget);
-
-                await mgr.FullInstall(silentInstall, progressSource.Raise);
-
-                await Log.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
-                    "Failed to create uninstaller registry entry");
+                Log.ErrorIfThrows(() => Utility.Retry(() => Directory.CreateDirectory(rootAppDir), 3),
+                    "Couldn't recreate app directory, perhaps Antivirus is blocking it");
             }
+
+            Directory.CreateDirectory(rootAppDir);
+
+            var updateTarget = Path.Combine(rootAppDir, "Update.exe");
+            Log.ErrorIfThrows(() => File.Copy(SquirrelRuntimeInfo.EntryExePath, updateTarget, true),
+                "Failed to copy Update.exe to " + updateTarget);
+
+            await mgr.FullInstall(silentInstall, progressSource.Raise);
+
+            await Log.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
+                "Failed to create uninstaller registry entry");
         }
 
         static async Task Update(string updateUrl, string appName = null)
@@ -293,7 +298,7 @@ namespace Squirrel.Update
 
             using (var mgr = new UpdateManager(updateUrl, appName)) {
                 bool ignoreDeltaUpdates = false;
-                Log.Info("About to update to: " + mgr.AppDirectory);
+                Log.Info("About to update to: " + mgr.Config.RootAppDir);
 
             retry:
                 try {
@@ -315,8 +320,6 @@ namespace Squirrel.Update
                     ignoreDeltaUpdates = true;
                     goto retry;
                 }
-
-                var updateTarget = Path.Combine(mgr.AppDirectory, "Update.exe");
 
                 await Log.ErrorIfThrows(() =>
                     mgr.CreateUninstallerRegistryEntry(),
@@ -349,7 +352,7 @@ namespace Squirrel.Update
                 var releaseNotes = updateInfo.FetchReleaseNotes();
 
                 var sanitizedUpdateInfo = new {
-                    currentVersion = updateInfo.CurrentlyInstalledVersion.Version.ToString(),
+                    currentVersion = updateInfo.LatestLocalReleaseEntry.Version.ToString(),
                     futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
                     releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
                         version = x.Version.ToString(),
@@ -371,7 +374,7 @@ namespace Squirrel.Update
                 var releaseNotes = updateInfo.FetchReleaseNotes();
 
                 var sanitizedUpdateInfo = new {
-                    currentVersion = updateInfo.CurrentlyInstalledVersion.Version.ToString(),
+                    currentVersion = updateInfo.LatestLocalReleaseEntry.Version.ToString(),
                     futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
                     releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
                         version = x.Version.ToString(),
@@ -393,7 +396,7 @@ namespace Squirrel.Update
                 mgr.RemoveUninstallerRegistryEntry();
 
                 // if this exe is in the app directory, starts a process that will wait 3 seconds and then delete this exe
-                if (Utility.IsFileInDirectory(SquirrelRuntimeInfo.EntryExePath, mgr.AppDirectory)) {
+                if (Utility.IsFileInDirectory(SquirrelRuntimeInfo.EntryExePath, mgr.Config.RootAppDir)) {
                     Process.Start(new ProcessStartInfo() {
                         Arguments = "/C choice /C Y /N /D Y /T 3 & Del \"" + SquirrelRuntimeInfo.EntryExePath + "\"",
                         WindowStyle = ProcessWindowStyle.Hidden, CreateNoWindow = true, FileName = "cmd.exe"
@@ -443,7 +446,8 @@ namespace Squirrel.Update
 
             if (shouldWait) waitForParentToExit();
 
-            var latestAppDir = Utility.UpdateAndRetrieveCurrentFolder(SquirrelRuntimeInfo.BaseDirectory, forceLatest);
+            var config = new UpdateConfig(null, null);
+            var latestAppDir = config.UpdateAndRetrieveCurrentFolder(forceLatest);
 
             // Check for the EXE name they want
             var targetExe = new FileInfo(Path.Combine(latestAppDir, exeName.Replace("%20", " ")));
@@ -482,7 +486,7 @@ namespace Squirrel.Update
 
                     using var splash = new ComposedWindow(manifest.ProductName, false, null, null);
                     splash.Show();
-                    using var _ = Utility.WithTempDirectory(out var tempFolder);
+                    using var _ = Utility.GetTempDir(TempDir, out var tempFolder);
                     var success = installMissingRuntimes(splash, missingFrameworks, false, tempFolder).Result;
                     if (!success) return;
                 }
