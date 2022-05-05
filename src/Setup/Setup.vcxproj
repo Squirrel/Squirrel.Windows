@@ -90,12 +90,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bundle_marker.cpp" />
+    <ClCompile Include="LzmaDec.c" />
     <ClCompile Include="miniz.c" />
     <ClCompile Include="platform_util.cpp" />
     <ClCompile Include="Setup.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="7zTypes.h" />
     <ClInclude Include="bundle_marker.h" />
+    <ClInclude Include="LzmaDec.h" />
     <ClInclude Include="miniz.h" />
     <ClInclude Include="platform_util.h" />
   </ItemGroup>

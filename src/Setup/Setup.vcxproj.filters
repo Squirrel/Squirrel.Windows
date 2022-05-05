@@ -27,6 +27,9 @@
     <ClCompile Include="miniz.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LzmaDec.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bundle_marker.h">
@@ -36,6 +39,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="miniz.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="7zTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LzmaDec.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
