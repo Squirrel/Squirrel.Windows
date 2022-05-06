@@ -8,8 +8,10 @@ using Squirrel.SimpleSplat;
 
 namespace Squirrel
 {
+    /// <summary> Describes how the application will be installed / updated on the given system. </summary>
     public class UpdateConfig
     {
+        /// <summary> The unique application Id. This is used in various app paths. </summary>
         public virtual string AppId { get; }
 
         public virtual string RootAppDir { get; }

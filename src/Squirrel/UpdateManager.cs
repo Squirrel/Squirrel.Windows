@@ -16,21 +16,17 @@ namespace Squirrel
     /// <inheritdoc cref="IUpdateManager"/>
     public partial class UpdateManager : IUpdateManager
     {
-        ///// <summary>The unique Id of the application.</summary>
-        //public virtual string AppId => _config.AppId;
-
-        ///// <inheritdoc/>
-        //public virtual string AppDirectory => _config.RootAppDir;
-
         /// <inheritdoc/>
         public bool IsInstalledApp => CurrentlyInstalledVersion() != null;
 
+        /// <summary>The <see cref="UpdateConfig"/> describes the structure of the application on disk (eg. file/folder locations).</summary>
         public UpdateConfig Config => _config;
 
         /// <summary>The <see cref="IUpdateSource"/> responsible for retrieving updates from a package repository.</summary>
-        protected readonly IUpdateSource _source;
-        protected readonly UpdateConfig _config;
+        public IUpdateSource Source => _source;
 
+        private readonly IUpdateSource _source;
+        private readonly UpdateConfig _config;
         private readonly object _lockobj = new object();
         private IDisposable _updateLock;
         private bool _disposed;
