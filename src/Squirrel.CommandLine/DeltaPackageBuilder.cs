@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using Squirrel.SimpleSplat;
 using Squirrel.Bsdiff;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace Squirrel
+namespace Squirrel.CommandLine
 {
     internal class DeltaPackageBuilder : IEnableLogger
     {

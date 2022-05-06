@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using Squirrel;
 using Squirrel.SimpleSplat;
 using Squirrel.Sources;
 
-namespace SquirrelCli.Sources
+namespace Squirrel.CommandLine.Sync
 {
     internal class GitHubRepository : IPackageRepository
     {

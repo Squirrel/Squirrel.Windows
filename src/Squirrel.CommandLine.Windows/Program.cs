@@ -1,29 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
-using System.IO.Compression;
 using System.Linq;
-using System.Reflection;
 using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using Mono.Options;
 using NuGet.Versioning;
-using Squirrel;
-using Squirrel.Json;
-using Squirrel.Lib;
 using Squirrel.NuGet;
-using Squirrel.CommandLine;
 using Squirrel.SimpleSplat;
-using SquirrelCli.Sources;
+using Squirrel.CommandLine.Sync;
 
-namespace SquirrelCli
+namespace Squirrel.CommandLine
 {
     class Program : IEnableLogger
     {

@@ -2,7 +2,6 @@
 using System.IO;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.Versioning;
-using System.Threading;
 using Microsoft.NET.HostModel;
 using Microsoft.NET.HostModel.AppHost;
 

@@ -10,10 +10,9 @@ using System.Threading.Tasks;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Squirrel;
 using Squirrel.SimpleSplat;
 
-namespace SquirrelCli.Sources
+namespace Squirrel.CommandLine.Sync
 {
     internal class S3Repository : IPackageRepository
     {

@@ -1,18 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using NuGet.Commands;
-using NuGet.Configuration;
-using NuGet.Packaging;
-using NuGet.Versioning;
 using Squirrel.SimpleSplat;
+using NG = NuGet.Common;
 
-namespace SquirrelCli
+namespace Squirrel.CommandLine
 {
-    internal class NugetConsole : NuGet.Common.ILogger, IEnableLogger
+    internal class NugetConsole : NG.ILogger, IEnableLogger
     {
         public void Pack(string nuspecPath, string baseDirectory, string outputDirectory)
         {
@@ -36,23 +31,23 @@ namespace SquirrelCli
         }
 
         #region NuGet.Common.ILogger
-        public void Log(NuGet.Common.LogLevel level, string data)
+        public void Log(NG.LogLevel level, string data)
         {
             this.Log().Info(data);
         }
 
-        public void Log(NuGet.Common.ILogMessage message)
+        public void Log(NG.ILogMessage message)
         {
             this.Log().Info(message.Message);
         }
 
-        public Task LogAsync(NuGet.Common.LogLevel level, string data)
+        public Task LogAsync(NG.LogLevel level, string data)
         {
             this.Log().Info(data);
             return Task.CompletedTask;
         }
 
-        public Task LogAsync(NuGet.Common.ILogMessage message)
+        public Task LogAsync(NG.ILogMessage message)
         {
             this.Log().Info(message.Message);
             return Task.CompletedTask;

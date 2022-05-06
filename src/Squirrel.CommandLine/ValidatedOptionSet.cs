@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Mono.Options;
-using Squirrel;
 
-namespace SquirrelCli
+namespace Squirrel.CommandLine
 {
     internal class OptionValidationException : Exception
     {

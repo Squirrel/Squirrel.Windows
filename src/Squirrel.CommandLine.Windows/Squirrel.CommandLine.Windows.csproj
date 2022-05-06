@@ -4,7 +4,7 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <OutputType>Exe</OutputType>
     <AssemblyName>Squirrel</AssemblyName>
-    <RootNamespace>Squirrel</RootNamespace>
+    <RootNamespace>Squirrel.CommandLine</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\..\squirrel.ico</ApplicationIcon>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>

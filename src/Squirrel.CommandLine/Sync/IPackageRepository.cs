@@ -1,7 +1,6 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
-namespace SquirrelCli.Sources
+namespace Squirrel.CommandLine.Sync
 {
     internal interface IPackageRepository
     {

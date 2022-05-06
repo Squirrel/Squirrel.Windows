@@ -6,9 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using B2Net;
 using B2Net.Models;
-using Squirrel;
 
-namespace SquirrelCli.Sources
+namespace Squirrel.CommandLine.Sync
 {
     internal class BackblazeRepository : IPackageRepository
     {

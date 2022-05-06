@@ -4,9 +4,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
-using Squirrel;
 
-namespace SquirrelCli.Sources
+namespace Squirrel.CommandLine.Sync
 {
     internal class SimpleWebRepository : IPackageRepository
     {

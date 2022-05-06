@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Squirrel.SimpleSplat;
+﻿using Squirrel.SimpleSplat;
 
-namespace SquirrelCli
+namespace Squirrel.CommandLine
 {
     internal abstract class BaseOptions : ValidatedOptionSet
     {

@@ -3,7 +3,6 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Xml;
 using Squirrel.MarkdownSharp;
 using Squirrel.NuGet;
@@ -15,7 +14,7 @@ using NuGet.Versioning;
 using System.Runtime.Versioning;
 using System.Collections.Generic;
 
-namespace Squirrel
+namespace Squirrel.CommandLine
 {
     internal interface IReleasePackage
     {

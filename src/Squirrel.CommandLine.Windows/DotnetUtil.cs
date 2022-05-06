@@ -4,7 +4,6 @@
 using Microsoft.NET.HostModel.AppHost;
 using Microsoft.NET.HostModel.Bundle;
 using NuGet.Versioning;
-using Squirrel;
 using Squirrel.SimpleSplat;
 using System;
 using System.Collections.Generic;
@@ -13,14 +12,11 @@ using System.IO;
 using System.IO.Compression;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace SquirrelCli
+namespace Squirrel.CommandLine
 {
     internal class DotnetUtil
     {
