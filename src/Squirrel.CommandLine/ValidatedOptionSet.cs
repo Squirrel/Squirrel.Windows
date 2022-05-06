@@ -185,6 +185,11 @@ namespace Squirrel.CommandLine
             this.Add(new CommandAction<T>(command, description, options, action));
         }
 
+        public void Add(CommandSet commands)
+        {
+            AddRange(commands);
+        }
+
         public virtual void Execute(string[] args)
         {
             if (args.Length == 0)

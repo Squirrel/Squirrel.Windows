@@ -162,7 +162,7 @@ namespace Squirrel.CommandLine
         {
             IsRequired(nameof(packId), nameof(packVersion), nameof(packDirectory));
             Squirrel.NuGet.NugetUtil.ThrowIfInvalidNugetId(packId);
-            Squirrel.NuGet.NugetUtil.ThrowIfVersionNotSemverCompliant(packVersion);
+            Squirrel.NuGet.NugetUtil.ThrowIfVersionNotSemverCompliant(packVersion, true);
             IsValidDirectory(nameof(packDirectory), true);
             IsValidFile(nameof(releaseNotes));
             base.ValidateInternal(false);

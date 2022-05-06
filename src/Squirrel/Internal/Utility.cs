@@ -94,7 +94,7 @@ namespace Squirrel
 
         public static bool PathPartEndsWith(string part1, string endsWith)
         {
-            return part1.StartsWith(endsWith, SquirrelRuntimeInfo.PathStringComparison);
+            return part1.EndsWith(endsWith, SquirrelRuntimeInfo.PathStringComparison);
         }
 
         public static bool FileHasExtension(string filePath, string extension)
@@ -378,19 +378,26 @@ namespace Squirrel
                 }));
         }
 
-        [SupportedOSPlatform("windows")]
         public static string GetDefaultTempDirectory(string localAppDirectory)
         {
+            string tempDir;
+
+            if (SquirrelRuntimeInfo.IsOSX) {
+                tempDir = "/tmp/squirrel";
+            } else if (SquirrelRuntimeInfo.IsWindows) {
 #if DEBUG
-            const string TEMP_ENV_VAR = "CLOWD_SQUIRREL_TEMP_DEBUG";
-            const string TEMP_DIR_NAME = "SquirrelClowdTempDebug";
+                const string TEMP_ENV_VAR = "CLOWD_SQUIRREL_TEMP_DEBUG";
+                const string TEMP_DIR_NAME = "SquirrelClowdTempDebug";
 #else
-            const string TEMP_ENV_VAR = "CLOWD_SQUIRREL_TEMP";
-            const string TEMP_DIR_NAME = "SquirrelClowdTemp";
+                const string TEMP_ENV_VAR = "CLOWD_SQUIRREL_TEMP";
+                const string TEMP_DIR_NAME = "SquirrelClowdTemp";
 #endif
 
-            var tempDir = Environment.GetEnvironmentVariable(TEMP_ENV_VAR);
-            tempDir = tempDir ?? Path.Combine(localAppDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), TEMP_DIR_NAME);
+                tempDir = Environment.GetEnvironmentVariable(TEMP_ENV_VAR);
+                tempDir = tempDir ?? Path.Combine(localAppDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), TEMP_DIR_NAME);
+            } else {
+                throw new NotSupportedException();
+            }
 
             var di = new DirectoryInfo(tempDir);
             if (!di.Exists) di.Create();

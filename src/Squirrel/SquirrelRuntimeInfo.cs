@@ -17,6 +17,7 @@ using InteropArchitecture = System.Runtime.InteropServices.Architecture;
 
 namespace System.Runtime.Versioning
 {
+    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
     internal class SupportedOSPlatformGuardAttribute : Attribute
     {
         public SupportedOSPlatformGuardAttribute(string platformName) { }
@@ -29,6 +30,7 @@ namespace System.Runtime.Versioning
 
 namespace System.Runtime.Versioning
 {
+    [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
     internal class SupportedOSPlatformAttribute : Attribute
     {
         public SupportedOSPlatformAttribute(string platformName) { }

@@ -8,136 +8,35 @@ using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Mono.Options;
 using NuGet.Versioning;
 using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
-using Squirrel.CommandLine.Sync;
 
 namespace Squirrel.CommandLine
 {
     class Program : IEnableLogger
     {
-#pragma warning disable CS0436 // Type conflicts with imported type
-        public static string DisplayVersion => ThisAssembly.AssemblyInformationalVersion + (ThisAssembly.IsPublicRelease ? "" : " (prerelease)");
-        public static string FileVersion => ThisAssembly.AssemblyFileVersion;
-#pragma warning restore CS0436 // Type conflicts with imported type
+        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
-        public static string TempDir => Utility.GetDefaultTempDirectory(null);
+        static string TempDir => Utility.GetDefaultTempDirectory(null);
 
         public static int Main(string[] args)
         {
-            var logger = new ConsoleLogger();
-            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(ILogger));
-
-            bool help = false;
-            bool verbose = false;
-            var globalOptions = new OptionSet() {
-                { "h|?|help", "Ignores all other arguments and shows help text", _ => help = true },
-                { "verbose", "Print extra diagnostic logging", _ => verbose = true },
-            };
-
-            var exeName = Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
-            string sqUsage =
-                $"Squirrel {DisplayVersion}, tool for creating and deploying Squirrel releases" + Environment.NewLine +
-                $"Usage: {exeName} [verb] [--option:value]";
-
             var commands = new CommandSet {
-                "",
-                sqUsage,
-                "",
-                "[ Global Options ]",
-                globalOptions.GetHelpText().TrimEnd(),
-                "",
                 "[ Package Authoring ]",
                 { "pack", "Creates a Squirrel release from a folder containing application files", new PackOptions(), Pack },
                 { "releasify", "Take an existing nuget package and convert it into a Squirrel release", new ReleasifyOptions(), Releasify },
-                "",
-                "[ Package Deployment / Syncing ]",
-                { "b2-down", "Download recent releases from BackBlaze B2", new SyncBackblazeOptions(), o => Download(new BackblazeRepository(o)) },
-                { "b2-up", "Upload releases to BackBlaze B2", new SyncBackblazeOptions(), o => Upload(new BackblazeRepository(o)) },
-                { "http-down", "Download recent releases from an HTTP source", new SyncHttpOptions(), o => Download(new SimpleWebRepository(o)) },
-                { "github-down", "Download recent releases from GitHub", new SyncGithubOptions(), o => Download(new GitHubRepository(o)) },
-                { "s3-down", "Download recent releases from a S3 bucket", new SyncS3Options(), o => Download(new S3Repository(o)) },
-                { "s3-up", "Upload recent releases to a S3 bucket", new SyncS3Options(), o => Upload(new S3Repository(o)) },
-                //"",
-                //"[ Examples ]",
-                //$"    {exeName} pack ",
-                //$"        ",
             };
 
-            try {
-                globalOptions.Parse(args);
-
-                if (verbose) {
-                    logger.Level = LogLevel.Debug;
-                }
-
-                if (help) {
-                    commands.WriteHelp();
-                    return 0;
-                } else {
-                    // parse cli and run command
-                    commands.Execute(args);
-                }
-
-                return 0;
-            } catch (Exception ex) when (ex is OptionValidationException || ex is OptionException) {
-                // if the arguments fail to validate, print argument help
-                Console.WriteLine();
-                logger.Write(ex.Message, LogLevel.Error);
-                commands.WriteHelp();
-                Console.WriteLine();
-                logger.Write(ex.Message, LogLevel.Error);
-                return -1;
-            } catch (Exception ex) {
-                // for other errors, just print the error and short usage instructions
-                Console.WriteLine();
-                logger.Write(ex.ToString(), LogLevel.Error);
-                Console.WriteLine();
-                Console.WriteLine(sqUsage);
-                Console.WriteLine($" > '{exeName} -h' to see program help.");
-                return -1;
-            }
+            return SquirrelHost.Run(args, commands);
         }
-
-        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
-
-        static void Upload<T>(T repo) where T : IPackageRepository => repo.UploadMissingPackages().Wait();
-
-        static void Download<T>(T repo) where T : IPackageRepository => repo.DownloadRecentPackages().Wait();
 
         static void Pack(PackOptions options)
         {
-            var releaseNotesText = String.IsNullOrEmpty(options.releaseNotes)
-                ? "" // no releaseNotes
-                : $"<releaseNotes>{SecurityElement.Escape(File.ReadAllText(options.releaseNotes))}</releaseNotes>";
-
             using (Utility.GetTempDir(TempDir, out var tmp)) {
-                string nuspec = $@"
-<?xml version=""1.0"" encoding=""utf-8""?>
-<package>
-  <metadata>
-    <id>{options.packId}</id>
-    <title>{options.packTitle ?? options.packId}</title>
-    <description>{options.packTitle ?? options.packId}</description>
-    <authors>{options.packAuthors ?? options.packId}</authors>
-    <version>{options.packVersion}</version>
-    {releaseNotesText}
-  </metadata>
-  <files>
-    <file src=""**"" target=""lib\native\"" exclude=""{(options.includePdb ? "" : "*.pdb;")}*.nupkg;*.vshost.*""/>
-  </files>
-</package>
-".Trim();
-                var nuspecPath = Path.Combine(tmp, options.packId + ".nuspec");
-                File.WriteAllText(nuspecPath, nuspec);
-
-                new NugetConsole().Pack(nuspecPath, options.packDirectory, tmp);
-
-                var nupkgPath = Directory.EnumerateFiles(tmp).Where(f => f.EndsWith(".nupkg")).FirstOrDefault();
-                if (nupkgPath == null)
-                    throw new Exception($"Failed to generate nupkg, unspecified error");
+                var nupkgPath = NugetConsole.CreatePackageFromMetadata(
+                    tmp, options.packDirectory, options.packId, options.packTitle,
+                    options.packAuthors, options.packVersion, options.releaseNotes, options.includePdb);
 
                 options.package = nupkgPath;
                 Releasify(options);
@@ -237,7 +136,7 @@ namespace Squirrel.CommandLine
                     // warning if the installed SquirrelLib version is not the same as Squirrel.exe
                     StringFileInfo sqLib = null;
                     try {
-                        var myFileVersion = new NuGetVersion(FileVersion).Version;
+                        var myFileVersion = new NuGetVersion(SquirrelHost.FileVersion).Version;
                         sqLib = Directory.EnumerateFiles(libDir, "SquirrelLib.dll")
                             .Select(f => { StringFileInfo.ReadVersionInfo(f, out var fi); return fi; })
                             .FirstOrDefault(fi => fi.FileVersion != myFileVersion);
@@ -247,7 +146,7 @@ namespace Squirrel.CommandLine
                     if (sqLib != null) {
                         Log.Warn(
                             $"SquirrelLib.dll {sqLib.FileVersion} is installed in provided package, " +
-                            $"but current Squirrel.exe version is {DisplayVersion} ({FileVersion}). " +
+                            $"but current Squirrel.exe version is {SquirrelHost.DisplayVersion} ({SquirrelHost.FileVersion}). " +
                             $"The LIB version and CLI tool version must be the same to build releases " +
                             $"or the application may fail to update properly.");
                     }
@@ -454,35 +353,6 @@ namespace Squirrel.CommandLine
                 });
             } catch (Exception ex) {
                 Log.ErrorException($"Error creating StubExecutable and copying resources for '{exeToCopy}'. This stub may or may not work properly.", ex);
-            }
-        }
-    }
-
-    class ConsoleLogger : ILogger
-    {
-        public LogLevel Level { get; set; } = LogLevel.Info;
-
-        private readonly object gate = new object();
-
-        private readonly string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-
-        public void Write(string message, LogLevel logLevel)
-        {
-            if (logLevel < Level) {
-                return;
-            }
-
-            message = message.Replace(localAppData, "%localappdata%", StringComparison.InvariantCultureIgnoreCase);
-
-            lock (gate) {
-                string lvl = logLevel.ToString().Substring(0, 4).ToUpper();
-                if (logLevel == LogLevel.Error || logLevel == LogLevel.Fatal) {
-                    Utility.ConsoleWriteWithColor($"[{lvl}] {message}{Environment.NewLine}", ConsoleColor.Red);
-                } else if (logLevel == LogLevel.Warn) {
-                    Utility.ConsoleWriteWithColor($"[{lvl}] {message}{Environment.NewLine}", ConsoleColor.Yellow);
-                } else {
-                    Console.WriteLine($"[{lvl}] {message}");
-                }
             }
         }
     }

@@ -42,7 +42,6 @@ namespace Squirrel.CommandLine
 
         public SemanticVersion Version => ReleaseEntry.ParseEntryFileName(InputPackageFile).Version;
 
-        [SupportedOSPlatform("windows")]
         internal string CreateReleasePackage(string temporaryDirectory, string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, ZipPackage> contentsPostProcessHook = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(outputFile));
@@ -62,7 +61,7 @@ namespace Squirrel.CommandLine
             // we don't really care that they aren't valid
             if (!ModeDetector.InUnitTestRunner()) {
                 // verify that the .nuspec version is semver compliant
-                NugetUtil.ThrowIfVersionNotSemverCompliant(package.Version.ToString());
+                NugetUtil.ThrowIfVersionNotSemverCompliant(package.Version.ToString(), true);
 
                 // verify that the suggested filename can be round-tripped as an assurance 
                 // someone won't run across an edge case and install a broken app somehow
