@@ -7,6 +7,7 @@
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
 
@@ -15,6 +16,7 @@ namespace Squirrel.Lib
     /// <summary>
     ///     Provides access to NTFS junction points in .Net.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     internal static class JunctionPoint
     {
         /// <summary>

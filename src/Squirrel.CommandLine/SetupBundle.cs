@@ -1,12 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.IO.MemoryMappedFiles;
+using System.Runtime.Versioning;
 using System.Threading;
 using Microsoft.NET.HostModel;
 using Microsoft.NET.HostModel.AppHost;
 
-namespace Squirrel.Shared
+namespace Squirrel.CommandLine
 {
+    [SupportedOSPlatform("windows")]
     public static class SetupBundle
     {
         public static bool IsBundle(string setupPath, out long bundleOffset, out long bundleLength)

@@ -19,7 +19,7 @@ using Squirrel;
 using Squirrel.Json;
 using Squirrel.Lib;
 using Squirrel.NuGet;
-using Squirrel.Shared;
+using Squirrel.CommandLine;
 using Squirrel.SimpleSplat;
 using SquirrelCli.Sources;
 
@@ -210,7 +210,7 @@ namespace SquirrelCli
             foreach (var file in toProcess) {
                 Log.Info("Creating release for package: " + file.FullName);
 
-                var rp = new ReleasePackage(file.FullName);
+                var rp = new ReleasePackageBuilder(file.FullName);
                 rp.CreateReleasePackage(TempDir, Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
                     var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
                         .ContextualSingle("package", "*.nuspec", "top level directory");
@@ -347,7 +347,7 @@ namespace SquirrelCli
 
                 processed.Add(rp.ReleasePackageFile);
 
-                var prev = ReleaseEntry.GetPreviousRelease(previousReleases, rp, targetDir);
+                var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, targetDir);
                 if (prev != null && generateDeltas) {
                     var deltaBuilder = new DeltaPackageBuilder();
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,

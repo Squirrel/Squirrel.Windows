@@ -20,10 +20,10 @@ namespace Squirrel
         public static string StubExecutablePath => FindHelperFile("StubExecutable.exe");
         public static string SingleFileHostPath => FindHelperFile("singlefilehost.exe");
         public static string WixTemplatePath => FindHelperFile("template.wxs");
-        public static string SevenZipPath => FindHelperFile("7z.exe");
         public static string SignToolPath => FindHelperFile("signtool.exe");
 
         // private so we don't expose paths to internal tools. these should be exposed as a helper function
+        private static string SevenZipPath => FindHelperFile("7z.exe");
         private static string RceditPath => FindHelperFile("rcedit.exe");
         private static string WixCandlePath => FindHelperFile("candle.exe");
         private static string WixLightPath => FindHelperFile("light.exe");
@@ -131,6 +131,43 @@ namespace Squirrel
             }
 
             return InvokeAndThrowIfNonZero(RceditPath, args);
+        }
+
+        //private static string _7zPath;
+
+        //private static async Task<string> Get7zPath()
+        //{
+        //    if (_7zPath != null) return _7zPath;
+
+        //    var findCommand = SquirrelRuntimeInfo.IsWindows ? "where" : "which";
+
+        //    // search for the 7z or 7za on the path
+        //    var result = await Utility.InvokeProcessUnsafeAsync(Utility.CreateProcessStartInfo(findCommand, "7z"), CancellationToken.None).ConfigureAwait(false);
+        //    if (result.ExitCode == 0) {
+        //        _7zPath = "7z";
+        //        return _7zPath;
+        //    }
+
+        //    result = await Utility.InvokeProcessUnsafeAsync(Utility.CreateProcessStartInfo(findCommand, "7za"), CancellationToken.None).ConfigureAwait(false);
+        //    if (result.ExitCode == 0) {
+        //        _7zPath = "7za";
+        //        return _7zPath;
+        //    }
+
+        //    // we only bundle the windows version currently
+        //    if (SquirrelRuntimeInfo.IsWindows) {
+        //        _7zPath = HelperExe.SevenZipPath;
+        //        return _7zPath;
+        //    }
+
+        //    return null;
+        //}
+
+        public static async Task CompressLzma7z(string zipFilePath, string inFolder)
+        {
+            Log.Info($"Compressing '{inFolder}' to '{zipFilePath}' using 7z (LZMA)...");
+            var args = new string[] { "a", zipFilePath, "-tzip", "-m0=LZMA", "-aoa", "-y", "*" };
+            await InvokeAndThrowIfNonZero(SevenZipPath, args, inFolder).ConfigureAwait(false);
         }
 
         private static async Task InvokeAndThrowIfNonZero(string exePath, IEnumerable<string> args, string workingDir = null)

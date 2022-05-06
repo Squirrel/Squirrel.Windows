@@ -11,6 +11,7 @@ using Squirrel.SimpleSplat;
 using System.Threading;
 using Squirrel.Bsdiff;
 using System.Runtime.Versioning;
+using Squirrel.NuGet;
 
 namespace Squirrel
 {
@@ -144,7 +145,7 @@ namespace Squirrel
                 target.Create();
 
                 this.Log().Info("Writing files to app directory: {0}", target.FullName);
-                await ReleasePackage.ExtractZipForInstall(
+                await ZipPackage.ExtractZipReleaseForInstall(
                     Path.Combine(updateInfo.PackageDirectory, release.Filename),
                     target.FullName,
                     _config.RootAppDir,
@@ -185,22 +186,22 @@ namespace Squirrel
             // 
 
             // Smash together our base full package and the nearest delta
-            var ret = await Task.Run(() => {
-                var basePkg = new ReleasePackage(Path.Combine(_config.PackagesDir, currentVersion.Filename));
-                var deltaPkg = new ReleasePackage(Path.Combine(_config.PackagesDir, releasesToApply.First().Filename));
+            var outputPackageZip = await Task.Run(() => {
+                var basePkg = Path.Combine(_config.PackagesDir, currentVersion.Filename);
+                var deltaPkg = Path.Combine(_config.PackagesDir, releasesToApply.First().Filename);
 
                 return ApplyDeltaPackage(basePkg, deltaPkg,
-                    Regex.Replace(deltaPkg.InputPackageFile, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+                    Regex.Replace(deltaPkg, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
                     x => progress.ReportReleaseProgress(x));
             }).ConfigureAwait(false);
 
             progress.FinishRelease();
 
             if (releasesToApply.Count() == 1) {
-                return ReleaseEntry.GenerateFromFile(ret.InputPackageFile);
+                return ReleaseEntry.GenerateFromFile(outputPackageZip);
             }
 
-            var fi = new FileInfo(ret.InputPackageFile);
+            var fi = new FileInfo(outputPackageZip);
             var entry = ReleaseEntry.GenerateFromFile(fi.OpenRead(), fi.Name);
 
             // Recursively combine the rest of them
@@ -360,19 +361,19 @@ namespace Squirrel
             return File.Exists(Path.Combine(appFolderPath, ".dead"));
         }
 
-        internal ReleasePackage ApplyDeltaPackage(ReleasePackage basePackage, ReleasePackage deltaPackage, string outputFile, Action<int> progress = null)
+        internal string ApplyDeltaPackage(string basePackageZip, string deltaPackageZip, string outputFile, Action<int> progress = null)
         {
             progress = progress ?? (x => { });
 
-            Contract.Requires(deltaPackage != null);
+            Contract.Requires(deltaPackageZip != null);
             Contract.Requires(!String.IsNullOrEmpty(outputFile) && !File.Exists(outputFile));
 
             using (Utility.GetTempDir(_config.TempDir, out var deltaPath))
             using (Utility.GetTempDir(_config.TempDir, out var workingPath)) {
-                EasyZip.ExtractZipToDirectory(deltaPackage.InputPackageFile, deltaPath);
+                EasyZip.ExtractZipToDirectory(deltaPackageZip, deltaPath);
                 progress(25);
 
-                EasyZip.ExtractZipToDirectory(basePackage.InputPackageFile, workingPath);
+                EasyZip.ExtractZipToDirectory(basePackageZip, workingPath);
                 progress(50);
 
                 var pathsVisited = new List<string>();
@@ -422,7 +423,7 @@ namespace Squirrel
                 progress(100);
             }
 
-            return new ReleasePackage(outputFile);
+            return outputFile;
         }
 
         void applyDiffToFile(string deltaPath, string relativeFilePath, string workingDirectory)

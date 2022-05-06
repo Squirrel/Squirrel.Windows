@@ -1,12 +1,11 @@
 ﻿// If updating HostModel, mark the ResourceUpdater.cs class as partial so these functions can get mixed in
 
 using System;
+using System.Runtime.Versioning;
 
 namespace Microsoft.NET.HostModel
 {
-#if NET5_0_OR_GREATER
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
-#endif
+    [SupportedOSPlatform("windows")]
     public partial class ResourceUpdater
     {
         public ResourceUpdater(string peFile, bool bDeleteExistingResources)

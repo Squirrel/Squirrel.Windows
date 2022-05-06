@@ -363,21 +363,6 @@ namespace Squirrel
             return Filename.GetHashCode();
         }
 
-        /// <summary>
-        /// Given a list of releases and a specified release package, returns the release package
-        /// directly previous to the specified version.
-        /// </summary>
-        internal static ReleasePackage GetPreviousRelease(IEnumerable<ReleaseEntry> releaseEntries, IReleasePackage package, string targetDir)
-        {
-            if (releaseEntries == null || !releaseEntries.Any()) return null;
-            return releaseEntries
-                .Where(x => x.IsDelta == false)
-                .Where(x => x.Version < package.Version)
-                .OrderByDescending(x => x.Version)
-                .Select(x => new ReleasePackage(Path.Combine(targetDir, x.Filename), true))
-                .FirstOrDefault();
-        }
-
         static readonly Regex _suffixRegex = new Regex(@"(-full|-delta)?\.nupkg$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         static readonly Regex _versionStartRegex = new Regex(@"[\.-](0|[1-9]\d*)\.(0|[1-9]\d*)($|[^\d])", RegexOptions.Compiled);
 

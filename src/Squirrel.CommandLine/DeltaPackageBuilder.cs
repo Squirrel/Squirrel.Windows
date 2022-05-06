@@ -14,7 +14,7 @@ namespace Squirrel
 {
     internal class DeltaPackageBuilder : IEnableLogger
     {
-        public ReleasePackage CreateDeltaPackage(ReleasePackage basePackage, ReleasePackage newPackage, string outputFile, string tempDirectory)
+        public ReleasePackageBuilder CreateDeltaPackage(ReleasePackageBuilder basePackage, ReleasePackageBuilder newPackage, string outputFile, string tempDirectory)
         {
             Contract.Requires(basePackage != null);
             Contract.Requires(!String.IsNullOrEmpty(outputFile) && !File.Exists(outputFile));
@@ -164,7 +164,7 @@ namespace Squirrel
 
                 printProcessed(newLibFiles.Length, baseLibFiles.Count);
 
-                ReleasePackage.addDeltaFilesToContentTypes(tempInfo.FullName);
+                ReleasePackageBuilder.addDeltaFilesToContentTypes(tempInfo.FullName);
                 EasyZip.CreateZipFromDirectory(outputFile, tempInfo.FullName);
 
                 this.Log().Info(
@@ -173,7 +173,7 @@ namespace Squirrel
                     ".");
             }
 
-            return new ReleasePackage(outputFile);
+            return new ReleasePackageBuilder(outputFile);
         }
     }
 }

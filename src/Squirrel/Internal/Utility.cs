@@ -12,9 +12,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Net;
-using NuGet.Versioning;
-using Squirrel.Lib;
 using Squirrel.NuGet;
 using System.Runtime.Versioning;
 
