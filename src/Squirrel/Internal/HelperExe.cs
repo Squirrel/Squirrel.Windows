@@ -90,45 +90,29 @@ namespace Squirrel
 
             try {
                 // Candle reprocesses and compiles WiX source files into object files (.wixobj).
+                Log.Info("Compiling WiX Template (candle.exe)");
                 var candleParams = new string[] { "-nologo", "-ext", "WixNetFxExtension", "-out", objFile, wxsTarget };
-                var processResult = await Utility.InvokeProcessAsync(WixCandlePath, candleParams, CancellationToken.None, workingDir).ConfigureAwait(false);
-
-                if (processResult.Item1 != 0) {
-                    var msg = String.Format(
-                        "Failed to compile WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
-                        "candle.exe", Utility.ArgsToCommandLine(candleParams), processResult.Item2);
-                    throw new Exception(msg);
-                }
+                await InvokeAndThrowIfNonZero(WixCandlePath, candleParams, workingDir).ConfigureAwait(false);
 
                 // Light links and binds one or more .wixobj files and creates a Windows Installer database (.msi or .msm). 
+                Log.Info("Linking WiX Template (light.exe)");
                 var lightParams = new string[] { "-ext", "WixNetFxExtension", "-spdb", "-sval", "-out", outputFile, objFile };
-                processResult = await Utility.InvokeProcessAsync(WixLightPath, lightParams, CancellationToken.None, workingDir).ConfigureAwait(false);
-
-                if (processResult.Item1 != 0) {
-                    var msg = String.Format(
-                        "Failed to link WiX template, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
-                        "light.exe", Utility.ArgsToCommandLine(lightParams), processResult.Item2);
-                    throw new Exception(msg);
-                }
+                await InvokeAndThrowIfNonZero(WixLightPath, lightParams, workingDir).ConfigureAwait(false);
             } finally {
                 Utility.DeleteFileOrDirectoryHard(objFile, throwOnFailure: false);
             }
         }
 
-        public static async Task SetExeIcon(string exePath, string iconPath)
+        public static Task SetExeIcon(string exePath, string iconPath)
         {
+            Log.Info("Updating PE icon for: " + exePath);
             var args = new[] { Path.GetFullPath(exePath), "--set-icon", iconPath };
-            var processResult = await Utility.InvokeProcessAsync(RceditPath, args, CancellationToken.None).ConfigureAwait(false);
-            if (processResult.ExitCode != 0) {
-                var msg = String.Format(
-                    "Failed to modify resources, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
-                    RceditPath, args, processResult.StdOutput);
-                throw new Exception(msg);
-            }
+            return InvokeAndThrowIfNonZero(RceditPath, args);
         }
 
-        public static async Task SetPEVersionBlockFromPackageInfo(string exePath, NuGet.IPackage package, string iconPath = null)
+        public static Task SetPEVersionBlockFromPackageInfo(string exePath, NuGet.IPackage package, string iconPath = null)
         {
+            Log.Info("Updating StringTable resources for: " + exePath);
             var realExePath = Path.GetFullPath(exePath);
 
             List<string> args = new List<string>() {
@@ -146,12 +130,16 @@ namespace Squirrel
                 args.Add(Path.GetFullPath(iconPath));
             }
 
-            var processResult = await Utility.InvokeProcessAsync(RceditPath, args, CancellationToken.None).ConfigureAwait(false);
-            if (processResult.ExitCode != 0) {
-                var msg = String.Format(
-                    "Failed to modify resources, command invoked was: '{0} {1}'\n\nOutput was:\n{2}",
-                    RceditPath, args, processResult.StdOutput);
-                throw new Exception(msg);
+            return InvokeAndThrowIfNonZero(RceditPath, args);
+        }
+
+        private static async Task InvokeAndThrowIfNonZero(string exePath, IEnumerable<string> args, string workingDir = null)
+        {
+            var result = await Utility.InvokeProcessAsync(exePath, args, CancellationToken.None, workingDir).ConfigureAwait(false);
+            if (result.ExitCode != 0) {
+                throw new Exception(
+                    $"Command failed: \n{Path.GetFileName(exePath)} {Utility.ArgsToCommandLine(args)}\n\n" +
+                    $"Output was:\n" + result.StdOutput);
             }
         }
     }
