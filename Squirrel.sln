@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel", "src\Squirrel\Sq
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel.Tests", "test\Squirrel.Tests.csproj", "{98AEB048-E27D-42F4-9440-505B7F78BAFD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Update", "src\Update\Update.csproj", "{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Update.Windows", "src\Update.Windows\Update.Windows.csproj", "{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionLevel", "SolutionLevel", "{ED657D2C-F8A0-4012-A64F-7367D41BE4D2}"
 	ProjectSection(SolutionItems) = preProject
@@ -18,11 +18,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionLevel", "SolutionLe
 		version.json = version.json
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SquirrelCli", "src\SquirrelCli\SquirrelCli.csproj", "{19E8EBF5-0277-422F-BF49-C66D9DBA5AA4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel.CommandLine.Windows", "src\Squirrel.CommandLine.Windows\Squirrel.CommandLine.Windows.csproj", "{19E8EBF5-0277-422F-BF49-C66D9DBA5AA4}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Setup", "src\Setup\Setup.vcxproj", "{6B406985-B2E1-4FED-A405-BD0694D68E93}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel.Shared", "src\Squirrel.Shared\Squirrel.Shared.csproj", "{352C15EA-622F-4132-80D8-9B6E3C83404E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel.CommandLine", "src\Squirrel.CommandLine\Squirrel.CommandLine.csproj", "{352C15EA-622F-4132-80D8-9B6E3C83404E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StubExecutable", "src\StubExecutable\StubExecutable.vcxproj", "{611A03D4-4CDE-4DA0-B151-DE6FAFFB8B8C}"
 EndProject
