@@ -21,13 +21,13 @@ foreach ($Folder in $Folders) {
 }
 
 # Build Squirrel C++ with msbuild as dotnet can't
-&"$MSBuildPath" /verbosity:minimal /restore /p:Configuration=Release /p:Platform=x86
+&"$MSBuildPath" /verbosity:minimal /restore /p:Configuration=Release
 
 # Build single-exe packaged projects
 # New-Item -Path "$Out" -Name "win-x86" -ItemType "directory"
 $BinOut = $Out
-dotnet publish -v minimal -c Release -r win-x64 --self-contained=true "$PSScriptRoot\src\SquirrelCli\SquirrelCli.csproj" -o "$Out"
-dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\Update\Update.csproj" -o "$BinOut"
+dotnet publish -v minimal -c Release -r win-x64 --self-contained=true "$PSScriptRoot\src\Squirrel.CommandLine.Windows\Squirrel.CommandLine.Windows.csproj" -o "$Out"
+dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\Update.Windows\Update.Windows.csproj" -o "$BinOut"
 
 # Copy over all files we need
 Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$BinOut" -Recurse
