@@ -163,7 +163,7 @@ namespace Squirrel.CommandLine
                 printProcessed(newLibFiles.Length, baseLibFiles.Count);
 
                 ReleasePackageBuilder.addDeltaFilesToContentTypes(tempInfo.FullName);
-                EasyZip.CreateZipFromDirectory(outputFile, tempInfo.FullName);
+                HelperFile.CompressLzma7z(outputFile, tempInfo.FullName).GetAwaiterResult();
 
                 this.Log().Info(
                     $"Successfully created delta package for {basePackage.Version} -> {newPackage.Version}" +

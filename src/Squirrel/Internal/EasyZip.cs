@@ -33,7 +33,7 @@ namespace Squirrel
 
         public static void CreateZipFromDirectory(string outputFile, string directoryToCompress)
         {
-            Log.Info($"Compressing '{directoryToCompress}' to '{outputFile}' using SharpCompress...");
+            Log.Info($"Compressing '{directoryToCompress}' to '{outputFile}' using SharpCompress (DEFLATE)...");
             using var archive = ZipArchive.Create();
             archive.DeflateCompressionLevel = CompressionLevel.BestSpeed;
             archive.AddAllFromDirectory(directoryToCompress);

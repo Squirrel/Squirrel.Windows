@@ -115,7 +115,7 @@ namespace Squirrel.CommandLine
 
                 contentsPostProcessHook?.Invoke(tempPath, package);
 
-                EasyZip.CreateZipFromDirectory(outputFile, tempPath);
+                HelperFile.CompressLzma7z(outputFile, tempPath).GetAwaiterResult();
 
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;

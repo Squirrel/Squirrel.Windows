@@ -289,14 +289,13 @@ namespace Squirrel.CommandLine
             Log.Info("Done");
         }
 
-        static async Task<string> createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
+        static Task<string> createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
         {
             Log.Info($"Compiling machine-wide msi deployment tool in {(packageAs64Bit ? "64-bit" : "32-bit")} mode");
 
             var setupExeDir = Path.GetDirectoryName(setupExe);
             var setupName = Path.GetFileNameWithoutExtension(setupExe);
             var culture = CultureInfo.GetCultureInfo(package.Language ?? "").TextInfo.ANSICodePage;
-            var templateText = File.ReadAllText(HelperExe.WixTemplatePath);
 
             // WiX Identifiers may contain ASCII characters A-Z, a-z, digits, underscores (_), or
             // periods(.). Every identifier must begin with either a letter or an underscore.
@@ -323,18 +322,7 @@ namespace Squirrel.CommandLine
                 templateData[String.Format("IdAsGuid{0}", i)] = Utility.CreateGuidFromHash(String.Format("{0}:{1}", package.Id, i)).ToString();
             }
 
-            var templateResult = CopStache.Render(templateText, templateData);
-
-            var wxsTarget = Path.Combine(setupExeDir, setupName + ".wxs");
-            File.WriteAllText(wxsTarget, templateResult, Encoding.UTF8);
-
-            try {
-                var msiTarget = Path.Combine(setupExeDir, setupName + "_DeploymentTool.msi");
-                await HelperExe.CompileWixTemplateToMsi(wxsTarget, msiTarget);
-                return msiTarget;
-            } finally {
-                File.Delete(wxsTarget);
-            }
+            return HelperExe.CompileWixTemplateToMsi(templateData, setupExeDir, setupName);
         }
 
         static void createExecutableStubForExe(string exeToCopy)
