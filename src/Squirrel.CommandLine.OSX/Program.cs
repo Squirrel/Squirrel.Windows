@@ -1,10 +1,10 @@
-﻿// See https://aka.ms/new-console-template for more information
+// See https://aka.ms/new-console-template for more information
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using Claunia.PropertyList;
+using Squirrel.PropertyList;
 using Squirrel.SimpleSplat;
 
 namespace Squirrel.CommandLine
