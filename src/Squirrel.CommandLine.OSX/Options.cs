@@ -40,7 +40,7 @@ namespace Squirrel.CommandLine
             IsValidFile(nameof(icon), ".icns");
 
             var exe = Path.Combine(packDirectory, exeName);
-            if (!File.Exists(exe)) // || !MachOUtils.IsMachOImage(exe))
+            if (!File.Exists(exe) || !MachOUtils.IsMachOImage(exe))
                 throw new OptionValidationException($"Could not find mach-o executable at '{exe}'.");
         }
     }

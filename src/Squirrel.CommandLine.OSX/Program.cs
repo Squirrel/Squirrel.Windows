@@ -1,4 +1,4 @@
-// See https://aka.ms/new-console-template for more information
+﻿// See https://aka.ms/new-console-template for more information
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,8 +19,8 @@ namespace Squirrel.CommandLine
         {
             var commands = new CommandSet {
                 "[ Package Authoring ]",
-                { "bundle", "Reads a build directory and creates a OSX '.app' bundle", new BundleOptions(), Bundle },
-                { "pack", "Convert a '.app' bundle into a Squirrel release", new PackOptions(), Pack },
+                { "bundle", "Convert a build directory into a OSX '.app' bundle", new BundleOptions(), Bundle },
+                { "pack", "Create a Squirrel release from a '.app' bundle", new PackOptions(), Pack },
             };
 
             return SquirrelHost.Run(args, commands);
@@ -40,9 +40,17 @@ namespace Squirrel.CommandLine
 
             var _ = Utility.GetTempDir(TempDir, out var tmp);
 
-            var packId = plist.ObjectForKey("CFBundleIdentifier").ToString();
-            var packVersion = plist.ObjectForKey("CFBundleVersion").ToString();
-            var packTitle = plist.ObjectForKey("CFBundleName").ToString();
+            string getpStr(string name)
+            {
+                var res = plist.ObjectForKey(name);
+                if (res == null)
+                    throw new Exception($"Did not find required key '{name}' in Info.plist");
+                return res.ToString();
+            }
+
+            var packId = getpStr("CFBundleIdentifier");
+            var packVersion = getpStr("CFBundleVersion");
+            var packTitle = getpStr("CFBundleName");
 
             var nupkgPath = NugetConsole.CreatePackageFromMetadata(
                 tmp, options.package, packId, packTitle, packTitle,
@@ -55,19 +63,20 @@ namespace Squirrel.CommandLine
             }
 
             var rp = new ReleasePackageBuilder(nupkgPath);
-            //var newPkgPath = rp.CreateReleasePackage(TempDir, Path.Combine(options.releaseDir, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
-            //    var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
-            //     .ContextualSingle("package", "*.nuspec", "top level directory");
-            //    var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
-            //        .ContextualSingle("package", "'lib' folder");
-            //    var contentsDir = Path.Combine(libDir, "Contents");
-            //    File.Copy(nuspecPath, Path.Combine(contentsDir, "current.version"));
-            //});
+            var newPkgPath = rp.CreateReleasePackage(TempDir, Path.Combine(options.releaseDir, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
+                var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
+                 .ContextualSingle("package", "*.nuspec", "top level directory");
+                var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
+                    .ContextualSingle("package", "'lib' folder");
+                var contentsDir = Path.Combine(libDir, "Contents");
+                File.Copy(nuspecPath, Path.Combine(contentsDir, "current.version"));
+                File.Copy(HelperExe.UpdatePath, Path.Combine(contentsDir, "UpdateMac"));
+            });
 
             // we are not currently making any modifications to the package
             // so we can just copy it to the right place. uncomment the above otherwise.
-            var newPkgPath = Path.Combine(targetDir, rp.SuggestedReleaseFileName);
-            File.Move(rp.InputPackageFile, newPkgPath);
+            //var newPkgPath = Path.Combine(targetDir, rp.SuggestedReleaseFileName);
+            //File.Move(rp.InputPackageFile, newPkgPath);
 
             var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, targetDir);
             if (prev != null && !options.noDelta) {
@@ -76,7 +85,7 @@ namespace Squirrel.CommandLine
                     Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")), TempDir);
             }
 
-            ReleaseEntry.WriteReleaseFile(previousReleases.Concat(new [] { ReleaseEntry.GenerateFromFile(newPkgPath) }), releaseFilePath);
+            ReleaseEntry.WriteReleaseFile(previousReleases.Concat(new[] { ReleaseEntry.GenerateFromFile(newPkgPath) }), releaseFilePath);
 
             Log.Info("Done");
         }

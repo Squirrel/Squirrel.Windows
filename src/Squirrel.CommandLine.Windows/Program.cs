@@ -67,7 +67,7 @@ namespace Squirrel.CommandLine
             using var ud = Utility.GetTempDir(TempDir, out var tempDir);
 
             // update icon for Update.exe if requested
-            var bundledUpdatePath = HelperExe.UpdatePath(p => Microsoft.NET.HostModel.AppHost.HostWriter.IsBundle(p, out var _hz));
+            var bundledUpdatePath = HelperExe.UpdatePath;
             var updatePath = Path.Combine(tempDir, "Update.exe");
             if (setupIcon != null) {
                 DotnetUtil.UpdateSingleFileBundleIcon(TempDir, bundledUpdatePath, updatePath, setupIcon).Wait();
