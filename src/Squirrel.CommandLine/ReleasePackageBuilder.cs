@@ -115,7 +115,7 @@ namespace Squirrel.CommandLine
 
                 contentsPostProcessHook?.Invoke(tempPath, package);
 
-                HelperFile.CompressLzma7z(outputFile, tempPath).GetAwaiterResult();
+                HelperFile.CompressLzma7z(outputFile, tempPath);
 
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;

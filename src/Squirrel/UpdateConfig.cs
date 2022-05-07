@@ -14,26 +14,42 @@ namespace Squirrel
         /// <summary> The unique application Id. This is used in various app paths. </summary>
         public virtual string AppId { get; }
 
+        /// <summary> 
+        /// The root directory of the application. On Windows, this folder contains all 
+        /// the application files, but that may not be the case on other operating systems. 
+        /// </summary>
         public virtual string RootAppDir { get; }
 
+        /// <summary> The directory in which nupkg files are stored for this application. </summary>
         public virtual string PackagesDir { get; }
 
+        /// <summary> The temporary directory for this application. </summary>
         public virtual string TempDir { get; }
 
+        /// <summary> The directory where new versions are stored, before they are applied. </summary>
         public virtual string VersionStagingDir { get; }
 
+        /// <summary> 
+        /// The directory where the current version of the application is stored.
+        /// This directory will be swapped out for a new version in <see cref="VersionStagingDir"/>.
+        /// </summary>
         public virtual string CurrentVersionDir { get; }
 
+        /// <summary> The path to the current Update.exe or similar on other operating systems. </summary>
         public virtual string UpdateExePath { get; }
 
+        /// <summary> The path to the RELEASES index detailing the local packages. </summary>
         public virtual string ReleasesFilePath => Path.Combine(PackagesDir, "RELEASES");
 
+        /// <summary> The path to the .betaId file which contains a unique GUID for this user. </summary>
         public virtual string BetaIdFilePath => Path.Combine(PackagesDir, ".betaId");
 
+        /// <summary> The currently installed version of the application. </summary>
         public virtual SemanticVersion CurrentlyInstalledVersion => GetCurrentlyInstalledVersion();
 
         private static IFullLogger Log() => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(UpdateConfig));
 
+        /// <summary> Creates a new instance of UpdateConfig. </summary>
         public UpdateConfig(string applicationIdOverride, string localAppDataDirOverride)
         {
             UpdateExePath = GetUpdateExe();

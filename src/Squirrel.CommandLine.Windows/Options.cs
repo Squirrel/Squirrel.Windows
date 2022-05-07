@@ -19,6 +19,17 @@ namespace Squirrel.CommandLine
                 v => signTemplate = v);
         }
 
+        public void SignPEFile(string filePath)
+        {
+            if (!String.IsNullOrEmpty(signParams)) {
+                HelperExe.SignPEFilesWithSignTool(filePath, signParams);
+            } else if (!String.IsNullOrEmpty(signTemplate)) {
+                HelperExe.SignPEFilesWithTemplate(filePath, signTemplate);
+            } else {
+                Log.Debug($"No signing paramaters, file will not be signed: '{filePath}'.");
+            }
+        }
+
         public override void Validate()
         {
             if (!String.IsNullOrEmpty(signParams) && !String.IsNullOrEmpty(signTemplate)) {
@@ -27,44 +38,6 @@ namespace Squirrel.CommandLine
 
             if (!String.IsNullOrEmpty(signTemplate) && !signTemplate.Contains("{{file}}")) {
                 throw new OptionValidationException($"Argument 'signTemplate': Must contain '{{{{file}}}}' in template string (replaced with the file to sign). Current value is '{signTemplate}'");
-            }
-        }
-
-        public void SignPEFile(string filePath)
-        {
-            try {
-                if (AuthenticodeTools.IsTrusted(filePath)) {
-                    Log.Debug("'{0}' is already signed, skipping...", filePath);
-                    return;
-                }
-            } catch (Exception ex) {
-                Log.ErrorException("Failed to determine signing status for " + filePath, ex);
-            }
-
-            string cmd;
-            ProcessStartInfo psi;
-            if (!String.IsNullOrEmpty(signParams)) {
-                // use embedded signtool.exe with provided parameters
-                cmd = $"sign {signParams} \"{filePath}\"";
-                psi = Utility.CreateProcessStartInfo(HelperExe.SignToolPath, cmd);
-                cmd = "signtool.exe " + cmd;
-            } else if (!String.IsNullOrEmpty(signTemplate)) {
-                // escape custom sign command and pass it to cmd.exe
-                cmd = signTemplate.Replace("\"{{file}}\"", "{{file}}").Replace("{{file}}", $"\"{filePath}\"");
-                psi = Utility.CreateProcessStartInfo("cmd", $"/c {Utility.EscapeCmdExeMetachars(cmd)}");
-            } else {
-                Log.Debug("{0} was not signed. (skipped; no signing parameters)", filePath);
-                return;
-            }
-
-            var processResult = Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None)
-                .ConfigureAwait(false).GetAwaiter().GetResult();
-
-            if (processResult.ExitCode != 0) {
-                var cmdWithPasswordHidden = new Regex(@"/p\s+\w+").Replace(cmd, "/p ********");
-                throw new Exception("Signing command failed: \n > " + cmdWithPasswordHidden + "\n" + processResult.StdOutput);
-            } else {
-                Log.Info("Sign successful: " + processResult.StdOutput);
             }
         }
     }

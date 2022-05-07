@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\src\SquirrelCli\NugetConsole.cs" Link="TestHelpers\NugetConsole.cs" />
+    <Compile Include="..\src\Squirrel.CommandLine\NugetConsole.cs" Link="TestHelpers\NugetConsole.cs" />
   </ItemGroup>
 
   <ItemGroup>

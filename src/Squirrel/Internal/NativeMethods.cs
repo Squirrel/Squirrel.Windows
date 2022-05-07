@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -28,6 +29,35 @@ namespace Squirrel
             }
 
             return (int) pbi.InheritedFromUniqueProcessId;
+        }
+
+        [DllImport("kernel32.dll", EntryPoint = "LocalFree", SetLastError = true)]
+        private static extern IntPtr _LocalFree(IntPtr hMem);
+
+        [DllImport("shell32.dll", EntryPoint = "CommandLineToArgvW", CharSet = CharSet.Unicode)]
+        private static extern IntPtr _CommandLineToArgvW([MarshalAs(UnmanagedType.LPWStr)] string cmdLine, out int numArgs);
+
+        public static string[] CommandLineToArgvW(string cmdLine)
+        {
+            IntPtr argv = IntPtr.Zero;
+            try {
+                int numArgs = 0;
+
+                argv = _CommandLineToArgvW(cmdLine, out numArgs);
+                if (argv == IntPtr.Zero) {
+                    throw new Win32Exception();
+                }
+                var result = new string[numArgs];
+
+                for (int i = 0; i < numArgs; i++) {
+                    IntPtr currArg = Marshal.ReadIntPtr(argv, i * Marshal.SizeOf(typeof(IntPtr)));
+                    result[i] = Marshal.PtrToStringUni(currArg);
+                }
+
+                return result;
+            } finally {
+                _LocalFree(argv);
+            }
         }
 
         [DllImport("shell32.dll", SetLastError = true)]

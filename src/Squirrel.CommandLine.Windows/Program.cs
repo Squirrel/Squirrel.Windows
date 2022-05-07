@@ -70,7 +70,7 @@ namespace Squirrel.CommandLine
             var bundledUpdatePath = HelperExe.UpdatePath;
             var updatePath = Path.Combine(tempDir, "Update.exe");
             if (setupIcon != null) {
-                DotnetUtil.UpdateSingleFileBundleIcon(TempDir, bundledUpdatePath, updatePath, setupIcon).Wait();
+                DotnetUtil.UpdateSingleFileBundleIcon(TempDir, bundledUpdatePath, updatePath, setupIcon);
             } else {
                 File.Copy(bundledUpdatePath, updatePath, true);
             }
@@ -262,7 +262,7 @@ namespace Squirrel.CommandLine
             var bundledzp = new ZipPackage(package);
             var targetSetupExe = Path.Combine(di.FullName, $"{bundledzp.Id}Setup.exe");
             File.Copy(options.debugSetupExe ?? HelperExe.SetupPath, targetSetupExe, true);
-            Utility.Retry(() => HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, bundledzp, setupIcon).Wait());
+            HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, bundledzp, setupIcon);
 
             var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
             var newestReleasePath = Path.Combine(di.FullName, newestFullRelease.Filename);
@@ -282,14 +282,14 @@ namespace Squirrel.CommandLine
 
             if (!String.IsNullOrEmpty(options.msi)) {
                 bool x64 = options.msi.Equals("x64");
-                var msiPath = createMsiPackage(targetSetupExe, bundledzp, x64).Result;
+                var msiPath = createMsiPackage(targetSetupExe, bundledzp, x64);
                 options.SignPEFile(msiPath);
             }
 
             Log.Info("Done");
         }
 
-        static Task<string> createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
+        static string createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
         {
             Log.Info($"Compiling machine-wide msi deployment tool in {(packageAs64Bit ? "64-bit" : "32-bit")} mode");
 

@@ -50,8 +50,7 @@ namespace Squirrel.CommandLine
                 if (helper != null)
                     return helper;
 
-                var psi = Utility.CreateProcessStartInfo(findCommand, n);
-                var result = Utility.InvokeProcessUnsafeAsync(psi, CancellationToken.None).GetAwaiterResult();
+                var result = ProcessUtil.InvokeProcess(findCommand, new[] { n }, null, CancellationToken.None);
                 if (result.ExitCode == 0) {
                     return n;
                 }
@@ -87,19 +86,19 @@ namespace Squirrel.CommandLine
             return result;
         }
 
-        public static async Task CompressLzma7z(string zipFilePath, string inFolder)
+        public static void CompressLzma7z(string zipFilePath, string inFolder)
         {
             Log.Info($"Compressing '{inFolder}' to '{zipFilePath}' using 7z (LZMA)...");
             var args = new string[] { "a", zipFilePath, "-tzip", "-m0=LZMA", "-aoa", "-y", "*" };
-            await InvokeAndThrowIfNonZero(SevenZipPath, args, inFolder).ConfigureAwait(false);
+            InvokeAndThrowIfNonZero(SevenZipPath, args, inFolder);
         }
 
-        protected static async Task InvokeAndThrowIfNonZero(string exePath, IEnumerable<string> args, string workingDir = null)
+        protected static void InvokeAndThrowIfNonZero(string exePath, IEnumerable<string> args, string workingDir)
         {
-            var result = await Utility.InvokeProcessAsync(exePath, args, CancellationToken.None, workingDir).ConfigureAwait(false);
+            var result = ProcessUtil.InvokeProcess(exePath, args, workingDir, CancellationToken.None);
             if (result.ExitCode != 0) {
                 throw new Exception(
-                    $"Command failed: \n{Path.GetFileName(exePath)} {Utility.ArgsToCommandLine(args)}\n\n" +
+                    $"Command failed:\n{result.Command}\n\n" +
                     $"Output was:\n" + result.StdOutput);
             }
         }

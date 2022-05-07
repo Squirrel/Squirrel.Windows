@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
@@ -70,7 +70,7 @@ namespace Microsoft.NET.HostModel.AppHost
             {
                 if (assemblyToCopyResorcesFrom != null && appHostIsPEImage)
                 {
-                    if (ResourceUpdater.IsSupportedOS())
+                    if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && ResourceUpdater.IsSupportedOS())
                     {
                         // Copy resources from managed dll to the apphost
                         new ResourceUpdater(appHostDestinationFilePath)

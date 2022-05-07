@@ -115,7 +115,7 @@ namespace Squirrel.CommandLine
             return HostWriter.IsBundle(peFile, out var offset) && offset > 0;
         }
 
-        public static async Task UpdateSingleFileBundleIcon(string rootTempDir, string sourceFile, string destinationFile, string iconPath)
+        public static void UpdateSingleFileBundleIcon(string rootTempDir, string sourceFile, string destinationFile, string iconPath)
         {
             using var _ = Utility.GetTempDir(rootTempDir, out var tmpdir);
             var sourceName = Path.GetFileNameWithoutExtension(sourceFile);
@@ -136,7 +136,7 @@ namespace Squirrel.CommandLine
 
             // set new icon
             Log.Info("Patching Update.exe icon");
-            await HelperExe.SetExeIcon(newAppHost, iconPath);
+            HelperExe.SetExeIcon(newAppHost, iconPath);
 
             // create new bundle
             var bundlerOutput = Path.Combine(tmpdir, "output");
@@ -153,7 +153,7 @@ namespace Squirrel.CommandLine
             );
 
             Log.Info("Re-packing Update.exe bundle");
-            var singleFile = DotnetUtil.GenerateBundle(bundler, tmpdir, bundlerOutput);
+            var singleFile = GenerateBundle(bundler, tmpdir, bundlerOutput);
 
             // copy to requested location
             File.Copy(singleFile, destinationFile);

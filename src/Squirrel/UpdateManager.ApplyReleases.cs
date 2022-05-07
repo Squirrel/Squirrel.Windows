@@ -42,7 +42,7 @@ namespace Squirrel
 
             // Progress range: 60 -> 80
             // extracts the new package to a version dir (app-{ver}) inside VersionStagingDir
-            var newVersionStagingDir = await this.ErrorIfThrows(() => installPackageToStagingDir(updateInfo, release, x => progress(CalculateProgress(x, 60, 80))),
+            var newVersionDir = await this.ErrorIfThrows(() => installPackageToStagingDir(updateInfo, release, x => progress(CalculateProgress(x, 60, 80))),
                 "Failed to install package to app dir").ConfigureAwait(false);
 
             progress(80);
@@ -50,14 +50,16 @@ namespace Squirrel
             this.Log().Info("Updating local release file");
             var currentReleases = await Task.Run(() => ReleaseEntry.BuildReleasesFile(_config.PackagesDir)).ConfigureAwait(false);
 
-            progress(85);
+            if (SquirrelRuntimeInfo.IsWindows) {
+                progress(85);
 
-            this.Log().Info("Running post-install hooks");
-            var currentVersionDir = await invokePostInstall(newVersionStagingDir, attemptingFullInstall, false, silentInstall).ConfigureAwait(false);
+                this.Log().Info("Running post-install hooks");
+                newVersionDir = await invokePostInstall(newVersionDir, attemptingFullInstall, false, silentInstall).ConfigureAwait(false);
 
-            progress(90);
+                progress(90);
 
-            executeSelfUpdate(currentVersionDir);
+                executeSelfUpdate(newVersionDir);
+            }
 
             progress(95);
 
@@ -69,7 +71,7 @@ namespace Squirrel
 
             progress(100);
 
-            return currentVersionDir;
+            return newVersionDir;
         }
 
         /// <inheritdoc/>
@@ -96,7 +98,8 @@ namespace Squirrel
                             using (var cts = new CancellationTokenSource()) {
                                 cts.CancelAfter(10 * 1000);
                                 try {
-                                    await Utility.InvokeProcessAsync(exe, new string[] { "--squirrel-uninstall", currentVersion.ToString() }, cts.Token).ConfigureAwait(false);
+                                    var args = new string[] { "--squirrel-uninstall", currentVersion.ToString() };
+                                    await ProcessUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
                                 } catch (Exception ex) {
                                     this.Log().ErrorException("Failed to run cleanup hook, continuing: " + exe, ex);
                                 }
@@ -208,6 +211,7 @@ namespace Squirrel
             return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progress).ConfigureAwait(false);
         }
 
+        [SupportedOSPlatform("windows")]
         void executeSelfUpdate(string newVersionDir)
         {
             var newSquirrel = Path.Combine(newVersionDir, "Squirrel.exe");
@@ -228,6 +232,7 @@ namespace Squirrel
             Utility.Retry(() => File.Copy(newSquirrel, _config.UpdateExePath, true));
         }
 
+        [SupportedOSPlatform("windows")]
         async Task<string> invokePostInstall(string targetDir, bool isInitialInstall, bool firstRunOnly, bool silentInstall)
         {
             var versionInfo = _config.GetVersionInfoFromDirectory(targetDir);
@@ -245,7 +250,7 @@ namespace Squirrel
                     cts.CancelAfter(30 * 1000);
 
                     try {
-                        await Utility.InvokeProcessAsync(exe, args, cts.Token, Path.GetDirectoryName(exe)).ConfigureAwait(false);
+                        await ProcessUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
                     } catch (Exception ex) {
                         this.Log().ErrorException("Couldn't run Squirrel hook, continuing: " + exe, ex);
                     }
@@ -298,18 +303,20 @@ namespace Squirrel
                 // don't run hooks if the folder is already dead.
                 if (isAppFolderDead(v.DirectoryPath)) continue;
 
-                var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(v.DirectoryPath);
-                var args = new string[] { "--squirrel-obsolete", v.Version.ToString() };
+                if (SquirrelRuntimeInfo.IsWindows) {
+                    var squirrelApps = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(v.DirectoryPath);
+                    var args = new string[] { "--squirrel-obsolete", v.Version.ToString() };
 
-                if (squirrelApps.Count > 0) {
-                    // For each app, run the install command in-order and wait
-                    foreach (var exe in squirrelApps) {
-                        using (var cts = new CancellationTokenSource()) {
-                            cts.CancelAfter(10 * 1000);
-                            try {
-                                await Utility.InvokeProcessAsync(exe, args, cts.Token).ConfigureAwait(false);
-                            } catch (Exception ex) {
-                                this.Log().ErrorException("Coudln't run Squirrel hook, continuing: " + exe, ex);
+                    if (squirrelApps.Count > 0) {
+                        // For each app, run the install command in-order and wait
+                        foreach (var exe in squirrelApps) {
+                            using (var cts = new CancellationTokenSource()) {
+                                cts.CancelAfter(10 * 1000);
+                                try {
+                                    await ProcessUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
+                                } catch (Exception ex) {
+                                    this.Log().ErrorException("Coudln't run Squirrel hook, continuing: " + exe, ex);
+                                }
                             }
                         }
                     }

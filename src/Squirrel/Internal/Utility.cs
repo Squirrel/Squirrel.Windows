@@ -226,103 +226,7 @@ namespace Squirrel
             }
         }
 
-        /*
-         * caesay — 09/12/2021 at 12:10 PM
-         * yeah
-         * can I steal this for squirrel? 
-         * Roman — 09/12/2021 at 12:10 PM
-         * sure :)
-         * reference CommandRunner.cs on the github url as source? :)
-         * https://github.com/RT-Projects/RT.Util/blob/ef660cd693f66bc946da3aaa368893b03b74eed7/RT.Util.Core/CommandRunner.cs#L327
-         */
 
-        /// <summary>
-        ///     Given a number of argument strings, constructs a single command line string with all the arguments escaped
-        ///     correctly so that a process using standard Windows API for parsing the command line will receive exactly the
-        ///     strings passed in here. See Remarks.</summary>
-        /// <remarks>
-        ///     The string is only valid for passing directly to a process. If the target process is invoked by passing the
-        ///     process name + arguments to cmd.exe then further escaping is required, to counteract cmd.exe's interpretation
-        ///     of additional special characters. See <see cref="EscapeCmdExeMetachars"/>.</remarks>
-        [SupportedOSPlatform("windows")]
-        public static string ArgsToCommandLine(IEnumerable<string> args)
-        {
-            var sb = new StringBuilder();
-            foreach (var arg in args) {
-                if (arg == null)
-                    continue;
-                if (sb.Length != 0)
-                    sb.Append(' ');
-                // For details, see https://web.archive.org/web/20150318010344/http://blogs.msdn.com/b/twistylittlepassagesallalike/archive/2011/04/23/everyone-quotes-arguments-the-wrong-way.aspx
-                // or https://devblogs.microsoft.com/oldnewthing/?p=12833
-                if (arg.Length != 0 && arg.IndexOfAny(_cmdChars) < 0)
-                    sb.Append(arg);
-                else {
-                    sb.Append('"');
-                    for (int c = 0; c < arg.Length; c++) {
-                        int backslashes = 0;
-                        while (c < arg.Length && arg[c] == '\\') {
-                            c++;
-                            backslashes++;
-                        }
-                        if (c == arg.Length) {
-                            sb.Append('\\', backslashes * 2);
-                            break;
-                        } else if (arg[c] == '"') {
-                            sb.Append('\\', backslashes * 2 + 1);
-                            sb.Append('"');
-                        } else {
-                            sb.Append('\\', backslashes);
-                            sb.Append(arg[c]);
-                        }
-                    }
-                    sb.Append('"');
-                }
-            }
-            return sb.ToString();
-        }
-        private static readonly char[] _cmdChars = new[] { ' ', '"', '\n', '\t', '\v' };
-
-        /// <summary>
-        ///     Escapes all cmd.exe meta-characters by prefixing them with a ^. See <see cref="ArgsToCommandLine"/> for more
-        ///     information.</summary>
-        [SupportedOSPlatform("windows")]
-        public static string EscapeCmdExeMetachars(string command)
-        {
-            var result = new StringBuilder();
-            foreach (var ch in command) {
-                switch (ch) {
-                case '(':
-                case ')':
-                case '%':
-                case '!':
-                case '^':
-                case '"':
-                case '<':
-                case '>':
-                case '&':
-                case '|':
-                    result.Append('^');
-                    break;
-                }
-                result.Append(ch);
-            }
-            return result.ToString();
-        }
-
-        /// <summary>
-        /// This function will escape command line arguments such that CommandLineToArgvW is guarenteed to produce the same output as the 'args' parameter. 
-        /// It also will automatically execute wine if trying to run an exe while not on windows.
-        /// </summary>
-        [SupportedOSPlatform("windows")]
-        public static Task<(int ExitCode, string StdOutput)> InvokeProcessAsync(string fileName, IEnumerable<string> args, CancellationToken ct, string workingDirectory = "")
-        {
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT && fileName.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) {
-                return InvokeProcessUnsafeAsync(CreateProcessStartInfo("wine", ArgsToCommandLine(new string[] { fileName }.Concat(args)), workingDirectory), ct);
-            } else {
-                return InvokeProcessUnsafeAsync(CreateProcessStartInfo(fileName, ArgsToCommandLine(args), workingDirectory), ct);
-            }
-        }
 
         public static T GetAwaiterResult<T>(this Task<T> task)
         {
@@ -332,45 +236,6 @@ namespace Squirrel
         public static void GetAwaiterResult(this Task task)
         {
             task.ConfigureAwait(false).GetAwaiter().GetResult();
-        }
-
-        public static ProcessStartInfo CreateProcessStartInfo(string fileName, string arguments, string workingDirectory = "")
-        {
-            var psi = new ProcessStartInfo(fileName, arguments);
-            psi.UseShellExecute = false;
-            psi.WindowStyle = ProcessWindowStyle.Hidden;
-            psi.ErrorDialog = false;
-            psi.CreateNoWindow = true;
-            psi.RedirectStandardOutput = true;
-            psi.RedirectStandardError = true;
-            psi.WorkingDirectory = workingDirectory;
-            return psi;
-        }
-
-        public static async Task<(int ExitCode, string StdOutput)> InvokeProcessUnsafeAsync(ProcessStartInfo psi, CancellationToken ct)
-        {
-            var pi = Process.Start(psi);
-            await Task.Run(() => {
-                while (!ct.IsCancellationRequested) {
-                    if (pi.WaitForExit(2000)) return;
-                }
-
-                if (ct.IsCancellationRequested) {
-                    pi.Kill();
-                    ct.ThrowIfCancellationRequested();
-                }
-            }).ConfigureAwait(false);
-
-            string textResult = await pi.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-            if (String.IsNullOrWhiteSpace(textResult) || pi.ExitCode != 0) {
-                textResult = (textResult ?? "") + "\n" + await pi.StandardError.ReadToEndAsync().ConfigureAwait(false);
-
-                if (String.IsNullOrWhiteSpace(textResult)) {
-                    textResult = String.Empty;
-                }
-            }
-
-            return (pi.ExitCode, textResult.Trim());
         }
 
         public static Task ForEachAsync<T>(this IEnumerable<T> source, Action<T> body, int degreeOfParallelism = 4)

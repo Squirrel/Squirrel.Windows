@@ -267,17 +267,18 @@ void extractSingleFile(void* zipBuf, size_t cZipBuf, wstring fileLocation, std::
                 throwLastMzError(&zip_archive, L"Unable to extract selected file from archive (DEFLATE).");
         }
         else if (file_stat.m_method == MZ_LZMA) {
+
             // miniz does not support LZMA, so we will extract as compressed data 
             // using MZ_ZIP_FLAG_COMPRESSED_DATA and then decode after using LZMA SDK
-            auto dataCompr = std::vector<Byte>(file_stat.m_comp_size);
-            if (!mz_zip_reader_extract_to_mem(&zip_archive, file_stat.m_file_index, &dataCompr[0], file_stat.m_comp_size, MZ_ZIP_FLAG_COMPRESSED_DATA))
+            auto dataCompr = std::vector<Byte>((size_t)file_stat.m_comp_size);
+            if (!mz_zip_reader_extract_to_mem(&zip_archive, file_stat.m_file_index, &dataCompr[0], (size_t)file_stat.m_comp_size, MZ_ZIP_FLAG_COMPRESSED_DATA))
                 throwLastMzError(&zip_archive, L"Unable to extract selected file from archive (LZMA).");
 
             // LZMA stream in zip container starts with 4 bytes: 0x09, 0x14, 0x05, 0x00
             // after that, there are 5 bytes that make up the LZMA decode properties
-            size_t szCompr = file_stat.m_comp_size - LZMA_PROPS_SIZE - 4;
-            size_t szDecompr = file_stat.m_uncomp_size;
-            auto dataDecompr = std::vector<Byte>(file_stat.m_uncomp_size);
+            size_t szCompr = (size_t)file_stat.m_comp_size - LZMA_PROPS_SIZE - 4;
+            size_t szDecompr = (size_t)file_stat.m_uncomp_size;
+            auto dataDecompr = std::vector<Byte>((size_t)file_stat.m_uncomp_size);
 
             ELzmaStatus status;
             SRes lzr = LzmaDecode(&dataDecompr[0], &szDecompr, &dataCompr[LZMA_PROPS_SIZE + 4],

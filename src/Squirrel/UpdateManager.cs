@@ -19,6 +19,12 @@ namespace Squirrel
         /// <inheritdoc/>
         public bool IsInstalledApp => CurrentlyInstalledVersion() != null;
 
+        /// <inheritdoc/>
+        public virtual SemanticVersion CurrentlyInstalledVersion() => _config.CurrentlyInstalledVersion;
+
+        /// <inheritdoc/>
+        public virtual string AppDirectory => _config.RootAppDir;
+
         /// <summary>The <see cref="UpdateConfig"/> describes the structure of the application on disk (eg. file/folder locations).</summary>
         public UpdateConfig Config => _config;
 
@@ -127,12 +133,6 @@ namespace Squirrel
         }
 
         /// <inheritdoc/>
-        public SemanticVersion CurrentlyInstalledVersion()
-        {
-            return _config.CurrentlyInstalledVersion;
-        }
-
-        /// <inheritdoc/>
         public async Task<ReleaseEntry> UpdateApp(Action<int> progress = null)
         {
             progress = progress ?? (_ => { });
@@ -173,9 +173,10 @@ namespace Squirrel
                     ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
                     "Failed to apply updates").ConfigureAwait(false);
 
-                await this.ErrorIfThrows(() =>
-                    CreateUninstallerRegistryEntry(),
-                    "Failed to set up uninstaller").ConfigureAwait(false);
+                if (SquirrelRuntimeInfo.IsWindows) {
+                    await CreateUninstallerRegistryEntry().ConfigureAwait(false);
+                }
+
             } catch {
                 if (ignoreDeltaUpdates == false) {
                     ignoreDeltaUpdates = true;
@@ -259,6 +260,7 @@ namespace Squirrel
             return process;
         }
 
+        [SupportedOSPlatform("windows")]
         private Process restartProcess(string exeToStart = null, string arguments = null)
         {
             // NB: Here's how this method works:
@@ -285,7 +287,7 @@ namespace Squirrel
                 args.Add(arguments);
             }
 
-            return Process.Start(_config.UpdateExePath, Utility.ArgsToCommandLine(args));
+            return ProcessUtil.StartNonBlocking(_config.UpdateExePath, args, Path.GetDirectoryName(_config.UpdateExePath));
         }
 
         private static string GetLocalAppDataDirectory(string assemblyLocation = null)
