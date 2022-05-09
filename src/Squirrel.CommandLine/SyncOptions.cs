@@ -14,27 +14,6 @@ namespace Squirrel.CommandLine
         }
     }
 
-    internal class SyncBackblazeOptions : BaseOptions
-    {
-        public string b2KeyId { get; private set; }
-        public string b2AppKey { get; private set; }
-        public string b2BucketId { get; private set; }
-
-        public SyncBackblazeOptions()
-        {
-            Add("b2BucketId=", v => b2BucketId = v);
-            Add("b2keyid=", v => b2KeyId = v);
-            Add("b2key=", v => b2AppKey = v);
-        }
-
-        public override void Validate()
-        {
-            IsRequired(nameof(b2KeyId), nameof(b2AppKey), nameof(b2BucketId));
-            Log.Warn("Provider 'b2' is being deprecated and will no longer be updated.");
-            Log.Warn("The replacement is using the 's3' provider with BackBlaze B2 using the '--endpoint' option.");
-        }
-    }
-
     internal class SyncS3Options : BaseOptions
     {
         public string keyId { get; private set; }
