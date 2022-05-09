@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Threading;
 using Squirrel.SimpleSplat;
 
 namespace Squirrel.Update
@@ -8,65 +10,52 @@ namespace Squirrel.Update
         static StartupOption _options;
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
-        [STAThread]
         public static int Main(string[] args)
         {
+            SetupLogLogger logger = null;
             try {
-                var logger = new SetupLogLogger(Utility.GetDefaultTempBaseDirectory());
+                logger = new SetupLogLogger(Utility.GetDefaultTempBaseDirectory());
                 SquirrelLocator.CurrentMutable.Register(() => logger, typeof(ILogger));
                 _options = new StartupOption(args);
 
-                
-                return main(args);
+                if (_options.updateAction == UpdateAction.Unset) {
+                    _options.WriteOptionDescriptions();
+                    return -1;
+                }
+
+                Log.Info("Starting Squirrel Updater: " + String.Join(" ", args));
+                Log.Info("Updater location is: " + SquirrelRuntimeInfo.EntryExePath);
+
+                switch (_options.updateAction) {
+                case UpdateAction.ApplyLatest:
+                    ApplyLatestVersion(_options.updateCurrentApp, _options.updateStagingDir, _options.restartApp);
+                    break;
+                }
+
+                Log.Info("Finished Squirrel Updater");
+                return 0;
             } catch (Exception ex) {
                 Console.Error.WriteLine(ex);
+                logger?.Write(ex.ToString(), LogLevel.Fatal);
                 return -1;
             }
         }
 
-        static int main(string[] args)
+        static void ApplyLatestVersion(string currentDir, string stagingDir, bool restartApp)
         {
-
-            try {
-            } catch (Exception ex) {
-                logp.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
-                throw;
+            if (!Utility.FileHasExtension(currentDir, ".app")) {
+                throw new ArgumentException("The current dir must end with '.app' on macos.");
             }
+            // todo https://stackoverflow.com/questions/51441576/how-to-run-app-as-sudo
+            // https://stackoverflow.com/questions/10283062/getting-sudo-to-ask-for-password-via-the-gui
 
-            // NB: Trying to delete the app directory while we have Setup.log
-            // open will actually crash the uninstaller
-            bool logToTemp = true;
+            Process.Start("killall", $"`basename -a '{currentDir}'`")?.WaitForExit();
 
-            var logDir = logToTemp ? Utility.GetDefaultTempDirectory(null) : SquirrelRuntimeInfo.BaseDirectory;
+            var config = new UpdateConfig(null, null);
+            config.UpdateAndRetrieveCurrentFolder(false);
 
-            var logger = new SetupLogLogger(logDir, !logToTemp, _options.updateAction) { Level = LogLevel.Info };
-            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
-
-            try {
-                return executeCommandLine(args);
-            } catch (Exception ex) {
-                logger.Write("Finished with unhandled exception: " + ex, LogLevel.Fatal);
-                throw;
-            }
-        }
-
-        static int executeCommandLine(string[] args)
-        {
-            Log.Info("Starting Squirrel Updater: " + String.Join(" ", args));
-            Log.Info("Updater location is: " + SquirrelRuntimeInfo.EntryExePath);
-
-            if (_options.updateAction == UpdateAction.Unset) {
-                _options.WriteOptionDescriptions();
-                return -1;
-            }
-
-            switch (_options.updateAction) {
-            case UpdateAction.ApplyLatest:
-                break;
-            }
-
-            Log.Info("Finished Squirrel Updater");
-            return 0;
+            if (restartApp)
+                ProcessUtil.InvokeProcess("open", new[] { "-n", currentDir }, null, CancellationToken.None);
         }
     }
 }
