@@ -115,9 +115,9 @@ namespace Squirrel.CommandLine
             return HostWriter.IsBundle(peFile, out var offset) && offset > 0;
         }
 
-        public static void UpdateSingleFileBundleIcon(string rootTempDir, string sourceFile, string destinationFile, string iconPath)
+        public static void UpdateSingleFileBundleIcon(string sourceFile, string destinationFile, string iconPath)
         {
-            using var _ = Utility.GetTempDir(rootTempDir, out var tmpdir);
+            using var _ = Utility.GetTempDirectory(out var tmpdir);
             var sourceName = Path.GetFileNameWithoutExtension(sourceFile);
 
             // extract Update.exe to tmp dir

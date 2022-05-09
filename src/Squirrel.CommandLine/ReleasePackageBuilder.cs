@@ -42,7 +42,7 @@ namespace Squirrel.CommandLine
 
         public SemanticVersion Version => ReleaseEntry.ParseEntryFileName(InputPackageFile).Version;
 
-        internal string CreateReleasePackage(string temporaryDirectory, string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, ZipPackage> contentsPostProcessHook = null)
+        internal string CreateReleasePackage(string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, ZipPackage> contentsPostProcessHook = null)
         {
             Contract.Requires(!String.IsNullOrEmpty(outputFile));
             releaseNotesProcessor = releaseNotesProcessor ?? (x => (new Markdown()).Transform(x));
@@ -97,7 +97,7 @@ namespace Squirrel.CommandLine
             this.Log().Info("Creating release package: {0} => {1}", InputPackageFile, outputFile);
 
 
-            using (Utility.GetTempDir(temporaryDirectory, out var tempPath)) {
+            using (Utility.GetTempDirectory(out var tempPath)) {
                 var tempDir = new DirectoryInfo(tempPath);
 
                 extractZipWithEscaping(InputPackageFile, tempPath).Wait();

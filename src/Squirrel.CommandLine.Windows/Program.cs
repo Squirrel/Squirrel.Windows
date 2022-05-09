@@ -18,8 +18,6 @@ namespace Squirrel.CommandLine
     {
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
-        static string TempDir => Utility.GetDefaultTempDirectory(null);
-
         public static int Main(string[] args)
         {
             var commands = new CommandSet {
@@ -33,7 +31,7 @@ namespace Squirrel.CommandLine
 
         static void Pack(PackOptions options)
         {
-            using (Utility.GetTempDir(TempDir, out var tmp)) {
+            using (Utility.GetTempDirectory(out var tmp)) {
                 var nupkgPath = NugetConsole.CreatePackageFromMetadata(
                     tmp, options.packDirectory, options.packId, options.packTitle,
                     options.packAuthors, options.packVersion, options.releaseNotes, options.includePdb);
@@ -64,13 +62,13 @@ namespace Squirrel.CommandLine
             if (requiredFrameworks.Any())
                 Log.Info("Package dependencies (from '--framework' argument) resolved as: " + String.Join(", ", requiredFrameworks.Select(r => r.Id)));
 
-            using var ud = Utility.GetTempDir(TempDir, out var tempDir);
+            using var ud = Utility.GetTempDirectory(out var tempDir);
 
             // update icon for Update.exe if requested
             var bundledUpdatePath = HelperExe.UpdatePath;
             var updatePath = Path.Combine(tempDir, "Update.exe");
             if (setupIcon != null) {
-                DotnetUtil.UpdateSingleFileBundleIcon(TempDir, bundledUpdatePath, updatePath, setupIcon);
+                DotnetUtil.UpdateSingleFileBundleIcon(bundledUpdatePath, updatePath, setupIcon);
             } else {
                 File.Copy(bundledUpdatePath, updatePath, true);
             }
@@ -101,7 +99,7 @@ namespace Squirrel.CommandLine
                 Log.Info("Creating release for package: " + file.FullName);
 
                 var rp = new ReleasePackageBuilder(file.FullName);
-                rp.CreateReleasePackage(TempDir, Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
+                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
                     var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
                         .ContextualSingle("package", "*.nuspec", "top level directory");
                     var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
@@ -241,7 +239,7 @@ namespace Squirrel.CommandLine
                 if (prev != null && generateDeltas) {
                     var deltaBuilder = new DeltaPackageBuilder();
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
-                        Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")), TempDir);
+                        Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
                     processed.Insert(0, dp.InputPackageFile);
                 }
             }

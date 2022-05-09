@@ -331,7 +331,7 @@ namespace Squirrel
             // Write the new RELEASES file to a temp file then move it into
             // place
             var entries = entriesQueue.ToList();
-            using var _ = Utility.GetTempFileName(releasePackagesDir, out var tempFile);
+            using var _ = Utility.GetTempFileName(out var tempFile);
 
             using (var of = File.OpenWrite(tempFile)) {
                 if (entries.Count > 0) WriteReleaseFile(entries, of);

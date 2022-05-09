@@ -5,17 +5,20 @@ namespace Squirrel.Update
 {
     class Program : IEnableLogger
     {
-        static StartupOption opt;
+        static StartupOption _options;
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
         [STAThread]
         public static int Main(string[] args)
         {
             try {
+                var logger = new SetupLogLogger(Utility.GetDefaultTempBaseDirectory());
+                SquirrelLocator.CurrentMutable.Register(() => logger, typeof(ILogger));
+                _options = new StartupOption(args);
+
+                
                 return main(args);
             } catch (Exception ex) {
-                // NB: Normally this is a terrible idea but we want to make
-                // sure Setup.exe above us gets the nonzero error code
                 Console.Error.WriteLine(ex);
                 return -1;
             }
@@ -23,10 +26,9 @@ namespace Squirrel.Update
 
         static int main(string[] args)
         {
+
             try {
-                opt = new StartupOption(args);
             } catch (Exception ex) {
-                var logp = new SetupLogLogger(Utility.GetDefaultTempDirectory(null), false, UpdateAction.Unset) { Level = LogLevel.Info };
                 logp.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 throw;
             }
@@ -37,7 +39,7 @@ namespace Squirrel.Update
 
             var logDir = logToTemp ? Utility.GetDefaultTempDirectory(null) : SquirrelRuntimeInfo.BaseDirectory;
 
-            var logger = new SetupLogLogger(logDir, !logToTemp, opt.updateAction) { Level = LogLevel.Info };
+            var logger = new SetupLogLogger(logDir, !logToTemp, _options.updateAction) { Level = LogLevel.Info };
             SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
 
             try {
@@ -53,17 +55,14 @@ namespace Squirrel.Update
             Log.Info("Starting Squirrel Updater: " + String.Join(" ", args));
             Log.Info("Updater location is: " + SquirrelRuntimeInfo.EntryExePath);
 
-            Console.WriteLine(opt.updateCurrentApp);
-            Console.WriteLine(opt.updateStagingDir);
-
-            if (opt.updateAction == UpdateAction.Unset) {
-                opt.WriteOptionDescriptions();
+            if (_options.updateAction == UpdateAction.Unset) {
+                _options.WriteOptionDescriptions();
                 return -1;
             }
 
-
-            switch (opt.updateAction) {
-         
+            switch (_options.updateAction) {
+            case UpdateAction.ApplyLatest:
+                break;
             }
 
             Log.Info("Finished Squirrel Updater");

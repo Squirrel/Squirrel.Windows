@@ -375,8 +375,8 @@ namespace Squirrel
             Contract.Requires(deltaPackageZip != null);
             Contract.Requires(!String.IsNullOrEmpty(outputFile) && !File.Exists(outputFile));
 
-            using (Utility.GetTempDir(_config.TempDir, out var deltaPath))
-            using (Utility.GetTempDir(_config.TempDir, out var workingPath)) {
+            using (Utility.GetTempDirectory(out var deltaPath, _config.TempDir))
+            using (Utility.GetTempDirectory(out var workingPath, _config.TempDir)) {
                 EasyZip.ExtractZipToDirectory(deltaPackageZip, deltaPath);
                 progress(25);
 
@@ -438,7 +438,7 @@ namespace Squirrel
             var inputFile = Path.Combine(deltaPath, relativeFilePath);
             var finalTarget = Path.Combine(workingDirectory, Regex.Replace(relativeFilePath, @"\.(bs)?diff$", ""));
 
-            using var _d = Utility.GetTempFileName(_config.TempDir, out var tempTargetFile);
+            using var _d = Utility.GetTempFileName(out var tempTargetFile, _config.TempDir);
 
             // NB: Zero-length diffs indicate the file hasn't actually changed
             if (new FileInfo(inputFile).Length == 0) {

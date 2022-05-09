@@ -8,20 +8,14 @@ namespace Squirrel.Update
 {
     class SetupLogLogger : ILogger
     {
-        public LogLevel Level { get; set; }
+        public LogLevel Level { get; set; } = LogLevel.Info;
 
         private readonly NLog.Logger _log;
 
-        public SetupLogLogger(string logDirectory, bool includeActionInLogName, UpdateAction action)
+        public SetupLogLogger(string logDirectory)
         {
-            string name, archivename;
-            if (includeActionInLogName || action == UpdateAction.Unset) {
-                name = "Squirrel.log";
-                archivename = "Squirrel.archive{###}.log";
-            } else {
-                name = $"Squirrel-{action}.log";
-                archivename = $"Squirrel-{action}.archive{{###}}.log";
-            }
+            var name = "Squirrel.log";
+            var archivename = "Squirrel.archive{###}.log";
 
             // https://gist.github.com/chrisortman/1092889
             SimpleConfigurator.ConfigureForTargetLogging(

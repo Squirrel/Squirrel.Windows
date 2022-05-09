@@ -22,7 +22,6 @@ namespace Squirrel.Update
     {
         static StartupOption opt;
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
-        static string TempDir => Utility.GetDefaultTempDirectory(null);
 
         [STAThread]
         public static int Main(string[] args)
@@ -42,7 +41,7 @@ namespace Squirrel.Update
             try {
                 opt = new StartupOption(args);
             } catch (Exception ex) {
-                var logp = new SetupLogLogger(Utility.GetDefaultTempDirectory(null), false, UpdateAction.Unset) { Level = LogLevel.Info };
+                var logp = new SetupLogLogger(Utility.GetDefaultTempBaseDirectory(), false, UpdateAction.Unset) { Level = LogLevel.Info };
                 logp.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 throw;
             }
@@ -54,7 +53,7 @@ namespace Squirrel.Update
                 opt.updateAction == UpdateAction.Setup ||
                 opt.updateAction == UpdateAction.Install;
 
-            var logDir = logToTemp ? Utility.GetDefaultTempDirectory(null) : SquirrelRuntimeInfo.BaseDirectory;
+            var logDir = logToTemp ? Utility.GetDefaultTempBaseDirectory() : SquirrelRuntimeInfo.BaseDirectory;
 
             var logger = new SetupLogLogger(logDir, !logToTemp, opt.updateAction) { Level = LogLevel.Info };
             SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
@@ -179,7 +178,7 @@ namespace Squirrel.Update
                 silentInstall = true;
             }
 
-            using var _t = Utility.GetTempDir(TempDir, out var tempFolder);
+            using var _t = Utility.GetTempDirectory(out var tempFolder);
             using ISplashWindow splash = new ComposedWindow(appname, silentInstall, zp.SetupIconBytes, zp.SetupSplashBytes);
 
             // verify that this package can be installed on this cpu architecture
@@ -486,7 +485,7 @@ namespace Squirrel.Update
 
                     using var splash = new ComposedWindow(manifest.ProductName, false, null, null);
                     splash.Show();
-                    using var _ = Utility.GetTempDir(TempDir, out var tempFolder);
+                    using var _ = Utility.GetTempDirectory(out var tempFolder);
                     var success = installMissingRuntimes(splash, missingFrameworks, false, tempFolder).Result;
                     if (!success) return;
                 }

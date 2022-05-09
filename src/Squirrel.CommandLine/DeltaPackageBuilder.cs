@@ -12,7 +12,7 @@ namespace Squirrel.CommandLine
 {
     internal class DeltaPackageBuilder : IEnableLogger
     {
-        public ReleasePackageBuilder CreateDeltaPackage(ReleasePackageBuilder basePackage, ReleasePackageBuilder newPackage, string outputFile, string tempDirectory)
+        public ReleasePackageBuilder CreateDeltaPackage(ReleasePackageBuilder basePackage, ReleasePackageBuilder newPackage, string outputFile)
         {
             Contract.Requires(basePackage != null);
             Contract.Requires(!String.IsNullOrEmpty(outputFile) && !File.Exists(outputFile));
@@ -37,8 +37,8 @@ namespace Squirrel.CommandLine
                 throw new FileNotFoundException("The new package release does not exist", newPackage.ReleasePackageFile);
             }
 
-            using (Utility.GetTempDir(tempDirectory, out var baseTempPath))
-            using (Utility.GetTempDir(tempDirectory, out var tempPath)) {
+            using (Utility.GetTempDirectory(out var baseTempPath))
+            using (Utility.GetTempDirectory(out var tempPath)) {
                 var baseTempInfo = new DirectoryInfo(baseTempPath);
                 var tempInfo = new DirectoryInfo(tempPath);
 

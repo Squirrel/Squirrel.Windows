@@ -21,8 +21,9 @@ namespace Squirrel
     {
         public static string RemoveByteOrderMarkerIfPresent(string content)
         {
-            return string.IsNullOrEmpty(content) ?
-                string.Empty : RemoveByteOrderMarkerIfPresent(Encoding.UTF8.GetBytes(content));
+            return string.IsNullOrEmpty(content)
+                ? string.Empty
+                : RemoveByteOrderMarkerIfPresent(Encoding.UTF8.GetBytes(content));
         }
 
         public static string RemoveByteOrderMarkerIfPresent(byte[] content)
@@ -59,7 +60,7 @@ namespace Squirrel
                 output = content;
             }
 
-        done:
+            done:
             if (output.Length > 0) {
                 Buffer.BlockCopy(content, content.Length - output.Length, output, 0, output.Length);
             }
@@ -74,6 +75,7 @@ namespace Squirrel
             if (success) {
                 retVal = (TEnum) Enum.ToObject(typeof(TEnum), enumValue);
             }
+
             return success;
         }
 
@@ -227,7 +229,6 @@ namespace Squirrel
         }
 
 
-
         public static T GetAwaiterResult<T>(this Task<T> task)
         {
             return task.ConfigureAwait(false).GetAwaiter().GetResult();
@@ -254,25 +255,18 @@ namespace Squirrel
                 }));
         }
 
-        public static string GetDefaultTempDirectory(string localAppDirectory)
+        public static string GetDefaultTempBaseDirectory()
         {
-            string tempDir;
+            string tempDir = Environment.GetEnvironmentVariable("CLOWD_SQUIRREL_TEMP");
 
-            if (SquirrelRuntimeInfo.IsOSX) {
-                tempDir = "/tmp/squirrel";
-            } else if (SquirrelRuntimeInfo.IsWindows) {
-#if DEBUG
-                const string TEMP_ENV_VAR = "CLOWD_SQUIRREL_TEMP_DEBUG";
-                const string TEMP_DIR_NAME = "SquirrelClowdTempDebug";
-#else
-                const string TEMP_ENV_VAR = "CLOWD_SQUIRREL_TEMP";
-                const string TEMP_DIR_NAME = "SquirrelClowdTemp";
-#endif
-
-                tempDir = Environment.GetEnvironmentVariable(TEMP_ENV_VAR);
-                tempDir = tempDir ?? Path.Combine(localAppDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), TEMP_DIR_NAME);
-            } else {
-                throw new NotSupportedException();
+            if (tempDir == null) {
+                if (SquirrelRuntimeInfo.IsOSX) {
+                    tempDir = "/tmp/squirrel";
+                } else if (SquirrelRuntimeInfo.IsWindows) {
+                    tempDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SquirrelClowdTemp");
+                } else {
+                    throw new NotSupportedException();
+                }
             }
 
             var di = new DirectoryInfo(tempDir);
@@ -281,34 +275,68 @@ namespace Squirrel
             return di.FullName;
         }
 
-        private static string getNextTempName(string tempDir)
+        private static string GetNextTempName(string tempDir)
         {
             for (int i = 1; i < 100; i++) {
                 string name = "temp" + i;
                 var target = Path.Combine(tempDir, name);
-                if (!File.Exists(target) && !Directory.Exists(target)) {
+
+                FileSystemInfo info = null;
+                if (Directory.Exists(target)) info = new DirectoryInfo(target);
+                else if (File.Exists(target)) info = new FileInfo(target);
+
+                // this dir/file does not exist, lets use it.
+                if (info == null) {
                     return target;
+                }
+
+                // this dir/file exists, but it is old, let's re-use it.
+                // this shouldn't generally happen, but crashes do exist.
+                if (DateTime.UtcNow - info.LastWriteTimeUtc > TimeSpan.FromDays(7)) {
+                    if (DeleteFileOrDirectoryHard(target, false, true)) {
+                        // the dir/file was deleted successfully.
+                        return target;
+                    }
                 }
             }
 
-            throw new Exception("Unable to find free temp path. Has the temp directory exceeded it's maximum number of items?");
+            throw new Exception(
+                "Unable to find free temp path. Has the temp directory exceeded it's maximum number of items?");
         }
 
-        public static IDisposable GetTempDir(string tempDir, out string newTempDirectory)
+        public static IDisposable GetTempDirectory(out string newTempDirectory)
         {
-            var disp = GetTempFileName(tempDir, out newTempDirectory);
+            return GetTempDirectory(out newTempDirectory, GetDefaultTempBaseDirectory());
+        }
+        
+        public static IDisposable GetTempDirectory(out string newTempDirectory, string rootTempDir)
+        {
+            var disp = GetTempFileName(out newTempDirectory, rootTempDir);
             Directory.CreateDirectory(newTempDirectory);
             return disp;
         }
 
-        public static IDisposable GetTempFileName(string tempDir, out string newTempFile)
+        public static IDisposable GetTempFileName(out string newTempFile)
         {
-            var path = getNextTempName(tempDir);
+            return GetTempFileName(out newTempFile, GetDefaultTempBaseDirectory());
+        }
+
+        public static IDisposable GetTempFileName(out string newTempFile, string rootTempDir)
+        {
+            var path = GetNextTempName(rootTempDir);
             newTempFile = path;
             return Disposable.Create(() => DeleteFileOrDirectoryHard(path, throwOnFailure: false));
         }
 
-        public static void DeleteFileOrDirectoryHard(string path, bool throwOnFailure = true, bool renameFirst = false)
+        /// <summary>
+        /// Repeatedly tries various methods to delete a file system object. Optionally renames the directory first.
+        /// Optionally ignores errors.
+        /// </summary>
+        /// <param name="path">The path of the file system entity to delete.</param>
+        /// <param name="throwOnFailure">Whether this function should throw if the delete fails.</param>
+        /// <param name="renameFirst">Try to rename this object first before deleting. Can help prevent partial delete of folders.</param>
+        /// <returns>True if the file system object was deleted, false otherwise.</returns>
+        public static bool DeleteFileOrDirectoryHard(string path, bool throwOnFailure = true, bool renameFirst = false)
         {
             Contract.Requires(!String.IsNullOrEmpty(path));
             Log().Debug("Starting to delete: {0}", path);
@@ -323,15 +351,19 @@ namespace Squirrel
                         Directory.Move(path, oldPath);
                         path = oldPath;
                     }
+
                     DeleteFsiTree(new DirectoryInfo(path));
                 } else {
                     if (throwOnFailure)
                         Log().Warn($"Cannot delete '{path}' if it does not exist.");
                 }
+
+                return true;
             } catch (Exception ex) {
                 Log().ErrorException($"Unable to delete '{path}'", ex);
                 if (throwOnFailure)
                     throw;
+                return false;
             }
         }
 
@@ -368,12 +400,13 @@ namespace Squirrel
 
             // try to remove "ReadOnly" attributes
             try { fileSystemInfo.Attributes = FileAttributes.Normal; } catch { }
+
             try { fileSystemInfo.Refresh(); } catch { }
 
             // use this instead of fsi.Delete() because it is more resilient/aggressive
             Action deleteMe = fileSystemInfo is DirectoryInfo
-                  ? () => Directory.Delete(fileSystemInfo.FullName, true)
-                  : () => File.Delete(fileSystemInfo.FullName);
+                ? () => Directory.Delete(fileSystemInfo.FullName, true)
+                : () => File.Delete(fileSystemInfo.FullName);
 
             // retry a few times. if a directory in this tree is open in Windows Explorer,
             // it might be locked for a little while WE cleans up handles
@@ -422,7 +455,8 @@ namespace Squirrel
 
         public static string GetAppUserModelId(string packageId, string exeName)
         {
-            return String.Format("com.squirrel.{0}.{1}", packageId.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
+            return String.Format("com.squirrel.{0}.{1}", packageId.Replace(" ", ""),
+                exeName.Replace(".exe", "").Replace(" ", ""));
         }
 
         public static bool IsHttpUrl(string urlOrPath)
@@ -466,6 +500,7 @@ namespace Squirrel
         }
 
         readonly static string[] peExtensions = new[] { ".exe", ".dll", ".node" };
+
         public static bool FileIsLikelyPEImage(string name)
         {
             var ext = Path.GetExtension(name);
@@ -525,11 +560,13 @@ namespace Squirrel
                     This.ErrorException(message ?? "", ex);
                     break;
                 }
+
                 throw;
             }
         }
 
-        public static async Task<T> LogIfThrows<T>(this IFullLogger This, LogLevel level, string message, Func<Task<T>> block)
+        public static async Task<T> LogIfThrows<T>(this IFullLogger This, LogLevel level, string message,
+            Func<Task<T>> block)
         {
             try {
                 return await block().ConfigureAwait(false);
@@ -548,6 +585,7 @@ namespace Squirrel
                     This.ErrorException(message ?? "", ex);
                     break;
                 }
+
                 throw;
             }
         }
@@ -624,15 +662,18 @@ namespace Squirrel
         }
 
         static IFullLogger logger;
+
         static IFullLogger Log()
         {
-            return logger ?? (logger = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(Utility)));
+            return logger ??
+                   (logger = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(Utility)));
         }
 
         public static Guid CreateGuidFromHash(string text)
         {
             return CreateGuidFromHash(text, Utility.IsoOidNamespace);
         }
+
         public static Guid CreateGuidFromHash(byte[] data)
         {
             return CreateGuidFromHash(data, Utility.IsoOidNamespace);
@@ -715,7 +756,8 @@ namespace Squirrel
             var pids = new int[2048];
             var gch = GCHandle.Alloc(pids, GCHandleType.Pinned);
             try {
-                if (!NativeMethods.EnumProcesses(gch.AddrOfPinnedObject(), sizeof(int) * pids.Length, out var bytesReturned))
+                if (!NativeMethods.EnumProcesses(gch.AddrOfPinnedObject(), sizeof(int) * pids.Length,
+                        out var bytesReturned))
                     throw new Win32Exception("Failed to enumerate processes");
 
                 if (bytesReturned < 1)
@@ -747,6 +789,7 @@ namespace Squirrel
                             NativeMethods.CloseHandle(hProcess);
                     }
                 }
+
                 return ret;
             } finally {
                 gch.Free();
@@ -759,7 +802,8 @@ namespace Squirrel
                 ? EnumerateProcessesWindows()
                 : Process.GetProcesses().Select(p => (p.MainModule.FileName, p.Id));
             return allRunningProcesses
-                .Where(x => !String.IsNullOrWhiteSpace(x.ProcessExePath)) // Processes we can't query will have an empty process name
+                .Where(x => !String.IsNullOrWhiteSpace(x
+                    .ProcessExePath)) // Processes we can't query will have an empty process name
                 .ToList();
         }
 
@@ -775,7 +819,9 @@ namespace Squirrel
             EnumerateProcessesInDirectory(directoryToKill)
                 .Where(x => {
                     // Never kill our own EXE
-                    if (SquirrelRuntimeInfo.EntryExePath != null && x.ProcessExePath.Equals(SquirrelRuntimeInfo.EntryExePath, StringComparison.OrdinalIgnoreCase)) return false;
+                    if (SquirrelRuntimeInfo.EntryExePath != null &&
+                        x.ProcessExePath.Equals(SquirrelRuntimeInfo.EntryExePath, StringComparison.OrdinalIgnoreCase))
+                        return false;
 
                     var name = Path.GetFileName(x.ProcessExePath).ToLowerInvariant();
                     if (name == "squirrel.exe" || name == "update.exe") return false;

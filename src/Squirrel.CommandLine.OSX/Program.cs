@@ -13,8 +13,6 @@ namespace Squirrel.CommandLine
     {
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
-        static string TempDir => Utility.GetDefaultTempDirectory(null);
-
         public static int Main(string[] args)
         {
             var commands = new CommandSet {
@@ -38,7 +36,7 @@ namespace Squirrel.CommandLine
             var plistPath = Path.Combine(options.package, "Contents", PlistWriter.PlistFileName);
             NSDictionary plist = (NSDictionary) PropertyListParser.Parse(plistPath);
 
-            var _ = Utility.GetTempDir(TempDir, out var tmp);
+            var _ = Utility.GetTempDirectory(out var tmp);
 
             string getpStr(string name)
             {
@@ -63,7 +61,7 @@ namespace Squirrel.CommandLine
             }
 
             var rp = new ReleasePackageBuilder(nupkgPath);
-            var newPkgPath = rp.CreateReleasePackage(TempDir, Path.Combine(options.releaseDir, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
+            var newPkgPath = rp.CreateReleasePackage(Path.Combine(options.releaseDir, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
                 var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
                  .ContextualSingle("package", "*.nuspec", "top level directory");
                 var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
@@ -82,7 +80,7 @@ namespace Squirrel.CommandLine
             if (prev != null && !options.noDelta) {
                 var deltaBuilder = new DeltaPackageBuilder();
                 var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
-                    Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")), TempDir);
+                    Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
             }
 
             ReleaseEntry.WriteReleaseFile(previousReleases.Concat(new[] { ReleaseEntry.GenerateFromFile(newPkgPath) }), releaseFilePath);
