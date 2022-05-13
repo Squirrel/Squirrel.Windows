@@ -46,6 +46,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 6.0.*
       - name: Build SquirrelMac
         run: |
           dotnet publish -v minimal -c Release -r osx.10.12-x64 --self-contained=true ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
