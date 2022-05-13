@@ -1,39 +1,63 @@
-name: Build Squirrel (Windows)
+name: Build Squirrel
 on: [push, pull_request]
 jobs:
-  build:
+  build-windows:
+    name: Build Windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+#        with:
+#          fetch-depth: 0
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 6.0.*
-          source-url: https://nuget.pkg.github.com/Clowd/index.json
-        env:
-          NUGET_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: "Install NGBV"
+      - name: Install NGBV
         run: dotnet tool install --tool-path . nbgv
       - name: Build
         shell: pwsh
         run: .\build.ps1
-      - name: Create NuGet Package
-        shell: pwsh
-        run: .\pack.ps1
+#      - name: Create NuGet Package
+#        shell: pwsh
+#        run: .\pack.ps1
       - name: Test
         run: dotnet test test\Squirrel.Tests.csproj -l "console;verbosity=detailed"
-      - name: "Upload Tools"
+#      - name: "Upload Tools"
+#        uses: actions/upload-artifact@v3
+#        with:
+#          path: .\build\SquirrelTools*.zip
+#          if-no-files-found: error
+#       https://stackoverflow.com/questions/63817052/github-actions-run-step-only-for-certain-pull-request-base-branches
+#      - name: "Upload NuGet Package"
+#        uses: actions/upload-artifact@v3
+#        with:
+#          path: .\build\Clowd.Squirrel*.nupkg
+#          if-no-files-found: error
+#      - name: Publish to GitHub Packages
+#        if: ${{ github.ref == 'ref/head/develop' }}
+#        run: dotnet nuget push .\build\Clowd.Squirrel*.nupkg
+      - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: .\build\SquirrelTools*.zip
-          if-no-files-found: error
-      - name: "Upload NuGet Package"
+          name: windows-tools
+          path: .\build\publish\*
+  build-macos:
+    name: Build OSX
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build SquirrelMac
+        run: |
+          dotnet publish -v minimal -c Release -r osx.10.12-x64 --self-contained=true ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
+          mv ./publish/SquirrelMac ./publish/SquirrelMac-x64
+          dotnet publish -v minimal -c Release -r osx.11.0-arm64 --self-contained=true ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
+          mkdir ./bundle
+          lipo -create -output ./bundle/SquirrelMac ./publish/SquirrelMac ./publish/SquirrelMac-x64
+      - name: Build UpdateMac
+        run: dotnet publish -v minimal -c Release -r osx.10.12-x64 --self-contained=true ./src/Update.OSX/Update.OSX.csproj -o ./bundle
+      - name: Upload MacOS Artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: .\build\Clowd.Squirrel*.nupkg
-          if-no-files-found: error
-      - name: Publish to GitHub Packages
-        if: ${{ github.ref == 'ref/head/develop' }}
-        run: dotnet nuget push .\build\Clowd.Squirrel*.nupkg
+          name: osx-tools
+          path: .\build\bundle\*
+        
