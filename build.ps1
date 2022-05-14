@@ -21,26 +21,34 @@ foreach ($Folder in $Folders) {
 }
 
 # Build Squirrel C++ with msbuild as dotnet can't
+Write-Output "Building Solution"
 &"$MSBuildPath" /verbosity:minimal /restore /p:Configuration=Release
 
 # Build single-exe packaged projects
-# New-Item -Path "$Out" -Name "win-x86" -ItemType "directory"
-$BinOut = $Out
+Write-Output "Publishing SingleFile Projects"
+New-Item -Path "$Out" -Name "bin" -ItemType "directory"
+$BinOut = "$Out\bin"
 dotnet publish -v minimal -c Release -r win-x64 --self-contained=true "$PSScriptRoot\src\Squirrel.CommandLine.Windows\Squirrel.CommandLine.Windows.csproj" -o "$Out"
-dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\Update.Windows\Update.Windows.csproj" -o "$BinOut"
+dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\Update.Windows\Update.Windows.csproj" -o "$Out"
 
 # Copy over all files we need
+Write-Output "Copying files to all the right places"
 Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$BinOut" -Recurse
 Copy-Item -Path "$PSScriptRoot\vendor\wix\*" -Destination "$BinOut" -Recurse
 Copy-Item "$In\Win32\Setup.exe" -Destination "$BinOut"
 Copy-Item "$In\Win32\StubExecutable.exe" -Destination "$BinOut"
-Copy-Item "$PSScriptRoot\vendor\nuget.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\singlefilehost.exe" -Destination "$BinOut"
 
+# Clean up files we do not need to create a nuget package
+Write-Output "Cleaning up intermediate files"
 Remove-Item "$Out\*.pdb"
 Remove-Item "$BinOut\*.pdb"
 Remove-Item "$Out\SquirrelLib.xml"
+Remove-Item "$In\..\obj" -Recurse
+Remove-Item "$In\Win32" -Recurse
+Remove-Item "$In\net6.0-windows" -Recurse
 
-Write-Output "Successfully copied files to './build/publish'"
+Write-Output "Done."
+

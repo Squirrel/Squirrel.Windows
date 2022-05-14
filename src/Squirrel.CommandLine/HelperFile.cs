@@ -25,9 +25,8 @@ namespace Squirrel.CommandLine
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor");
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "7zip");
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix");
-#else
-            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "bin");
 #endif
+            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "bin");
         }
 
         public static void AddSearchPath(params string[] pathParts)

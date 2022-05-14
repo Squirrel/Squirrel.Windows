@@ -136,10 +136,8 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Install NGBV
         run: dotnet tool install --tool-path . nbgv
-      - name: Get NuGet Version
-        run: |
-          export NUGET_VERSION=$(nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
-          echo $NUGET_VERSION
+      - name: Install NuGet
+        run: sudo apt install nuget
       - name: Download Windows Artifacts
         uses: actions/download-artifact@v3
         with:
@@ -149,12 +147,19 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: tools
-      - name: Decompress Tools
+      - name: Decompress OSX
         run: |
           unzip ./squirrel-osx-x64.zip -d ./build/publish
-          ls -la 
-          ls -la ./build
-          ls -la ./build/publish
+      - name: Create NuGet Package
+        run: |
+          export NUGET_VERSION=$(nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
+          echo $NUGET_VERSION
+          nuget pack ./src/Clowd.Squirrel.nuspec -BasePath ./src -OutputDirectory . -Version $NUGET_VERSION
+      - name: Upload NuGet Package
+        uses: actions/upload-artifact@v3
+        with:
+          name: tools
+          path: '*.nupkg'
 #      - name: Upload Artifacts
 #        uses: actions/upload-artifact@v3
 #        with:
