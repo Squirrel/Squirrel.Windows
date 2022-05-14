@@ -3,7 +3,7 @@ name: Build Squirrel
 on: [push, pull_request]
 
 env:
-  DOTNET_VERSION: 6.0.202
+  DOTNET_VERSION: '6.0.202'
 
 jobs:
   build-windows:
@@ -16,7 +16,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: $DOTNET_VERSION
+          dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Install NGBV
         run: dotnet tool install --tool-path . nbgv
       - name: Build
@@ -56,7 +56,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: $DOTNET_VERSION
+          dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Build SquirrelMac
         run: |
           dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
