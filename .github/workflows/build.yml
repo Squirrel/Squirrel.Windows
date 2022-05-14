@@ -79,15 +79,15 @@ jobs:
     needs: [build-windows, build-macos]
     runs-on: macos-latest
     steps:
-#      - uses: actions/checkout@v2
-#        with:
-#          fetch-depth: 0
-#      - name: Setup .NET
-#        uses: actions/setup-dotnet@v1
-#        with:
-#          dotnet-version: ${{ env.DOTNET_VERSION }}
-#      - name: Install NGBV
-#        run: dotnet tool install --tool-path . nbgv
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+      - name: Install NGBV
+        run: dotnet tool install --tool-path . nbgv
       - name: Download all workflow artifacts
         uses: actions/download-artifact@v3
       - name: Install Apple Certificate

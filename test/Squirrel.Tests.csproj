@@ -11,6 +11,7 @@
     <NoWarn>CS1998,xUnit2015,xUnit2017,xUnit2005,xUnit2009,xUnit2013,xUnit2004</NoWarn>
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\Squirrel.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>$(NoWarn);CA2007</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
