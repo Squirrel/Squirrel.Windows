@@ -135,6 +135,7 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+          source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       - name: Install NGBV
         run: dotnet tool install --tool-path . nbgv
       - name: Install NuGet
@@ -164,6 +165,12 @@ jobs:
         with:
           name: tools
           path: '*.nupkg'
+      - name: Publish Dev NuGet Package
+        if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
+        env:
+          NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        run: |
+          dotnet nuget push *.nupkg --skip-duplicate
 #      - name: Upload Artifacts
 #        uses: actions/upload-artifact@v3
 #        with:
