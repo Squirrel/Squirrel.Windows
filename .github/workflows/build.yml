@@ -47,7 +47,8 @@ jobs:
           name: windows-build
           path: .\build\*
       - name: Bundle Tools
-        run: .\vendor\7zip\7z.exe a squirrel-win-x64.zip -tzip -aoa -y -mmt build\publish\*
+        shell: pwsh
+        run: .\vendor\7zip\7z.exe a squirrel-win-x64.zip -tzip -aoa -y -mmt "$env:GITHUB_WORKSPACE\build\publish\*"
       - name: Upload Tools
         uses: actions/upload-artifact@v3
         with:
