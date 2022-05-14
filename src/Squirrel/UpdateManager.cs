@@ -20,7 +20,7 @@ namespace Squirrel
         public bool IsInstalledApp => CurrentlyInstalledVersion() != null;
 
         /// <inheritdoc/>
-        public virtual SemanticVersion CurrentlyInstalledVersion() => _config.CurrentlyInstalledVersion;
+        public virtual SemanticVersion CurrentlyInstalledVersion() => _config?.CurrentlyInstalledVersion;
 
         /// <inheritdoc/>
         public virtual string AppDirectory => _config.RootAppDir;
@@ -92,7 +92,7 @@ namespace Squirrel
         }
         
         internal UpdateManager(string urlOrPath, string appId, string localAppData, IFileDownloader downloader) 
-            : this(new SimpleWebSource(urlOrPath, downloader), new AppDescWindows(Path.Combine(localAppData, appId), appId))
+            : this(CreateSource(urlOrPath, downloader), new AppDescWindows(Path.Combine(localAppData, appId), appId))
         {
         }
 

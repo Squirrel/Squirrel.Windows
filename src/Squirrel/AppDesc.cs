@@ -128,6 +128,7 @@ namespace Squirrel
                 // 'current' doesn't exist right now, lets move the latest version
                 var latestDir = CurrentVersionDir;
                 this.Log().Info($"Moving '{latestVer.DirectoryPath}' to '{latestDir}'.");
+                Utility.DeleteFileOrDirectoryHard(latestDir, renameFirst: true, throwOnFailure: false);
                 Utility.Retry(() => Directory.Move(latestVer.DirectoryPath, latestDir));
 
                 this.Log().Info("Running app in: " + latestDir);
@@ -206,7 +207,7 @@ namespace Squirrel
 
         internal VersionDirInfo GetVersionInfoFromDirectory(string d)
         {
-            bool isCurrent = Utility.FullPathEquals(d, CurrentVersionDir);
+            bool isCurrent = CurrentVersionDir != null ? Utility.FullPathEquals(d, CurrentVersionDir) : false;
             var directoryName = Path.GetFileName(d);
             bool isExecuting = Utility.IsFileInDirectory(SquirrelRuntimeInfo.EntryExePath, d);
             var manifest = Utility.ReadManifestFromVersionDir(d);
@@ -226,9 +227,15 @@ namespace Squirrel
 
         internal VersionDirInfo[] GetVersions()
         {
-            return Directory.EnumerateDirectories(RootAppDir, "app-*", SearchOption.TopDirectoryOnly)
-                .Concat(Directory.EnumerateDirectories(VersionStagingDir, "app-*", SearchOption.TopDirectoryOnly))
-                .Concat(new[] { CurrentVersionDir })
+            List<string> directories = new List<string>() { CurrentVersionDir };
+            if (Directory.Exists(RootAppDir))
+                directories.AddRange(Directory.GetDirectories(RootAppDir, "app-*", SearchOption.TopDirectoryOnly));
+
+            if (Directory.Exists(VersionStagingDir))
+                directories.AddRange(Directory.GetDirectories(VersionStagingDir, "app-*", SearchOption.TopDirectoryOnly));
+
+            return directories
+                .Where(Directory.Exists)
                 .Select(Utility.NormalizePath)
                 .Distinct(SquirrelRuntimeInfo.PathStringComparer)
                 .Select(GetVersionInfoFromDirectory)
@@ -284,10 +291,13 @@ namespace Squirrel
         /// </summary>
         /// <param name="appDir">The location of the application.</param>
         /// <param name="appId">The unique ID of the application.</param>
-        public AppDescWindows(string appDir, string appId)
+        public AppDescWindows(string appDir, string appId, bool createIfNotExist = true)
         {
             if (!SquirrelRuntimeInfo.IsWindows)
                 throw new NotSupportedException("Cannot instantiate AppDescWindows on a non-Windows system.");
+
+            if (!Directory.Exists(appDir) && createIfNotExist)
+                Directory.CreateDirectory(appDir);
             
             AppId = appId;
             RootAppDir = appDir;
@@ -304,7 +314,7 @@ namespace Squirrel
         {
             if (!SquirrelRuntimeInfo.IsWindows)
                 throw new NotSupportedException("Cannot instantiate AppDescWindows on a non-Windows system.");
-            
+
             var myDir = Path.GetDirectoryName(ourPath);
 
             // Am I update.exe at the application root?

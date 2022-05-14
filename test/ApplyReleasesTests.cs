@@ -17,13 +17,8 @@ namespace Squirrel.Tests
 {
     class ApplyReleasesImpl : UpdateManager
     {
-        public override string AppDirectory => rootDir;
-
-        private readonly string rootDir;
-
-        public ApplyReleasesImpl(string rootDir)
+        public ApplyReleasesImpl(string rootDir, string appId) : base(null, new AppDescWindows(rootDir, appId))
         {
-            this.rootDir = rootDir;
         }
 
         public Task<string> ApplyReleasesPublic(UpdateInfo updateInfo, bool silentInstall, bool attemptingFullInstall, Action<int> progress = null)
@@ -95,10 +90,10 @@ namespace Squirrel.Tests
 
                 await Task.Delay(1000);
 
-                Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", "args2.txt")));
-                Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt")));
+                Assert.False(File.Exists(Path.Combine(tempDir, "theApp", "staging", "app-0.2.0", "args2.txt")));
+                Assert.True(File.Exists(Path.Combine(tempDir, "theApp", "staging", "app-0.2.0", "args.txt")));
 
-                var text = File.ReadAllText(Path.Combine(tempDir, "theApp", "app-0.2.0", "args.txt"), Encoding.UTF8);
+                var text = File.ReadAllText(Path.Combine(tempDir, "theApp", "staging", "app-0.2.0", "args.txt"), Encoding.UTF8);
                 Assert.Contains("updated", text);
                 Assert.Contains("0.2.0", text);
             }
@@ -300,7 +295,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.1.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir, "theApp");
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
@@ -323,7 +318,7 @@ namespace Squirrel.Tests
                 };
 
                 filesToFind.ForEach(x => {
-                    var path = Path.Combine(tempDir, "theApp", "app-1.1.0.0", x.Name);
+                    var path = Path.Combine(tempDir, "theApp", "staging", "app-1.1.0.0", x.Name);
                     this.Log().Info("Looking for {0}", path);
                     File.Exists(path).ShouldBeTrue();
 
@@ -349,7 +344,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.2.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir, "theApp");
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.2.0.0-full.nupkg"));
@@ -365,7 +360,7 @@ namespace Squirrel.Tests
                     .Aggregate(0, (acc, x) => { (x >= acc).ShouldBeTrue(); return x; })
                     .ShouldEqual(100);
 
-                var rootDirectory = Path.Combine(tempDir, "theApp", "app-1.2.0.0");
+                var rootDirectory = Path.Combine(tempDir, "theApp", "staging", "app-1.2.0.0");
 
                 new[] {
                     new {Name = "NLog.dll", Version = new Version("2.0.0.0")},
@@ -397,7 +392,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.3.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir, "theApp");
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-full.nupkg"));
                 var latestFullEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.3.0.0-full.nupkg"));
@@ -413,7 +408,7 @@ namespace Squirrel.Tests
                     .Aggregate(0, (acc, x) => { (x >= acc).ShouldBeTrue(); return x; })
                     .ShouldEqual(100);
 
-                var rootDirectory = Path.Combine(tempDir, "theApp", "app-1.3.0.0");
+                var rootDirectory = Path.Combine(tempDir, "theApp", "staging", "app-1.3.0.0");
 
                 new[] {
                     new {Name = "NLog.dll", Version = new Version("2.0.0.0")},
@@ -448,7 +443,7 @@ namespace Squirrel.Tests
                     "Squirrel.Core.1.1.0.0-full.nupkg",
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(packagesDir, x)));
 
-                var fixture = new ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir, "theApp");
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(packagesDir, "Squirrel.Core.1.1.0.0-delta.nupkg"));
@@ -472,7 +467,7 @@ namespace Squirrel.Tests
                 };
 
                 filesToFind.ForEach(x => {
-                    var path = Path.Combine(tempDir, "theApp", "app-1.1.0.0", x.Name);
+                    var path = Path.Combine(tempDir, "theApp", "staging", "app-1.1.0.0", x.Name);
                     this.Log().Info("Looking for {0}", path);
                     File.Exists(path).ShouldBeTrue();
 
@@ -498,7 +493,7 @@ namespace Squirrel.Tests
                 }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
                 var urlDownloader = new FakeDownloader();
-                var fixture = new ApplyReleasesImpl(appDir);
+                var fixture = new ApplyReleasesImpl(appDir, "theApp");
 
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, "theApp", "packages", "Squirrel.Core.1.1.0.0-delta.nupkg"));
@@ -525,7 +520,7 @@ namespace Squirrel.Tests
                     await mgr.FullInstall();
                 }
 
-                var fixture = new ApplyReleasesImpl(Path.Combine(path, "theApp"));
+                var fixture = new ApplyReleasesImpl(Path.Combine(path, "theApp"), "theApp");
                 fixture.CreateShortcutsForExecutable("SquirrelAwareApp.exe", ShortcutLocation.Desktop | ShortcutLocation.StartMenu | ShortcutLocation.Startup | ShortcutLocation.AppRoot, false, null, null);
 
                 // NB: COM is Weird.
