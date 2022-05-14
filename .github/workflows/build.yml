@@ -80,6 +80,7 @@ jobs:
     runs-on: macos-latest
     needs: [build-macos]
     steps:
+      - uses: actions/checkout@v2
       - name: Download MacOS Artifacts
         uses: actions/download-artifact@v3
         with:

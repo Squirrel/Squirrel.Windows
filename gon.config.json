@@ -1,7 +1,7 @@
 {
   "source": [
-    "./osx-tools/SquirrelMac",
-    "./osx-tools/UpdateMac"
+    "./osx-build/SquirrelMac",
+    "./osx-build/UpdateMac"
   ],
   "bundle_id": "com.caesay.squirrel",
   "sign": {
