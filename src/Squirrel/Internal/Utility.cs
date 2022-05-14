@@ -653,12 +653,9 @@ namespace Squirrel
         public static void ConsoleWriteWithColor(string text, ConsoleColor color)
         {
             var fc = Console.ForegroundColor;
-            var bc = Console.BackgroundColor;
             Console.ForegroundColor = color;
-            Console.BackgroundColor = ConsoleColor.Black;
             Console.Write(text);
             Console.ForegroundColor = fc;
-            Console.BackgroundColor = bc;
         }
 
         static IFullLogger logger;
