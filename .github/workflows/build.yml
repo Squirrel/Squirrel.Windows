@@ -87,8 +87,8 @@ jobs:
           security list-keychain -d user -s $KEYCHAIN_PATH
       - name: CodeSign Binaries
         run: |
-          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements Squirrel.entitlements --sign "Developer ID: Caelan Sayler" ./publish/SquirrelMac
-          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements Squirrel.entitlements --sign "Developer ID: Caelan Sayler" ./publish/UpdateMac
+          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./publish/SquirrelMac
+          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./publish/UpdateMac
       - name: Clean up KeyChain
         if: ${{ always() }}
         run: |
