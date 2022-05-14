@@ -13,6 +13,7 @@
     <owners>Caelan Sayler</owners>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/clowd/Clowd.Squirrel</projectUrl>
+    <repository type="git" url="https://github.com/clowd/Clowd.Squirrel.git" />
     <icon>images\Squirrel-Clowd-Logo.png</icon>
     <iconUrl>https://user-images.githubusercontent.com/1287295/131249078-9e131e51-0b66-4dc7-8c0a-99cbea6bcf80.png</iconUrl>
 
