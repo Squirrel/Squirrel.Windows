@@ -1,0 +1,22 @@
+{
+  "source": [
+    "./publish/SquirrelMac",
+    "./publish/UpdateMac"
+  ],
+  "bundle_id": "com.caesay.squirrel",
+  "apple_id": {
+    "username": "@env:NZ_USERNAME",
+    "password": "@env:NZ_PASSWORD"
+  },
+  "sign": {
+    "application_identity": "Developer ID Application: Caelan Sayler",
+    "entitlements_file": "Squirrel.entitlements"
+  },
+  "dmg": {
+    "output_path": "Squirrel.dmg",
+    "volume_name": "Squirrel"
+  },
+  "zip": {
+    "output_path": "Squirrel.zip"
+  }
+}

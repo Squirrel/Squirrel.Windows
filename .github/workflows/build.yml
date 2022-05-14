@@ -85,10 +85,26 @@ jobs:
           # import certificate to keychain
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
-      - name: CodeSign Binaries
-        run: |
-          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./publish/SquirrelMac
-          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./publish/UpdateMac
+#      - name: CodeSign Binaries
+#        run: |
+#          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements ./Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./publish/SquirrelMac
+#          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements ./Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./publish/UpdateMac
+#          zip bundle.zip ./publish/SquirrelMac
+#          zip bundle.zip ./publish/UpdateMac
+      - name: Install mitchellh/gon
+        run: brew install mitchellh/gon/gon
+      - name: Bundle, Sign, and Notarize
+        run: gon ./gon.config.json
+#      - name: Notarize Binaries
+#        uses: devbotsxyz/xcode-notarize@v1
+#        with:
+#          product-path: "bundle.zip"
+#          appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
+#          appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
+#      - name: Staple Notarization
+#        uses: devbotsxyz/xcode-staple@v1
+#        with:
+#          product-path: "bundle.zip"
       - name: Clean up KeyChain
         if: ${{ always() }}
         run: |
