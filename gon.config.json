@@ -1,6 +1,14 @@
 {
-  "notarize": [{
-    "path": "SquirrelTools.zip",
-    "bundle_id": "com.caesay.squirrel"
-  }]
+  "source": [
+    "./osx-tools/SquirrelMac",
+    "./osx-tools/UpdateMac"
+  ],
+  "bundle_id": "com.caesay.squirrel",
+  "sign": {
+    "application_identity": "Developer ID Application: Caelan Sayler",
+    "entitlements_file": "Squirrel.entitlements"
+  },
+  "zip": {
+    "output_path": "squirrel-osx-x64.zip"
+  }
 }
