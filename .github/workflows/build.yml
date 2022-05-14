@@ -127,6 +127,8 @@ jobs:
     name: "Deploy"
     needs: [build-windows, package-macos]
     runs-on: ubuntu-latest
+    env:
+      NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -167,8 +169,6 @@ jobs:
           path: '*.nupkg'
       - name: Publish Dev NuGet Package
         if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
-        env:
-          NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
         run: |
           dotnet nuget push *.nupkg --skip-duplicate
 #      - name: Upload Artifacts
