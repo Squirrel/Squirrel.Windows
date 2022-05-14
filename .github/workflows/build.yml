@@ -94,6 +94,9 @@ jobs:
       - name: Install mitchellh/gon
         run: brew install mitchellh/gon/gon
       - name: Bundle, Sign, and Notarize
+        env:
+          NZ_USERNAME: ${{ secrets.NOTARIZATION_USERNAME }}
+          NZ_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
         run: gon ./gon.config.json
 #      - name: Notarize Binaries
 #        uses: devbotsxyz/xcode-notarize@v1
