@@ -13,7 +13,7 @@
     <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
-    <NoWarn>CA2007</NoWarn>
+    <NoWarn>$(NoWarn);CA2007;NETSDK1179</NoWarn>
   </PropertyGroup>
   
   <ItemGroup>

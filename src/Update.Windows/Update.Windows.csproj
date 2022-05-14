@@ -16,7 +16,7 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
-    <NoWarn>CA2007</NoWarn>
+    <NoWarn>$(NoWarn);CA2007;NETSDK1179</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
