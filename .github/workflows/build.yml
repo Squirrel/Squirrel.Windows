@@ -95,9 +95,9 @@ jobs:
         run: brew install mitchellh/gon/gon
       - name: Bundle, Sign, and Notarize
         env:
-          NZ_USERNAME: ${{ secrets.NOTARIZATION_USERNAME }}
-          NZ_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
-        run: gon -log-json -log-level=debug ./gon.config.json
+          AC_USERNAME: ${{ secrets.NOTARIZATION_USERNAME }}
+          AC_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
+        run: gon -log-level=debug ./gon.config.json
 #      - name: Notarize Binaries
 #        uses: devbotsxyz/xcode-notarize@v1
 #        with:
@@ -116,5 +116,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: osx-tools
-          path: ./publish/*
+          path: ./SquirrelTools.*
         
