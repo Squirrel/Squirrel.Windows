@@ -17,8 +17,8 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - name: Install NGBV
-        run: dotnet tool install --tool-path . nbgv
+#      - name: Install NGBV
+#        run: dotnet tool install --tool-path . nbgv
       - name: Build
         shell: pwsh
         run: .\build.ps1
@@ -46,6 +46,7 @@ jobs:
         with:
           name: windows-tools
           path: .\build\publish\*
+          
   build-macos:
     name: Build OSX
     runs-on: macos-latest
@@ -58,14 +59,37 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Build SquirrelMac
-        run: |
-          dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
-          ls -la ./publish
+        run:  dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
+      - name: Upload SquirrelMac
+        uses: actions/upload-artifact@v3
+        with:
+          name: osx-tools
+          path: ./publish/SquirrelMac
       - name: Build UpdateMac
-        run: |
-          dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Update.OSX/Update.OSX.csproj -o ./publish
-          ls -la ./publish
-      # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
+        run: dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Update.OSX/Update.OSX.csproj -o ./publish
+      - name: Upload UpdateMac
+        uses: actions/upload-artifact@v3
+        with:
+          name: osx-tools
+          path: ./publish/UpdateMac
+
+  # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
+  deploy:
+    name: "Deploy"
+    needs: [build-windows, build-macos]
+    runs-on: macos-latest
+    steps:
+#      - uses: actions/checkout@v2
+#        with:
+#          fetch-depth: 0
+#      - name: Setup .NET
+#        uses: actions/setup-dotnet@v1
+#        with:
+#          dotnet-version: ${{ env.DOTNET_VERSION }}
+#      - name: Install NGBV
+#        run: dotnet tool install --tool-path . nbgv
+      - name: Download all workflow artifacts
+        uses: actions/download-artifact@v3
       - name: Install Apple Certificate
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_BUILD_CERTIFICATE_BASE64 }}
@@ -85,36 +109,28 @@ jobs:
           # import certificate to keychain
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
-#      - name: CodeSign Binaries
-#        run: |
-#          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements ./Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./publish/SquirrelMac
-#          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements ./Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./publish/UpdateMac
-#          zip bundle.zip ./publish/SquirrelMac
-#          zip bundle.zip ./publish/UpdateMac
+      - name: CodeSign Binaries
+        run: |
+          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements ./Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./osx-tools/SquirrelMac
+          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements ./Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./osx-tools/UpdateMac
+      - name: Bundle Tools
+        run: |
+          zip SquirrelTools.zip ./osx-tools/*
+          zip SquirrelTools.zip ./windows-tools/*
       - name: Install mitchellh/gon
         run: brew install mitchellh/gon/gon
-      - name: Bundle, Sign, and Notarize
+      - name: Notarize Tools
         env:
           AC_USERNAME: ${{ secrets.NOTARIZATION_USERNAME }}
           AC_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
-        run: gon -log-level=debug ./gon.config.json
-#      - name: Notarize Binaries
-#        uses: devbotsxyz/xcode-notarize@v1
-#        with:
-#          product-path: "bundle.zip"
-#          appstore-connect-username: ${{ secrets.NOTARIZATION_USERNAME }}
-#          appstore-connect-password: ${{ secrets.NOTARIZATION_PASSWORD }}
-#      - name: Staple Notarization
-#        uses: devbotsxyz/xcode-staple@v1
-#        with:
-#          product-path: "bundle.zip"
+        run: gon ./gon.config.json
       - name: Clean up KeyChain
         if: ${{ always() }}
         run: |
           security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-      - name: Upload MacOS Artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: osx-tools
+          name: tools
           path: ./SquirrelTools.*
         
