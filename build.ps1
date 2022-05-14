@@ -33,13 +33,13 @@ dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScript
 
 # Copy over all files we need
 Write-Output "Copying files to all the right places"
-Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$BinOut" -Recurse
 Copy-Item -Path "$PSScriptRoot\vendor\wix\*" -Destination "$BinOut" -Recurse
 Copy-Item "$In\Win32\Setup.exe" -Destination "$BinOut"
 Copy-Item "$In\Win32\StubExecutable.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\singlefilehost.exe" -Destination "$BinOut"
+Copy-Item -Path "$PSScriptRoot\vendor\7za.exe" -Destination "$BinOut"
 
 # Clean up files we do not need to create a nuget package
 Write-Output "Cleaning up intermediate files"

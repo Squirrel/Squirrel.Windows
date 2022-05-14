@@ -44,11 +44,15 @@ namespace Squirrel.CommandLine
         {
             var findCommand = SquirrelRuntimeInfo.IsWindows ? "where" : "which";
 
+            // first search the usual places
             foreach (var n in names) {
                 var helper = FindHelperFile(n, throwWhenNotFound: false);
                 if (helper != null)
                     return helper;
-
+            }
+            
+            // then see if there is something on the path
+            foreach (var n in names) {
                 var result = ProcessUtil.InvokeProcess(findCommand, new[] { n }, null, CancellationToken.None);
                 if (result.ExitCode == 0) {
                     return n;

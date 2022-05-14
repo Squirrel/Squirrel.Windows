@@ -153,10 +153,8 @@ jobs:
           name: tools
       - name: Decompress OSX
         run: |
-          ls -la ./build
-          ls -la ./build/publish
           unzip ./squirrel-osx-x64.zip -d ./build/publish
-          ls -la ./build/publish
+          mv ./build/publish/7zz ./build/publish/bin/
       - name: Create NuGet Package
         run: |
           export NUGET_VERSION=$(nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
