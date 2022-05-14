@@ -11,6 +11,7 @@ using System.Text;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Readers;
 using SharpCompress.Common;
+using Squirrel.CommandLine;
 
 namespace Squirrel.Tests.TestHelpers
 {
@@ -63,7 +64,7 @@ namespace Squirrel.Tests.TestHelpers
         static object gate = 42;
         public static IDisposable WithFakeInstallDirectory(string packageFileName, out string path)
         {
-            var ret = Utility.WithTempDirectory(out path);
+            var ret = Utility.GetTempDirectory(out path);
 
             File.Copy(GetPath("fixtures", packageFileName), Path.Combine(path, packageFileName));
             var rp = ReleaseEntry.GenerateFromFile(Path.Combine(path, packageFileName));
@@ -78,7 +79,7 @@ namespace Squirrel.Tests.TestHelpers
 
             nuspecFile = nuspecFile ?? "SquirrelInstalledApp.nuspec";
 
-            using (var clearTemp = Utility.WithTempDirectory(out targetDir)) {
+            using (var clearTemp = Utility.GetTempDirectory(out targetDir)) {
                 var nuspec = File.ReadAllText(IntegrationTestHelper.GetPath("fixtures", nuspecFile), Encoding.UTF8);
                 var nuspecPath = Path.Combine(targetDir, nuspecFile);
 
@@ -91,7 +92,7 @@ namespace Squirrel.Tests.TestHelpers
                     IntegrationTestHelper.GetPath("fixtures", "NotSquirrelAwareApp.exe"),
                     Path.Combine(targetDir, "NotSquirrelAwareApp.exe"));
 
-                new SquirrelCli.NugetConsole().Pack(nuspecPath, targetDir, targetDir);
+                new NugetConsole().Pack(nuspecPath, targetDir, targetDir);
 
                 var di = new DirectoryInfo(targetDir);
                 var pkg = di.EnumerateFiles("*.nupkg").First();
@@ -114,7 +115,7 @@ namespace Squirrel.Tests.TestHelpers
 
         public static IDisposable WithFakeAlreadyInstalledApp(string zipFile, out string path)
         {
-            var ret = Utility.WithTempDirectory(out path);
+            var ret = Utility.GetTempDirectory(out path);
 
             // NB: Apparently Ionic.Zip is perfectly content to extract a Zip
             // file that doesn't actually exist, without failing.

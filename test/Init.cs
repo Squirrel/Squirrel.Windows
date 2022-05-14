@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Reflection;
+using Squirrel.CommandLine;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
@@ -14,9 +15,9 @@ namespace Squirrel.Tests
         {
             // Place initialization code here
             var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase.Replace("file:///", ""));
-            HelperExe.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor"));
-            HelperExe.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "7zip"));
-            HelperExe.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "wix"));
+            HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor"));
+            HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "7zip"));
+            HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "wix"));
         }
 
         public new void Dispose()

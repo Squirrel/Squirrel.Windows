@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net48</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <Description>Squirrel.Tests</Description>
     <Title>Squirrel.Tests</Title>
     <IsPackable>false</IsPackable>
@@ -14,24 +14,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\src\Squirrel.CommandLine\NugetConsole.cs" Link="TestHelpers\NugetConsole.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" PrivateAssets="All" />
     <PackageReference Include="System.IO.Packaging" Version="6.0.0" />
-    <PackageReference Include="NuGet.Commands" Version="6.1.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Squirrel\Squirrel.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="System.Net.Http" />
+    <ProjectReference Include="..\src\Squirrel.CommandLine\Squirrel.CommandLine.csproj" />
   </ItemGroup>
 
 </Project>

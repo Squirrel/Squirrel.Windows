@@ -80,7 +80,19 @@ namespace Squirrel
             _config = config ?? AppDesc.GetCurrentPlatform();
         }
 
-        internal UpdateManager(string urlOrPath, string appId) : this(CreateSource(urlOrPath), new AppDescWindows())
+        internal UpdateManager(string urlOrPath, string appId) 
+            : this(CreateSource(urlOrPath), new AppDescWindows(
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appId), appId))
+        {
+        }
+        
+        internal UpdateManager(string urlOrPath, string appId, string localAppData) 
+            : this(CreateSource(urlOrPath), new AppDescWindows(Path.Combine(localAppData, appId), appId))
+        {
+        }
+        
+        internal UpdateManager(string urlOrPath, string appId, string localAppData, IFileDownloader downloader) 
+            : this(new SimpleWebSource(urlOrPath, downloader), new AppDescWindows(Path.Combine(localAppData, appId), appId))
         {
         }
 

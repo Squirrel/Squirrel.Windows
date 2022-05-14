@@ -44,8 +44,8 @@ namespace Squirrel.Tests
             string tempDir;
             string remotePkgDir;
 
-            using (Utility.WithTempDirectory(out tempDir))
-            using (Utility.WithTempDirectory(out remotePkgDir)) {
+            using (Utility.GetTempDirectory(out tempDir))
+            using (Utility.GetTempDirectory(out remotePkgDir)) {
                 IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
                 var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
                 ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
@@ -73,8 +73,8 @@ namespace Squirrel.Tests
             string tempDir;
             string remotePkgDir;
 
-            using (Utility.WithTempDirectory(out tempDir))
-            using (Utility.WithTempDirectory(out remotePkgDir)) {
+            using (Utility.GetTempDirectory(out tempDir))
+            using (Utility.GetTempDirectory(out remotePkgDir)) {
                 IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
                 var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
                 ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
@@ -110,8 +110,8 @@ namespace Squirrel.Tests
             string tempDir;
             string remotePkgDir;
 
-            using (Utility.WithTempDirectory(out tempDir))
-            using (Utility.WithTempDirectory(out remotePkgDir)) {
+            using (Utility.GetTempDirectory(out tempDir))
+            using (Utility.GetTempDirectory(out remotePkgDir)) {
                 IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
                 var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
                 ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
@@ -147,8 +147,8 @@ namespace Squirrel.Tests
             string tempDir;
             string remotePkgDir;
 
-            using (Utility.WithTempDirectory(out tempDir))
-            using (Utility.WithTempDirectory(out remotePkgDir)) {
+            using (Utility.GetTempDirectory(out tempDir))
+            using (Utility.GetTempDirectory(out remotePkgDir)) {
                 IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir);
                 var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
                 ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(remotePkgDir, "RELEASES"));
@@ -186,8 +186,8 @@ namespace Squirrel.Tests
             string remotePkgDir;
             const string pkgName = "Squirrel.Installed.App";
 
-            using (Utility.WithTempDirectory(out tempDir))
-            using (Utility.WithTempDirectory(out remotePkgDir)) {
+            using (Utility.GetTempDirectory(out tempDir))
+            using (Utility.GetTempDirectory(out remotePkgDir)) {
                 // install 0.1.0
                 IntegrationTestHelper.CreateFakeInstalledApp("0.1.0", remotePkgDir, "SquirrelInstalledAppWithDots.nuspec");
                 var pkgs = ReleaseEntry.BuildReleasesFile(remotePkgDir);
@@ -240,7 +240,7 @@ namespace Squirrel.Tests
         public void WhenNoNewReleasesAreAvailableTheListIsEmpty()
         {
             string tempDir;
-            using (Utility.WithTempDirectory(out tempDir)) {
+            using (Utility.GetTempDirectory(out tempDir)) {
                 var appDir = Directory.CreateDirectory(Path.Combine(tempDir, "theApp"));
                 var packages = Path.Combine(appDir.FullName, "packages");
                 Directory.CreateDirectory(packages);
@@ -261,7 +261,7 @@ namespace Squirrel.Tests
         public void ThrowsWhenOnlyDeltaReleasesAreAvailable()
         {
             string tempDir;
-            using (Utility.WithTempDirectory(out tempDir)) {
+            using (Utility.GetTempDirectory(out tempDir)) {
                 var appDir = Directory.CreateDirectory(Path.Combine(tempDir, "theApp"));
                 var packages = Path.Combine(appDir.FullName, "packages");
                 Directory.CreateDirectory(packages);
@@ -288,7 +288,7 @@ namespace Squirrel.Tests
         {
             string tempDir;
 
-            using (Utility.WithTempDirectory(out tempDir)) {
+            using (Utility.GetTempDirectory(out tempDir)) {
                 string appDir = Path.Combine(tempDir, "theApp");
                 string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
@@ -337,7 +337,7 @@ namespace Squirrel.Tests
         {
             string tempDir;
 
-            using (Utility.WithTempDirectory(out tempDir)) {
+            using (Utility.GetTempDirectory(out tempDir)) {
                 string appDir = Path.Combine(tempDir, "theApp");
                 string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
@@ -385,7 +385,7 @@ namespace Squirrel.Tests
         {
             string tempDir;
 
-            using (Utility.WithTempDirectory(out tempDir)) {
+            using (Utility.GetTempDirectory(out tempDir)) {
                 string appDir = Path.Combine(tempDir, "theApp");
                 string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
@@ -435,7 +435,7 @@ namespace Squirrel.Tests
         {
             string tempDir;
 
-            using (Utility.WithTempDirectory(out tempDir)) {
+            using (Utility.GetTempDirectory(out tempDir)) {
                 string appDir = Path.Combine(tempDir, "theApp");
                 string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
@@ -485,7 +485,7 @@ namespace Squirrel.Tests
         public async Task CreateFullPackagesFromDeltaSmokeTest()
         {
             string tempDir;
-            using (Utility.WithTempDirectory(out tempDir)) {
+            using (Utility.GetTempDirectory(out tempDir)) {
                 string appDir = Path.Combine(tempDir, "theApp");
                 string packagesDir = Path.Combine(appDir, "packages");
                 Directory.CreateDirectory(packagesDir);
@@ -516,8 +516,8 @@ namespace Squirrel.Tests
             string remotePkgPath;
             string path;
 
-            using (Utility.WithTempDirectory(out path)) {
-                using (Utility.WithTempDirectory(out remotePkgPath))
+            using (Utility.GetTempDirectory(out path)) {
+                using (Utility.GetTempDirectory(out remotePkgPath))
                 using (var mgr = new UpdateManager(remotePkgPath, "theApp", path)) {
                     IntegrationTestHelper.CreateFakeInstalledApp("1.0.0.1", remotePkgPath);
                     await mgr.FullInstall();

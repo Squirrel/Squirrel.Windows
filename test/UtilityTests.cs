@@ -135,7 +135,7 @@ namespace Squirrel.Tests
         public void CanDeleteDeepRecursiveDirectoryStructure()
         {
             string tempDir;
-            using (Utility.WithTempDirectory(out tempDir)) {
+            using (Utility.GetTempDirectory(out tempDir)) {
                 for (var i = 0; i < 50; i++) {
                     var directory = Path.Combine(tempDir, newId());
                     CreateSampleDirectory(directory);
@@ -161,7 +161,7 @@ namespace Squirrel.Tests
         public void CreateFakePackageSmokeTest()
         {
             string path;
-            using (Utility.WithTempDirectory(out path)) {
+            using (Utility.GetTempDirectory(out path)) {
                 var output = IntegrationTestHelper.CreateFakeInstalledApp("0.3.0", path);
                 Assert.True(File.Exists(output));
             }
@@ -205,7 +205,7 @@ namespace Squirrel.Tests
             var dl = Utility.CreateDefaultDownloader();
 
             List<int> prog = new List<int>();
-            using (Utility.WithTempFile(out var tempPath))
+            using (Utility.GetTempFileName(out var tempPath))
                 dl.DownloadFile(testUrl, tempPath, prog.Add).Wait();
 
             Assert.True(prog.Count > 10);

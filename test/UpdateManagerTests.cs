@@ -26,8 +26,8 @@ namespace Squirrel.Tests
                 string remotePkgPath;
                 string path;
 
-                using (Utility.WithTempDirectory(out path)) {
-                    using (Utility.WithTempDirectory(out remotePkgPath))
+                using (Utility.GetTempDirectory(out path)) {
+                    using (Utility.GetTempDirectory(out remotePkgPath))
                     using (var mgr = new UpdateManager(remotePkgPath, "theApp", path)) {
                         IntegrationTestHelper.CreateFakeInstalledApp("1.0.0.1", remotePkgPath);
                         await mgr.FullInstall();
@@ -62,7 +62,7 @@ namespace Squirrel.Tests
             public async Task UpdateLocalReleasesSmokeTest()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir)) {
+                using (Utility.GetTempDirectory(out tempDir)) {
                     var appDir = Path.Combine(tempDir, "theApp");
                     var packageDir = Directory.CreateDirectory(Path.Combine(appDir, "packages"));
 
@@ -86,7 +86,7 @@ namespace Squirrel.Tests
             public async Task InitialInstallSmokeTest()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir)) {
+                using (Utility.GetTempDirectory(out tempDir)) {
                     var remotePackageDir = Directory.CreateDirectory(Path.Combine(tempDir, "remotePackages"));
                     var localAppDir = Path.Combine(tempDir, "theApp");
 
@@ -116,7 +116,7 @@ namespace Squirrel.Tests
             public async Task SpecialCharactersInitialInstallTest()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir)) {
+                using (Utility.GetTempDirectory(out tempDir)) {
                     var remotePackageDir = Directory.CreateDirectory(Path.Combine(tempDir, "remotePackages"));
                     var localAppDir = Path.Combine(tempDir, "theApp");
 
@@ -144,7 +144,7 @@ namespace Squirrel.Tests
             public async Task WhenBothFilesAreInSyncNoUpdatesAreApplied()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir)) {
+                using (Utility.GetTempDirectory(out tempDir)) {
                     var appDir = Path.Combine(tempDir, "theApp");
                     var localPackages = Path.Combine(appDir, "packages");
                     var remotePackages = Path.Combine(tempDir, "releases");
@@ -180,7 +180,7 @@ namespace Squirrel.Tests
             public async Task WhenRemoteReleasesDoNotHaveDeltasNoUpdatesAreApplied()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir)) {
+                using (Utility.GetTempDirectory(out tempDir)) {
                     var appDir = Path.Combine(tempDir, "theApp");
                     var localPackages = Path.Combine(appDir, "packages");
                     var remotePackages = Path.Combine(tempDir, "releases");
@@ -222,7 +222,7 @@ namespace Squirrel.Tests
             public async Task WhenTwoRemoteUpdatesAreAvailableChoosesDeltaVersion()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir)) {
+                using (Utility.GetTempDirectory(out tempDir)) {
                     var appDir = Path.Combine(tempDir, "theApp");
                     var localPackages = Path.Combine(appDir, "packages");
                     var remotePackages = Path.Combine(tempDir, "releases");
@@ -262,7 +262,7 @@ namespace Squirrel.Tests
             public async Task WhenFolderDoesNotExistThrowHelpfulError()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir)) {
+                using (Utility.GetTempDirectory(out tempDir)) {
                     var directory = Path.Combine(tempDir, "missing-folder");
                     var fixture = new UpdateManager(directory, "MyAppName");
 
@@ -276,7 +276,7 @@ namespace Squirrel.Tests
             public async Task WhenReleasesFileDoesntExistThrowACustomError()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir)) {
+                using (Utility.GetTempDirectory(out tempDir)) {
                     var fixture = new UpdateManager(tempDir, "MyAppName");
 
                     using (fixture) {
@@ -289,7 +289,7 @@ namespace Squirrel.Tests
             public async Task WhenReleasesFileIsBlankThrowAnException()
             {
                 string tempDir;
-                using (Utility.WithTempDirectory(out tempDir)) {
+                using (Utility.GetTempDirectory(out tempDir)) {
                     var fixture = new UpdateManager(tempDir, "MyAppName");
                     File.WriteAllText(Path.Combine(tempDir, "RELEASES"), "");
 
@@ -311,7 +311,7 @@ namespace Squirrel.Tests
             [Fact]
             public void IsInstalledHandlesInvalidDirectoryStructure()
             {
-                using (Utility.WithTempDirectory(out var tempDir)) {
+                using (Utility.GetTempDirectory(out var tempDir)) {
                     Directory.CreateDirectory(Path.Combine(tempDir, "theApp"));
                     Directory.CreateDirectory(Path.Combine(tempDir, "theApp", "app-1.0.1"));
                     Directory.CreateDirectory(Path.Combine(tempDir, "theApp", "wrongDir"));
