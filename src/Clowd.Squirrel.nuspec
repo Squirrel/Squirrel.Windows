@@ -51,7 +51,7 @@
     <file src="..\build\Release\netstandard2.0\SquirrelLib.*" target="lib\netstandard2.0" />
 
     <!-- Binary tools, icon, and build properties -->
-    <file src="..\build\publish\*" target="tools" />
+    <file src="..\build\publish\**" target="tools" />
     <file src="..\docs\artwork\Squirrel-Clowd-Logo.png" target="images" />
     <file src="Clowd.Squirrel.props" target="build" />
   </files>
