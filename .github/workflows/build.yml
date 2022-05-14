@@ -78,6 +78,7 @@ jobs:
 
   package-macos:
     name: Package OSX
+    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
     runs-on: macos-latest
     needs: [build-macos]
     steps:
@@ -125,10 +126,9 @@ jobs:
   # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
   deploy:
     name: "Deploy"
+    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
     needs: [build-windows, package-macos]
     runs-on: ubuntu-latest
-    env:
-      NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     steps:
       - uses: actions/checkout@v2
         with:
@@ -137,7 +137,6 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          source-url: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
       - name: Install NGBV
         run: dotnet tool install --tool-path . nbgv
       - name: Install NuGet
@@ -166,21 +165,5 @@ jobs:
           name: tools
           path: '*.nupkg'
       - name: Publish Dev NuGet Package
-        if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
         run: |
-          dotnet nuget push *.nupkg --skip-duplicate
-#      - name: Upload Artifacts
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: tools
-#          path: ./SquirrelTools.*
-        
-        
-      #      - name: CodeSign Binaries
-      #        run: |
-      #          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements ./Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./osx-tools/SquirrelMac
-      #          codesign --force --timestamp --options=runtime --keychain $KEYCHAIN_PATH --entitlements ./Squirrel.entitlements --sign "Developer ID Application: Caelan Sayler" ./osx-tools/UpdateMac
-      #      - name: Bundle Tools
-      #        run: |
-      #          zip SquirrelTools.zip ./osx-tools/*
-      #          zip SquirrelTools.zip ./windows-tools/*
+          nuget push *.nupkg -ApiKey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
