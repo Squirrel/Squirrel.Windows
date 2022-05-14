@@ -85,10 +85,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: osx-build
-      - name: test
-        run: |
-          ls -la .
-          ls -la ./osx-build
+          path: ./osx-build
       - name: Install Apple Certificate
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_BUILD_CERTIFICATE_BASE64 }}
@@ -143,12 +140,20 @@ jobs:
         run: |
           export NUGET_VERSION=$(nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
           echo $NUGET_VERSION
-      - name: Download all workflow artifacts
+      - name: Download Windows Artifacts
         uses: actions/download-artifact@v3
-      - name: Decompress artifacts
+        with:
+          name: windows-build
+          path: ./build
+      - name: Download Tools
+        uses: actions/download-artifact@v3
+        with:
+          name: tools
+      - name: Decompress Tools
         run: |
-          unzip ./tools/squirrel-osx-x64.zip -d ./build/publish
-          unzip ./tools/squirrel-win-x64.zip -d ./build/publish
+          unzip ./squirrel-osx-x64.zip -d ./build/publish
+          ls -la 
+          ls -la ./build
           ls -la ./build/publish
 #      - name: Upload Artifacts
 #        uses: actions/upload-artifact@v3
