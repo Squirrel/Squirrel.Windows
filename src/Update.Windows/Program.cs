@@ -445,7 +445,7 @@ namespace Squirrel.Update
 
             if (shouldWait) waitForParentToExit();
 
-            var config = new UpdateConfig(null, null);
+            var config = new AppDescWindows();
             var latestAppDir = config.UpdateAndRetrieveCurrentFolder(forceLatest);
 
             // Check for the EXE name they want
@@ -585,7 +585,6 @@ namespace Squirrel.Update
 
             return true;
         }
-
 
         static string getAppNameFromDirectory(string path = null)
         {

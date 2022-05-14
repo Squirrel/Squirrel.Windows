@@ -27,7 +27,8 @@ namespace Squirrel.NuGet
         public byte[] AppIconBytes { get; private set; }
 
         public ZipPackage(string filePath) : this(File.OpenRead(filePath))
-        { }
+        {
+        }
 
         public ZipPackage(Stream zipStream, bool leaveOpen = false)
         {
@@ -62,7 +63,7 @@ namespace Squirrel.NuGet
         private ZipArchiveEntry GetManifestEntry(ZipArchive zip)
         {
             var manifest = zip.Entries
-              .FirstOrDefault(f => f.Key.EndsWith(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(f => f.Key.EndsWith(NugetUtil.ManifestExtension, StringComparison.OrdinalIgnoreCase));
 
             if (manifest == null)
                 throw new InvalidDataException("Invalid nupkg. Does not contain required '.nuspec' manifest.");
@@ -73,11 +74,11 @@ namespace Squirrel.NuGet
         private IEnumerable<ZipPackageFile> GetPackageFiles(ZipArchive zip)
         {
             return from entry in zip.Entries
-                   where !entry.IsDirectory
-                   let uri = new Uri(entry.Key, UriKind.Relative)
-                   let path = NugetUtil.GetPath(uri)
-                   where IsPackageFile(path)
-                   select new ZipPackageFile(uri);
+                where !entry.IsDirectory
+                let uri = new Uri(entry.Key, UriKind.Relative)
+                let path = NugetUtil.GetPath(uri)
+                where IsPackageFile(path)
+                select new ZipPackageFile(uri);
         }
 
         private string[] GetFrameworks(IEnumerable<ZipPackageFile> files)
@@ -90,8 +91,60 @@ namespace Squirrel.NuGet
                 .ToArray();
         }
 
-        [SupportedOSPlatform("windows")]
         public static Task ExtractZipReleaseForInstall(string zipFilePath, string outFolder, string rootPackageFolder, Action<int> progress)
+        {
+            if (SquirrelRuntimeInfo.IsWindows)
+                return ExtractZipReleaseForInstallWindows(zipFilePath, outFolder, rootPackageFolder, progress);
+
+            if (SquirrelRuntimeInfo.IsOSX)
+                return ExtractZipReleaseForInstallOSX(zipFilePath, outFolder, rootPackageFolder, progress);
+
+            throw new NotSupportedException("Platform not supported.");
+        }
+
+        private static readonly Regex libFolderPattern = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        [SupportedOSPlatform("macos")]
+        public static Task ExtractZipReleaseForInstallOSX(string zipFilePath, string outFolder, string rootPackageFolder, Action<int> progress)
+        {
+            return Task.Run(() => {
+                using (var za = ZipArchive.Open(zipFilePath))
+                using (var reader = za.ExtractAllEntries()) {
+                    var totalItems = za.Entries.Count;
+                    var currentItem = 0;
+
+                    while (reader.MoveToNextEntry()) {
+                        // Report progress early since we might be need to continue for non-matches
+                        currentItem++;
+                        var percentage = (currentItem * 100d) / totalItems;
+                        progress((int) percentage);
+
+                        var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
+                        var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
+
+                        if (!libFolderPattern.IsMatch(decoded)) continue;
+                        decoded = libFolderPattern.Replace(decoded, "", 1);
+
+                        var fullTargetFile = Path.Combine(outFolder, decoded);
+                        var fullTargetDir = Path.GetDirectoryName(fullTargetFile);
+                        Directory.CreateDirectory(fullTargetDir);
+
+                        Utility.Retry(() => {
+                            if (reader.Entry.IsDirectory) {
+                                Directory.CreateDirectory(fullTargetFile);
+                            } else {
+                                reader.WriteEntryToFile(fullTargetFile);
+                            }
+                        }, 5);
+                    }
+                }
+
+                progress(100);
+            });
+        }
+
+        [SupportedOSPlatform("windows")]
+        public static Task ExtractZipReleaseForInstallWindows(string zipFilePath, string outFolder, string rootPackageFolder, Action<int> progress)
         {
             var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
@@ -116,8 +169,8 @@ namespace Squirrel.NuGet
                         var parts = reader.Entry.Key.Split('\\', '/').Select(x => Uri.UnescapeDataString(x));
                         var decoded = String.Join(Path.DirectorySeparatorChar.ToString(), parts);
 
-                        if (!re.IsMatch(decoded)) continue;
-                        decoded = re.Replace(decoded, "", 1);
+                        if (!libFolderPattern.IsMatch(decoded)) continue;
+                        decoded = libFolderPattern.Replace(decoded, "", 1);
 
                         var fullTargetFile = Path.Combine(outFolder, decoded);
                         var fullTargetDir = Path.GetDirectoryName(fullTargetFile);

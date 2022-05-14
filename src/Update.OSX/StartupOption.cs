@@ -6,17 +6,18 @@ namespace Squirrel.Update
 {
     enum UpdateAction
     {
-        Unset = 0, ApplyLatest
+        Unset = 0, ProcessStart
     }
 
     internal class StartupOption
     {
         private readonly OptionSet optionSet;
         internal UpdateAction updateAction { get; private set; } = default(UpdateAction);
-        internal string updateCurrentApp { get; private set; }
-        internal string updateStagingDir { get; private set; }
-        internal bool restartApp { get; private set; }
-
+        internal string processStart { get; private set; } = default(string);
+        internal string processStartArgs { get; private set; } = default(string);
+        internal bool shouldWait { get; private set; } = false;
+        internal bool forceLatest { get; private set; } = false;
+        
         public StartupOption(string[] args)
         {
             optionSet = Parse(args);
@@ -32,18 +33,14 @@ namespace Squirrel.Update
 #pragma warning restore CS0436 // Type conflicts with imported type
                 $"Usage: {exeName} command [OPTS]",
                 "",
-                "Commands:", {
-                    "apply=", "Replace {0:CURRENT} .app with the latest in {1:STAGING}",
-                    (v1, v2) => {
-                        updateAction = UpdateAction.ApplyLatest;
-                        updateCurrentApp = v1;
-                        updateStagingDir = v2;
-                    }
-                },
-                { "restartApp", "Launch the app after applying the latest version", v => restartApp = true },
+                "Commands:", 
+                { "processStart=", "Start an executable in the current version of the app package", v => { updateAction = UpdateAction.ProcessStart; processStart = v; }, true},
+                { "processStartAndWait=", "Start an executable in the current version of the app package", v => { updateAction = UpdateAction.ProcessStart; processStart = v; shouldWait = true; }, true},
                 "",
                 "Options:",
                 { "h|?|help", "Display Help and exit", _ => { } },
+                { "forceLatest", "Force updates the current version folder", v => forceLatest = true},
+                { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
             };
 
             opts.Parse(args);

@@ -25,88 +25,63 @@ namespace Squirrel
         /// <inheritdoc/>
         public virtual string AppDirectory => _config.RootAppDir;
 
-        /// <summary>The <see cref="UpdateConfig"/> describes the structure of the application on disk (eg. file/folder locations).</summary>
-        public UpdateConfig Config => _config;
+        /// <summary>The <see cref="AppDesc"/> describes the structure of the application on disk (eg. file/folder locations).</summary>
+        public AppDesc Config => _config;
 
         /// <summary>The <see cref="IUpdateSource"/> responsible for retrieving updates from a package repository.</summary>
         public IUpdateSource Source => _source;
 
         private readonly IUpdateSource _source;
-        private readonly UpdateConfig _config;
+        private readonly AppDesc _config;
         private readonly object _lockobj = new object();
         private IDisposable _updateLock;
         private bool _disposed;
 
         /// <summary>
         /// Create a new instance of <see cref="UpdateManager"/> to check for and install updates. 
-        /// Do not forget to dispose this class! This constructor is just a shortcut for
-        /// <see cref="UpdateManager(IUpdateSource, string, string)"/>, and will automatically create
-        /// a <see cref="SimpleFileSource"/> or a <see cref="SimpleWebSource"/> depending on 
-        /// whether 'urlOrPath' is a filepath or a URL, respectively.
+        /// Do not forget to dispose this class!
         /// </summary>
         /// <param name="urlOrPath">
-        /// The URL where your update packages or stored, or a local package repository directory.
+        /// The URL or local directory that contains application update files (.nupkg and RELEASES)
         /// </param>
-        /// <param name="applicationIdOverride">
-        /// The Id of your application should correspond with the 
-        /// appdata directory name, and the Id used with Squirrel releasify/pack.
-        /// If left null/empty, UpdateManger will attempt to determine the current application Id  
-        /// from the installed app location, or throw if the app is not currently installed during certain 
-        /// operations.
-        /// </param>
-        /// <param name="localAppDataDirectoryOverride">
-        /// Provide a custom location for the system LocalAppData, it will be used 
-        /// instead of <see cref="Environment.SpecialFolder.LocalApplicationData"/>.
-        /// </param>
-        /// <param name="urlDownloader">
-        /// A custom file downloader, for using non-standard package sources or adding proxy configurations. 
-        /// </param>
-        public UpdateManager(
-            string urlOrPath,
-            string applicationIdOverride = null,
-            string localAppDataDirectoryOverride = null,
-            IFileDownloader urlDownloader = null)
-            : this(CreateSource(urlOrPath, urlDownloader), applicationIdOverride, localAppDataDirectoryOverride)
-        { }
+        public UpdateManager(string urlOrPath) : this(CreateSource(urlOrPath))
+        {
+        }
 
         /// <summary>
         /// Create a new instance of <see cref="UpdateManager"/> to check for and install updates. 
         /// Do not forget to dispose this class!
         /// </summary>
-        /// <param name="updateSource">
+        /// <param name="source">
         /// The source of your update packages. This can be a web server (<see cref="SimpleWebSource"/>),
         /// a local directory (<see cref="SimpleFileSource"/>), a GitHub repository (<see cref="GithubSource"/>),
         /// or a custom location.
         /// </param>
-        /// <param name="applicationIdOverride">
-        /// The Id of your application should correspond with the 
-        /// appdata directory name, and the Id used with Squirrel releasify/pack.
-        /// If left null/empty, UpdateManger will attempt to determine the current application Id  
-        /// from the installed app location, or throw if the app is not currently installed during certain 
-        /// operations.
-        /// </param>
-        /// <param name="localAppDataDirectoryOverride">
-        /// Provide a custom location for the system LocalAppData, it will be used 
-        /// instead of <see cref="Environment.SpecialFolder.LocalApplicationData"/>.
-        /// </param>
-        public UpdateManager(
-            IUpdateSource updateSource,
-            string applicationIdOverride = null,
-            string localAppDataDirectoryOverride = null)
-            : this(updateSource, new UpdateConfig(applicationIdOverride, localAppDataDirectoryOverride))
-        { }
+        public UpdateManager(IUpdateSource source) : this(source, null)
+        {
+        }
 
-        public UpdateManager(
-            string urlOrPath,
-            UpdateConfig config,
-            IFileDownloader urlDownloader = null)
-            : this(CreateSource(urlOrPath, urlDownloader), config)
-        { }
-
-        public UpdateManager(IUpdateSource source, UpdateConfig config)
+        /// <summary>
+        /// Create a new instance of <see cref="UpdateManager"/> to check for and install updates. 
+        /// Do not forget to dispose this class!
+        /// </summary>
+        /// <param name="source">
+        /// The source of your update packages. This can be a web server (<see cref="SimpleWebSource"/>),
+        /// a local directory (<see cref="SimpleFileSource"/>), a GitHub repository (<see cref="GithubSource"/>),
+        /// or a custom location.
+        /// </param>
+        /// <param name="config">
+        /// For configuring advanced / custom deployment scenarios. Should not be used unless
+        /// you know what you are doing.
+        /// </param>
+        public UpdateManager(IUpdateSource source, AppDesc config)
         {
             _source = source;
-            _config = config;
+            _config = config ?? AppDesc.GetCurrentPlatform();
+        }
+
+        internal UpdateManager(string urlOrPath, string appId) : this(CreateSource(urlOrPath), new AppDescWindows())
+        {
         }
 
         internal UpdateManager() { }
@@ -140,7 +115,7 @@ namespace Squirrel
 
             bool ignoreDeltaUpdates = false;
 
-        retry:
+            retry:
             var updateInfo = default(UpdateInfo);
 
             try {
@@ -166,17 +141,16 @@ namespace Squirrel
                 }
 
                 await this.ErrorIfThrows(() =>
-                    DownloadReleases(updateInfo.ReleasesToApply, x => progress(x / 3 + 33)),
+                        DownloadReleases(updateInfo.ReleasesToApply, x => progress(x / 3 + 33)),
                     "Failed to download updates").ConfigureAwait(false);
 
                 await this.ErrorIfThrows(() =>
-                    ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
+                        ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
                     "Failed to apply updates").ConfigureAwait(false);
 
                 if (SquirrelRuntimeInfo.IsWindows) {
                     await CreateUninstallerRegistryEntry().ConfigureAwait(false);
                 }
-
             } catch {
                 if (ignoreDeltaUpdates == false) {
                     ignoreDeltaUpdates = true;
@@ -186,9 +160,7 @@ namespace Squirrel
                 throw;
             }
 
-            return updateInfo.ReleasesToApply.Any() ?
-                updateInfo.ReleasesToApply.MaxBy(x => x.Version).Last() :
-                default(ReleaseEntry);
+            return updateInfo.ReleasesToApply.Any() ? updateInfo.ReleasesToApply.MaxBy(x => x.Version).Last() : default(ReleaseEntry);
         }
 
         /// <inheritdoc/>
@@ -205,6 +177,7 @@ namespace Squirrel
                 if (disp != null) {
                     disp.Dispose();
                 }
+
                 _disposed = true;
                 GC.SuppressFinalize(this);
             }
@@ -222,7 +195,7 @@ namespace Squirrel
         /// however you'd like.</remarks>
         public void RestartApp(string exeToStart = null, string arguments = null)
         {
-            restartProcess(exeToStart, arguments);
+            AppDesc.GetCurrentPlatform().StartRestartingProcess(exeToStart, arguments);
             // NB: We have to give update.exe some time to grab our PID
             Thread.Sleep(500);
             Environment.Exit(0);
@@ -236,9 +209,9 @@ namespace Squirrel
         /// the current executable. </param>
         /// <param name="arguments">Arguments to start the exe with</param>
         /// <returns>The Update.exe process that is waiting for this process to exit</returns>
-        public Process RestartAppWhenExited(string exeToStart = null, string arguments = null)
+        public static Process RestartAppWhenExited(string exeToStart = null, string arguments = null)
         {
-            var process = restartProcess(exeToStart, arguments);
+            var process = AppDesc.GetCurrentPlatform().StartRestartingProcess(exeToStart, arguments);
             // NB: We have to give update.exe some time to grab our PID
             Thread.Sleep(500);
             return process;
@@ -252,63 +225,16 @@ namespace Squirrel
         /// the current executable. </param>
         /// <param name="arguments">Arguments to start the exe with</param>
         /// <returns>The Update.exe process that is waiting for this process to exit</returns>
-        public async Task<Process> RestartAppWhenExitedAsync(string exeToStart = null, string arguments = null)
+        public static async Task<Process> RestartAppWhenExitedAsync(string exeToStart = null, string arguments = null)
         {
-            var process = restartProcess(exeToStart, arguments);
+            var process = AppDesc.GetCurrentPlatform().StartRestartingProcess(exeToStart, arguments);
             // NB: We have to give update.exe some time to grab our PID
             await Task.Delay(500).ConfigureAwait(false);
             return process;
         }
 
-        [SupportedOSPlatform("windows")]
-        private Process restartProcess(string exeToStart = null, string arguments = null)
-        {
-            // NB: Here's how this method works:
-            //
-            // 1. We're going to pass the *name* of our EXE and the params to 
-            //    Update.exe
-            // 2. Update.exe is going to grab our PID (via getting its parent), 
-            //    then wait for us to exit.
-            // 3. Return control and new Process back to caller and allow them to Exit as desired.
-            // 4. After our process exits, Update.exe unblocks, then we launch the app again, possibly 
-            //    launching a different version than we started with (this is why
-            //    we take the app's *name* rather than a full path)
 
-            exeToStart = exeToStart ?? Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
-
-            List<string> args = new() {
-                "--forceLatest",
-                "--processStartAndWait",
-                exeToStart,
-            };
-
-            if (arguments != null) {
-                args.Add("-a");
-                args.Add(arguments);
-            }
-
-            return ProcessUtil.StartNonBlocking(_config.UpdateExePath, args, Path.GetDirectoryName(_config.UpdateExePath));
-        }
-
-        private static string GetLocalAppDataDirectory(string assemblyLocation = null)
-        {
-            // if we're installed and running as update.exe in the app folder, the app directory root is one folder up
-            if (SquirrelRuntimeInfo.IsSingleFile && Path.GetFileName(SquirrelRuntimeInfo.EntryExePath).Equals("Update.exe", StringComparison.OrdinalIgnoreCase)) {
-                var oneFolderUpFromAppFolder = Path.Combine(Path.GetDirectoryName(SquirrelRuntimeInfo.EntryExePath), "..");
-                return Path.GetFullPath(oneFolderUpFromAppFolder);
-            }
-
-            // if update exists above us, we're running from within a version directory, and the appdata folder is two above us
-            if (File.Exists(Path.Combine(SquirrelRuntimeInfo.BaseDirectory, "..", "Update.exe"))) {
-                var twoFoldersUpFromAppFolder = Path.Combine(Path.GetDirectoryName(SquirrelRuntimeInfo.EntryExePath), "..\\..");
-                return Path.GetFullPath(twoFoldersUpFromAppFolder);
-            }
-
-            // if neither of the above are true, we're probably not installed yet, so return the real appdata directory
-            return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        }
-
-        private static IUpdateSource CreateSource(string urlOrPath, IFileDownloader urlDownloader)
+        private static IUpdateSource CreateSource(string urlOrPath, IFileDownloader urlDownloader = null)
         {
             if (String.IsNullOrWhiteSpace(urlOrPath)) {
                 return null;
@@ -333,8 +259,7 @@ namespace Squirrel
 
                 IDisposable theLock;
                 try {
-                    theLock = ModeDetector.InUnitTestRunner() ?
-                        Disposable.Create(() => { }) : new SingleGlobalInstance(key, TimeSpan.FromMilliseconds(2000));
+                    theLock = ModeDetector.InUnitTestRunner() ? Disposable.Create(() => { }) : new SingleGlobalInstance(key, TimeSpan.FromMilliseconds(2000));
                 } catch (TimeoutException) {
                     throw new TimeoutException("Couldn't acquire update lock, another instance may be running updates");
                 }

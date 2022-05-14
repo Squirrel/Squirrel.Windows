@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Squirrel.SimpleSplat;
 
@@ -7,7 +8,6 @@ namespace Squirrel.Update
 {
     class Program : IEnableLogger
     {
-        static StartupOption _options;
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
         public static int Main(string[] args)
@@ -16,19 +16,19 @@ namespace Squirrel.Update
             try {
                 logger = new SetupLogLogger(Utility.GetDefaultTempBaseDirectory());
                 SquirrelLocator.CurrentMutable.Register(() => logger, typeof(ILogger));
-                _options = new StartupOption(args);
+                var opt = new StartupOption(args);
 
-                if (_options.updateAction == UpdateAction.Unset) {
-                    _options.WriteOptionDescriptions();
+                if (opt.updateAction == UpdateAction.Unset) {
+                    opt.WriteOptionDescriptions();
                     return -1;
                 }
 
                 Log.Info("Starting Squirrel Updater: " + String.Join(" ", args));
                 Log.Info("Updater location is: " + SquirrelRuntimeInfo.EntryExePath);
 
-                switch (_options.updateAction) {
-                case UpdateAction.ApplyLatest:
-                    ApplyLatestVersion(_options.updateCurrentApp, _options.updateStagingDir, _options.restartApp);
+                switch (opt.updateAction) {
+                case UpdateAction.ProcessStart:
+                    ProcessStart(opt.processStart, opt.processStartArgs, opt.shouldWait, opt.forceLatest);
                     break;
                 }
 
@@ -41,21 +41,27 @@ namespace Squirrel.Update
             }
         }
 
-        static void ApplyLatestVersion(string currentDir, string stagingDir, bool restartApp)
+        static void ProcessStart(string exeName, string arguments, bool shouldWait, bool forceLatest)
         {
-            if (!Utility.FileHasExtension(currentDir, ".app")) {
-                throw new ArgumentException("The current dir must end with '.app' on macos.");
-            }
+            if (shouldWait) waitForParentToExit();
+
             // todo https://stackoverflow.com/questions/51441576/how-to-run-app-as-sudo
             // https://stackoverflow.com/questions/10283062/getting-sudo-to-ask-for-password-via-the-gui
 
-            Process.Start("killall", $"`basename -a '{currentDir}'`")?.WaitForExit();
+            var desc = new AppDescOsx();
+            var currentDir = desc.UpdateAndRetrieveCurrentFolder(forceLatest);
 
-            var config = new UpdateConfig(null, null);
-            config.UpdateAndRetrieveCurrentFolder(false);
+            ProcessUtil.InvokeProcess("open", new[] { "-n", currentDir }, null, CancellationToken.None);
+        }
 
-            if (restartApp)
-                ProcessUtil.InvokeProcess("open", new[] { "-n", currentDir }, null, CancellationToken.None);
+        [DllImport("libSystem.dylib")]
+        private static extern int getppid();
+        
+        static void waitForParentToExit()
+        {
+            var parentPid = getppid();
+            var proc = Process.GetProcessById(parentPid);
+            proc.WaitForExit();
         }
     }
 }

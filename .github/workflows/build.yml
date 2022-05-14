@@ -53,16 +53,9 @@ jobs:
         with:
           dotnet-version: 6.0.*
       - name: Build SquirrelMac
-        run: dotnet publish -v minimal -c Release -r osx.10.12-x64 --self-contained ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
-#      - name: Build SquirrelMac
-#        run: |
-#          dotnet publish -v minimal -c Release -r osx.10.12-x64 --self-contained ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
-#          mv ./publish/SquirrelMac ./publish/SquirrelMac-x64
-#          dotnet publish -v minimal -c Release -r osx.11.0-arm64 --self-contained=true ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
-#          mkdir ./bundle
-#          lipo -create -output ./bundle/SquirrelMac ./publish/SquirrelMac ./publish/SquirrelMac-x64
+        run: dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
       - name: Build UpdateMac
-        run: dotnet publish -v minimal -c Release -r osx.10.12-x64 --self-contained ./src/Update.OSX/Update.OSX.csproj -o ./publish
+        run: dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Update.OSX/Update.OSX.csproj -o ./publish
       - name: Upload MacOS Artifacts
         uses: actions/upload-artifact@v3
         with:

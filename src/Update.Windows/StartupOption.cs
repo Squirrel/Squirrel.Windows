@@ -61,7 +61,7 @@ namespace Squirrel.Update
                 { "s|silent", "Silent install", _ => silentInstall = true, true},
                 { "processStart=", "Start an executable in the current version of the app package", v => { updateAction = UpdateAction.ProcessStart; processStart = v; }, true},
                 { "processStartAndWait=", "Start an executable in the current version of the app package", v => { updateAction = UpdateAction.ProcessStart; processStart = v; shouldWait = true; }, true},
-                { "forceLatest", "Force updates the current version junction", v => forceLatest = true},
+                { "forceLatest", "Force updates the current version folder", v => forceLatest = true},
                 { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                 { "setup=", "Install the package at this location", v => {  updateAction = UpdateAction.Setup; target = v; }, true },
                 { "setupOffset=", "Offset where in setup package to start reading", v => { setupOffset = long.Parse(v); }, true },
