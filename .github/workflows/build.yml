@@ -97,7 +97,7 @@ jobs:
         env:
           NZ_USERNAME: ${{ secrets.NOTARIZATION_USERNAME }}
           NZ_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
-        run: gon ./gon.config.json
+        run: gon -log-json -log-level=debug ./gon.config.json
 #      - name: Notarize Binaries
 #        uses: devbotsxyz/xcode-notarize@v1
 #        with:
