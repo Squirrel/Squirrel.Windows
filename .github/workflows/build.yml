@@ -59,15 +59,15 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Build SquirrelMac
         run: |
-          dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
-          ls -la ./publish
+          dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./bundle
+          ls -la ./bundle
       - name: Build UpdateMac
         run: |
-          dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Update.OSX/Update.OSX.csproj -o ./publish
-          ls -la ./publish
+          dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Update.OSX/Update.OSX.csproj -o ./bundle
+          ls -la ./bundle
       - name: Upload MacOS Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: osx-tools
-          path: ./publish/*
+          path: ./bundle/*
         
