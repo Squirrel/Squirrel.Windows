@@ -13,6 +13,7 @@ using Xunit;
 using Squirrel.NuGet;
 using Xunit.Abstractions;
 using NuGet.Versioning;
+using Squirrel.CommandLine;
 
 namespace Squirrel.Tests
 {
@@ -55,7 +56,7 @@ namespace Squirrel.Tests
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
 
-            var fixture = new ReleasePackage(inputPackage);
+            var fixture = new ReleasePackageBuilder(inputPackage);
 
             try {
                 fixture.CreateReleasePackage(outputPackage);
@@ -88,7 +89,7 @@ namespace Squirrel.Tests
         {
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.NoDependencies.1.0.0.0.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
-            var fixture = new ReleasePackage(inputPackage);
+            var fixture = new ReleasePackageBuilder(inputPackage);
             try {
                 fixture.CreateReleasePackage(outputPackage);
             } finally {
@@ -101,7 +102,7 @@ namespace Squirrel.Tests
         {
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "ProjectDependsOnJsonDotNet.1.0.nupkg");
             var outputPackage = Path.GetTempFileName() + ".nupkg";
-            var fixture = new ReleasePackage(inputPackage);
+            var fixture = new ReleasePackageBuilder(inputPackage);
             try {
                 Assert.Throws<InvalidOperationException>(() => fixture.CreateReleasePackage(outputPackage));
             } finally {
@@ -115,7 +116,7 @@ namespace Squirrel.Tests
         {
             var dontcare = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nupkg");
             var inputSpec = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0.nuspec");
-            var fixture = new ReleasePackage(dontcare);
+            var fixture = new ReleasePackageBuilder(dontcare);
 
             var targetFile = Path.GetTempFileName();
             File.Copy(inputSpec, targetFile, true);
@@ -148,7 +149,7 @@ namespace Squirrel.Tests
         {
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "ProjectWithContent.1.0.0.0-beta.nupkg");
             var outputPackage = Path.GetTempFileName() + ".zip";
-            var fixture = new ReleasePackage(inputPackage);
+            var fixture = new ReleasePackageBuilder(inputPackage);
 
             try {
                 fixture.CreateReleasePackage(outputPackage);

@@ -72,7 +72,8 @@ namespace Squirrel.Tests
                         "Squirrel.Core.1.1.0.0-full.nupkg",
                     }.ForEach(x => File.Copy(IntegrationTestHelper.GetPath("fixtures", x), Path.Combine(tempDir, "theApp", "packages", x)));
 
-                    ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(appDir));
+                    var info = new AppDescWindows(appDir, "theApp");
+                    ReleaseEntry.BuildReleasesFile(info.PackagesDir);
 
                     var releasePath = Path.Combine(packageDir.FullName, "RELEASES");
                     File.Exists(releasePath).ShouldBeTrue();
@@ -162,7 +163,8 @@ namespace Squirrel.Tests
                     });
 
                     // sync both release files
-                    ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(appDir));
+                    var info = new AppDescWindows(appDir, "theApp");
+                    ReleaseEntry.BuildReleasesFile(info.PackagesDir);
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
                     // check for an update
@@ -205,7 +207,8 @@ namespace Squirrel.Tests
                     });
 
                     // sync both release files
-                    ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(appDir));
+                    var info = new AppDescWindows(appDir, "theApp");
+                    ReleaseEntry.BuildReleasesFile(info.PackagesDir);
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
                     UpdateInfo updateInfo;
@@ -244,7 +247,8 @@ namespace Squirrel.Tests
                     });
 
                     // sync both release files
-                    ReleaseEntry.BuildReleasesFile(Utility.PackageDirectoryForAppDir(appDir));
+                    var info = new AppDescWindows(appDir, "theApp");
+                    ReleaseEntry.BuildReleasesFile(info.PackagesDir);
                     ReleaseEntry.BuildReleasesFile(remotePackages);
 
                     using (var mgr = new UpdateManager(remotePackages, "theApp", tempDir, new FakeDownloader())) {
@@ -317,10 +321,11 @@ namespace Squirrel.Tests
                     Directory.CreateDirectory(Path.Combine(tempDir, "theApp", "wrongDir"));
                     File.WriteAllText(Path.Combine(tempDir, "theApp", "Update.exe"), "1");
                     using (var fixture = new UpdateManager("http://lol", "theApp", tempDir)) {
-                        Assert.Null(fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "app.exe")));
-                        Assert.Null(fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "app.exe")));
-                        Assert.Null(fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "wrongDir", "app.exe")));
-                        Assert.Equal(new SemanticVersion(1, 0, 9), fixture.CurrentlyInstalledVersion(Path.Combine(tempDir, "theApp", "app-1.0.9", "app.exe")));
+                        Assert.Null(new AppDescWindows(Path.Combine(tempDir, "app.exe")).CurrentlyInstalledVersion);
+                        Assert.Null(new AppDescWindows(Path.Combine(tempDir, "theApp", "app.exe")).CurrentlyInstalledVersion);
+                        Assert.Null(new AppDescWindows(Path.Combine(tempDir, "theApp", "wrongDir", "app.exe")).CurrentlyInstalledVersion);
+                        Assert.Equal(new SemanticVersion(1, 0, 9),
+                            new AppDescWindows(Path.Combine(tempDir, "theApp", "app-1.0.9", "app.exe")).CurrentlyInstalledVersion);
                     }
                 }
             }

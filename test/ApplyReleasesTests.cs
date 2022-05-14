@@ -200,7 +200,9 @@ namespace Squirrel.Tests
                 //Assert.True(Directory.Exists(Path.Combine(tempDir, pkgName, "app-0.1.0")));
                 Assert.True(Directory.Exists(Path.Combine(tempDir, pkgName, "current")));
 
-                var version = Utility.GetAppVersionDirectories(Path.Combine(tempDir, pkgName)).Single();
+                var info = new AppDescWindows(Path.Combine(tempDir, pkgName), pkgName);
+
+                var version = info.GetVersions().Single();
                 Assert.True(version.IsCurrent);
                 Assert.Equal(new SemanticVersion(0, 1, 0), version.Manifest.Version);
 
@@ -216,9 +218,9 @@ namespace Squirrel.Tests
                     await fixture.UpdateApp();
                 }
 
-                Utility.UpdateAndRetrieveCurrentFolder(Path.Combine(tempDir, pkgName), false);
+                info.UpdateAndRetrieveCurrentFolder(false);
 
-                var versions = Utility.GetAppVersionDirectories(Path.Combine(tempDir, pkgName)).ToArray();
+                var versions = info.GetVersions().ToArray();
                 Assert.Equal(2, versions.Count());
                 Assert.Equal(new SemanticVersion(0, 2, 0), versions.Single(s => s.IsCurrent).Version);
 

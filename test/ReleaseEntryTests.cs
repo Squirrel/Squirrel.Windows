@@ -6,6 +6,7 @@ using Squirrel.Tests.TestHelpers;
 using Xunit;
 using Squirrel.NuGet;
 using NuGet.Versioning;
+using Squirrel.CommandLine;
 
 namespace Squirrel.Tests
 {
@@ -173,26 +174,26 @@ namespace Squirrel.Tests
         [Fact]
         public void GetLatestReleaseWithNullCollectionReturnsNull()
         {
-            Assert.Null(ReleaseEntry.GetPreviousRelease(
+            Assert.Null(ReleasePackageBuilder.GetPreviousRelease(
                 null, null, null));
         }
 
         [Fact]
         public void GetLatestReleaseWithEmptyCollectionReturnsNull()
         {
-            Assert.Null(ReleaseEntry.GetPreviousRelease(
+            Assert.Null(ReleasePackageBuilder.GetPreviousRelease(
                 Enumerable.Empty<ReleaseEntry>(), null, null));
         }
 
         [Fact]
         public void WhenCurrentReleaseMatchesLastReleaseReturnNull()
         {
-            var package = new ReleasePackage("Espera-1.7.6-beta.nupkg");
+            var package = new ReleasePackageBuilder("Espera-1.7.6-beta.nupkg");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.6-beta.nupkg"))
             };
-            Assert.Null(ReleaseEntry.GetPreviousRelease(
+            Assert.Null(ReleasePackageBuilder.GetPreviousRelease(
                 releaseEntries, package, @"C:\temp\somefolder"));
         }
 
@@ -200,14 +201,14 @@ namespace Squirrel.Tests
         public void WhenMultipleReleaseMatchesReturnEarlierResult()
         {
             var expected = SemanticVersion.Parse("1.7.5-beta");
-            var package = new ReleasePackage("Espera-1.7.6-beta.nupkg");
+            var package = new ReleasePackageBuilder("Espera-1.7.6-beta.nupkg");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.6-beta.nupkg")),
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.5-beta.nupkg"))
             };
 
-            var actual = ReleaseEntry.GetPreviousRelease(
+            var actual = ReleasePackageBuilder.GetPreviousRelease(
                 releaseEntries,
                 package,
                 @"C:\temp\");
@@ -219,14 +220,14 @@ namespace Squirrel.Tests
         public void WhenMultipleReleasesFoundReturnPreviousVersion()
         {
             var expected = SemanticVersion.Parse("1.7.6-beta");
-            var input = new ReleasePackage("Espera-1.7.7-beta.nupkg");
+            var input = new ReleasePackageBuilder("Espera-1.7.7-beta.nupkg");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.6-beta.nupkg")),
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.5-beta.nupkg"))
             };
 
-            var actual = ReleaseEntry.GetPreviousRelease(
+            var actual = ReleasePackageBuilder.GetPreviousRelease(
                 releaseEntries,
                 input,
                 @"C:\temp\");
@@ -238,14 +239,14 @@ namespace Squirrel.Tests
         public void WhenMultipleReleasesFoundInOtherOrderReturnPreviousVersion()
         {
             var expected = SemanticVersion.Parse("1.7.6-beta");
-            var input = new ReleasePackage("Espera-1.7.7-beta.nupkg");
+            var input = new ReleasePackageBuilder("Espera-1.7.7-beta.nupkg");
 
             var releaseEntries = new[] {
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.5-beta.nupkg")),
                 ReleaseEntry.ParseReleaseEntry(MockReleaseEntry("Espera-1.7.6-beta.nupkg"))
             };
 
-            var actual = ReleaseEntry.GetPreviousRelease(
+            var actual = ReleasePackageBuilder.GetPreviousRelease(
                 releaseEntries,
                 input,
                 @"C:\temp\");

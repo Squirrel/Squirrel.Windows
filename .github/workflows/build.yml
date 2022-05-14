@@ -1,6 +1,6 @@
 name: Build Squirrel
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 env:
   DOTNET_VERSION: '6.0.202'
@@ -17,30 +17,11 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-#      - name: Install NGBV
-#        run: dotnet tool install --tool-path . nbgv
       - name: Build
         shell: pwsh
         run: .\build.ps1
-#      - name: Create NuGet Package
-#        shell: pwsh
-#        run: .\pack.ps1
-#      - name: Test
-#        run: dotnet test test\Squirrel.Tests.csproj -l "console;verbosity=detailed"
-#      - name: "Upload Tools"
-#        uses: actions/upload-artifact@v3
-#        with:
-#          path: .\build\SquirrelTools*.zip
-#          if-no-files-found: error
-#       https://stackoverflow.com/questions/63817052/github-actions-run-step-only-for-certain-pull-request-base-branches
-#      - name: "Upload NuGet Package"
-#        uses: actions/upload-artifact@v3
-#        with:
-#          path: .\build\Clowd.Squirrel*.nupkg
-#          if-no-files-found: error
-#      - name: Publish to GitHub Packages
-#        if: ${{ github.ref == 'ref/head/develop' }}
-#        run: dotnet nuget push .\build\Clowd.Squirrel*.nupkg
+      - name: Test
+        run: dotnet test test\Squirrel.Tests.csproj -l "console;verbosity=detailed"
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -54,7 +35,7 @@ jobs:
         with:
           name: tools
           path: squirrel-win-x64.zip
-          
+  
   build-macos:
     name: Build OSX
     runs-on: macos-latest
@@ -75,12 +56,13 @@ jobs:
         with:
           name: osx-build
           path: ./publish/*
-
+  
+  # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
   package-macos:
     name: Package OSX
     if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
     runs-on: macos-latest
-    needs: [build-macos]
+    needs: [ build-macos ]
     steps:
       - uses: actions/checkout@v2
       - name: Download MacOS Artifacts
@@ -122,12 +104,11 @@ jobs:
         with:
           name: tools
           path: squirrel-osx-x64.zip
-      
-  # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
+  
   deploy:
     name: "Deploy"
     if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
-    needs: [build-windows, package-macos]
+    needs: [ build-windows, package-macos ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

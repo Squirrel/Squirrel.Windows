@@ -9,6 +9,7 @@ using Squirrel.Tests.TestHelpers;
 using Xunit;
 using Xunit.Abstractions;
 using NuGet.Versioning;
+using Squirrel.CommandLine;
 
 namespace Squirrel.Tests
 {
@@ -21,13 +22,13 @@ namespace Squirrel.Tests
         [Fact]
         public void ApplyDeltaPackageSmokeTest()
         {
-            var basePackage = new ReleasePackage(IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0-full.nupkg"));
-            var deltaPackage = new ReleasePackage(IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0-delta.nupkg"));
+            var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.0.0.0-full.nupkg");
+            var deltaPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0-delta.nupkg");
             var expectedPackageFile = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Core.1.1.0.0-full.nupkg");
             var outFile = Path.GetTempFileName() + ".nupkg";
 
             try {
-                var deltaBuilder = new DeltaPackageBuilder();
+                var deltaBuilder = new DeltaPackage();
                 deltaBuilder.ApplyDeltaPackage(basePackage, deltaPackage, outFile);
 
                 var result = new ZipPackage(outFile);
@@ -57,12 +58,12 @@ namespace Squirrel.Tests
         [Fact]
         public void ApplyDeltaWithBothBsdiffAndNormalDiffDoesntFail()
         {
-            var basePackage = new ReleasePackage(IntegrationTestHelper.GetPath("fixtures", "slack-1.1.8-full.nupkg"));
-            var deltaPackage = new ReleasePackage(IntegrationTestHelper.GetPath("fixtures", "slack-1.2.0-delta.nupkg"));
+            var basePackage = IntegrationTestHelper.GetPath("fixtures", "slack-1.1.8-full.nupkg");
+            var deltaPackage = IntegrationTestHelper.GetPath("fixtures", "slack-1.2.0-delta.nupkg");
             var outFile = Path.GetTempFileName() + ".nupkg";
 
             try {
-                var deltaBuilder = new DeltaPackageBuilder();
+                var deltaBuilder = new DeltaPackage();
                 deltaBuilder.ApplyDeltaPackage(basePackage, deltaPackage, outFile);
 
                 var result = new ZipPackage(outFile);
@@ -91,8 +92,8 @@ namespace Squirrel.Tests
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
 
-            var baseFixture = new ReleasePackage(basePackage);
-            var fixture = new ReleasePackage(newPackage);
+            var baseFixture = new ReleasePackageBuilder(basePackage);
+            var fixture = new ReleasePackageBuilder(newPackage);
 
             var tempFiles = Enumerable.Range(0, 3)
                 .Select(_ => Path.GetTempPath() + Guid.NewGuid().ToString() + ".nupkg")
@@ -173,8 +174,8 @@ namespace Squirrel.Tests
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
 
-            var baseFixture = new ReleasePackage(basePackage);
-            var fixture = new ReleasePackage(newPackage);
+            var baseFixture = new ReleasePackageBuilder(basePackage);
+            var fixture = new ReleasePackageBuilder(newPackage);
 
             var tempFiles = Enumerable.Range(0, 3)
                 .Select(_ => Path.GetTempPath() + Guid.NewGuid().ToString() + ".nupkg")
@@ -205,8 +206,8 @@ namespace Squirrel.Tests
             var sourceDir = IntegrationTestHelper.GetPath("fixtures", "packages");
             (new DirectoryInfo(sourceDir)).Exists.ShouldBeTrue();
 
-            var baseFixture = new ReleasePackage(basePackage);
-            var fixture = new ReleasePackage(newPackage);
+            var baseFixture = new ReleasePackageBuilder(basePackage);
+            var fixture = new ReleasePackageBuilder(newPackage);
 
             var tempFile = Path.GetTempPath() + Guid.NewGuid() + ".nupkg";
 
@@ -226,8 +227,8 @@ namespace Squirrel.Tests
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
 
-            var baseFixture = new ReleasePackage(basePackage);
-            var fixture = new ReleasePackage(newPackage);
+            var baseFixture = new ReleasePackageBuilder(basePackage);
+            var fixture = new ReleasePackageBuilder(newPackage);
 
             var tempFiles = Enumerable.Range(0, 3)
                 .Select(_ => Path.GetTempPath() + Guid.NewGuid().ToString() + ".nupkg")
@@ -258,8 +259,8 @@ namespace Squirrel.Tests
             var basePackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.1.0-pre.nupkg");
             var newPackage = IntegrationTestHelper.GetPath("fixtures", "Squirrel.Tests.0.2.0-pre.nupkg");
 
-            var baseFixture = new ReleasePackage(basePackage);
-            var fixture = new ReleasePackage(newPackage);
+            var baseFixture = new ReleasePackageBuilder(basePackage);
+            var fixture = new ReleasePackageBuilder(newPackage);
 
             var tempFiles = Enumerable.Range(0, 3)
                 .Select(_ => Path.GetTempPath() + Guid.NewGuid().ToString() + ".nupkg")

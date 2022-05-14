@@ -27,7 +27,7 @@ namespace Squirrel.NuGet
                 throw new ArgumentException($"Invalid package Id '{id}', it must contain only alphanumeric characters, underscores, dashes, and dots.");
         }
 
-        public static void ThrowIfVersionNotSemverCompliant(string version, bool allowTags)
+        public static void ThrowIfVersionNotSemverCompliant(string version, bool allowTags = true)
         {
             if (SemanticVersion.TryParse(version, out var parsed)) {
                 if (parsed < new SemanticVersion(0, 0, 1)) {
