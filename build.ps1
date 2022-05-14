@@ -26,8 +26,8 @@ foreach ($Folder in $Folders) {
 # Build single-exe packaged projects
 # New-Item -Path "$Out" -Name "win-x86" -ItemType "directory"
 $BinOut = $Out
-dotnet publish -v minimal -c Release -r win-x64 --self-contained=true "$PSScriptRoot\src\Squirrel.CommandLine.Windows\Squirrel.CommandLine.Windows.csproj" -o "$Out"
-dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\Update.Windows\Update.Windows.csproj" -o "$BinOut"
+dotnet publish -v minimal -c Release -r win-x64 --self-contained=true "$PSScriptRoot\src\Squirrel.CommandLine.Windows\Squirrel.CommandLine.Windows.csproj" -o "$Out" -p:NoWarn=NETSDK1179
+dotnet publish -v minimal -c Release -r win-x86 --self-contained=true "$PSScriptRoot\src\Update.Windows\Update.Windows.csproj" -o "$BinOut" -p:NoWarn=NETSDK1179
 
 # Copy over all files we need
 Copy-Item -Path "$PSScriptRoot\vendor\7zip\*" -Destination "$BinOut" -Recurse
