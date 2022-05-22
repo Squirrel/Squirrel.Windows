@@ -8,13 +8,10 @@ using System.Runtime.Versioning;
 using Squirrel.SimpleSplat;
 
 #if !NETFRAMEWORK
-
 using InteropArchitecture = System.Runtime.InteropServices.Architecture;
-
 #endif
 
 #if !NET6_0_OR_GREATER
-
 namespace System.Runtime.Versioning
 {
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
@@ -23,11 +20,9 @@ namespace System.Runtime.Versioning
         public SupportedOSPlatformGuardAttribute(string platformName) { }
     }
 }
-
 #endif
 
 #if NETFRAMEWORK || NETSTANDARD2_0_OR_GREATER
-
 namespace System.Runtime.Versioning
 {
     [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
@@ -41,7 +36,6 @@ namespace System.Runtime.CompilerServices
 {
     internal static class IsExternalInit { }
 }
-
 #endif
 
 namespace Squirrel
@@ -52,10 +46,13 @@ namespace Squirrel
     {
         /// <summary> Unknown or unsupported </summary>
         Unknown = 0,
+
         /// <summary> Intel x86 </summary>
         x86 = 0x014c,
+
         /// <summary> x64 / Amd64 </summary>
         x64 = 0x8664,
+
         /// <summary> Arm64 </summary>
         arm64 = 0xAA64,
     }
@@ -68,10 +65,10 @@ namespace Squirrel
     {
         /// <summary> The current compiled Squirrel display version. </summary>
         public static string SquirrelDisplayVersion => ThisAssembly.AssemblyInformationalVersion + (ThisAssembly.IsPublicRelease ? "" : " (prerelease)");
-        
+
         /// <summary> The current compiled Squirrel assembly file version. </summary>
         public static string SquirrelFileVersion => ThisAssembly.AssemblyFileVersion;
-        
+
         /// <summary> The path on disk of the entry assembly. </summary>
         public static string EntryExePath { get; }
 
@@ -114,7 +111,8 @@ namespace Squirrel
 
         static SquirrelRuntimeInfo()
         {
-            EntryExePath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+            var entryProcess = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+            EntryExePath = Path.GetFileNameWithoutExtension(entryProcess) == "dotnet" ? "csq" : entryProcess;
             BaseDirectory = AppContext.BaseDirectory;
 
             // if Assembly.Location does not exist, we're almost certainly bundled into a dotnet SingleFile
@@ -123,7 +121,7 @@ namespace Squirrel
             var assyPath = (Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly())?.Location;
             if (String.IsNullOrEmpty(assyPath) || !File.Exists(assyPath))
                 IsSingleFile = true;
-            
+
 #if NETFRAMEWORK
             CheckArchitectureWindows();
 #else
@@ -190,10 +188,12 @@ namespace Squirrel
                     // https://stackoverflow.com/questions/69038560/detect-windows-11-with-net-framework-or-windows-api
                     if (architecture == RuntimeCpu.x64 && Environment.OSVersion.Version.Build >= 22000) return true;
                 }
+
                 if (SystemArchitecture == RuntimeCpu.x64) {
                     if (architecture == RuntimeCpu.x64) return true;
                     if (architecture == RuntimeCpu.x86) return true;
                 }
+
                 if (SystemArchitecture == RuntimeCpu.x86) {
                     if (architecture == RuntimeCpu.x86) return true;
                 }

@@ -27,8 +27,8 @@ namespace Squirrel.CommandLine
 
             var exeName = Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
             string sqUsage =
-                $"Squirrel {SquirrelRuntimeInfo.SquirrelDisplayVersion}, tool for creating and deploying Squirrel releases" + Environment.NewLine +
-                $"Usage: {exeName} [verb] [--option:value]";
+                $"Squirrel {SquirrelRuntimeInfo.SquirrelDisplayVersion}, tool for creating Squirrel releases" + Environment.NewLine +
+                $"Usage: {exeName} [verb] [--option=value]";
 
             try {
                 globalOptions.Parse(args);

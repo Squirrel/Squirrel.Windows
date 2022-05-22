@@ -10,11 +10,13 @@ namespace Squirrel.Tool
 {
     class Program
     {
+        private const string EMBEDDED_FLAG = "--csq-embedded";
+
         static int Main(string[] args)
         {
             try {
-                if (args.Contains("--csq-embedded-only")) {
-                    return SquirrelHost.Main(args);
+                if (args.Contains(EMBEDDED_FLAG)) {
+                    return SquirrelHost.Main(args.Except(new[] { EMBEDDED_FLAG }).ToArray());
                 }
 
                 Console.WriteLine($"Squirrel Locator {SquirrelRuntimeInfo.SquirrelDisplayVersion}");
@@ -44,12 +46,13 @@ namespace Squirrel.Tool
                 Process p;
 
                 if (File.Exists(toolDllPath)) {
-                    Console.WriteLine("Running at: " + toolDllPath);
-                    p = Process.Start("dotnet", new[] { dllName, "--csq-embedded-only" }.Concat(args));
+                    var dnargs = new[] { toolDllPath, EMBEDDED_FLAG }.Concat(args);
+                    Console.WriteLine("Running: dotnet " + String.Join(" ", dnargs));
+                    p = Process.Start("dotnet", dnargs);
                 } else if (File.Exists(toolExePath)) {
                     if (!SquirrelRuntimeInfo.IsWindows)
                         throw new NotSupportedException($"The installed version {targetVersion} does not support this operating system. Please update.");
-                    Console.WriteLine("Running at: " + toolExePath);
+                    Console.WriteLine("Running: " + toolExePath + " " + String.Join(" ", args));
                     p = Process.Start(toolExePath, args);
                 } else {
                     throw new Exception("Unable to locate Squirrel " + targetVersion);
