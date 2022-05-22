@@ -86,17 +86,14 @@ jobs:
         run: |
           export NUGET_VERSION=$(./nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
           echo $NUGET_VERSION
-          ls -la .
           unzip ./signed.zip -d ./bsigned/
-          ls -la .
           cp ./bsigned/UpdateMac ./squirrel/tools/
           cp ./bsigned/UpdateMac ./csq/tools/net6.0/any/
           cp ./bsigned/7zz ./squirrel/tools/
           cp ./bsigned/7zz ./csq/tools/net6.0/any/
           rm -rf *.nupkg
-          zip csq.${NUGET_VERSION}.nupkg ${GITHUB_WORKSPACE}/csq/* 
-          zip Clowd.Squirrel.${NUGET_VERSION}.nupkg ${GITHUB_WORKSPACE}/squirrel/*
-          ls -la .
+          ./vendor/7zz a csq.${NUGET_VERSION}.nupkg -tzip -mx9 "${GITHUB_WORKSPACE}/csq/*" 
+          ./vendor/7zz a Clowd.Squirrel.${NUGET_VERSION}.nupkg -tzip -mx9 "${GITHUB_WORKSPACE}/squirrel/*" 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
