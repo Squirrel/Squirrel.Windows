@@ -21,7 +21,7 @@ jobs:
         shell: pwsh
         run: .\build.ps1
       - name: Test
-        run: dotnet test --no-build test\Squirrel.Tests.csproj -l "console;verbosity=detailed"
+        run: dotnet test --no-build test\Squirrel.Tests.csproj -c Release -l "console;verbosity=detailed"
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
