@@ -5,6 +5,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>Squirrel.Update</RootNamespace>
     <AssemblyName>Update</AssemblyName>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <PublishSingleFile>true</PublishSingleFile>
     <PublishTrimmed>true</PublishTrimmed>

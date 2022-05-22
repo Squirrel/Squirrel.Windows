@@ -36,9 +36,7 @@ namespace Squirrel.Update
             var exeName = Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
             var opts = new OptionSet() {
                 "",
-#pragma warning disable CS0436 // Type conflicts with imported type
-                $"Squirrel Updater ({ThisAssembly.AssemblyInformationalVersion}) manages packages and installs updates for Squirrel applications",
-#pragma warning restore CS0436 // Type conflicts with imported type
+                $"Squirrel Updater ({SquirrelRuntimeInfo.SquirrelDisplayVersion}) manages packages and installs updates for Squirrel applications",
                 $"Usage: {exeName} command [OPTS]",
                 "",
                 "Commands:",

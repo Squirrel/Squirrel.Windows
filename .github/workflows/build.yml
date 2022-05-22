@@ -21,7 +21,7 @@ jobs:
         shell: pwsh
         run: .\build.ps1
       - name: Test
-        run: dotnet test test\Squirrel.Tests.csproj -l "console;verbosity=detailed"
+        run: dotnet test --no-build test\Squirrel.Tests.csproj -l "console;verbosity=detailed"
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -51,9 +51,10 @@ jobs:
       - name: Extract Artifacts
         run: |
           ls -la .
-          ls -la ./squirrel
           unzip Clowd.Squirrel*.nupkg -d ./squirrel/
           unzip csq*.nupkg -d ./csq/
+          ls -la ./squirrel
+          ls -la ./csq
       - name: Install Apple Certificate
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_BUILD_CERTIFICATE_BASE64 }}

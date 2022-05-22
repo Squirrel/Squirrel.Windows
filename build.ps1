@@ -41,15 +41,15 @@ Remove-Item *.nupkg
 
 Write-Host "Publishing SingleFile Projects" -ForegroundColor Magenta
 $ToolsDir = "csq\tools\net6.0\any"
-dotnet publish -v minimal -c Release -r win-x86 --self-contained "$PSScriptRoot\src\Update.Windows\Update.Windows.csproj" -o "$ToolsDir"
-dotnet publish -v minimal -c Release -r osx.10.12-x64 --self-contained "$PSScriptRoot\src\Update.OSX\Update.OSX.csproj" -o "$ToolsDir"
+dotnet publish -v minimal --no-build -c Release --self-contained "$PSScriptRoot\src\Update.Windows\Update.Windows.csproj" -o "$ToolsDir"
+dotnet publish -v minimal --no-build -c Release --self-contained "$PSScriptRoot\src\Update.OSX\Update.OSX.csproj" -o "$ToolsDir"
 
 Write-Host "Copying Tools" -ForegroundColor Magenta
 New-Item -Path "squirrel" -Name "tools" -ItemType "directory"
 Copy-Item -Path "$ToolsDir\*" -Destination "squirrel\tools" -Recurse
 
 Write-Host "Re-assembling Packages" -ForegroundColor Magenta
-seven a "csq.$version.nupkg" -tzip "$PSScriptRoot\build\Release\csq\*"
-seven a "Clowd.Squirrel.$version.nupkg" -tzip "$PSScriptRoot\build\Release\squirrel\*"
+seven a "csq.$version.nupkg" -tzip -mx9 "$PSScriptRoot\build\Release\csq\*"
+seven a "Clowd.Squirrel.$version.nupkg" -tzip -mx9 "$PSScriptRoot\build\Release\squirrel\*"
 
 Write-Host "Done." -ForegroundColor Magenta
