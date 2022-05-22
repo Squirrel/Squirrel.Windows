@@ -5,9 +5,8 @@ using System.Runtime.Versioning;
 using Microsoft.NET.HostModel;
 using Microsoft.NET.HostModel.AppHost;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.Windows
 {
-    [SupportedOSPlatform("windows")]
     public static class SetupBundle
     {
         public static bool IsBundle(string setupPath, out long bundleOffset, out long bundleLength)

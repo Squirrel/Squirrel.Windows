@@ -9,7 +9,6 @@ using Squirrel.SimpleSplat;
 
 namespace Squirrel.CommandLine.OSX
 {
-    [SupportedOSPlatform("osx")]
     class CommandsOSX
     {
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(CommandsOSX));
@@ -67,7 +66,7 @@ namespace Squirrel.CommandLine.OSX
                     .ContextualSingle("package", "'lib' folder");
                 var contentsDir = Path.Combine(libDir, "Contents");
                 File.Copy(nuspecPath, Path.Combine(contentsDir, "current.version"));
-                File.Copy(HelperExe.UpdatePath, Path.Combine(contentsDir, "UpdateMac"));
+                File.Copy(HelperExe.UpdateMacPath, Path.Combine(contentsDir, "UpdateMac"));
             });
 
             // we are not currently making any modifications to the package

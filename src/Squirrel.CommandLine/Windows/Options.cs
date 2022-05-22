@@ -14,15 +14,18 @@ namespace Squirrel.CommandLine.Windows
 
         public SigningOptions()
         {
-            Add("n=|signParams=", "Sign files via SignTool.exe using these {PARAMETERS}",
-                v => signParams = v);
-            Add("signTemplate=", "Use a custom signing {COMMAND}. '{{{{file}}}}' will be replaced by the path of the file to sign.",
-                v => signTemplate = v);
+            if (SquirrelRuntimeInfo.IsWindows) {
+                Add("n=|signParams=", "Sign files via SignTool.exe using these {PARAMETERS}",
+                    v => signParams = v);
+                Add("signTemplate=", "Use a custom signing {COMMAND}. '{{{{file}}}}' will be replaced by the path of the file to sign.",
+                    v => signTemplate = v);
+            }
         }
 
-        [SupportedOSPlatform("windows")]
         public void SignPEFile(string filePath)
         {
+            if (!SquirrelRuntimeInfo.IsWindows) return;
+            
             if (!String.IsNullOrEmpty(signParams)) {
                 HelperExe.SignPEFilesWithSignTool(filePath, signParams);
             } else if (!String.IsNullOrEmpty(signTemplate)) {
@@ -74,7 +77,9 @@ namespace Squirrel.CommandLine.Windows
             Add("s=|splashImage=", "{PATH} to image/gif displayed during installation", v => splashImage = v);
             Add("i=|icon=", "{PATH} to .ico for Setup.exe and Update.exe", v => icon = v);
             Add("appIcon=", "{PATH} to .ico for 'Apps and Features' list", v => appIcon = v);
-            Add("msi=", "Compile a .msi machine-wide deployment tool with the specified {BITNESS}. (either 'x86' or 'x64')", v => msi = v.ToLower());
+            if (SquirrelRuntimeInfo.IsWindows) {
+                Add("msi=", "Compile a .msi machine-wide deployment tool with the specified {BITNESS}. (either 'x86' or 'x64')", v => msi = v.ToLower());
+            }
         }
 
         public override void Validate()

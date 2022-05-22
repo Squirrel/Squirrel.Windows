@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security;
 using System.Text;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.Windows
 {
     internal static class CopStache
     {

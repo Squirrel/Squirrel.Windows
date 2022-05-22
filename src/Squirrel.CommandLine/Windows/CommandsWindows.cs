@@ -15,7 +15,6 @@ using Squirrel.SimpleSplat;
 
 namespace Squirrel.CommandLine.Windows
 {
-    [SupportedOSPlatform("windows")]
     class CommandsWindows : IEnableLogger
     {
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(CommandsWindows));
@@ -28,7 +27,7 @@ namespace Squirrel.CommandLine.Windows
                 { "releasify", "Take an existing nuget package and convert it into a Squirrel release", new ReleasifyOptions(), Releasify },
             };
         }
-        
+
         static void Pack(PackOptions options)
         {
             using (Utility.GetTempDirectory(out var tmp)) {
@@ -67,9 +66,13 @@ namespace Squirrel.CommandLine.Windows
             // update icon for Update.exe if requested
             var bundledUpdatePath = HelperExe.UpdatePath;
             var updatePath = Path.Combine(tempDir, "Update.exe");
-            if (setupIcon != null) {
+            if (setupIcon != null && SquirrelRuntimeInfo.IsWindows) {
                 DotnetUtil.UpdateSingleFileBundleIcon(bundledUpdatePath, updatePath, setupIcon);
             } else {
+                if (setupIcon != null) {
+                    Log.Warn("Unable to set icon for Update.exe (only supported on windows).");
+                }
+
                 File.Copy(bundledUpdatePath, updatePath, true);
             }
 
@@ -131,24 +134,6 @@ namespace Squirrel.CommandLine.Windows
                             "Please publish your application to a folder without ClickOnce.");
                     }
 
-                    // warning if the installed SquirrelLib version is not the same as Squirrel.exe
-                    StringFileInfo sqLib = null;
-                    try {
-                        var myFileVersion = new NuGetVersion(SquirrelRuntimeInfo.SquirrelFileVersion).Version;
-                        sqLib = Directory.EnumerateFiles(libDir, "SquirrelLib.dll")
-                            .Select(f => { StringFileInfo.ReadVersionInfo(f, out var fi); return fi; })
-                            .FirstOrDefault(fi => fi.FileVersion != myFileVersion);
-                    } catch (Exception ex) {
-                        Log.WarnException("Error validating SquirrelLib version in package.", ex);
-                    }
-                    if (sqLib != null) {
-                        Log.Warn(
-                            $"SquirrelLib.dll {sqLib.FileVersion} is installed in provided package, " +
-                            $"but current Squirrel.exe version is {SquirrelRuntimeInfo.SquirrelDisplayVersion} ({SquirrelRuntimeInfo.SquirrelFileVersion}). " +
-                            $"The LIB version and CLI tool version must be the same to build releases " +
-                            $"or the application may fail to update properly.");
-                    }
-
                     // parse the PE header of every squirrel aware app
                     var peparsed = awareExes.ToDictionary(path => path, path => new PeNet.PeFile(path));
 
@@ -160,9 +145,9 @@ namespace Squirrel.CommandLine.Windows
                     }
 
                     var peArch = from pe in peparsed
-                                 let machine = pe.Value?.ImageNtHeaders?.FileHeader?.Machine ?? 0
-                                 let arch = parseMachine(machine)
-                                 select new { Name = Path.GetFileName(pe.Key), Architecture = arch };
+                        let machine = pe.Value?.ImageNtHeaders?.FileHeader?.Machine ?? 0
+                        let arch = parseMachine(machine)
+                        select new { Name = Path.GetFileName(pe.Key), Architecture = arch };
 
                     if (awareExes.Count > 0) {
                         Log.Info($"There are {awareExes.Count} SquirrelAwareApp's. Binaries will be executed during install/update/uninstall hooks.");
@@ -171,7 +156,7 @@ namespace Squirrel.CommandLine.Windows
                         }
                     } else {
                         Log.Warn("There are no SquirrelAwareApp's. No hooks will be executed during install/update/uninstall. " +
-                            "Shortcuts will be created for every binary in package.");
+                                 "Shortcuts will be created for every binary in package.");
                     }
 
                     var pkgarch = SquirrelRuntimeInfo.SelectPackageArchitecture(peArch.Select(f => f.Architecture));
@@ -179,7 +164,7 @@ namespace Squirrel.CommandLine.Windows
                         pkgarch == RuntimeCpu.Unknown ? LogLevel.Warn : LogLevel.Info);
 
                     // check dependencies of squirrel aware binaries for potential issues
-                    peparsed.ForEach(kvp => DotnetUtil.CheckDotnetReferences(kvp.Key, kvp.Value, requiredFrameworks));
+                    // peparsed.ForEach(kvp => DotnetUtil.CheckDotnetReferences(kvp.Key, kvp.Value, requiredFrameworks));
 
                     // store the runtime dependencies and the package architecture in nuspec (read by installer)
                     ZipPackage.SetSquirrelMetadata(nuspecPath, pkgarch, requiredFrameworks.Select(r => r.Id));
@@ -206,13 +191,10 @@ namespace Squirrel.CommandLine.Windows
                     // copy app icon to 'lib/fx/app.ico'
                     var iconTarget = Path.Combine(libDir, "app.ico");
                     if (options.appIcon != null) {
-
                         // icon was specified on the command line
                         Log.Info("Using app icon from command line arguments");
                         File.Copy(options.appIcon, iconTarget, true);
-
                     } else if (!File.Exists(iconTarget) && zpkg.IconUrl != null) {
-
                         // icon was provided in the nuspec. download it and possibly convert it from a different image format
                         Log.Info($"Downloading app icon from '{zpkg.IconUrl}'.");
                         var fd = Utility.CreateDefaultDownloader();
@@ -220,11 +202,16 @@ namespace Squirrel.CommandLine.Windows
                         if (zpkg.IconUrl.AbsolutePath.EndsWith(".ico")) {
                             File.WriteAllBytes(iconTarget, imgBytes);
                         } else {
-                            using var imgStream = new MemoryStream(imgBytes);
-                            using var bmp = (Bitmap) Image.FromStream(imgStream);
-                            using var ico = Icon.FromHandle(bmp.GetHicon());
-                            using var fs = File.Open(iconTarget, FileMode.Create, FileAccess.Write);
-                            ico.Save(fs);
+                            if (SquirrelRuntimeInfo.IsWindows) {
+                                using var imgStream = new MemoryStream(imgBytes);
+                                using var bmp = (Bitmap) Image.FromStream(imgStream);
+                                using var ico = Icon.FromHandle(bmp.GetHicon());
+                                using var fs = File.Open(iconTarget, FileMode.Create, FileAccess.Write);
+                                ico.Save(fs);
+                            } else {
+                                Log.Warn($"App icon is currently {Path.GetExtension(zpkg.IconUrl.AbsolutePath)} and can not be automatically " +
+                                         $"converted to .ico (only supported on windows). Supply a .ico image instead.");
+                            }
                         }
                     }
 
@@ -260,7 +247,12 @@ namespace Squirrel.CommandLine.Windows
             var bundledzp = new ZipPackage(package);
             var targetSetupExe = Path.Combine(di.FullName, $"{bundledzp.Id}Setup.exe");
             File.Copy(options.debugSetupExe ?? HelperExe.SetupPath, targetSetupExe, true);
-            HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, bundledzp, setupIcon);
+
+            if (SquirrelRuntimeInfo.IsWindows) {
+                HelperExe.SetPEVersionBlockFromPackageInfo(targetSetupExe, bundledzp, setupIcon);
+            } else {
+                Log.Warn("Unable to set Setup.exe icon (only supported on windows)");
+            }
 
             var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
             var newestReleasePath = Path.Combine(di.FullName, newestFullRelease.Filename);
@@ -279,14 +271,19 @@ namespace Squirrel.CommandLine.Windows
             }
 
             if (!String.IsNullOrEmpty(options.msi)) {
-                bool x64 = options.msi.Equals("x64");
-                var msiPath = createMsiPackage(targetSetupExe, bundledzp, x64);
-                options.SignPEFile(msiPath);
+                if (SquirrelRuntimeInfo.IsWindows) {
+                    bool x64 = options.msi.Equals("x64");
+                    var msiPath = createMsiPackage(targetSetupExe, bundledzp, x64);
+                    options.SignPEFile(msiPath);                    
+                } else {
+                    Log.Warn("Unable to create MSI (only supported on windows).");
+                }
             }
 
             Log.Info("Done");
         }
 
+        [SupportedOSPlatform("windows")]
         static string createMsiPackage(string setupExe, IPackage package, bool packageAs64Bit)
         {
             Log.Info($"Compiling machine-wide msi deployment tool in {(packageAs64Bit ? "64-bit" : "32-bit")} mode");
@@ -326,16 +323,18 @@ namespace Squirrel.CommandLine.Windows
         static void createExecutableStubForExe(string exeToCopy)
         {
             try {
-                var target = Path.Combine(
-                    Path.GetDirectoryName(exeToCopy),
-                    Path.GetFileNameWithoutExtension(exeToCopy) + "_ExecutionStub.exe");
+                var targetName = Path.GetFileNameWithoutExtension(exeToCopy) + "_ExecutionStub.exe";
+                var target = Path.Combine(Path.GetDirectoryName(exeToCopy), targetName);
 
                 Utility.Retry(() => File.Copy(HelperExe.StubExecutablePath, target, true));
-
                 Utility.Retry(() => {
-                    using var writer = new Microsoft.NET.HostModel.ResourceUpdater(target, true);
-                    writer.AddResourcesFromPEImage(exeToCopy);
-                    writer.Update();
+                    if (SquirrelRuntimeInfo.IsWindows) {
+                        using var writer = new Microsoft.NET.HostModel.ResourceUpdater(target, true);
+                        writer.AddResourcesFromPEImage(exeToCopy);
+                        writer.Update();
+                    } else {
+                        Log.Warn($"Cannot set resources/icon for {target} (only supported on windows).");
+                    }
                 });
             } catch (Exception ex) {
                 Log.ErrorException($"Error creating StubExecutable and copying resources for '{exeToCopy}'. This stub may or may not work properly.", ex);

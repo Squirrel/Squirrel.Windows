@@ -10,7 +10,6 @@ namespace Squirrel
     /// <summary>
     /// Contains static properties to access common supported runtimes, and a function to search for a runtime by name
     /// </summary>
-    [SupportedOSPlatform("windows")]
     public static partial class Runtimes
     {
         /// <summary> Runtime for .NET Framework 4.5 </summary>

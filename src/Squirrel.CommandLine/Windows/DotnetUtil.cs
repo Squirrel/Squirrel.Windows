@@ -19,104 +19,104 @@ using System.Threading.Tasks;
 
 namespace Squirrel.CommandLine.Windows
 {
-    [SupportedOSPlatform("windows")]
     internal class DotnetUtil
     {
         private static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(DotnetUtil));
 
-        public static void CheckDotnetReferences(string filePath, PeNet.PeFile pe, IEnumerable<Runtimes.RuntimeInfo> dependencies)
-        {
-            try {
-                var name = Path.GetFileName(filePath);
-                var baseDir = Path.GetDirectoryName(filePath);
-
-                if (pe == null) {
-                    return;
-                }
-
-                Log.Debug($"Verifying dependencies for {name}");
-
-                var probablyBitness = pe.IsExe && pe.Is32Bit ? "-x86" : ""; // used to construct a suggested reference later
-
-                // might be an app host or single file bundle, lets look for a dotnet "dll"
-                if (pe.IsExe && !pe.IsDotNet) {
-                    if (IsSingleFileBundle(filePath)) {
-                        // TODO
-                        Log.Info("Checking dependencies in SingleFileBundle's is not supported.");
-                        return;
-                    } else {
-                        var st = pe.Resources.VsVersionInfo.StringFileInfo.StringTable;
-                        if (st.Length > 0) {
-                            var original = st[0].OriginalFilename;
-                            if (original != null && original.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase) && File.Exists(Path.Combine(baseDir, original))) {
-                                pe = new PeNet.PeFile(Path.Combine(baseDir, original));
-                                Log.Debug($"Redirecting to {original}");
-                            }
-                        }
-                    }
-                }
-
-                var refs = pe.MetaDataStreamTablesHeader?.Tables?.AssemblyRef ?? new();
-                if (!pe.IsDotNet || refs.Count == 0) {
-                    Log.Info($"{name} is not a CLR assembly or no assembly references were found.");
-                    return;
-                }
-
-                var lookup = refs.ToDictionary(x => pe.MetaDataStreamString.GetStringAtIndex(x.Name), x => x, StringComparer.InvariantCultureIgnoreCase);
-
-                // base lib is "mscorlib" for full framework or "System.Runtime" for dotnet
-                if (lookup.ContainsKey("mscorlib")) {
-                    Log.Debug($"{name} references the full framework, skipping....");
-                    return;
-                }
-
-                var foundcore = lookup.TryGetValue("System.Runtime", out var corelib);
-                if (!foundcore) {
-                    Log.Debug($"{name} has no reference to a known core lib, skipping...");
-                    return;
-                }
-
-                // don't bother checking any assemblies (exe or dll) that are present in the package
-                foreach (var k in Directory.GetFiles(baseDir)) {
-                    if (Utility.FileIsLikelyPEImage(k)) {
-                        if (lookup.ContainsKey(Path.GetFileNameWithoutExtension(k))) {
-                            Log.Debug($"Reference {Path.GetFileName(k)} found in local directory.");
-                            lookup.Remove(Path.GetFileNameWithoutExtension(k));
-                        }
-                    }
-                }
-
-                if (!lookup.Any())
-                    return;
-
-                var runtime = dependencies.OfType<Runtimes.DotnetInfo>()
-                    .FirstOrDefault(f => f.MinVersion.Major == corelib.MajorVersion && f.MinVersion.Minor == corelib.MinorVersion);
-
-                if (runtime == null) {
-                    var suggestedArg = $"--framework net{corelib.MajorVersion}.{corelib.MinorVersion}" + probablyBitness;
-                    Log.Warn($"{name} has {lookup.Count} unresolved references, and no matching runtimes were found. (Are you missing the '{suggestedArg}' argument?)");
-                    foreach (var f in lookup)
-                        Log.Debug($"{name} has unresolved reference {f.Key}.");
-
-                    return;
-                }
-
-                foreach (var f in lookup) {
-                    var fver = new NuGetVersion(f.Value.MajorVersion, f.Value.MinorVersion, f.Value.BuildNumber, f.Value.RevisionNumber);
-                    if (fver > runtime.MinVersion) {
-                        Log.Warn($"{name} references {f.Key},Version={fver} - which is higher than the current runtime version ({runtime.MinVersion}).");
-                    }
-                }
-            } catch (Exception ex) {
-                Log.WarnException("Failed to verify dependencies.", ex);
-            }
-        }
+        // public static void CheckDotnetReferences(string filePath, PeNet.PeFile pe, IEnumerable<Runtimes.RuntimeInfo> dependencies)
+        // {
+        //     try {
+        //         var name = Path.GetFileName(filePath);
+        //         var baseDir = Path.GetDirectoryName(filePath);
+        //
+        //         if (pe == null) {
+        //             return;
+        //         }
+        //
+        //         Log.Debug($"Verifying dependencies for {name}");
+        //
+        //         var probablyBitness = pe.IsExe && pe.Is32Bit ? "-x86" : ""; // used to construct a suggested reference later
+        //
+        //         // might be an app host or single file bundle, lets look for a dotnet "dll"
+        //         if (pe.IsExe && !pe.IsDotNet) {
+        //             if (IsSingleFileBundle(filePath)) {
+        //                 // TODO
+        //                 Log.Info("Checking dependencies in SingleFileBundle's is not supported.");
+        //                 return;
+        //             } else {
+        //                 var st = pe.Resources.VsVersionInfo.StringFileInfo.StringTable;
+        //                 if (st.Length > 0) {
+        //                     var original = st[0].OriginalFilename;
+        //                     if (original != null && original.EndsWith(".dll", StringComparison.InvariantCultureIgnoreCase) && File.Exists(Path.Combine(baseDir, original))) {
+        //                         pe = new PeNet.PeFile(Path.Combine(baseDir, original));
+        //                         Log.Debug($"Redirecting to {original}");
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //
+        //         var refs = pe.MetaDataStreamTablesHeader?.Tables?.AssemblyRef ?? new();
+        //         if (!pe.IsDotNet || refs.Count == 0) {
+        //             Log.Info($"{name} is not a CLR assembly or no assembly references were found.");
+        //             return;
+        //         }
+        //
+        //         var lookup = refs.ToDictionary(x => pe.MetaDataStreamString.GetStringAtIndex(x.Name), x => x, StringComparer.InvariantCultureIgnoreCase);
+        //
+        //         // base lib is "mscorlib" for full framework or "System.Runtime" for dotnet
+        //         if (lookup.ContainsKey("mscorlib")) {
+        //             Log.Debug($"{name} references the full framework, skipping....");
+        //             return;
+        //         }
+        //
+        //         var foundcore = lookup.TryGetValue("System.Runtime", out var corelib);
+        //         if (!foundcore) {
+        //             Log.Debug($"{name} has no reference to a known core lib, skipping...");
+        //             return;
+        //         }
+        //
+        //         // don't bother checking any assemblies (exe or dll) that are present in the package
+        //         foreach (var k in Directory.GetFiles(baseDir)) {
+        //             if (Utility.FileIsLikelyPEImage(k)) {
+        //                 if (lookup.ContainsKey(Path.GetFileNameWithoutExtension(k))) {
+        //                     Log.Debug($"Reference {Path.GetFileName(k)} found in local directory.");
+        //                     lookup.Remove(Path.GetFileNameWithoutExtension(k));
+        //                 }
+        //             }
+        //         }
+        //
+        //         if (!lookup.Any())
+        //             return;
+        //
+        //         var runtime = dependencies.OfType<Runtimes.DotnetInfo>()
+        //             .FirstOrDefault(f => f.MinVersion.Major == corelib.MajorVersion && f.MinVersion.Minor == corelib.MinorVersion);
+        //
+        //         if (runtime == null) {
+        //             var suggestedArg = $"--framework net{corelib.MajorVersion}.{corelib.MinorVersion}" + probablyBitness;
+        //             Log.Warn($"{name} has {lookup.Count} unresolved references, and no matching runtimes were found. (Are you missing the '{suggestedArg}' argument?)");
+        //             foreach (var f in lookup)
+        //                 Log.Debug($"{name} has unresolved reference {f.Key}.");
+        //
+        //             return;
+        //         }
+        //
+        //         foreach (var f in lookup) {
+        //             var fver = new NuGetVersion(f.Value.MajorVersion, f.Value.MinorVersion, f.Value.BuildNumber, f.Value.RevisionNumber);
+        //             if (fver > runtime.MinVersion) {
+        //                 Log.Warn($"{name} references {f.Key},Version={fver} - which is higher than the current runtime version ({runtime.MinVersion}).");
+        //             }
+        //         }
+        //     } catch (Exception ex) {
+        //         Log.WarnException("Failed to verify dependencies.", ex);
+        //     }
+        // }
 
         public static bool IsSingleFileBundle(string peFile)
         {
             return HostWriter.IsBundle(peFile, out var offset) && offset > 0;
         }
 
+        [SupportedOSPlatform("windows")]
         public static void UpdateSingleFileBundleIcon(string sourceFile, string destinationFile, string iconPath)
         {
             using var _ = Utility.GetTempDirectory(out var tmpdir);

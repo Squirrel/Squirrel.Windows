@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -68,9 +69,11 @@ namespace Squirrel
             public abstract Task<string> GetDownloadUrl();
 
             /// <summary> Check if a runtime compatible with the current instance is installed on this system </summary>
+            [SupportedOSPlatform("windows")]
             public abstract Task<bool> CheckIsInstalled();
 
             /// <summary> Check if this runtime is supported on the current system </summary>
+            [SupportedOSPlatform("windows")]
             public abstract Task<bool> CheckIsSupported();
 
             /// <summary> Download the latest installer for this runtime to the specified file </summary>
@@ -83,6 +86,7 @@ namespace Squirrel
             }
 
             /// <summary> Execute a runtime installer at a local file path. Typically used after <see cref="DownloadToFile"/> </summary>
+            [SupportedOSPlatform("windows")]
             public virtual async Task<RuntimeInstallResult> InvokeInstaller(string pathToInstaller, bool isQuiet)
             {
                 var args = new string[] { "/passive", "/norestart", "/showrmui" };
@@ -133,6 +137,7 @@ namespace Squirrel
             }
 
             /// <inheritdoc/>
+            [SupportedOSPlatform("windows")]
             public override Task<bool> CheckIsSupported()
             {
                 // TODO use IsWindowsVersionOrGreater function to verify it can be installed on this machine
@@ -140,6 +145,7 @@ namespace Squirrel
             }
 
             /// <inheritdoc/>
+            [SupportedOSPlatform("windows")]
             public override Task<bool> CheckIsInstalled()
             {
                 using var view = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default);
@@ -196,6 +202,7 @@ namespace Squirrel
             private const string DotNetFeed = "https://dotnetcli.azureedge.net/dotnet";
 
             /// <inheritdoc/>
+            [SupportedOSPlatform("windows")]
             public override Task<bool> CheckIsInstalled()
             {
                 switch (CpuArchitecture) {
@@ -208,6 +215,7 @@ namespace Squirrel
             }
 
             /// <inheritdoc/>
+            [SupportedOSPlatform("windows")]
             public override Task<bool> CheckIsSupported()
             {
                 if (CpuArchitecture == RuntimeCpu.x64 && !Environment.Is64BitOperatingSystem)
@@ -217,12 +225,14 @@ namespace Squirrel
                 return Task.FromResult(true);
             }
 
+            [SupportedOSPlatform("windows")]
             private bool CheckIsInstalledX86()
             {
                 var pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
                 return CheckIsInstalledInBaseDirectory(pf86);
             }
 
+            [SupportedOSPlatform("windows")]
             private bool CheckIsInstalledX64()
             {
                 if (!Environment.Is64BitOperatingSystem)
@@ -247,6 +257,7 @@ namespace Squirrel
                 return false;
             }
 
+            [SupportedOSPlatform("windows")]
             private bool CheckIsInstalledInBaseDirectory(string baseDirectory)
             {
                 var directory = Path.Combine(baseDirectory, "dotnet", "shared", "Microsoft.WindowsDesktop.App");
@@ -416,6 +427,7 @@ namespace Squirrel
             }
 
             /// <inheritdoc/>
+            [SupportedOSPlatform("windows")]
             public override Task<bool> CheckIsInstalled()
             {
                 return Task.FromResult(GetInstalledVCVersions().Any(
@@ -425,6 +437,7 @@ namespace Squirrel
             }
 
             /// <inheritdoc/>
+            [SupportedOSPlatform("windows")]
             public override Task<bool> CheckIsSupported()
             {
                 if (CpuArchitecture == RuntimeCpu.x64 && !Environment.Is64BitOperatingSystem)
@@ -440,6 +453,7 @@ namespace Squirrel
             /// Returns the list of currently installed VC++ redistributables, as reported by the
             /// Windows Programs &amp; Features dialog.
             /// </summary>
+            [SupportedOSPlatform("windows")]
             public static (NuGetVersion Ver, RuntimeCpu Cpu)[] GetInstalledVCVersions()
             {
                 List<(NuGetVersion Ver, RuntimeCpu Cpu)> results = new List<(NuGetVersion Ver, RuntimeCpu Cpu)>();
