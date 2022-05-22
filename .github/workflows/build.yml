@@ -92,6 +92,7 @@ jobs:
           cp ./bsigned/7zz ./squirrel/tools/
           cp ./bsigned/7zz ./csq/tools/net6.0/any/
           rm -rf *.nupkg
+          chmod 755 ./vendor/7zz
           ./vendor/7zz a csq.${NUGET_VERSION}.nupkg -tzip -mx9 "${GITHUB_WORKSPACE}/csq/*" 
           ./vendor/7zz a Clowd.Squirrel.${NUGET_VERSION}.nupkg -tzip -mx9 "${GITHUB_WORKSPACE}/squirrel/*" 
       - name: Upload Artifacts
