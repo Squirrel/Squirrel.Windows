@@ -227,7 +227,7 @@ namespace Squirrel.Tests
         {
             var text = Guid.NewGuid().ToString();
             var bytes = Encoding.Unicode.GetBytes(text);
-            var provider = new SHA1Managed();
+            var provider = SHA1.Create();
             var hashString = string.Empty;
 
             foreach (var x in provider.ComputeHash(bytes)) {

@@ -14,7 +14,7 @@ namespace Squirrel.Tests
           : base(messageSink)
         {
             // Place initialization code here
-            var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase.Replace("file:///", ""));
+            var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location.Replace("file:///", ""));
             HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor"));
             HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "7zip"));
             HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "wix"));

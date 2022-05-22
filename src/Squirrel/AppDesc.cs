@@ -291,6 +291,7 @@ namespace Squirrel
         /// </summary>
         /// <param name="appDir">The location of the application.</param>
         /// <param name="appId">The unique ID of the application.</param>
+        /// <param name="createIfNotExist">Create the appDir if it does not already exist.</param>
         public AppDescWindows(string appDir, string appId, bool createIfNotExist = true)
         {
             if (!SquirrelRuntimeInfo.IsWindows)

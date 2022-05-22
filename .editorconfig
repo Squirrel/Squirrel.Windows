@@ -198,5 +198,5 @@ cpp_space_pointer_reference_alignment = left
 cpp_space_around_ternary_operator = insert
 cpp_wrap_preserve_blocks = one_liners
 
-[*.{csproj,manifest,nuspec,wxs}] 
+[*.{csproj,manifest,nuspec,wxs,props}] 
 indent_size = 2
