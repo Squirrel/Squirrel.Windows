@@ -5,12 +5,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Squirrel.Update</RootNamespace>
     <AssemblyName>UpdateMac</AssemblyName>
-    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <PublishSingleFile>true</PublishSingleFile>
     <PublishTrimmed>true</PublishTrimmed>
-    <DebugType>embedded</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-    <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
     <NoWarn>$(NoWarn);CA2007</NoWarn>
