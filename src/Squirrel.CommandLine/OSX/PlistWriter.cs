@@ -6,7 +6,7 @@ using System.Linq;
 using System.Xml;
 using Squirrel.SimpleSplat;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.OSX
 {
     internal class PlistWriter : IEnableLogger
     {

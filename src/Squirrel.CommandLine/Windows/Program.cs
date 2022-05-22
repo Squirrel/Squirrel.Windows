@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Security;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -12,13 +13,14 @@ using NuGet.Versioning;
 using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.Windows
 {
+    [SupportedOSPlatform("windows")]
     class Program : IEnableLogger
     {
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
-        public static int Main(string[] args)
+        public static int MainWindows(string[] args)
         {
             var commands = new CommandSet {
                 "[ Package Authoring ]",

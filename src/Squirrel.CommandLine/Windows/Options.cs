@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
 using System.Threading;
 using Squirrel.Lib;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.Windows
 {
     internal class SigningOptions : BaseOptions
     {
@@ -19,6 +20,7 @@ namespace Squirrel.CommandLine
                 v => signTemplate = v);
         }
 
+        [SupportedOSPlatform("windows")]
         public void SignPEFile(string filePath)
         {
             if (!String.IsNullOrEmpty(signParams)) {
@@ -61,7 +63,7 @@ namespace Squirrel.CommandLine
             Add("b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true);
             Add("allowUnaware", "Allows building packages without a SquirrelAwareApp (disabled by default)", v => allowUnaware = true, true);
             Add("addSearchPath=", "Add additional search directories when looking for helper exe's such as Setup.exe, Update.exe, etc",
-                v => HelperExe.AddSearchPath(v), true);
+                HelperExe.AddSearchPath, true);
             Add("debugSetupExe=", "Uses the Setup.exe at this {PATH} to create the bundle, and then replaces it with the bundle. " +
                 "Used for locally debugging Setup.exe with a real bundle attached.", v => debugSetupExe = v, true);
 

@@ -3,17 +3,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using System.Text;
 using Squirrel.PropertyList;
 using Squirrel.SimpleSplat;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.OSX
 {
+    [SupportedOSPlatform("osx")]
     class Program
     {
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
-        public static int Main(string[] args)
+        public static int MainOSX(string[] args)
         {
             var commands = new CommandSet {
                 "[ Package Authoring ]",

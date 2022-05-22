@@ -13,7 +13,13 @@ namespace Squirrel.CommandLine
 {
     internal class HelperFile
     {
-        private static string SevenZipPath => FindAny("7z", "7za", "7zz");
+        private static string SevenZipPath {
+            get {
+                if (SquirrelRuntimeInfo.IsWindows) return FindHelperFile("7za.exe");
+                if (SquirrelRuntimeInfo.IsOSX) return FindHelperFile("7zz");
+                throw new NotImplementedException("Unsupported OS");
+            }
+        }
 
         private static List<string> _searchPaths = new List<string>();
         protected static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(HelperFile));
@@ -40,27 +46,27 @@ namespace Squirrel.CommandLine
                 _searchPaths.Insert(0, path);
         }
 
-        protected static string FindAny(params string[] names)
-        {
-            var findCommand = SquirrelRuntimeInfo.IsWindows ? "where" : "which";
-
-            // first search the usual places
-            foreach (var n in names) {
-                var helper = FindHelperFile(n, throwWhenNotFound: false);
-                if (helper != null)
-                    return helper;
-            }
-            
-            // then see if there is something on the path
-            foreach (var n in names) {
-                var result = ProcessUtil.InvokeProcess(findCommand, new[] { n }, null, CancellationToken.None);
-                if (result.ExitCode == 0) {
-                    return n;
-                }
-            }
-
-            throw new Exception($"Could not find any of {String.Join(", ", names)}.");
-        }
+        // protected static string FindAny(params string[] names)
+        // {
+        //     var findCommand = SquirrelRuntimeInfo.IsWindows ? "where" : "which";
+        //
+        //     // first search the usual places
+        //     foreach (var n in names) {
+        //         var helper = FindHelperFile(n, throwWhenNotFound: false);
+        //         if (helper != null)
+        //             return helper;
+        //     }
+        //     
+        //     // then see if there is something on the path
+        //     foreach (var n in names) {
+        //         var result = ProcessUtil.InvokeProcess(findCommand, new[] { n }, null, CancellationToken.None);
+        //         if (result.ExitCode == 0) {
+        //             return n;
+        //         }
+        //     }
+        //
+        //     throw new Exception($"Could not find any of {String.Join(", ", names)}.");
+        // }
 
         protected static string FindHelperFile(string toFind, Func<string, bool> predicate = null, bool throwWhenNotFound = true)
         {

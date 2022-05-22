@@ -13,11 +13,13 @@ using System.IO.Compression;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.Windows
 {
+    [SupportedOSPlatform("windows")]
     internal class DotnetUtil
     {
         private static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(DotnetUtil));

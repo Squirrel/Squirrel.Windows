@@ -1,6 +1,7 @@
 ﻿using System;
+using System.Runtime.Versioning;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.OSX
 {
     internal class HelperExe : HelperFile
     {

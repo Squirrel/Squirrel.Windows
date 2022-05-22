@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.NET.HostModel.AppHost;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.OSX
 {
     internal class BundleOptions : ValidatedOptionSet
     {

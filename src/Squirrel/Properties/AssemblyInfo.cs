@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("Squirrel.Tests, PublicKey=" + SNK.SHA1)]
 [assembly: InternalsVisibleTo("Squirrel, PublicKey=" + SNK.SHA1)]
 [assembly: InternalsVisibleTo("SquirrelMac, PublicKey=" + SNK.SHA1)]
+[assembly: InternalsVisibleTo("SquirrelCli, PublicKey=" + SNK.SHA1)]
 [assembly: InternalsVisibleTo("Squirrel.CommandLine, PublicKey=" + SNK.SHA1)]
 [assembly: InternalsVisibleTo("Squirrel.CommandLine.OSX, PublicKey=" + SNK.SHA1)]
 [assembly: InternalsVisibleTo("Squirrel.CommandLine.Windows, PublicKey=" + SNK.SHA1)]

@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using Squirrel.SimpleSplat;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.OSX
 {
     public class StructureBuilder : IEnableLogger
     {

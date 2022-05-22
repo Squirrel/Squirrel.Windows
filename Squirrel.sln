@@ -23,15 +23,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionLevel", "SolutionLe
 		gon.config.json = gon.config.json
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel.CommandLine.Windows", "src\Squirrel.CommandLine.Windows\Squirrel.CommandLine.Windows.csproj", "{19E8EBF5-0277-422F-BF49-C66D9DBA5AA4}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Setup", "src\Setup\Setup.vcxproj", "{6B406985-B2E1-4FED-A405-BD0694D68E93}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel.CommandLine", "src\Squirrel.CommandLine\Squirrel.CommandLine.csproj", "{352C15EA-622F-4132-80D8-9B6E3C83404E}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "StubExecutable", "src\StubExecutable\StubExecutable.vcxproj", "{611A03D4-4CDE-4DA0-B151-DE6FAFFB8B8C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squirrel.CommandLine.OSX", "src\Squirrel.CommandLine.OSX\Squirrel.CommandLine.OSX.csproj", "{5ECCE39A-56E3-4EA8-8F55-CE59979B6B6B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Update.OSX", "src\Update.OSX\Update.OSX.csproj", "{A63B2CDA-5ECC-461C-9B1F-54CF4709ACBD}"
 EndProject
@@ -55,10 +51,6 @@ Global
 		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{19E8EBF5-0277-422F-BF49-C66D9DBA5AA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{19E8EBF5-0277-422F-BF49-C66D9DBA5AA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{19E8EBF5-0277-422F-BF49-C66D9DBA5AA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{19E8EBF5-0277-422F-BF49-C66D9DBA5AA4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6B406985-B2E1-4FED-A405-BD0694D68E93}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{6B406985-B2E1-4FED-A405-BD0694D68E93}.Debug|Any CPU.Build.0 = Debug|Win32
 		{6B406985-B2E1-4FED-A405-BD0694D68E93}.Release|Any CPU.ActiveCfg = Release|Win32
@@ -71,10 +63,6 @@ Global
 		{611A03D4-4CDE-4DA0-B151-DE6FAFFB8B8C}.Debug|Any CPU.Build.0 = Debug|Win32
 		{611A03D4-4CDE-4DA0-B151-DE6FAFFB8B8C}.Release|Any CPU.ActiveCfg = Release|Win32
 		{611A03D4-4CDE-4DA0-B151-DE6FAFFB8B8C}.Release|Any CPU.Build.0 = Release|Win32
-		{5ECCE39A-56E3-4EA8-8F55-CE59979B6B6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5ECCE39A-56E3-4EA8-8F55-CE59979B6B6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5ECCE39A-56E3-4EA8-8F55-CE59979B6B6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5ECCE39A-56E3-4EA8-8F55-CE59979B6B6B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A63B2CDA-5ECC-461C-9B1F-54CF4709ACBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A63B2CDA-5ECC-461C-9B1F-54CF4709ACBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A63B2CDA-5ECC-461C-9B1F-54CF4709ACBD}.Release|Any CPU.ActiveCfg = Release|Any CPU

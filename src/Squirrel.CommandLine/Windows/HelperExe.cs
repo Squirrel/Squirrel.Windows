@@ -9,9 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Squirrel.Lib;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.Windows
 {
-    [SupportedOSPlatform("windows")]
     internal class HelperExe : HelperFile
     {
         public static string SetupPath => FindHelperFile("Setup.exe");
@@ -26,6 +25,7 @@ namespace Squirrel.CommandLine
         private static string WixCandlePath => FindHelperFile("candle.exe");
         private static string WixLightPath => FindHelperFile("light.exe");
 
+        [SupportedOSPlatform("windows")]
         private static bool CheckIsAlreadySigned(string filePath)
         {
             if (String.IsNullOrWhiteSpace(filePath)) return true;
@@ -47,6 +47,7 @@ namespace Squirrel.CommandLine
             return false;
         }
 
+        [SupportedOSPlatform("windows")]
         public static void SignPEFilesWithSignTool(string filePath, string signArguments)
         {
             if (CheckIsAlreadySigned(filePath)) return;
@@ -67,6 +68,7 @@ namespace Squirrel.CommandLine
             }
         }
 
+        [SupportedOSPlatform("windows")]
         public static void SignPEFilesWithTemplate(string filePath, string signTemplate)
         {
             if (CheckIsAlreadySigned(filePath)) return;
@@ -88,6 +90,7 @@ namespace Squirrel.CommandLine
             }
         }
 
+        [SupportedOSPlatform("windows")]
         public static string CompileWixTemplateToMsi(Dictionary<string, string> templateData, string workingDir, string appId)
         {
             var wxsFile = Path.Combine(workingDir, appId + ".wxs");
@@ -116,6 +119,7 @@ namespace Squirrel.CommandLine
             }
         }
 
+        [SupportedOSPlatform("windows")]
         public static void SetExeIcon(string exePath, string iconPath)
         {
             Log.Info("Updating PE icon for: " + exePath);
@@ -123,6 +127,7 @@ namespace Squirrel.CommandLine
             Utility.Retry(() => InvokeAndThrowIfNonZero(RceditPath, args, null));
         }
 
+        [SupportedOSPlatform("windows")]
         public static void SetPEVersionBlockFromPackageInfo(string exePath, NuGet.IPackage package, string iconPath = null)
         {
             Log.Info("Updating StringTable resources for: " + exePath);

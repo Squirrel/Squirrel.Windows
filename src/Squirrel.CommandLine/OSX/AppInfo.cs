@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Squirrel.CommandLine
+namespace Squirrel.CommandLine.OSX
 {
     internal class AppInfo
     {
