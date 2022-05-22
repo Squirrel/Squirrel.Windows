@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
+    <TargetFramework>net6.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <AssemblyName>csq</AssemblyName>
     <PackageId>csq</PackageId>
@@ -19,9 +19,19 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Description>A .NET Core Tool that uses the Squirrel framework to create installers and update packages for dotnet applications.</Description>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <None Include="..\..\vendor\**" Pack="true" PackagePath="tools\net6.0\any\" />
+    <None Include="..\..\build\$(Configuration)\Win32\Setup.exe" Pack="true" PackagePath="tools\net6.0\any\" />
+    <None Include="..\..\build\$(Configuration)\Win32\StubExecutable.exe" Pack="true" PackagePath="tools\net6.0\any\" />
+  </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
+    <ProjectReference Include="..\Squirrel.CommandLine\Squirrel.CommandLine.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build" Version="16.9.0" />
   </ItemGroup>
 
 </Project>

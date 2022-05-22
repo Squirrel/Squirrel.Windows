@@ -32,6 +32,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Update.OSX", "src\Update.OSX\Update.OSX.csproj", "{A63B2CDA-5ECC-461C-9B1F-54CF4709ACBD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squirrel.Tool", "src\Squirrel.Tool\Squirrel.Tool.csproj", "{9E769C7E-A54C-4844-8362-727D37BB1578}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6B406985-B2E1-4FED-A405-BD0694D68E93} = {6B406985-B2E1-4FED-A405-BD0694D68E93}
+		{611A03D4-4CDE-4DA0-B151-DE6FAFFB8B8C} = {611A03D4-4CDE-4DA0-B151-DE6FAFFB8B8C}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

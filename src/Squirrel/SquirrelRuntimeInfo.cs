@@ -66,6 +66,12 @@ namespace Squirrel
     /// </summary>
     public static class SquirrelRuntimeInfo
     {
+        /// <summary> The current compiled Squirrel display version. </summary>
+        public static string SquirrelDisplayVersion => ThisAssembly.AssemblyInformationalVersion + (ThisAssembly.IsPublicRelease ? "" : " (prerelease)");
+        
+        /// <summary> The current compiled Squirrel assembly file version. </summary>
+        public static string SquirrelFileVersion => ThisAssembly.AssemblyFileVersion;
+        
         /// <summary> The path on disk of the entry assembly. </summary>
         public static string EntryExePath { get; }
 

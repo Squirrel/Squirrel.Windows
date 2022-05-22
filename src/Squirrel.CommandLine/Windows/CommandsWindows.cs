@@ -16,21 +16,19 @@ using Squirrel.SimpleSplat;
 namespace Squirrel.CommandLine.Windows
 {
     [SupportedOSPlatform("windows")]
-    class Program : IEnableLogger
+    class CommandsWindows : IEnableLogger
     {
-        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
+        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(CommandsWindows));
 
-        public static int MainWindows(string[] args)
+        public static CommandSet GetCommands()
         {
-            var commands = new CommandSet {
+            return new CommandSet {
                 "[ Package Authoring ]",
                 { "pack", "Creates a Squirrel release from a folder containing application files", new PackOptions(), Pack },
                 { "releasify", "Take an existing nuget package and convert it into a Squirrel release", new ReleasifyOptions(), Releasify },
             };
-
-            return SquirrelHost.Run(args, commands);
         }
-
+        
         static void Pack(PackOptions options)
         {
             using (Utility.GetTempDirectory(out var tmp)) {
@@ -136,7 +134,7 @@ namespace Squirrel.CommandLine.Windows
                     // warning if the installed SquirrelLib version is not the same as Squirrel.exe
                     StringFileInfo sqLib = null;
                     try {
-                        var myFileVersion = new NuGetVersion(SquirrelHost.FileVersion).Version;
+                        var myFileVersion = new NuGetVersion(SquirrelRuntimeInfo.SquirrelFileVersion).Version;
                         sqLib = Directory.EnumerateFiles(libDir, "SquirrelLib.dll")
                             .Select(f => { StringFileInfo.ReadVersionInfo(f, out var fi); return fi; })
                             .FirstOrDefault(fi => fi.FileVersion != myFileVersion);
@@ -146,7 +144,7 @@ namespace Squirrel.CommandLine.Windows
                     if (sqLib != null) {
                         Log.Warn(
                             $"SquirrelLib.dll {sqLib.FileVersion} is installed in provided package, " +
-                            $"but current Squirrel.exe version is {SquirrelHost.DisplayVersion} ({SquirrelHost.FileVersion}). " +
+                            $"but current Squirrel.exe version is {SquirrelRuntimeInfo.SquirrelDisplayVersion} ({SquirrelRuntimeInfo.SquirrelFileVersion}). " +
                             $"The LIB version and CLI tool version must be the same to build releases " +
                             $"or the application may fail to update properly.");
                     }

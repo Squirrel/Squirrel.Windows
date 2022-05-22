@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,21 +10,19 @@ using Squirrel.SimpleSplat;
 namespace Squirrel.CommandLine.OSX
 {
     [SupportedOSPlatform("osx")]
-    class Program
+    class CommandsOSX
     {
-        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
+        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(CommandsOSX));
 
-        public static int MainOSX(string[] args)
+        public static CommandSet GetCommands()
         {
-            var commands = new CommandSet {
+            return new CommandSet {
                 "[ Package Authoring ]",
                 { "bundle", "Convert a build directory into a OSX '.app' bundle", new BundleOptions(), Bundle },
                 { "pack", "Create a Squirrel release from a '.app' bundle", new PackOptions(), Pack },
             };
-
-            return SquirrelHost.Run(args, commands);
         }
-
+        
         private static void Pack(PackOptions options)
         {
             var targetDir = options.releaseDir ?? Path.Combine(".", "Releases");

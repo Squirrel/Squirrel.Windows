@@ -33,6 +33,7 @@ namespace Squirrel.CommandLine
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix");
 #endif
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "bin");
+            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "wix");
         }
 
         public static void AddSearchPath(params string[] pathParts)
@@ -81,8 +82,7 @@ namespace Squirrel.CommandLine
                 .Where(d => !String.IsNullOrEmpty(d))
                 .Distinct()
                 .Select(d => Path.Combine(d, toFind))
-                .Where(d => File.Exists(d) || (File.Exists(d + ".exe") && SquirrelRuntimeInfo.IsWindows))
-                .Select(d => File.Exists(d + ".exe") ? d + ".exe" : d)
+                .Where(d => File.Exists(d))
                 .Select(Path.GetFullPath);
 
             if (predicate != null)

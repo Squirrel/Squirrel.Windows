@@ -1,75 +1,79 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading;
+using Microsoft.Build.Construction;
+using Squirrel.CommandLine;
 
 namespace Squirrel.Tool
 {
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
-            var packageName = "Clowd.Squirrel";
-            // var dependencies = Directory.EnumerateFiles(Environment.CurrentDirectory, "*.sln", SearchOption.TopDirectoryOnly)
-            //     .SelectMany(GetProjectsFromSln)
-            //     .Distinct()
-            //     .SelectMany(proj => GetSquirrelVersionsFromProject(packageName, proj))
-            //     .Distinct()
-            //     .ToArray();
-
-            var dependencies = GetSquirrelVersionsFromProject(packageName);
-
-            if (dependencies.Length == 0)
-                throw new Exception("Clowd.Squirrel package was not found to be installed in the current solution.");
-
-            if (dependencies.Length > 1)
-                throw new Exception("Found multiple versions of Clowd.Squirrel installed in current solution. " +
-                                    "Please consolidate to a single version: " + string.Join(", ", dependencies));
-
-            var toolExecutable = SquirrelRuntimeInfo.SystemOsName switch {
-                "windows" => "Squirrel.exe",
-                "osx" => "SquirrelMac",
-                _ => throw new NotSupportedException("OS not supported: " + SquirrelRuntimeInfo.SystemOsName),
-            };
+            if (args.Contains("--csq-embedded-only")) {
+                return SquirrelHost.Main(args);
+            }
             
-            var packages = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
-            var toolPath = Path.Combine(packages, packageName.ToLower(), dependencies.First(), "tools", toolExecutable);
+            Console.WriteLine($"Squirrel Locator {SquirrelRuntimeInfo.SquirrelDisplayVersion}");
 
-            Process.Start(toolPath, args);
+            var packageName = "Clowd.Squirrel";
+            var dependencies = GetPackageVersionsFromCurrentDir(packageName).Distinct().ToArray();
+
+            if (dependencies.Length == 0) {
+                Console.WriteLine("Clowd.Squirrel package was not found to be installed in the current working dir/project.");
+                Console.WriteLine($"Using bundled Squirrel {SquirrelRuntimeInfo.SquirrelDisplayVersion}");
+                return SquirrelHost.Main(args);
+            }
+
+            if (dependencies.Length > 1) {
+                throw new Exception("Found multiple versions of Clowd.Squirrel installed in current working dir/project. " +
+                                    "Please consolidate to a single version: " + string.Join(", ", dependencies));
+            }
+
+            var packages = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
+
+            var targetVersion = dependencies.First();
+            Console.WriteLine("Attempting to locate Squirrel " + targetVersion + " (installed in current working dir)");
+
+            var dllName = "csq.dll";
+            var exeName = "Squirrel.exe";
+            var toolDllPath = Path.Combine(packages, packageName.ToLower(), targetVersion, "tools", dllName);
+            var toolExePath = Path.Combine(packages, packageName.ToLower(), targetVersion, "tools", exeName);
+
+            Process p;
+
+            if (File.Exists(toolDllPath)) {
+                Console.WriteLine("Running at: " + toolDllPath);
+                p = Process.Start("dotnet", new[] { dllName, "--csq-embedded-only" }.Concat(args));
+            } else if (File.Exists(toolExePath)) {
+                if (!SquirrelRuntimeInfo.IsWindows)
+                    throw new NotSupportedException($"The installed version {targetVersion} does not support this operating system. Please update.");
+                Console.WriteLine("Running at: " + toolExePath);
+                p = Process.Start(toolExePath, args);
+            } else {
+                throw new Exception("Unable to locate Squirrel " + targetVersion);
+            }
+
+            p.WaitForExit();
+            return p.ExitCode;
         }
 
-        // static string[] GetProjectsFromSln(string solutionFile)
-        // {
-        //     var result = ProcessUtil.InvokeProcess("dotnet", new[] { "sln", solutionFile, "list" }, null, CancellationToken.None);
-        //     var proj = result.StdOutput
-        //         .Split('\r', '\n')
-        //         .Select(s => s.TrimEnd())
-        //         .Where(s => s.EndsWith(".csproj", StringComparison.InvariantCultureIgnoreCase))
-        //         .Select(s => s.Trim())
-        //         .ToArray();
-        //
-        //     return proj;
-        // }
-
-        static string[] GetSquirrelVersionsFromProject(string packageName)
+        static IEnumerable<string> GetPackageVersionsFromCurrentDir(string packageName)
         {
-            //dotnet list "$PSScriptRoot\src\Clowd\Clowd.csproj" package
-            var result = ProcessUtil.InvokeProcess("dotnet", new[] { "list", "package" }, null, CancellationToken.None);
-            Console.WriteLine(result.StdOutput);
-            
-            var escapedName = Regex.Escape(packageName);
-            var matches = Regex.Matches(result.StdOutput, $@"(?m){escapedName}.*\s(\d{{1,3}}\.\d{{1,3}}\.\d.*?)$");
+            foreach (var projFile in Directory.EnumerateFiles(Environment.CurrentDirectory, "*.csproj", SearchOption.AllDirectories)) {
+                var proj = ProjectRootElement.Open(projFile);
+                if (proj == null) continue;
 
-            if (matches.Count == 0)
-                return new string[0];
+                ProjectItemElement item = proj.Items.FirstOrDefault(i => i.ItemType == "PackageReference" && i.Include == packageName);
+                if (item == null) continue;
 
-            var outp = matches.Select(m => m.Groups[1].Value.Trim()).Distinct().ToArray();
-            Console.WriteLine(String.Join(", ", outp));
-            Console.WriteLine(String.Join(", ", outp));
-            Console.WriteLine(String.Join(", ", outp));
-            return outp;
+                var version = item.Children.FirstOrDefault(x => x.ElementName == "Version") as ProjectMetadataElement;
+                if (version == null) continue;
+
+                yield return version.Value;
+            }
         }
     }
 }
