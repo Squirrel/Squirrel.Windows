@@ -43,6 +43,7 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Install NGBV
+        shell: bash
         run: dotnet tool install --tool-path . nbgv
       - name: Download Artifacts
         uses: actions/download-artifact@v3
@@ -50,11 +51,10 @@ jobs:
           name: packages
       - name: Extract Artifacts
         run: |
-          ls -la .
           unzip Clowd.Squirrel*.nupkg -d ./squirrel/
           unzip csq*.nupkg -d ./csq/
-          ls -la ./squirrel
-          ls -la ./csq
+      - name: Install mitchellh/gon
+        run: brew install mitchellh/gon/gon
       - name: Install Apple Certificate
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_BUILD_CERTIFICATE_BASE64 }}
@@ -74,9 +74,7 @@ jobs:
           # import certificate to keychain
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
-      - name: Install mitchellh/gon
-        run: brew install mitchellh/gon/gon
-      - name: Bundle, Sign, and Notarize
+      - name: Sign and Notarize
         env:
           AC_USERNAME: ${{ secrets.NOTARIZATION_USERNAME }}
           AC_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
@@ -85,11 +83,12 @@ jobs:
         if: ${{ always() }}
         run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
       - name: Fix Packages
+        shell: bash
         run: |
           export NUGET_VERSION=$(nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
           echo $NUGET_VERSION
-          unzip signed.zip ./signed
           ls -la .
+          unzip signed.zip ./signed
           ls -la ./signed
           cp ./signed/UpdateMac ./squirrel/tools/
           cp ./signed/UpdateMac ./csq/tools/net6.0/any/
