@@ -3,12 +3,13 @@
 
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0;net5.0;net6.0</TargetFrameworks>
-    <Description>Squirrel</Description>
-    <Title>Squirrel</Title>
     <AssemblyName>SquirrelLib</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>sqbuild</PackageId>
+    <PackageId>Clowd.Squirrel</PackageId>
+    <Title>Squirrel Updater</Title>
+    <Description>Quick and easy installer and automatic updates for desktop applications</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Icon>Clowd_200.png</Icon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +25,10 @@
     <PackageReference Include="System.ValueTuple" Version="4.5" />
     <Reference Include="System.Web" />
     <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Include="..\..\docs\artwork\Clowd_200.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

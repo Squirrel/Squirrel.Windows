@@ -6,19 +6,25 @@
     <BaseOutputPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\build\))</BaseOutputPath>
     <BaseIntermediateOutputPath>$(BaseOutputPath)obj\$(ProjectName)\</BaseIntermediateOutputPath>
     <OutputPath>$(BaseOutputPath)$(Configuration)\</OutputPath>
-
-    <LangVersion>9</LangVersion>
-    <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\..\Squirrel.snk</AssemblyOriginatorKeyFile>
     <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <Product>Squirrel</Product>
-    <Authors>Caelan Sayler</Authors>
-
+    
+    <LangVersion>9</LangVersion>
+    <SignAssembly>True</SignAssembly>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <AssemblyOriginatorKeyFile>..\..\Squirrel.snk</AssemblyOriginatorKeyFile>
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    
+    <Product>Squirrel</Product>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright © Caelan Sayler 2021</Copyright>
+    <Authors>Caelan Sayler</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/clowd/Clowd.Squirrel</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/clowd/Clowd.Squirrel</RepositoryUrl>
+    <PackageTags>windows;macos;osx;updater;dotnet;installer;desktop;squirrel;autoupdate;automatic-updates</PackageTags>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(MSBuildProjectExtension)'=='.csproj' ">
