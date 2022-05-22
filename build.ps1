@@ -47,6 +47,7 @@ dotnet publish -v minimal --no-build -c Release --self-contained "$PSScriptRoot\
 Write-Host "Copying Tools" -ForegroundColor Magenta
 New-Item -Path "squirrel" -Name "tools" -ItemType "directory"
 Copy-Item -Path "$ToolsDir\*" -Destination "squirrel\tools" -Recurse
+Remove-Item "squirrel\tools\*.xml"
 
 Write-Host "Re-assembling Packages" -ForegroundColor Magenta
 seven a "csq.$version.nupkg" -tzip -mx9 "$PSScriptRoot\build\Release\csq\*"
