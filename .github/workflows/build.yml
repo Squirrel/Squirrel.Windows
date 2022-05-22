@@ -22,23 +22,18 @@ jobs:
         run: .\build.ps1
       - name: Test
         run: dotnet test test\Squirrel.Tests.csproj -l "console;verbosity=detailed"
-      - name: Upload Windows Artifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: windows-build
-          path: .\build\*
-      - name: Bundle Tools
-        shell: pwsh
-        run: .\vendor\7za.exe a squirrel-win-x64.zip -tzip -aoa -y -mmt "$env:GITHUB_WORKSPACE\build\publish\*"
-      - name: Upload Tools
-        uses: actions/upload-artifact@v3
-        with:
-          name: tools
-          path: squirrel-win-x64.zip
+          name: packages
+          path: .\build\Release\*.nupkg
   
-  build-macos:
-    name: Build OSX
+  # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
+  package-macos:
+    name: Sign OSX
+    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
     runs-on: macos-latest
+    needs: [ build-windows ]
     steps:
       - uses: actions/checkout@v2
         with:
@@ -47,29 +42,18 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-      - name: Build SquirrelMac
-        run: dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Squirrel.CommandLine.OSX/Squirrel.CommandLine.OSX.csproj -o ./publish
-      - name: Build UpdateMac
-        run: dotnet publish -v minimal --self-contained -c Release -r osx.10.12-x64 ./src/Update.OSX/Update.OSX.csproj -o ./publish
-      - name: Upload MacOS Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: osx-build
-          path: ./publish/*
-  
-  # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
-  package-macos:
-    name: Package OSX
-    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
-    runs-on: macos-latest
-    needs: [ build-macos ]
-    steps:
-      - uses: actions/checkout@v2
-      - name: Download MacOS Artifacts
+      - name: Install NGBV
+        run: dotnet tool install --tool-path . nbgv
+      - name: Download Artifacts
         uses: actions/download-artifact@v3
         with:
-          name: osx-build
-          path: ./osx-build
+          name: packages
+      - name: Extract Artifacts
+        run: |
+          ls -la .
+          ls -la ./squirrel
+          unzip Clowd.Squirrel*.nupkg -d ./squirrel/
+          unzip csq*.nupkg -d ./csq/
       - name: Install Apple Certificate
         env:
           BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_BUILD_CERTIFICATE_BASE64 }}
@@ -99,52 +83,26 @@ jobs:
       - name: Clean up KeyChain
         if: ${{ always() }}
         run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-      - name: Upload Tools
-        uses: actions/upload-artifact@v3
-        with:
-          name: tools
-          path: squirrel-osx-x64.zip
-  
-  deploy:
-    name: "Deploy"
-    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
-    needs: [ build-windows, package-macos ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-      - name: Install NGBV
-        run: dotnet tool install --tool-path . nbgv
-      - name: Install NuGet
-        run: sudo apt install nuget
-      - name: Download Windows Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: windows-build
-          path: ./build
-      - name: Download Tools
-        uses: actions/download-artifact@v3
-        with:
-          name: tools
-      - name: Decompress OSX
-        run: |
-          unzip ./squirrel-osx-x64.zip -d ./build/publish
-          mv ./build/publish/7zz ./build/publish/bin/
-      - name: Create NuGet Package
+      - name: Fix Packages
         run: |
           export NUGET_VERSION=$(nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
           echo $NUGET_VERSION
-          nuget pack ./src/Clowd.Squirrel.nuspec -BasePath ./src -OutputDirectory . -Version $NUGET_VERSION
-      - name: Upload NuGet Package
+          unzip signed.zip ./signed
+          ls -la .
+          ls -la ./signed
+          cp ./signed/UpdateMac ./squirrel/tools/
+          cp ./signed/UpdateMac ./csq/tools/net6.0/any/
+          cp ./signed/7zz ./squirrel/tools/
+          cp ./signed/7zz ./csq/tools/net6.0/any/
+          rm -rf *.nupkg
+          zip csq.${NUGET_VERSION}.nupkg ${GITHUB_WORKSPACE}/csq/* 
+          zip Clowd.Squirrel.${NUGET_VERSION}.nupkg ${GITHUB_WORKSPACE}/squirrel/*
+          ls -la .
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: tools
-          path: '*.nupkg'
+          name: signed-packages
+          path: "*.nupkg"
       - name: Publish Dev NuGet Package
         run: |
           nuget push *.nupkg -ApiKey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate

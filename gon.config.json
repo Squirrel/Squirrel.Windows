@@ -1,8 +1,7 @@
 {
   "source": [
-    "./osx-build/SquirrelMac",
-    "./osx-build/UpdateMac",
-    "./vendor/7zz"
+    "./squirrel/tools/UpdateMac",
+    "./squirrel/tools/7zz"
   ],
   "bundle_id": "com.caesay.squirrel",
   "sign": {
@@ -10,6 +9,6 @@
     "entitlements_file": "Squirrel.entitlements"
   },
   "zip": {
-    "output_path": "squirrel-osx-x64.zip"
+    "output_path": "signed.zip"
   }
 }

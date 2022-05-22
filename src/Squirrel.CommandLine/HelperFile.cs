@@ -28,11 +28,10 @@ namespace Squirrel.CommandLine
         {
 #if DEBUG
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "build", "publish");
+            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "build", "Release", "squirrel", "tools");
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor");
-            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "7zip");
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix");
 #endif
-            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "bin");
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "wix");
         }
 
