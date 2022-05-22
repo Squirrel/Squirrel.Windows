@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squirrel.CommandLine.OSX", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Update.OSX", "src\Update.OSX\Update.OSX.csproj", "{A63B2CDA-5ECC-461C-9B1F-54CF4709ACBD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Squirrel.Tool", "src\Squirrel.Tool\Squirrel.Tool.csproj", "{9E769C7E-A54C-4844-8362-727D37BB1578}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,10 @@ Global
 		{A63B2CDA-5ECC-461C-9B1F-54CF4709ACBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A63B2CDA-5ECC-461C-9B1F-54CF4709ACBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A63B2CDA-5ECC-461C-9B1F-54CF4709ACBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9E769C7E-A54C-4844-8362-727D37BB1578}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9E769C7E-A54C-4844-8362-727D37BB1578}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9E769C7E-A54C-4844-8362-727D37BB1578}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9E769C7E-A54C-4844-8362-727D37BB1578}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

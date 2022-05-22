@@ -12,6 +12,7 @@ using System.Runtime.InteropServices;
 [assembly: InternalsVisibleTo("UpdateMac, PublicKey=" + SNK.SHA1)]
 [assembly: InternalsVisibleTo("Update.Windows, PublicKey=" + SNK.SHA1)]
 [assembly: InternalsVisibleTo("Update.OSX, PublicKey=" + SNK.SHA1)]
+[assembly: InternalsVisibleTo("csq, PublicKey=" + SNK.SHA1)]
 
 internal static class SNK
 {
