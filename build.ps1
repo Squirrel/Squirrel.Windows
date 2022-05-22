@@ -38,7 +38,6 @@ Copy-Item "$In\Win32\Setup.exe" -Destination "$BinOut"
 Copy-Item "$In\Win32\StubExecutable.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\rcedit.exe" -Destination "$BinOut"
 Copy-Item "$PSScriptRoot\vendor\signtool.exe" -Destination "$BinOut"
-Copy-Item "$PSScriptRoot\vendor\singlefilehost.exe" -Destination "$BinOut"
 Copy-Item -Path "$PSScriptRoot\vendor\7za.exe" -Destination "$BinOut"
 
 # Clean up files we do not need to create a nuget package

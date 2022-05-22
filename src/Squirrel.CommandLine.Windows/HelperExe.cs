@@ -18,7 +18,6 @@ namespace Squirrel.CommandLine
         public static string UpdatePath
             => FindHelperFile("Update.exe", p => Microsoft.NET.HostModel.AppHost.HostWriter.IsBundle(p, out var _));
         public static string StubExecutablePath => FindHelperFile("StubExecutable.exe");
-        public static string SingleFileHostPath => FindHelperFile("singlefilehost.exe");
 
         // private so we don't expose paths to internal tools. these should be exposed as a helper function
         private static string SignToolPath => FindHelperFile("signtool.exe");

@@ -119,26 +119,20 @@ namespace Squirrel.CommandLine
         {
             using var _ = Utility.GetTempDirectory(out var tmpdir);
             var sourceName = Path.GetFileNameWithoutExtension(sourceFile);
+            var newAppHost = Path.Combine(tmpdir, sourceName + ".exe");
 
-            // extract Update.exe to tmp dir
-            Log.Info("Extracting Update.exe resources to temp directory");
+            // extract bundled Update.exe assets to tmp dir
+            Log.Info("Extracting Update.exe resources");
+            File.Copy(sourceFile, newAppHost);
             DumpPackageAssemblies(sourceFile, tmpdir);
 
-            // create new app host
-            var newAppHost = Path.Combine(tmpdir, sourceName + ".exe");
-            HostWriter.CreateAppHost(
-                HelperExe.SingleFileHostPath, // input file
-                newAppHost, // output file
-                sourceName + ".dll", // entry point, relative to apphost
-                true, // isGui?
-                Path.Combine(tmpdir, sourceName + ".dll") // copy exe resources from?
-            );
-
-            // set new icon
+            // set new icon (which eradicates bundled assets)
             Log.Info("Patching Update.exe icon");
             HelperExe.SetExeIcon(newAppHost, iconPath);
+            HostWriter.ResetBundle(newAppHost);
 
-            // create new bundle
+            // re-append bundled assets to exe
+            Log.Info("Re-packing Update.exe bundle");
             var bundlerOutput = Path.Combine(tmpdir, "output");
             Directory.CreateDirectory(bundlerOutput);
             var bundler = new Bundler(
@@ -151,8 +145,6 @@ namespace Squirrel.CommandLine
                 false,
                 sourceName
             );
-
-            Log.Info("Re-packing Update.exe bundle");
             var singleFile = GenerateBundle(bundler, tmpdir, bundlerOutput);
 
             // copy to requested location
@@ -167,7 +159,7 @@ namespace Squirrel.CommandLine
 
             using (var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read)) {
                 using (var packageView = memoryMappedPackage.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read)) {
-                    var manifest = DotnetUtil.ReadManifest(packageView, bundleHeaderOffset);
+                    var manifest = ReadManifest(packageView, bundleHeaderOffset);
                     foreach (var entry in manifest.Entries) {
                         Stream contents;
 

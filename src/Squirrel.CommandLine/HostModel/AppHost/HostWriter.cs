@@ -209,8 +209,37 @@ namespace Microsoft.NET.HostModel.AppHost
         /// Check if the an AppHost is a single-file bundle
         /// </summary>
         /// <param name="appHostFilePath">The path of Apphost to check</param>
-        /// <param name="bundleHeaderOffset">An out parameter containing the offset of the bundle header (if any)</param>
         /// <returns>True if the AppHost is a single-file bundle, false otherwise</returns>
+        public static void ResetBundle(string appHostFilePath)
+        {
+            byte[] bundleSignature = {
+                // 32 bytes represent the bundle signature: SHA-256 for ".net core bundle"
+                0x8b, 0x12, 0x02, 0xb9, 0x6a, 0x61, 0x20, 0x38,
+                0x72, 0x7b, 0x93, 0x02, 0x14, 0xd7, 0xa0, 0x32,
+                0x13, 0xf5, 0xb9, 0xe6, 0xef, 0xae, 0x33, 0x18,
+                0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae
+            };
+
+            void ResetBundleHeader()
+            {
+                using (var memoryMappedFile = MemoryMappedFile.CreateFromFile(appHostFilePath))
+                {
+                    using (MemoryMappedViewAccessor accessor = memoryMappedFile.CreateViewAccessor())
+                    {
+                        int position = BinaryUtils.SearchInFile(accessor, bundleSignature);
+                        if (position == -1)
+                        {
+                            throw new PlaceHolderNotFoundInAppHostException(bundleSignature);
+                        }
+                        
+                        accessor.WriteArray(position - sizeof(long), new byte[sizeof(long)], 0, sizeof(long));
+                    }
+                }
+            }
+
+            RetryUtil.RetryOnIOError(ResetBundleHeader);
+        }
+        
         public static bool IsBundle(string appHostFilePath, out long bundleHeaderOffset)
         {
             byte[] bundleSignature = {
