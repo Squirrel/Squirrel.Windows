@@ -3,7 +3,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0;net5.0;net6.0</TargetFrameworks>
-    <AssemblyName>SquirrelLib</AssemblyName>
+    <AssemblyName>Squirrel.Core</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>Clowd.Squirrel</PackageId>
     <Title>Squirrel Updater</Title>
