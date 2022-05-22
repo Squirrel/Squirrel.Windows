@@ -43,7 +43,6 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
       - name: Install NGBV
-        shell: bash
         run: dotnet tool install --tool-path . nbgv
       - name: Download Artifacts
         uses: actions/download-artifact@v3
@@ -85,11 +84,9 @@ jobs:
       - name: Fix Packages
         shell: bash
         run: |
-          export NUGET_VERSION=$(nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
+          export NUGET_VERSION=$(./nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
           echo $NUGET_VERSION
-          ls -la .
-          unzip signed.zip ./signed
-          ls -la ./signed
+          unzip signed.zip ./signed/
           cp ./signed/UpdateMac ./squirrel/tools/
           cp ./signed/UpdateMac ./csq/tools/net6.0/any/
           cp ./signed/7zz ./squirrel/tools/
