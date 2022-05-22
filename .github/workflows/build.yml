@@ -87,7 +87,7 @@ jobs:
           export NUGET_VERSION=$(./nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
           echo $NUGET_VERSION
           ls -la .
-          unzip ./signed.zip ./bsigned/
+          unzip ./signed.zip -d ./bsigned/
           ls -la .
           cp ./bsigned/UpdateMac ./squirrel/tools/
           cp ./bsigned/UpdateMac ./csq/tools/net6.0/any/
