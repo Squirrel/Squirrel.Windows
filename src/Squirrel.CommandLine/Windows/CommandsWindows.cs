@@ -42,11 +42,7 @@ namespace Squirrel.CommandLine.Windows
 
         static void Releasify(ReleasifyOptions options)
         {
-            var targetDir = options.releaseDir ?? Path.Combine(".", "Releases");
-            if (!Directory.Exists(targetDir)) {
-                Directory.CreateDirectory(targetDir);
-            }
-
+            var targetDir = options.GetReleaseDirectory();
             var package = options.package;
             var baseUrl = options.baseUrl;
             var generateDeltas = !options.noDelta;
@@ -83,16 +79,15 @@ namespace Squirrel.CommandLine.Windows
             options.SignPEFile(updatePath);
 
             // copy input package to target output directory
-            var di = new DirectoryInfo(targetDir);
-            File.Copy(package, Path.Combine(di.FullName, Path.GetFileName(package)), true);
+            File.Copy(package, Path.Combine(targetDir.FullName, Path.GetFileName(package)), true);
 
-            var allNuGetFiles = di.EnumerateFiles()
+            var allNuGetFiles = targetDir.EnumerateFiles()
                 .Where(x => x.Name.EndsWith(".nupkg", StringComparison.InvariantCultureIgnoreCase));
 
             var toProcess = allNuGetFiles.Where(x => !x.Name.Contains("-delta") && !x.Name.Contains("-full"));
             var processed = new List<string>();
 
-            var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
+            var releaseFilePath = Path.Combine(targetDir.FullName, "RELEASES");
             var previousReleases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
                 previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
@@ -102,7 +97,7 @@ namespace Squirrel.CommandLine.Windows
                 Log.Info("Creating release for package: " + file.FullName);
 
                 var rp = new ReleasePackageBuilder(file.FullName);
-                rp.CreateReleasePackage(Path.Combine(di.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
+                rp.CreateReleasePackage(Path.Combine(targetDir.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
                     var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
                         .ContextualSingle("package", "*.nuspec", "top level directory");
                     var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
@@ -222,11 +217,11 @@ namespace Squirrel.CommandLine.Windows
 
                 processed.Add(rp.ReleasePackageFile);
 
-                var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, targetDir);
+                var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, targetDir.FullName);
                 if (prev != null && generateDeltas) {
                     var deltaBuilder = new DeltaPackageBuilder();
                     var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
-                        Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                        Path.Combine(targetDir.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
                     processed.Insert(0, dp.InputPackageFile);
                 }
             }
@@ -245,7 +240,7 @@ namespace Squirrel.CommandLine.Windows
             ReleaseEntry.WriteReleaseFile(releaseEntries, releaseFilePath);
 
             var bundledzp = new ZipPackage(package);
-            var targetSetupExe = Path.Combine(di.FullName, $"{bundledzp.Id}Setup.exe");
+            var targetSetupExe = Path.Combine(targetDir.FullName, $"{bundledzp.Id}Setup.exe");
             File.Copy(options.debugSetupExe ?? HelperExe.SetupPath, targetSetupExe, true);
 
             if (SquirrelRuntimeInfo.IsWindows) {
@@ -255,7 +250,7 @@ namespace Squirrel.CommandLine.Windows
             }
 
             var newestFullRelease = Squirrel.EnumerableExtensions.MaxBy(releaseEntries, x => x.Version).Where(x => !x.IsDelta).First();
-            var newestReleasePath = Path.Combine(di.FullName, newestFullRelease.Filename);
+            var newestReleasePath = Path.Combine(targetDir.FullName, newestFullRelease.Filename);
 
             Log.Info($"Creating Setup bundle");
             var bundleOffset = SetupBundle.CreatePackageBundle(targetSetupExe, newestReleasePath);

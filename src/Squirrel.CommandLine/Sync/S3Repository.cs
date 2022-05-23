@@ -42,14 +42,11 @@ namespace Squirrel.CommandLine.Sync
 
         public async Task DownloadRecentPackages()
         {
-            var releasesDir = new DirectoryInfo(_options.releaseDir);
-            if (!releasesDir.Exists)
-                releasesDir.Create();
-
+            var releasesDir = _options.GetReleaseDirectory();
             var releasesPath = Path.Combine(releasesDir.FullName, "RELEASES");
 
-            Log.Info($"Downloading latest release to '{_options.releaseDir}' from S3 bucket '{_options.bucket}'"
-                + (String.IsNullOrWhiteSpace(_prefix) ? "" : " with prefix '" + _prefix + "'"));
+            Log.Info($"Downloading latest release to '{releasesDir.FullName}' from S3 bucket '{_options.bucket}'"
+                     + (String.IsNullOrWhiteSpace(_prefix) ? "" : " with prefix '" + _prefix + "'"));
 
             try {
                 Log.Info("Downloading RELEASES");
@@ -78,10 +75,12 @@ namespace Squirrel.CommandLine.Sync
 
         public async Task UploadMissingPackages()
         {
-            Log.Info($"Uploading releases from '{_options.releaseDir}' to S3 bucket '{_options.bucket}'"
-                + (String.IsNullOrWhiteSpace(_prefix) ? "" : " with prefix '" + _prefix + "'"));
+            var releasesDir = _options.GetReleaseDirectory(createIfMissing: false);
+            if (!releasesDir.Exists)
+                throw new Exception($"Release directory '{releasesDir.FullName}' does not exist.");
 
-            var releasesDir = new DirectoryInfo(_options.releaseDir);
+            Log.Info($"Uploading releases from '{releasesDir.FullName}' to S3 bucket '{_options.bucket}'"
+                     + (String.IsNullOrWhiteSpace(_prefix) ? "" : " with prefix '" + _prefix + "'"));
 
             // locate files to upload
             var files = releasesDir.GetFiles("*", SearchOption.TopDirectoryOnly);
@@ -122,7 +121,7 @@ namespace Squirrel.CommandLine.Sync
 
             if (!releaseEntries.All(f => f.PackageName == releaseEntries.First().PackageName)) {
                 throw new Exception("There are mix-matched package Id's in local/remote RELEASES file. " +
-                    "Please fix the release files manually so there is only one consistent package Id present.");
+                                    "Please fix the release files manually so there is only one consistent package Id present.");
             }
 
             var fullCount = releaseEntries.Where(r => !r.IsDelta).Count();
@@ -158,6 +157,7 @@ namespace Squirrel.CommandLine.Sync
                     Log.Warn($"Upload file '{f.Name}' skipped (not in RELEASES file)");
                     continue;
                 }
+
                 await UploadFile(f, _options.overwrite);
             }
 
@@ -170,7 +170,6 @@ namespace Squirrel.CommandLine.Sync
 
             // ignore dead package cleanup if there is no retention policy
             if (_options.keepMaxReleases > 0) {
-
                 // remove any dead packages (not in RELEASES) as they are undiscoverable anyway
                 Log.Info("Searching for remote dead packages (not in RELEASES file)");
 
@@ -228,8 +227,7 @@ namespace Squirrel.CommandLine.Sync
                 // from the NextContinuationToken property of the response.
                 request.KeyMarker = response.NextKeyMarker;
                 request.VersionIdMarker = response.NextVersionIdMarker;
-            }
-            while (response.IsTruncated);
+            } while (response.IsTruncated);
         }
 
         private async Task UploadFile(FileInfo f, bool overwriteRemote)
@@ -293,6 +291,7 @@ namespace Squirrel.CommandLine.Sync
                             return;
                         }
                     }
+
                     Log.Error($"Error: {ex.Message}, retrying in 1 second.");
                     await Task.Delay(1000).ConfigureAwait(false);
                 }

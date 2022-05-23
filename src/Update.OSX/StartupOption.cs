@@ -28,7 +28,7 @@ namespace Squirrel.Update
             var exeName = Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
             var opts = new OptionSet() {
                 "",
-                $"Squirrel Updater (OSX) ({SquirrelRuntimeInfo.SquirrelDisplayVersion}) installs updates for Squirrel applications",
+                $"Squirrel Updater for OSX {SquirrelRuntimeInfo.SquirrelDisplayVersion}",
                 $"Usage: {exeName} command [OPTS]",
                 "",
                 "Commands:", 

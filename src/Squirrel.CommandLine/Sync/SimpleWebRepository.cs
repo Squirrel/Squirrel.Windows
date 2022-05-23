@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 using System.Threading.Tasks;
 
 namespace Squirrel.CommandLine.Sync
@@ -18,7 +19,7 @@ namespace Squirrel.CommandLine.Sync
 
         public Task DownloadRecentPackages()
         {
-            return SyncRemoteReleases(new Uri(options.url), new DirectoryInfo(options.releaseDir));
+            return SyncRemoteReleases(new Uri(options.url), options.GetReleaseDirectory());
         }
 
         static async Task SyncRemoteReleases(Uri targetUri, DirectoryInfo releasesDir)

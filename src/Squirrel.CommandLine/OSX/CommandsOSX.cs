@@ -24,11 +24,7 @@ namespace Squirrel.CommandLine.OSX
         
         private static void Pack(PackOptions options)
         {
-            var targetDir = options.releaseDir ?? Path.Combine(".", "Releases");
-            var di = new DirectoryInfo(targetDir);
-            if (!Directory.Exists(targetDir)) {
-                Directory.CreateDirectory(targetDir);
-            }
+            var targetDir = options.GetReleaseDirectory();
 
             //var builder = new StructureBuilder(options.package);
             var plistPath = Path.Combine(options.package, "Contents", PlistWriter.PlistFileName);
@@ -52,14 +48,14 @@ namespace Squirrel.CommandLine.OSX
                 tmp, options.package, packId, packTitle, packTitle,
                 packVersion, options.releaseNotes, options.includePdb);
 
-            var releaseFilePath = Path.Combine(di.FullName, "RELEASES");
+            var releaseFilePath = Path.Combine(targetDir.FullName, "RELEASES");
             var previousReleases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
                 previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
             }
 
             var rp = new ReleasePackageBuilder(nupkgPath);
-            var newPkgPath = rp.CreateReleasePackage(Path.Combine(options.releaseDir, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
+            var newPkgPath = rp.CreateReleasePackage(Path.Combine(targetDir.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
                 var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
                  .ContextualSingle("package", "*.nuspec", "top level directory");
                 var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
@@ -74,11 +70,11 @@ namespace Squirrel.CommandLine.OSX
             //var newPkgPath = Path.Combine(targetDir, rp.SuggestedReleaseFileName);
             //File.Move(rp.InputPackageFile, newPkgPath);
 
-            var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, targetDir);
+            var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, targetDir.FullName);
             if (prev != null && !options.noDelta) {
                 var deltaBuilder = new DeltaPackageBuilder();
                 var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
-                    Path.Combine(di.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                    Path.Combine(targetDir.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
             }
 
             ReleaseEntry.WriteReleaseFile(previousReleases.Concat(new[] { ReleaseEntry.GenerateFromFile(newPkgPath) }), releaseFilePath);

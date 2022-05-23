@@ -1,12 +1,21 @@
-﻿using Squirrel.SimpleSplat;
+﻿using System.IO;
+using Squirrel.SimpleSplat;
 
 namespace Squirrel.CommandLine
 {
     internal abstract class BaseOptions : ValidatedOptionSet
     {
-        public string releaseDir { get; private set; } = ".\\Releases";
+        protected string releaseDir { get; private set; }
 
         protected static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(BaseOptions));
+
+        public DirectoryInfo GetReleaseDirectory(bool createIfMissing = true)
+        {
+            var targetDir = Path.GetFullPath(releaseDir ?? Path.Combine(".", "Releases"));
+            var di = new DirectoryInfo(targetDir);
+            if (!di.Exists && createIfMissing) di.Create();
+            return di;
+        }
 
         public BaseOptions()
         {
@@ -43,7 +52,8 @@ namespace Squirrel.CommandLine
             IsRequired(nameof(secret), nameof(keyId), nameof(bucket));
 
             if ((region == null) == (endpoint == null)) {
-                throw new OptionValidationException("One of 'region' and 'endpoint' arguments is required and are also mutually exclusive. Specify only one of these. ");
+                throw new OptionValidationException(
+                    "One of 'region' and 'endpoint' arguments is required and are also mutually exclusive. Specify only one of these. ");
             }
 
             if (region != null) {
@@ -57,6 +67,7 @@ namespace Squirrel.CommandLine
     internal class SyncHttpOptions : BaseOptions
     {
         public string url { get; private set; }
+
         public SyncHttpOptions()
         {
             Add("url=", "Base url to the http location with hosted releases", v => url = v);

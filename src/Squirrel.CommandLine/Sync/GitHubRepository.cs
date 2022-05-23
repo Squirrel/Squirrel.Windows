@@ -19,9 +19,7 @@ namespace Squirrel.CommandLine.Sync
 
         public async Task DownloadRecentPackages()
         {
-            var releaseDirectoryInfo = new DirectoryInfo(_options.releaseDir);
-            if (!releaseDirectoryInfo.Exists)
-                releaseDirectoryInfo.Create();
+            var releaseDirectoryInfo = _options.GetReleaseDirectory();
 
             if (String.IsNullOrWhiteSpace(_options.token))
                 Log.Warn("No GitHub access token provided. Unauthenticated requests will be limited to 60 per hour.");

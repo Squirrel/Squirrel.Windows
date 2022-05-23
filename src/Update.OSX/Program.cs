@@ -61,7 +61,7 @@ namespace Squirrel.Update
         {
             var parentPid = getppid();
             var proc = Process.GetProcessById(parentPid);
-            proc.WaitForExit();
+            proc?.WaitForExit();
         }
     }
 }
