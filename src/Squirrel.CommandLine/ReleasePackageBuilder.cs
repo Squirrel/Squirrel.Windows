@@ -13,6 +13,7 @@ using SharpCompress.Readers;
 using NuGet.Versioning;
 using System.Runtime.Versioning;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace Squirrel.CommandLine
 {
@@ -26,11 +27,12 @@ namespace Squirrel.CommandLine
 
     internal class ReleasePackageBuilder : IEnableLogger, IReleasePackage
     {
-        private ZipPackage _package;
+        private Lazy<ZipPackage> _package;
+        
         public ReleasePackageBuilder(string inputPackageFile, bool isReleasePackage = false)
         {
             InputPackageFile = inputPackageFile;
-            _package = new ZipPackage(InputPackageFile);
+            _package = new Lazy<ZipPackage>(() => new ZipPackage(inputPackageFile));
             
             if (isReleasePackage) {
                 ReleasePackageFile = inputPackageFile;
@@ -41,11 +43,11 @@ namespace Squirrel.CommandLine
         
         public string ReleasePackageFile { get; protected set; }
 
-        public string SuggestedReleaseFileName => _package.FullReleaseFilename;
+        public string SuggestedReleaseFileName => _package.Value.FullReleaseFilename;
 
-        public string Id => _package.Id;
+        public string Id => ReleaseEntry.ParseEntryFileName(InputPackageFile).PackageName;
 
-        public SemanticVersion Version => _package.Version;
+        public SemanticVersion Version => ReleaseEntry.ParseEntryFileName(InputPackageFile).Version;
 
         internal string CreateReleasePackage(string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, ZipPackage> contentsPostProcessHook = null)
         {
@@ -56,7 +58,7 @@ namespace Squirrel.CommandLine
                 return ReleasePackageFile;
             }
 
-            var package = new ZipPackage(InputPackageFile);
+            var package = _package.Value;
 
             // just in-case our parsing is more-strict than nuget.exe and
             // the 'releasify' command was used instead of 'pack'.
