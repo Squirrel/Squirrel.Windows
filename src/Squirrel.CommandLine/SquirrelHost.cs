@@ -31,7 +31,7 @@ namespace Squirrel.CommandLine
                 $"Usage: {exeName} [verb] [--option=value]";
 
             try {
-                globalOptions.Parse(args);
+                var restArgs = globalOptions.Parse(args);
 
                 if (xplat == null)
                     xplat = SquirrelRuntimeInfo.SystemOsName;
@@ -85,7 +85,7 @@ namespace Squirrel.CommandLine
 
                 try {
                     // parse cli and run command
-                    commands.Execute(args);
+                    commands.Execute(restArgs.ToArray());
                     return 0;
                 } catch (Exception ex) when (ex is OptionValidationException || ex is OptionException) {
                     // if the arguments fail to validate, print argument help

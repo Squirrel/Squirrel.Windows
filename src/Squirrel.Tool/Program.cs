@@ -40,7 +40,19 @@ namespace Squirrel.Tool
                 var targetVersion = dependencies.First();
                 var dllName = "csq.dll";
                 var exeName = "Squirrel.exe";
+
                 var toolRootPath = Path.Combine(packages, packageName.ToLower(), targetVersion, "tools");
+                
+                // resolve wildcards. we should probably rely on the dotnet tooling for this in the future
+                // so we can be more certain we are using precisely the same version as dotnet.
+                if (targetVersion.Contains("*")) {
+                    var vdir = Directory.EnumerateDirectories(Path.Combine(packages, packageName.ToLower()),
+                        targetVersion, SearchOption.TopDirectoryOnly).FirstOrDefault();
+
+                    if (vdir != null)
+                        toolRootPath = Path.Combine(vdir, "tools");
+                }
+                
                 var toolDllPath = Path.Combine(toolRootPath, dllName);
                 var toolExePath = Path.Combine(toolRootPath, exeName);
 
