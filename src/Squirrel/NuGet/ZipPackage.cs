@@ -108,6 +108,7 @@ namespace Squirrel.NuGet
         public static Task ExtractZipReleaseForInstallOSX(string zipFilePath, string outFolder, Action<int> progress)
         {
             progress ??= ((_) => { });
+            Directory.CreateDirectory(outFolder);
             return Task.Run(() => {
                 using (var za = ZipArchive.Open(zipFilePath))
                 using (var reader = za.ExtractAllEntries()) {
@@ -148,7 +149,7 @@ namespace Squirrel.NuGet
         public static Task ExtractZipReleaseForInstallWindows(string zipFilePath, string outFolder, string rootPackageFolder, Action<int> progress)
         {
             progress ??= ((_) => { });
-            var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+            Directory.CreateDirectory(outFolder);
 
             return Task.Run(() => {
                 using (var za = ZipArchive.Open(zipFilePath))

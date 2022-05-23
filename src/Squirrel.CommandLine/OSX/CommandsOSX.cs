@@ -25,7 +25,7 @@ namespace Squirrel.CommandLine.OSX
         
         private static void Pack(PackOptions options)
         {
-            var targetDir = options.GetReleaseDirectory();
+            var releasesDir = options.GetReleaseDirectory();
 
             //var builder = new StructureBuilder(options.package);
             var plistPath = Path.Combine(options.package, "Contents", PlistWriter.PlistFileName);
@@ -49,7 +49,7 @@ namespace Squirrel.CommandLine.OSX
                 tmp, options.package, packId, packTitle, packTitle,
                 packVersion, options.releaseNotes, options.includePdb);
 
-            var releaseFilePath = Path.Combine(targetDir.FullName, "RELEASES");
+            var releaseFilePath = Path.Combine(releasesDir.FullName, "RELEASES");
             var previousReleases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
                 previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
@@ -57,7 +57,7 @@ namespace Squirrel.CommandLine.OSX
 
             Log.Info("Creating Squirrel Release");
             var rp = new ReleasePackageBuilder(nupkgPath);
-            var newPkgPath = rp.CreateReleasePackage(Path.Combine(targetDir.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
+            var newPkgPath = rp.CreateReleasePackage(Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
                 var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
                  .ContextualSingle("package", "*.nuspec", "top level directory");
                 var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
@@ -74,21 +74,23 @@ namespace Squirrel.CommandLine.OSX
             //File.Move(rp.InputPackageFile, newPkgPath);
 
             Log.Info("Creating Delta Packages");
-            var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, targetDir.FullName);
+            var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, releasesDir.FullName);
             if (prev != null && !options.noDelta) {
                 var deltaBuilder = new DeltaPackageBuilder();
                 var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
-                    Path.Combine(targetDir.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                    Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
             }
 
             ReleaseEntry.WriteReleaseFile(previousReleases.Concat(new[] { ReleaseEntry.GenerateFromFile(newPkgPath) }), releaseFilePath);
             
-            Log.Info("Generating latest app archive");
-            var finalAppDir = Path.Combine(targetDir.FullName, $"{rp.Id}.app");
-            Utility.DeleteFileOrDirectoryHard(finalAppDir);
+            Log.Info("Preparing final .app for release");
+            var finalAppDir = Path.Combine(releasesDir.FullName, $"{rp.Id}.app");
+            if (Directory.Exists(finalAppDir)) Utility.DeleteFileOrDirectoryHard(finalAppDir);
+            Directory.CreateDirectory(finalAppDir);
             ZipPackage.ExtractZipReleaseForInstallOSX(rp.SuggestedReleaseFileName, finalAppDir, null);
-            EasyZip.CreateZipFromDirectory(Path.Combine(targetDir.FullName, $"{rp.Id}.app.zip"), finalAppDir);
-
+            EasyZip.CreateZipFromDirectory(Path.Combine(releasesDir.FullName, $"{rp.Id}.app.zip"), finalAppDir);
+            Utility.DeleteFileOrDirectoryHard(finalAppDir);
+            
             Log.Info("Done");
         }
 
