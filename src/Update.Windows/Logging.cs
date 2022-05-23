@@ -8,27 +8,30 @@ namespace Squirrel.Update
 {
     class SetupLogLogger : ILogger
     {
-        public LogLevel Level { get; set; }
+        public LogLevel Level { get; set; } = LogLevel.Info;
 
         private readonly NLog.Logger _log;
 
-        public SetupLogLogger(string logDirectory, bool includeActionInLogName, UpdateAction action)
+        public SetupLogLogger(UpdateAction action)
         {
-            string name, archivename;
-            if (includeActionInLogName || action == UpdateAction.Unset) {
-                name = "Squirrel.log";
-                archivename = "Squirrel.archive{###}.log";
-            } else {
-                name = $"Squirrel-{action}.log";
-                archivename = $"Squirrel-{action}.archive{{###}}.log";
-            }
+            // NB: Trying to delete the app directory while we have Setup.log
+            // open will actually crash the uninstaller if it's in the base directory
+            bool logToTemp =
+                action == UpdateAction.Unset ||
+                action == UpdateAction.Uninstall ||
+                action == UpdateAction.Setup ||
+                action == UpdateAction.Install;
 
+            var logDirectory = logToTemp ? Utility.GetDefaultTempBaseDirectory() : SquirrelRuntimeInfo.BaseDirectory;
+            var logName = logToTemp ? "Squirrel.log" : $"Squirrel-{action}.log";
+            var logArchiveName = logToTemp ? "Squirrel.archive{###}.log" : $"Squirrel-{action}.archive{{###}}.log";
+            
             // https://gist.github.com/chrisortman/1092889
             SimpleConfigurator.ConfigureForTargetLogging(
                 new FileTarget() {
-                    FileName = Path.Combine(logDirectory, name),
+                    FileName = Path.Combine(logDirectory, logName),
                     Layout = new NLog.Layouts.SimpleLayout("${longdate} [${level:uppercase=true}] - ${message}"),
-                    ArchiveFileName = Path.Combine(logDirectory, archivename),
+                    ArchiveFileName = Path.Combine(logDirectory, logArchiveName),
                     ArchiveAboveSize = 1_000_000 /* 2 MB */,
                     ArchiveNumbering = ArchiveNumberingMode.Sequence,
                     ConcurrentWrites = true, // should allow multiple processes to use the same file

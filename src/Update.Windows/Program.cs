@@ -41,22 +41,13 @@ namespace Squirrel.Update
             try {
                 opt = new StartupOption(args);
             } catch (Exception ex) {
-                var logp = new SetupLogLogger(Utility.GetDefaultTempBaseDirectory(), false, UpdateAction.Unset) { Level = LogLevel.Info };
+                var logp = new SetupLogLogger(UpdateAction.Unset);
                 logp.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 throw;
             }
-
-            // NB: Trying to delete the app directory while we have Setup.log
-            // open will actually crash the uninstaller
-            bool logToTemp =
-                opt.updateAction == UpdateAction.Uninstall ||
-                opt.updateAction == UpdateAction.Setup ||
-                opt.updateAction == UpdateAction.Install;
-
-            var logDir = logToTemp ? Utility.GetDefaultTempBaseDirectory() : SquirrelRuntimeInfo.BaseDirectory;
-
-            var logger = new SetupLogLogger(logDir, !logToTemp, opt.updateAction) { Level = LogLevel.Info };
-            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(SimpleSplat.ILogger));
+            
+            var logger = new SetupLogLogger(opt.updateAction);
+            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(ILogger));
 
             try {
                 return executeCommandLine(args);
