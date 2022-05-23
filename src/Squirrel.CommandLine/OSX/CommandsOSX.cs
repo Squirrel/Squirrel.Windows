@@ -87,9 +87,9 @@ namespace Squirrel.CommandLine.OSX
             var finalAppDir = Path.Combine(releasesDir.FullName, $"{rp.Id}.app");
             if (Directory.Exists(finalAppDir)) Utility.DeleteFileOrDirectoryHard(finalAppDir);
             Directory.CreateDirectory(finalAppDir);
+            Log.Info($"Extracting {rp.SuggestedReleaseFileName} to '{finalAppDir}'.");
             ZipPackage.ExtractZipReleaseForInstallOSX(rp.SuggestedReleaseFileName, finalAppDir, null);
             EasyZip.CreateZipFromDirectory(Path.Combine(releasesDir.FullName, $"{rp.Id}.app.zip"), finalAppDir);
-            Utility.DeleteFileOrDirectoryHard(finalAppDir);
             
             Log.Info("Done");
         }
