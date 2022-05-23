@@ -15,14 +15,16 @@ namespace Squirrel.Tool
         static int Main(string[] args)
         {
             try {
+                // explicitly told to execute embedded version
                 if (args.Contains(EMBEDDED_FLAG)) {
                     return SquirrelHost.Main(args.Except(new[] { EMBEDDED_FLAG }).ToArray());
                 }
 
                 Console.WriteLine($"Squirrel Locator {SquirrelRuntimeInfo.SquirrelDisplayVersion}");
+                
                 var packageName = "Clowd.Squirrel";
                 var dependencies = GetPackageVersionsFromCurrentDir(packageName).Distinct().ToArray();
-
+                
                 if (dependencies.Length == 0) {
                     Console.WriteLine("Clowd.Squirrel is not installed in the current working dir/project. (Using bundled Squirrel)");
                     return SquirrelHost.Main(args);
@@ -36,12 +38,11 @@ namespace Squirrel.Tool
                 var packages = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
 
                 var targetVersion = dependencies.First();
-                Console.WriteLine("Attempting to locate Squirrel " + targetVersion + " (installed in current working dir)");
-
                 var dllName = "csq.dll";
                 var exeName = "Squirrel.exe";
-                var toolDllPath = Path.Combine(packages, packageName.ToLower(), targetVersion, "tools", dllName);
-                var toolExePath = Path.Combine(packages, packageName.ToLower(), targetVersion, "tools", exeName);
+                var toolRootPath = Path.Combine(packages, packageName.ToLower(), targetVersion, "tools");
+                var toolDllPath = Path.Combine(toolRootPath, dllName);
+                var toolExePath = Path.Combine(toolRootPath, exeName);
 
                 Process p;
 
@@ -55,7 +56,7 @@ namespace Squirrel.Tool
                     Console.WriteLine("Running: " + toolExePath + " " + String.Join(" ", args));
                     p = Process.Start(toolExePath, args);
                 } else {
-                    throw new Exception("Unable to locate Squirrel " + targetVersion);
+                    throw new Exception("Unable to locate Squirrel " + targetVersion + " at: " + toolRootPath);
                 }
 
                 p.WaitForExit();

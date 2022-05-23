@@ -226,7 +226,7 @@ namespace Squirrel.CommandLine
 
                 // print command name + desc
                 Console.WriteLine();
-                Utility.ConsoleWriteWithColor(c.Command, ConsoleColor.Blue);
+                Utility.ConsoleWriteWithColor(c.Command, ConsoleColor.Magenta);
                 if (!String.IsNullOrWhiteSpace(c.Description))
                     Console.Write(": " + c.Description);
 
