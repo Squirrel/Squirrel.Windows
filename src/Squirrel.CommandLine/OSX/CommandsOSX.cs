@@ -31,7 +31,7 @@ namespace Squirrel.CommandLine.OSX
             var plistPath = Path.Combine(options.package, "Contents", PlistWriter.PlistFileName);
             NSDictionary plist = (NSDictionary) PropertyListParser.Parse(plistPath);
 
-            var _ = Utility.GetTempDirectory(out var tmp);
+            using var _ = Utility.GetTempDirectory(out var tmp);
 
             string getpStr(string name)
             {
