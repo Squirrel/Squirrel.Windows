@@ -108,7 +108,7 @@ namespace Squirrel.Tests
                     Assert.True(File.Exists(Path.Combine(localAppDir, "current", "ReactiveUI.dll")));
                     Assert.True(File.Exists(Path.Combine(localAppDir, "current", "NSync.Core.dll")));
 
-                    var manifest = NuspecManifest.ParseFromFile(Path.Combine(localAppDir, "current", "current.version"));
+                    var manifest = NuspecManifest.ParseFromFile(Path.Combine(localAppDir, "current", Utility.SpecVersionFileName));
                     Assert.Equal(new NuGetVersion(1, 0, 0, 0), manifest.Version);
                 }
             }

@@ -160,9 +160,9 @@ namespace Squirrel.NuGet
                         var percentage = (currentItem * 100d) / totalItems;
                         progress((int) percentage);
 
-                        // extract .nuspec to app directory as 'current.version'
+                        // extract .nuspec to app directory as '.version'
                         if (Utility.FileHasExtension(reader.Entry.Key, NugetUtil.ManifestExtension)) {
-                            Utility.Retry(() => reader.WriteEntryToFile(Path.Combine(outFolder, "current.version")));
+                            Utility.Retry(() => reader.WriteEntryToFile(Path.Combine(outFolder, Utility.SpecVersionFileName)));
                             continue;
                         }
 

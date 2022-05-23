@@ -834,18 +834,29 @@ namespace Squirrel
                 });
         }
 
+        public const string SpecVersionFileName = ".sqversion";
+        
         public static NuspecManifest ReadManifestFromVersionDir(string appVersionDir)
         {
             NuspecManifest manifest;
+            string nuspec;
 
-            var nuspec = Path.Combine(appVersionDir, "mysqver");
+            nuspec = Path.Combine(appVersionDir, SpecVersionFileName);
+            if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
+                return manifest;
+            
+            nuspec = Path.Combine(appVersionDir, "Contents", SpecVersionFileName);
+            if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
+                return manifest;
+            
+            nuspec = Path.Combine(appVersionDir, "mysqver");
             if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
                 return manifest;
 
             nuspec = Path.Combine(appVersionDir, "current.version");
             if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
                 return manifest;
-
+            
             return null;
         }
     }

@@ -61,7 +61,7 @@ namespace Squirrel.CommandLine.OSX
                 var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
                     .ContextualSingle("package", "'lib' folder");
                 var contentsDir = Path.Combine(libDir, "Contents");
-                File.Copy(nuspecPath, Path.Combine(contentsDir, "current.version"));
+                File.Copy(nuspecPath, Path.Combine(contentsDir, Utility.SpecVersionFileName));
                 File.Copy(HelperExe.UpdateMacPath, Path.Combine(contentsDir, "UpdateMac"));
             });
 
