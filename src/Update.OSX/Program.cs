@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading;
 using Squirrel.SimpleSplat;
 
 namespace Squirrel.Update
 {
+    [SupportedOSPlatform("osx")]
     class Program : IEnableLogger
     {
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
@@ -54,12 +56,9 @@ namespace Squirrel.Update
             ProcessUtil.InvokeProcess("open", new[] { "-n", currentDir }, null, CancellationToken.None);
         }
 
-        [DllImport("libSystem.dylib")]
-        private static extern int getppid();
-        
         static void waitForParentToExit()
         {
-            var parentPid = getppid();
+            var parentPid = NativeMac.getppid();
             var proc = Process.GetProcessById(parentPid);
             proc?.WaitForExit();
         }
