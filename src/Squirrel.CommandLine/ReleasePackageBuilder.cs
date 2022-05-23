@@ -26,21 +26,26 @@ namespace Squirrel.CommandLine
 
     internal class ReleasePackageBuilder : IEnableLogger, IReleasePackage
     {
+        private ZipPackage _package;
         public ReleasePackageBuilder(string inputPackageFile, bool isReleasePackage = false)
         {
             InputPackageFile = inputPackageFile;
-
+            _package = new ZipPackage(InputPackageFile);
+            
             if (isReleasePackage) {
                 ReleasePackageFile = inputPackageFile;
             }
         }
 
         public string InputPackageFile { get; protected set; }
+        
         public string ReleasePackageFile { get; protected set; }
 
-        public string SuggestedReleaseFileName => new ZipPackage(InputPackageFile).FullReleaseFilename;
+        public string SuggestedReleaseFileName => _package.FullReleaseFilename;
 
-        public SemanticVersion Version => ReleaseEntry.ParseEntryFileName(InputPackageFile).Version;
+        public string Id => _package.Id;
+
+        public SemanticVersion Version => _package.Version;
 
         internal string CreateReleasePackage(string outputFile, Func<string, string> releaseNotesProcessor = null, Action<string, ZipPackage> contentsPostProcessHook = null)
         {

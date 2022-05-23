@@ -97,7 +97,7 @@ namespace Squirrel.NuGet
                 return ExtractZipReleaseForInstallWindows(zipFilePath, outFolder, rootPackageFolder, progress);
 
             if (SquirrelRuntimeInfo.IsOSX)
-                return ExtractZipReleaseForInstallOSX(zipFilePath, outFolder, rootPackageFolder, progress);
+                return ExtractZipReleaseForInstallOSX(zipFilePath, outFolder, progress);
 
             throw new NotSupportedException("Platform not supported.");
         }
@@ -105,8 +105,9 @@ namespace Squirrel.NuGet
         private static readonly Regex libFolderPattern = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         [SupportedOSPlatform("macos")]
-        public static Task ExtractZipReleaseForInstallOSX(string zipFilePath, string outFolder, string rootPackageFolder, Action<int> progress)
+        public static Task ExtractZipReleaseForInstallOSX(string zipFilePath, string outFolder, Action<int> progress)
         {
+            progress ??= ((_) => { });
             return Task.Run(() => {
                 using (var za = ZipArchive.Open(zipFilePath))
                 using (var reader = za.ExtractAllEntries()) {
@@ -146,6 +147,7 @@ namespace Squirrel.NuGet
         [SupportedOSPlatform("windows")]
         public static Task ExtractZipReleaseForInstallWindows(string zipFilePath, string outFolder, string rootPackageFolder, Action<int> progress)
         {
+            progress ??= ((_) => { });
             var re = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
             return Task.Run(() => {

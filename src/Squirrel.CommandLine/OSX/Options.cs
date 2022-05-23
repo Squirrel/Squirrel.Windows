@@ -39,6 +39,9 @@ namespace Squirrel.CommandLine.OSX
             IsRequired(nameof(icon));
             IsValidFile(nameof(icon), ".icns");
 
+            if (exeName == null)
+                exeName = packId;
+
             var exe = Path.Combine(packDirectory, exeName);
             if (!File.Exists(exe) || !MachOUtils.IsMachOImage(exe))
                 throw new OptionValidationException($"Could not find mach-o executable at '{exe}'.");

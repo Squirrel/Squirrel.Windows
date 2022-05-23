@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using Squirrel.NuGet;
 using Squirrel.PropertyList;
 using Squirrel.SimpleSplat;
 
@@ -54,6 +55,7 @@ namespace Squirrel.CommandLine.OSX
                 previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
             }
 
+            Log.Info("Creating Squirrel Release");
             var rp = new ReleasePackageBuilder(nupkgPath);
             var newPkgPath = rp.CreateReleasePackage(Path.Combine(targetDir.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
                 var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
@@ -65,11 +67,13 @@ namespace Squirrel.CommandLine.OSX
                 File.Copy(HelperExe.UpdateMacPath, Path.Combine(contentsDir, "UpdateMac"));
             });
 
+
             // we are not currently making any modifications to the package
             // so we can just copy it to the right place. uncomment the above otherwise.
             //var newPkgPath = Path.Combine(targetDir, rp.SuggestedReleaseFileName);
             //File.Move(rp.InputPackageFile, newPkgPath);
 
+            Log.Info("Creating Delta Packages");
             var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, targetDir.FullName);
             if (prev != null && !options.noDelta) {
                 var deltaBuilder = new DeltaPackageBuilder();
@@ -78,6 +82,12 @@ namespace Squirrel.CommandLine.OSX
             }
 
             ReleaseEntry.WriteReleaseFile(previousReleases.Concat(new[] { ReleaseEntry.GenerateFromFile(newPkgPath) }), releaseFilePath);
+            
+            Log.Info("Generating latest app archive");
+            var finalAppDir = Path.Combine(targetDir.FullName, $"{rp.Id}.app");
+            Utility.DeleteFileOrDirectoryHard(finalAppDir);
+            ZipPackage.ExtractZipReleaseForInstallOSX(rp.SuggestedReleaseFileName, finalAppDir, null);
+            EasyZip.CreateZipFromDirectory(Path.Combine(targetDir.FullName, $"{rp.Id}.app.zip"), finalAppDir);
 
             Log.Info("Done");
         }
