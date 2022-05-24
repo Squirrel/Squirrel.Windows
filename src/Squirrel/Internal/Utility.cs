@@ -308,7 +308,7 @@ namespace Squirrel
         {
             return GetTempDirectory(out newTempDirectory, GetDefaultTempBaseDirectory());
         }
-        
+
         public static IDisposable GetTempDirectory(out string newTempDirectory, string rootTempDir)
         {
             var disp = GetTempFileName(out newTempDirectory, rootTempDir);
@@ -797,17 +797,17 @@ namespace Squirrel
         {
             IEnumerable<(string ProcessExePath, int ProcessId)> allRunningProcesses = SquirrelRuntimeInfo.IsWindows
                 ? EnumerateProcessesWindows()
-                : Process.GetProcesses().Select(p => (p.MainModule.FileName, p.Id));
+                : Process.GetProcesses().Select(p => (p.MainModule?.FileName, p.Id));
+            
             return allRunningProcesses
-                .Where(x => !String.IsNullOrWhiteSpace(x
-                    .ProcessExePath)) // Processes we can't query will have an empty process name
+                .Where(x => !String.IsNullOrWhiteSpace(x.ProcessExePath)) // Processes we can't query will have an empty process name
                 .ToList();
         }
 
         public static List<(string ProcessExePath, int ProcessId)> EnumerateProcessesInDirectory(string directory)
         {
             return EnumerateProcesses()
-                .Where(x => Utility.IsFileInDirectory(x.ProcessExePath, directory))
+                .Where(x => IsFileInDirectory(x.ProcessExePath, directory))
                 .ToList();
         }
 
@@ -816,8 +816,7 @@ namespace Squirrel
             EnumerateProcessesInDirectory(directoryToKill)
                 .Where(x => {
                     // Never kill our own EXE
-                    if (SquirrelRuntimeInfo.EntryExePath != null &&
-                        x.ProcessExePath.Equals(SquirrelRuntimeInfo.EntryExePath, StringComparison.OrdinalIgnoreCase))
+                    if (FullPathEquals(SquirrelRuntimeInfo.EntryExePath, x.ProcessExePath))
                         return false;
 
                     var name = Path.GetFileName(x.ProcessExePath).ToLowerInvariant();
@@ -835,7 +834,7 @@ namespace Squirrel
         }
 
         public const string SpecVersionFileName = "sq.version";
-        
+
         public static NuspecManifest ReadManifestFromVersionDir(string appVersionDir)
         {
             NuspecManifest manifest;
@@ -844,11 +843,11 @@ namespace Squirrel
             nuspec = Path.Combine(appVersionDir, SpecVersionFileName);
             if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
                 return manifest;
-            
+
             nuspec = Path.Combine(appVersionDir, "Contents", SpecVersionFileName);
             if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
                 return manifest;
-            
+
             nuspec = Path.Combine(appVersionDir, "mysqver");
             if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
                 return manifest;
@@ -856,10 +855,10 @@ namespace Squirrel
             nuspec = Path.Combine(appVersionDir, "current.version");
             if (File.Exists(nuspec) && NuspecManifest.TryParseFromFile(nuspec, out manifest))
                 return manifest;
-            
+
             return null;
         }
-        
+
         private enum Magic : uint
         {
             MH_MAGIC = 0xfeedface,
@@ -867,11 +866,10 @@ namespace Squirrel
             MH_MAGIC_64 = 0xfeedfacf,
             MH_CIGAM_64 = 0xcffaedfe
         }
-        
+
         public static bool IsMachOImage(string filePath)
         {
-            using (BinaryReader reader = new BinaryReader(File.OpenRead(filePath)))
-            {
+            using (BinaryReader reader = new BinaryReader(File.OpenRead(filePath))) {
                 if (reader.BaseStream.Length < 256) // Header size
                     return false;
 

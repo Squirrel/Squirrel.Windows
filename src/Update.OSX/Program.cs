@@ -60,8 +60,13 @@ namespace Squirrel.Update
         static void waitForParentToExit()
         {
             var parentPid = NativeMac.getppid();
+            if (parentPid <= 1) {
+                Log.Warn("Cannot wait for parent to exit, it has already exited.");
+                return;
+            }
+
             var proc = Process.GetProcessById(parentPid);
-            
+
             Log.Info($"Waiting for PID {parentPid} to exit (30s timeout)...");
             var exited = proc.WaitForExit(30_000);
             if (!exited) {
