@@ -205,11 +205,11 @@ namespace Squirrel
         /// <remarks>See <see cref="RestartAppWhenExited(string, string)"/> for a version which does not
         /// exit the current process immediately, but instead allows you to exit the current process
         /// however you'd like.</remarks>
-        public void RestartApp(string exeToStart = null, string arguments = null)
+        public static void RestartApp(string exeToStart = null, string arguments = null)
         {
             AppDesc.GetCurrentPlatform().StartRestartingProcess(exeToStart, arguments);
             // NB: We have to give update.exe some time to grab our PID
-            Thread.Sleep(500);
+            Thread.Sleep(1000);
             Environment.Exit(0);
         }
 
@@ -225,7 +225,7 @@ namespace Squirrel
         {
             var process = AppDesc.GetCurrentPlatform().StartRestartingProcess(exeToStart, arguments);
             // NB: We have to give update.exe some time to grab our PID
-            Thread.Sleep(500);
+            Thread.Sleep(1000);
             return process;
         }
 
@@ -241,7 +241,7 @@ namespace Squirrel
         {
             var process = AppDesc.GetCurrentPlatform().StartRestartingProcess(exeToStart, arguments);
             // NB: We have to give update.exe some time to grab our PID
-            await Task.Delay(500).ConfigureAwait(false);
+            await Task.Delay(1000).ConfigureAwait(false);
             return process;
         }
 

@@ -41,6 +41,8 @@ namespace Squirrel.Update
                 return;
             }
 
+            Console.WriteLine($"[{logLevel}] {message}");
+
             switch (logLevel) {
             case LogLevel.Debug:
                 _log.Debug(message);

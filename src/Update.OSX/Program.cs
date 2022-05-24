@@ -49,18 +49,26 @@ namespace Squirrel.Update
 
             // todo https://stackoverflow.com/questions/51441576/how-to-run-app-as-sudo
             // https://stackoverflow.com/questions/10283062/getting-sudo-to-ask-for-password-via-the-gui
+            // /usr/bin/osascript -e 'do shell script "/path/to/myscript args 2>&1 etc" with administrator privileges'
 
             var desc = new AppDescOsx();
             var currentDir = desc.UpdateAndRetrieveCurrentFolder(forceLatest);
 
-            ProcessUtil.InvokeProcess("open", new[] { "-n", currentDir }, null, CancellationToken.None);
+            ProcessUtil.InvokeProcess("open", new[] { "-n", currentDir, "--args", arguments }, null, CancellationToken.None);
         }
 
         static void waitForParentToExit()
         {
             var parentPid = NativeMac.getppid();
             var proc = Process.GetProcessById(parentPid);
-            proc?.WaitForExit();
+            
+            Log.Info($"Waiting for PID {parentPid} to exit (30s timeout)...");
+            var exited = proc.WaitForExit(30_000);
+            if (!exited) {
+                throw new Exception("Parent wait timed out.");
+            }
+
+            Log.Info($"PID {parentPid} has exited.");
         }
     }
 }
