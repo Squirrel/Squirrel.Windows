@@ -89,7 +89,7 @@ namespace Squirrel.CommandLine.OSX
                     throw new OptionValidationException("--icon is required when generating a new app bundle.");
 
                 var mainExePath = Path.Combine(options.packDirectory, options.exeName);
-                if (options.exeName == null || !File.Exists(mainExePath) || !NativeMac.IsMachOImage(mainExePath))
+                if (options.exeName == null || !File.Exists(mainExePath) || !Utility.IsMachOImage(mainExePath))
                     throw new OptionValidationException("--exeName is required when generating a new app bundle, and it must be a mach-o executable.");
 
                 var appleId = $"com.{options.packAuthors ?? options.packId}.{options.packId}";
