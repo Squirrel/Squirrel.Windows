@@ -32,7 +32,6 @@ namespace Squirrel.CommandLine
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor");
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "vendor", "wix");
 #endif
-            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "wix");
         }
 
         public static void AddSearchPath(params string[] pathParts)

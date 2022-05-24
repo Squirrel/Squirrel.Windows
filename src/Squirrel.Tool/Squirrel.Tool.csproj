@@ -16,7 +16,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Include="..\..\vendor\**" Pack="true" PackagePath="tools\net6.0\any\" />
+    <None Include="..\..\vendor\wix\*" Pack="true" PackagePath="tools\net6.0\any\" />
+    <None Include="..\..\vendor\*" Pack="true" PackagePath="tools\net6.0\any\" />
     <None Include="..\..\build\$(Configuration)\Win32\Setup.exe" Pack="true" PackagePath="tools\net6.0\any\" />
     <None Include="..\..\build\$(Configuration)\Win32\StubExecutable.exe" Pack="true" PackagePath="tools\net6.0\any\" />
     <None Include="..\..\docs\artwork\Clowd_200.png" Pack="true" PackagePath="\" />
