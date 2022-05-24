@@ -82,7 +82,6 @@ jobs:
         if: ${{ always() }}
         run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
       - name: Fix Packages
-        shell: bash
         run: |
           export NUGET_VERSION=$(./nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
           echo $NUGET_VERSION

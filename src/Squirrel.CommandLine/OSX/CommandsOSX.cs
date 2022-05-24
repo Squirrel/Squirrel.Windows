@@ -36,9 +36,9 @@ namespace Squirrel.CommandLine.OSX
             var nupkgPath = NugetConsole.CreatePackageFromNuspecPath(tmp, options.package, manifest.FilePath);
 
             var releaseFilePath = Path.Combine(releasesDir.FullName, "RELEASES");
-            var previousReleases = new List<ReleaseEntry>();
+            var releases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
-                previousReleases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
+                releases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
             }
 
             Log.Info("Creating Squirrel Release");
@@ -46,15 +46,17 @@ namespace Squirrel.CommandLine.OSX
             var newPkgPath = rp.CreateReleasePackage(Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName));
 
             Log.Info("Creating Delta Packages");
-            var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, releasesDir.FullName);
+            var prev = ReleasePackageBuilder.GetPreviousRelease(releases, rp, releasesDir.FullName);
             if (prev != null && !options.noDelta) {
                 var deltaBuilder = new DeltaPackageBuilder();
-                var dp = deltaBuilder.CreateDeltaPackage(prev, rp,
-                    Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta")));
+                var deltaFile = Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta"));
+                var dp = deltaBuilder.CreateDeltaPackage(prev, rp, deltaFile);
+                releases.Add(ReleaseEntry.GenerateFromFile(deltaFile));
             }
-
-            ReleaseEntry.WriteReleaseFile(previousReleases.Concat(new[] { ReleaseEntry.GenerateFromFile(newPkgPath) }), releaseFilePath);
-            EasyZip.CreateZipFromDirectory(Path.Combine(releasesDir.FullName, $"{rp.Id}.app.zip"), options.package, nestDirectory: true);
+            
+            releases.Add(ReleaseEntry.GenerateFromFile(newPkgPath));
+            ReleaseEntry.WriteReleaseFile(releases, releaseFilePath);
+            // EasyZip.CreateZipFromDirectory(Path.Combine(releasesDir.FullName, $"{rp.Id}.app.zip"), options.package, nestDirectory: true);
 
             Log.Info("Done");
         }
