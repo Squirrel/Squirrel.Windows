@@ -57,7 +57,7 @@ namespace Squirrel
                 foreach (var path in Directory.EnumerateFiles(filePath, searchPattern, searchOption))
                 {
                     var fileInfo = new FileInfo(path);
-                    writableArchive.AddEntry(path.Substring(parent.FullName.Length), fileInfo.OpenRead(), true, fileInfo.Length,
+                    writableArchive.AddEntry(fileInfo.FullName.Substring(parent.FullName.Length), fileInfo.OpenRead(), true, fileInfo.Length,
                         fileInfo.LastWriteTime);
                 }
             }

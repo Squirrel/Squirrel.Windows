@@ -11,7 +11,7 @@ namespace Squirrel.CommandLine
 
         public DirectoryInfo GetReleaseDirectory(bool createIfMissing = true)
         {
-            var targetDir = Path.GetFullPath(releaseDir ?? Path.Combine(".", "Releases"));
+            var targetDir = Path.GetFullPath(releaseDir ?? Path.Combine(".", "releases"));
             var di = new DirectoryInfo(targetDir);
             if (!di.Exists && createIfMissing) di.Create();
             return di;

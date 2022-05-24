@@ -36,7 +36,7 @@ namespace Squirrel.Tool
                     return RunCsqFromPath(explicitSquirrelPath, restArgs);
                 }
 
-                Console.WriteLine($"Squirrel Locator {SquirrelRuntimeInfo.SquirrelDisplayVersion}");
+                Console.WriteLine($"Squirrel Locator (csq) {SquirrelRuntimeInfo.SquirrelDisplayVersion}");
 
                 var packageName = "Clowd.Squirrel";
                 var dependencies = GetPackageVersionsFromCurrentDir(packageName).Distinct().ToArray();
@@ -52,10 +52,7 @@ namespace Squirrel.Tool
                 }
 
                 var packages = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
-
                 var targetVersion = dependencies.First();
-
-
                 var toolRootPath = Path.Combine(packages, packageName.ToLower(), targetVersion, "tools");
 
                 // resolve wildcards. we should probably rely on the dotnet tooling for this in the future
@@ -87,11 +84,13 @@ namespace Squirrel.Tool
             if (File.Exists(toolDllPath)) {
                 var dnargs = new[] { toolDllPath, EMBEDDED_FLAG }.Concat(args);
                 Console.WriteLine("Running: dotnet " + String.Join(" ", dnargs));
+                Console.WriteLine();
                 p = Process.Start("dotnet", dnargs);
             } else if (File.Exists(toolExePath)) {
                 if (!SquirrelRuntimeInfo.IsWindows)
                     throw new NotSupportedException($"Squirrel at '{toolRootPath}' does not support this operating system. Please update the package.");
                 Console.WriteLine("Running: " + toolExePath + " " + String.Join(" ", args));
+                Console.WriteLine();
                 p = Process.Start(toolExePath, args);
             } else {
                 throw new Exception("Unable to locate Squirrel at: " + toolRootPath);
