@@ -34,7 +34,7 @@ namespace Squirrel.CommandLine.OSX
                 throw new Exception("Package directory is not a valid Squirrel bundle. Execute 'bundle' command on this app first.");
 
             var nupkgPath = NugetConsole.CreatePackageFromNuspecPath(tmp, options.package, manifest.FilePath);
-            
+
             var releaseFilePath = Path.Combine(releasesDir.FullName, "RELEASES");
             var previousReleases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
@@ -54,7 +54,7 @@ namespace Squirrel.CommandLine.OSX
             }
 
             ReleaseEntry.WriteReleaseFile(previousReleases.Concat(new[] { ReleaseEntry.GenerateFromFile(newPkgPath) }), releaseFilePath);
-            EasyZip.CreateZipFromDirectory(Path.Combine(releasesDir.FullName, $"{rp.Id}.app.zip"), options.package);
+            EasyZip.CreateZipFromDirectory(Path.Combine(releasesDir.FullName, $"{rp.Id}.app.zip"), options.package, nestDirectory: true);
 
             Log.Info("Done");
         }
@@ -88,9 +88,17 @@ namespace Squirrel.CommandLine.OSX
                 if (options.icon == null || !File.Exists(options.icon))
                     throw new OptionValidationException("--icon is required when generating a new app bundle.");
 
-                var mainExePath = Path.Combine(options.packDirectory, options.exeName);
-                if (options.exeName == null || !File.Exists(mainExePath) || !Utility.IsMachOImage(mainExePath))
-                    throw new OptionValidationException("--exeName is required when generating a new app bundle, and it must be a mach-o executable.");
+                // auto-discover exe if it's the same as packId
+                var exeName = options.exeName;
+                if (exeName == null && File.Exists(Path.Combine(options.packDirectory, options.packId)))
+                    exeName = options.packId;
+
+                if (exeName == null)
+                    throw new OptionValidationException("--exeName is required when generating a new app bundle.");
+
+                var mainExePath = Path.Combine(options.packDirectory, exeName);
+                if (!File.Exists(mainExePath) || !Utility.IsMachOImage(mainExePath))
+                    throw new OptionValidationException($"--exeName '{mainExePath}' does not exist or is not a mach-o executable.");
 
                 var appleId = $"com.{options.packAuthors ?? options.packId}.{options.packId}";
                 var escapedAppleId = Regex.Replace(appleId, @"[^\w\.]", "_");

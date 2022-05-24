@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -31,13 +32,35 @@ namespace Squirrel
             });
         }
 
-        public static void CreateZipFromDirectory(string outputFile, string directoryToCompress)
+        public static void CreateZipFromDirectory(string outputFile, string directoryToCompress, bool nestDirectory = false)
         {
             Log.Info($"Compressing '{directoryToCompress}' to '{outputFile}' using SharpCompress (DEFLATE)...");
             using var archive = ZipArchive.Create();
             archive.DeflateCompressionLevel = CompressionLevel.BestSpeed;
-            archive.AddAllFromDirectory(directoryToCompress);
+            if (nestDirectory) {
+                AddAllFromDirectoryInNestedDir(archive, directoryToCompress);
+            } else {
+                archive.AddAllFromDirectory(directoryToCompress);
+            }
             archive.SaveTo(outputFile, CompressionType.Deflate);
+        }
+        
+        private static void AddAllFromDirectoryInNestedDir(
+            IWritableArchive writableArchive,
+            string filePath, string searchPattern = "*.*", SearchOption searchOption = SearchOption.AllDirectories)
+        {
+            var di = new DirectoryInfo(filePath);
+            var parent = di.Parent;
+            
+            using (writableArchive.PauseEntryRebuilding())
+            {
+                foreach (var path in Directory.EnumerateFiles(filePath, searchPattern, searchOption))
+                {
+                    var fileInfo = new FileInfo(path);
+                    writableArchive.AddEntry(path.Substring(parent.FullName.Length), fileInfo.OpenRead(), true, fileInfo.Length,
+                        fileInfo.LastWriteTime);
+                }
+            }
         }
     }
 }
