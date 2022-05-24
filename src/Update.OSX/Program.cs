@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -54,7 +55,14 @@ namespace Squirrel.Update
             var desc = new AppDescOsx();
             var currentDir = desc.UpdateAndRetrieveCurrentFolder(forceLatest);
 
-            ProcessUtil.InvokeProcess("open", new[] { "-n", currentDir, "--args", arguments }, null, CancellationToken.None);
+            var args = new List<string> { "-n", currentDir, };
+            
+            if (!String.IsNullOrEmpty(arguments)) {
+                args.Add("--args");
+                args.Add(arguments);
+            }
+            
+            ProcessUtil.StartNonBlocking("/usr/bin/open", args, null);
         }
 
         static void waitForParentToExit()
