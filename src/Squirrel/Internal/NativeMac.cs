@@ -27,7 +27,7 @@ namespace Squirrel
 
         public static void ChmodAsExe(string filePath)
         {
-            var filePermissionOctal = Convert.ToInt32("755", 8); // -rwxr-xr-x
+            var filePermissionOctal = Convert.ToInt32("777", 8);
             const int EINTR = 4;
             int chmodReturnCode = 0;
 

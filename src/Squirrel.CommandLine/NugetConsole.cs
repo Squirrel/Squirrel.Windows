@@ -11,9 +11,9 @@ namespace Squirrel.CommandLine
 {
     internal class NugetConsole : NG.ILogger, IEnableLogger
     {
-        public static string CreatePackageFromMetadata(
-            string tempDir, string packDir, string packId, string packTitle, string packAuthors, 
-            string packVersion, string releaseNotes, bool includePdb)
+        public static string CreateNuspec(
+            string packId, string packTitle, string packAuthors,
+            string packVersion, string releaseNotes, bool includePdb, string libFolderName)
         {
             var releaseNotesText = String.IsNullOrEmpty(releaseNotes)
                 ? "" // no releaseNotes
@@ -31,21 +31,36 @@ namespace Squirrel.CommandLine
     {releaseNotesText}
   </metadata>
   <files>
-    <file src=""**"" target=""lib\native\"" exclude=""{(includePdb ? "" : "*.pdb;")}*.nupkg;*.vshost.*""/>
+    <file src=""**"" target=""lib\{libFolderName}\"" exclude=""{(includePdb ? "" : "*.pdb;")}*.nupkg;*.vshost.*;**\createdump.exe""/>
   </files>
 </package>
 ".Trim();
 
-            var nuspecPath = Path.Combine(tempDir, packId + ".nuspec");
-            File.WriteAllText(nuspecPath, nuspec);
+            return nuspec;
+        }
 
-            new NugetConsole().Pack(nuspecPath, packDir, tempDir);
+        public static string CreatePackageFromNuspecPath(string tempDir, string packDir, string nuspecPath)
+        {
+            var nup = Path.Combine(tempDir, "squirreltemp.nuspec");
+            File.Copy(nuspecPath, nup);
+            
+            new NugetConsole().Pack(nup, packDir, tempDir);
 
             var nupkgPath = Directory.EnumerateFiles(tempDir).Where(f => f.EndsWith(".nupkg")).FirstOrDefault();
             if (nupkgPath == null)
                 throw new Exception($"Failed to generate nupkg, unspecified error");
 
             return nupkgPath;
+        }
+
+        public static string CreatePackageFromMetadata(
+            string tempDir, string packDir, string packId, string packTitle, string packAuthors,
+            string packVersion, string releaseNotes, bool includePdb, string libFolderName)
+        {
+            string nuspec = CreateNuspec(packId, packTitle, packAuthors, packVersion, releaseNotes, includePdb, libFolderName);
+            var nuspecPath = Path.Combine(tempDir, packId + ".nuspec");
+            File.WriteAllText(nuspecPath, nuspec);
+            return CreatePackageFromNuspecPath(tempDir, packDir, nuspecPath);          
         }
 
         public void Pack(string nuspecPath, string baseDirectory, string outputDirectory)
@@ -70,6 +85,7 @@ namespace Squirrel.CommandLine
         }
 
         #region NuGet.Common.ILogger
+
         public void Log(NG.LogLevel level, string data)
         {
             this.Log().Info(data);
@@ -126,6 +142,7 @@ namespace Squirrel.CommandLine
         {
             this.Log().Warn(data);
         }
+
         #endregion NuGet.Common.ILogger
     }
 }

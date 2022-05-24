@@ -834,7 +834,7 @@ namespace Squirrel
                 });
         }
 
-        public const string SpecVersionFileName = ".sqversion";
+        public const string SpecVersionFileName = "sq.version";
         
         public static NuspecManifest ReadManifestFromVersionDir(string appVersionDir)
         {

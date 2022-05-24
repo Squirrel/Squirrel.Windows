@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
+using System.Text.RegularExpressions;
 using Squirrel.NuGet;
 using Squirrel.PropertyList;
 using Squirrel.SimpleSplat;
@@ -22,33 +23,18 @@ namespace Squirrel.CommandLine.OSX
                 { "pack", "Create a Squirrel release from a '.app' bundle", new PackOptions(), Pack },
             };
         }
-        
+
         private static void Pack(PackOptions options)
         {
             var releasesDir = options.GetReleaseDirectory();
-
-            //var builder = new StructureBuilder(options.package);
-            var plistPath = Path.Combine(options.package, "Contents", PlistWriter.PlistFileName);
-            NSDictionary plist = (NSDictionary) PropertyListParser.Parse(plistPath);
-
             using var _ = Utility.GetTempDirectory(out var tmp);
 
-            string getpStr(string name)
-            {
-                var res = plist.ObjectForKey(name);
-                if (res == null)
-                    throw new Exception($"Did not find required key '{name}' in Info.plist");
-                return res.ToString();
-            }
+            var manifest = Utility.ReadManifestFromVersionDir(options.package);
+            if (manifest == null)
+                throw new Exception("Package directory is not a valid Squirrel bundle. Execute 'bundle' command on this app first.");
 
-            var packId = getpStr("CFBundleIdentifier");
-            var packVersion = getpStr("CFBundleVersion");
-            var packTitle = getpStr("CFBundleName");
-
-            var nupkgPath = NugetConsole.CreatePackageFromMetadata(
-                tmp, options.package, packId, packTitle, packTitle,
-                packVersion, options.releaseNotes, options.includePdb);
-
+            var nupkgPath = NugetConsole.CreatePackageFromNuspecPath(tmp, options.package, manifest.FilePath);
+            
             var releaseFilePath = Path.Combine(releasesDir.FullName, "RELEASES");
             var previousReleases = new List<ReleaseEntry>();
             if (File.Exists(releaseFilePath)) {
@@ -57,21 +43,7 @@ namespace Squirrel.CommandLine.OSX
 
             Log.Info("Creating Squirrel Release");
             var rp = new ReleasePackageBuilder(nupkgPath);
-            var newPkgPath = rp.CreateReleasePackage(Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName), contentsPostProcessHook: (pkgPath, zpkg) => {
-                var nuspecPath = Directory.GetFiles(pkgPath, "*.nuspec", SearchOption.TopDirectoryOnly)
-                 .ContextualSingle("package", "*.nuspec", "top level directory");
-                var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
-                    .ContextualSingle("package", "'lib' folder");
-                var contentsDir = Path.Combine(libDir, "Contents");
-                File.Copy(nuspecPath, Path.Combine(contentsDir, Utility.SpecVersionFileName));
-                File.Copy(HelperExe.UpdateMacPath, Path.Combine(contentsDir, "UpdateMac"));
-            });
-
-
-            // we are not currently making any modifications to the package
-            // so we can just copy it to the right place. uncomment the above otherwise.
-            //var newPkgPath = Path.Combine(targetDir, rp.SuggestedReleaseFileName);
-            //File.Move(rp.InputPackageFile, newPkgPath);
+            var newPkgPath = rp.CreateReleasePackage(Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName));
 
             Log.Info("Creating Delta Packages");
             var prev = ReleasePackageBuilder.GetPreviousRelease(previousReleases, rp, releasesDir.FullName);
@@ -82,50 +54,96 @@ namespace Squirrel.CommandLine.OSX
             }
 
             ReleaseEntry.WriteReleaseFile(previousReleases.Concat(new[] { ReleaseEntry.GenerateFromFile(newPkgPath) }), releaseFilePath);
-            
-            Log.Info("Preparing final .app for release");
-            var finalAppDir = Path.Combine(releasesDir.FullName, $"{rp.Id}.app");
-            if (Directory.Exists(finalAppDir)) Utility.DeleteFileOrDirectoryHard(finalAppDir);
-            Directory.CreateDirectory(finalAppDir);
-            Log.Info($"Extracting {rp.SuggestedReleaseFileName} to '{finalAppDir}'.");
-            ZipPackage.ExtractZipReleaseForInstallOSX(Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName), finalAppDir, null);
-            EasyZip.CreateZipFromDirectory(Path.Combine(releasesDir.FullName, $"{rp.Id}.app.zip"), finalAppDir);
-            
+            EasyZip.CreateZipFromDirectory(Path.Combine(releasesDir.FullName, $"{rp.Id}.app.zip"), options.package);
+
             Log.Info("Done");
         }
 
         private static void Bundle(BundleOptions options)
         {
-            var info = new AppInfo {
-                CFBundleName = options.packTitle ?? options.packId,
-                CFBundleDisplayName = options.packTitle ?? options.packId,
-                CFBundleExecutable = options.exeName,
-                CFBundleIdentifier = options.packId,
-                CFBundlePackageType = "APPL",
-                CFBundleShortVersionString = options.packVersion,
-                CFBundleVersion = options.packVersion,
-                CFBundleSignature = "????",
-                NSPrincipalClass = "NSApplication",
-                NSHighResolutionCapable = true,
-                CFBundleIconFile = Path.GetFileName(options.icon),
-            };
+            var releaseDir = options.GetReleaseDirectory();
+            string appBundlePath;
 
-            Log.Info("Creating .app directory structure");
-            var builder = new StructureBuilder(options.packId, options.outputDirectory);
-            builder.Build();
+            if (options.packDirectory.EndsWith(".app", StringComparison.InvariantCultureIgnoreCase)) {
+                Log.Info("Pack directory is already a '.app' bundle. Converting to Squirrel app.");
 
-            Log.Info("Writing Info.plist");
-            var plist = new PlistWriter(info, builder.ContentsDirectory);
-            plist.Write();
+                if (options.icon != null)
+                    Log.Warn("--icon is ignored if the pack directory is a '.app' bundle.");
 
-            Log.Info("Copying resources");
-            File.Copy(options.icon, Path.Combine(builder.ResourcesDirectory, Path.GetFileName(options.icon)));
+                if (options.exeName != null)
+                    Log.Warn("--exeName is ignored if the pack directory is a '.app' bundle.");
 
-            Log.Info("Copying application files");
-            CopyFiles(new DirectoryInfo(options.packDirectory), new DirectoryInfo(builder.MacosDirectory));
+                appBundlePath = Path.Combine(releaseDir.FullName, options.packId + ".app");
 
-            Log.Info("MacOS application bundle (.app) created at: " + builder.AppDirectory);
-            Log.Info("Done.");
+                if (Utility.PathPartStartsWith(releaseDir.FullName, appBundlePath))
+                    throw new Exception("Pack directory is inside release directory. Please move the app bundle outside of the release directory first.");
+
+                Log.Info("Copying app to release directory");
+                if (Directory.Exists(appBundlePath)) Utility.DeleteFileOrDirectoryHard(appBundlePath);
+                Directory.CreateDirectory(appBundlePath);
+                CopyFiles(new DirectoryInfo(options.packDirectory), new DirectoryInfo(appBundlePath));
+            } else {
+                Log.Info("Pack directory is not a bundle. Will generate new '.app' bundle from a directory of application files.");
+
+                if (options.icon == null || !File.Exists(options.icon))
+                    throw new OptionValidationException("--icon is required when generating a new app bundle.");
+
+                var mainExePath = Path.Combine(options.packDirectory, options.exeName);
+                if (options.exeName == null || !File.Exists(mainExePath) || !NativeMac.IsMachOImage(mainExePath))
+                    throw new OptionValidationException("--exeName is required when generating a new app bundle, and it must be a mach-o executable.");
+
+                var appleId = $"com.{options.packAuthors ?? options.packId}.{options.packId}";
+                var escapedAppleId = Regex.Replace(appleId, @"[^\w\.]", "_");
+
+                var info = new AppInfo {
+                    CFBundleName = options.packTitle ?? options.packId,
+                    CFBundleDisplayName = options.packTitle ?? options.packId,
+                    CFBundleExecutable = options.exeName,
+                    CFBundleIdentifier = escapedAppleId,
+                    CFBundlePackageType = "APPL",
+                    CFBundleShortVersionString = options.packVersion,
+                    CFBundleVersion = options.packVersion,
+                    CFBundleSignature = "????",
+                    NSPrincipalClass = "NSApplication",
+                    NSHighResolutionCapable = true,
+                    CFBundleIconFile = Path.GetFileName(options.icon),
+                };
+
+                Log.Info("Creating '.app' directory structure");
+                var builder = new StructureBuilder(options.packId, releaseDir.FullName);
+                if (Directory.Exists(builder.AppDirectory)) Utility.DeleteFileOrDirectoryHard(builder.AppDirectory);
+                builder.Build();
+
+                Log.Info("Writing Info.plist");
+                var plist = new PlistWriter(info, builder.ContentsDirectory);
+                plist.Write();
+
+                Log.Info("Copying resources into new '.app' bundle");
+                File.Copy(options.icon, Path.Combine(builder.ResourcesDirectory, Path.GetFileName(options.icon)));
+
+                Log.Info("Copying application files into new '.app' bundle");
+                CopyFiles(new DirectoryInfo(options.packDirectory), new DirectoryInfo(builder.MacosDirectory));
+
+                appBundlePath = builder.AppDirectory;
+            }
+
+            Log.Info("Adding Squirrel resources to bundle.");
+            var contentsDir = Path.Combine(appBundlePath, "Contents");
+
+            if (!Directory.Exists(contentsDir))
+                throw new Exception("Invalid bundle structure (missing Contents dir)");
+
+            if (!File.Exists(Path.Combine(contentsDir, "Info.plist")))
+                throw new Exception("Invalid bundle structure (missing Info.plist)");
+
+            var nuspecText = NugetConsole.CreateNuspec(
+                options.packId, options.packTitle, options.packAuthors, options.packVersion, options.releaseNotes, options.includePdb, "osx");
+
+            File.WriteAllText(Path.Combine(contentsDir, Utility.SpecVersionFileName), nuspecText);
+            File.Copy(HelperExe.UpdateMacPath, Path.Combine(contentsDir, "UpdateMac"));
+
+            Log.Info("MacOS '.app' bundle prepared for Squirrel at: " + appBundlePath);
+            Log.Info("CodeSign and Notarize this app bundle before packing a Squirrel release.");
         }
 
         private static void CopyFiles(DirectoryInfo source, DirectoryInfo target)

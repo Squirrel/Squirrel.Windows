@@ -33,7 +33,7 @@ namespace Squirrel.CommandLine.Windows
             using (Utility.GetTempDirectory(out var tmp)) {
                 var nupkgPath = NugetConsole.CreatePackageFromMetadata(
                     tmp, options.packDirectory, options.packId, options.packTitle,
-                    options.packAuthors, options.packVersion, options.releaseNotes, options.includePdb);
+                    options.packAuthors, options.packVersion, options.releaseNotes, options.includePdb, "win");
 
                 options.package = nupkgPath;
                 Releasify(options);
