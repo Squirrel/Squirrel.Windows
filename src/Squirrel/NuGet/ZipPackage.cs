@@ -107,6 +107,8 @@ namespace Squirrel.NuGet
         [SupportedOSPlatform("macos")]
         public static Task ExtractZipReleaseForInstallOSX(string zipFilePath, string outFolder, Action<int> progress)
         {
+            if (!File.Exists(zipFilePath)) throw new ArgumentException("zipFilePath must exist");
+            
             progress ??= ((_) => { });
             Directory.CreateDirectory(outFolder);
             return Task.Run(() => {
@@ -151,6 +153,8 @@ namespace Squirrel.NuGet
         [SupportedOSPlatform("windows")]
         public static Task ExtractZipReleaseForInstallWindows(string zipFilePath, string outFolder, string rootPackageFolder, Action<int> progress)
         {
+            if (!File.Exists(zipFilePath)) throw new ArgumentException("zipFilePath must exist");
+
             progress ??= ((_) => { });
             Directory.CreateDirectory(outFolder);
 
