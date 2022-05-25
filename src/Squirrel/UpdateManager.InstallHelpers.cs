@@ -35,7 +35,7 @@ namespace Squirrel
             using var parentKey = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
                 .CreateSubKey("Uninstall", RegistryKeyPermissionCheck.ReadWriteSubTree);
 
-            using var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+            var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
                 .CreateSubKey(uninstallRegSubKey + "\\" + applicationName, RegistryKeyPermissionCheck.ReadWriteSubTree);
 
             var targetIco = Path.Combine(rootAppDirectory, "app.ico");
@@ -93,7 +93,7 @@ namespace Squirrel
         public void RemoveUninstallerRegistryEntry()
         {
             this.Log().Info("Removing uninstall registry entry");
-            var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default).OpenSubKey(uninstallRegSubKey, true);
+            using var key = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default).OpenSubKey(uninstallRegSubKey, true);
             key.DeleteSubKeyTree(_config.AppId, false);
         }
     }

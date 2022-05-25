@@ -276,7 +276,7 @@ namespace Squirrel.Update
 
             await mgr.FullInstall(silentInstall, progressSource.Raise);
 
-            await Log.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
+            using var rk = await Log.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
                 "Failed to create uninstaller registry entry");
         }
 
@@ -311,7 +311,7 @@ namespace Squirrel.Update
                     goto retry;
                 }
 
-                await Log.ErrorIfThrows(() =>
+                using var rk = await Log.ErrorIfThrows(() =>
                     mgr.CreateUninstallerRegistryEntry(),
                     "Failed to create uninstaller registry entry");
             }

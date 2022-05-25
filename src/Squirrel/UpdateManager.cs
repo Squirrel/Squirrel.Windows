@@ -143,7 +143,7 @@ namespace Squirrel
                     "Failed to apply updates").ConfigureAwait(false);
 
                 if (SquirrelRuntimeInfo.IsWindows) {
-                    await CreateUninstallerRegistryEntry().ConfigureAwait(false);
+                    using var rk = await CreateUninstallerRegistryEntry().ConfigureAwait(false);
                 }
             } catch {
                 if (ignoreDeltaUpdates == false) {
