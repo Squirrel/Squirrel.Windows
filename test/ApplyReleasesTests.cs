@@ -17,7 +17,7 @@ namespace Squirrel.Tests
 {
     class ApplyReleasesImpl : UpdateManager
     {
-        public ApplyReleasesImpl(string rootDir, string appId) : base(null, new AppDescWindows(rootDir, appId))
+        public ApplyReleasesImpl(string rootDir, string appId) : base(rootDir, appId)
         {
         }
 

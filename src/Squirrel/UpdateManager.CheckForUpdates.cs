@@ -23,14 +23,13 @@ namespace Squirrel
             if (_source == null)
                 throw new InvalidOperationException("Cannot check for updates if no update source / url was provided in the construction of UpdateManager.");
 
-            progress = progress ?? (_ => { });
-            var localReleases = Enumerable.Empty<ReleaseEntry>();
-            var stagingId = intention == UpdaterIntention.Install ? null : getOrCreateStagedUserId();
+            progress ??= (_ => { });
+            ReleaseEntry[] localReleases = new ReleaseEntry[0];
             bool shouldInitialize = intention == UpdaterIntention.Install;
 
             if (intention != UpdaterIntention.Install) {
                 try {
-                    localReleases = Utility.LoadLocalReleases(_config.ReleasesFilePath);
+                    localReleases = Utility.LoadLocalReleases(_config.ReleasesFilePath).ToArray();
                 } catch (Exception ex) {
                     // Something has gone pear-shaped, let's start from scratch
                     this.Log().WarnException("Failed to load local releases, starting from scratch", ex);
@@ -39,10 +38,12 @@ namespace Squirrel
             }
 
             if (shouldInitialize) initializeClientAppDirectory();
+            
+            var stagingId = intention == UpdaterIntention.Install ? null : getOrCreateStagedUserId();
 
-            var latestLocalRelease = localReleases != null && localReleases.Count() > 0
-                ? localReleases.MaxBy(v => v.Version).First() :
-                null;
+            var latestLocalRelease = localReleases.Count() > 0
+                ? localReleases.MaxBy(v => v.Version).First() 
+                : null;
 
             progress(33);
 

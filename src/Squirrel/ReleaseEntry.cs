@@ -234,7 +234,7 @@ namespace Squirrel
                 .Where(x => x != null)
                 .ToArray();
 
-            return ret.Any(x => x == null) ? null : ret;
+            return ret.Any(x => x == null) ? new ReleaseEntry[0] : ret;
         }
 
         /// <summary>

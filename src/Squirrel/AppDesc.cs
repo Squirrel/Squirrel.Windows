@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.Versioning;
 using NuGet.Versioning;
 using Squirrel.NuGet;
 using Squirrel.SimpleSplat;
@@ -247,6 +248,7 @@ namespace Squirrel
     /// An implementation for Windows which uses the Squirrel defaults and installs to
     /// local app data.
     /// </summary>
+    [SupportedOSPlatform("windows")]
     public class AppDescWindows : AppDesc
     {
         /// <inheritdoc />
@@ -270,9 +272,8 @@ namespace Squirrel
         /// <inheritdoc />
         public override string AppTempDir => CreateSubDirIfDoesNotExist(PackagesDir, "SquirrelClowdTemp");
 
-
         /// <inheritdoc />
-        public override string VersionStagingDir => CreateSubDirIfDoesNotExist(RootAppDir, "staging");
+        public override string VersionStagingDir => CreateSubDirIfDoesNotExist(PackagesDir, "staging");
 
         /// <inheritdoc />
         public override string CurrentVersionDir => CreateSubDirIfDoesNotExist(RootAppDir, "current");
@@ -295,7 +296,7 @@ namespace Squirrel
         {
             if (!SquirrelRuntimeInfo.IsWindows)
                 throw new NotSupportedException("Cannot instantiate AppDescWindows on a non-Windows system.");
-
+        
             if (!Directory.Exists(appDir) && createIfNotExist)
                 Directory.CreateDirectory(appDir);
             
@@ -303,26 +304,28 @@ namespace Squirrel
             RootAppDir = appDir;
             var updateExe = Path.Combine(appDir, "Update.exe");
             var ver = GetLatestVersion();
+            UpdateExePath = updateExe;
+            IsUpdateExe = Utility.FullPathEquals(updateExe, SquirrelRuntimeInfo.EntryExePath);
 
             if (File.Exists(updateExe) && ver != null) {
-                UpdateExePath = updateExe;
                 CurrentlyInstalledVersion = ver.Version;
             }
         }
 
-        internal AppDescWindows(string ourPath)
+        internal AppDescWindows(string ourExePath)
         {
             if (!SquirrelRuntimeInfo.IsWindows)
                 throw new NotSupportedException("Cannot instantiate AppDescWindows on a non-Windows system.");
 
-            var myDir = Path.GetDirectoryName(ourPath);
+            ourExePath = Path.GetFullPath(ourExePath);
+            var myDir = Path.GetDirectoryName(ourExePath);
 
             // Am I update.exe at the application root?
-            if (ourPath != null &&
-                Path.GetFileName(ourPath).Equals("update.exe", StringComparison.InvariantCultureIgnoreCase) &&
-                ourPath.IndexOf("app-", StringComparison.InvariantCultureIgnoreCase) == -1 &&
-                ourPath.IndexOf("SquirrelClowdTemp", StringComparison.InvariantCultureIgnoreCase) == -1) {
-                UpdateExePath = ourPath;
+            if (ourExePath != null &&
+                Path.GetFileName(ourExePath).Equals("update.exe", StringComparison.InvariantCultureIgnoreCase) &&
+                ourExePath.IndexOf("app-", StringComparison.InvariantCultureIgnoreCase) == -1 &&
+                ourExePath.IndexOf("SquirrelClowdTemp", StringComparison.InvariantCultureIgnoreCase) == -1) {
+                UpdateExePath = ourExePath;
                 RootAppDir = myDir;
                 var ver = GetLatestVersion();
                 if (ver != null) {
@@ -360,6 +363,7 @@ namespace Squirrel
     /// The default for OSX. All application files will remain in the '.app'.
     /// All additional files (log, etc) will be placed in a temporary directory.
     /// </summary>
+    [SupportedOSPlatform("osx")]
     public class AppDescOsx : AppDesc
     {
         /// <inheritdoc />
@@ -403,7 +407,7 @@ namespace Squirrel
             var ix = ourPath.IndexOf(".app/", StringComparison.InvariantCultureIgnoreCase);
             if (ix < 0) return;
 
-            var appPath = ourPath.Substring(0, ix + 5);
+            var appPath = ourPath.Substring(0, ix + 4);
             var contentsDir = Path.Combine(appPath, "Contents");
             var updateExe = Path.Combine(contentsDir, "UpdateMac");
             var info = GetVersionInfoFromDirectory(contentsDir);

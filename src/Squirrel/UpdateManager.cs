@@ -32,7 +32,7 @@ namespace Squirrel
         public IUpdateSource Source => _source;
 
         private readonly IUpdateSource _source;
-        private readonly AppDesc _config;
+        private readonly AppDesc _config = AppDesc.GetCurrentPlatform();
         private readonly object _lockobj = new object();
         private IDisposable _updateLock;
         private bool _disposed;
@@ -44,7 +44,10 @@ namespace Squirrel
         /// <param name="urlOrPath">
         /// The URL or local directory that contains application update files (.nupkg and RELEASES)
         /// </param>
-        public UpdateManager(string urlOrPath) : this(CreateSource(urlOrPath))
+        /// <param name="downloader">
+        /// A custom downloader to use when retrieving files from an HTTP source.
+        /// </param>
+        public UpdateManager(string urlOrPath, IFileDownloader downloader = null) : this(CreateSource(urlOrPath, downloader))
         {
         }
 
@@ -57,43 +60,16 @@ namespace Squirrel
         /// a local directory (<see cref="SimpleFileSource"/>), a GitHub repository (<see cref="GithubSource"/>),
         /// or a custom location.
         /// </param>
-        public UpdateManager(IUpdateSource source) : this(source, null)
-        {
-        }
-
-        /// <summary>
-        /// Create a new instance of <see cref="UpdateManager"/> to check for and install updates. 
-        /// Do not forget to dispose this class!
-        /// </summary>
-        /// <param name="source">
-        /// The source of your update packages. This can be a web server (<see cref="SimpleWebSource"/>),
-        /// a local directory (<see cref="SimpleFileSource"/>), a GitHub repository (<see cref="GithubSource"/>),
-        /// or a custom location.
-        /// </param>
-        /// <param name="config">
-        /// For configuring advanced / custom deployment scenarios. Should not be used unless
-        /// you know what you are doing.
-        /// </param>
-        public UpdateManager(IUpdateSource source, AppDesc config)
+        public UpdateManager(IUpdateSource source)
         {
             _source = source;
-            _config = config ?? AppDesc.GetCurrentPlatform();
         }
 
-        internal UpdateManager(string urlOrPath, string appId) 
-            : this(CreateSource(urlOrPath), new AppDescWindows(
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appId), appId))
+        [SupportedOSPlatform("windows")]
+        internal UpdateManager(string urlOrPath, string appId, string localAppData = null, IFileDownloader downloader = null)
         {
-        }
-        
-        internal UpdateManager(string urlOrPath, string appId, string localAppData) 
-            : this(CreateSource(urlOrPath), new AppDescWindows(Path.Combine(localAppData, appId), appId))
-        {
-        }
-        
-        internal UpdateManager(string urlOrPath, string appId, string localAppData, IFileDownloader downloader) 
-            : this(CreateSource(urlOrPath, downloader), new AppDescWindows(Path.Combine(localAppData, appId), appId))
-        {
+            _source = CreateSource(urlOrPath, downloader);
+            _config = new AppDescWindows(Path.Combine(localAppData ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appId), appId);
         }
 
         internal UpdateManager() { }
@@ -134,30 +110,36 @@ namespace Squirrel
                 var localVersions = _config.GetVersions();
                 var currentVersion = CurrentlyInstalledVersion();
 
-                updateInfo = await this.ErrorIfThrows(() => CheckForUpdate(ignoreDeltaUpdates, x => progress(x / 3)),
+                // 0 -> 10%
+                updateInfo = await this.ErrorIfThrows(() => CheckForUpdate(ignoreDeltaUpdates, x => progress(CalculateProgress(x, 0, 10))),
                     "Failed to check for updates").ConfigureAwait(false);
 
                 if (updateInfo == null || updateInfo.FutureReleaseEntry == null) {
                     this.Log().Info("No update available.");
+                    progress(100);
                     return null;
                 }
 
                 if (currentVersion >= updateInfo.FutureReleaseEntry.Version) {
                     this.Log().Info($"Current version {currentVersion} is up to date with remote.");
+                    progress(100);
                     return null;
                 }
 
                 if (localVersions.Any(v => v.Version == updateInfo.FutureReleaseEntry.Version)) {
                     this.Log().Info("Update available, it is already downloaded.");
+                    progress(100);
                     return updateInfo.FutureReleaseEntry;
                 }
 
+                // 10 -> 50%
                 await this.ErrorIfThrows(() =>
-                        DownloadReleases(updateInfo.ReleasesToApply, x => progress(x / 3 + 33)),
+                        DownloadReleases(updateInfo.ReleasesToApply, x => progress(CalculateProgress(x, 10, 50))),
                     "Failed to download updates").ConfigureAwait(false);
 
+                // 50 -> 100%
                 await this.ErrorIfThrows(() =>
-                        ApplyReleases(updateInfo, x => progress(x / 3 + 66)),
+                        ApplyReleases(updateInfo, x => progress(CalculateProgress(x, 50, 100))),
                     "Failed to apply updates").ConfigureAwait(false);
 
                 if (SquirrelRuntimeInfo.IsWindows) {
@@ -165,14 +147,15 @@ namespace Squirrel
                 }
             } catch {
                 if (ignoreDeltaUpdates == false) {
+                    this.Log().Warn("Failed to apply delta updates. Retrying with full package.");
                     ignoreDeltaUpdates = true;
                     goto retry;
                 }
-
                 throw;
             }
-
-            return updateInfo.ReleasesToApply.Any() ? updateInfo.ReleasesToApply.MaxBy(x => x.Version).Last() : default(ReleaseEntry);
+            
+            progress(100);
+            return updateInfo.ReleasesToApply.Any() ? updateInfo.ReleasesToApply.MaxBy(x => x.Version).Last() : default;
         }
 
         /// <inheritdoc/>
