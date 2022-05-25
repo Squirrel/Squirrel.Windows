@@ -12,27 +12,43 @@ namespace Squirrel.Update
 
         private readonly NLog.Logger _log;
 
-        public SetupLogLogger(string logDirectory)
+        protected SetupLogLogger(string appId)
         {
-            var name = "Squirrel.log";
-            var archivename = "Squirrel.archive{###}.log";
+            var name = "squirrel.log";
+            var archivename = "squirrel.{###}.log";
 
+            if (appId != null) {
+                name = $"squirrel.{appId}.log";
+                archivename = $"squirrel.{appId}.{{###}}.log";
+            }
+
+            var homeDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var logDirectory = Path.Combine(homeDir, "Library", "Logs");
+            if (!Directory.Exists(logDirectory)) Directory.CreateDirectory(logDirectory);
+            
             // https://gist.github.com/chrisortman/1092889
             SimpleConfigurator.ConfigureForTargetLogging(
                 new FileTarget() {
                     FileName = Path.Combine(logDirectory, name),
                     Layout = new NLog.Layouts.SimpleLayout("${longdate} [${level:uppercase=true}] - ${message}"),
                     ArchiveFileName = Path.Combine(logDirectory, archivename),
-                    ArchiveAboveSize = 1_000_000 /* 2 MB */,
+                    ArchiveAboveSize = 1_000_000,
                     ArchiveNumbering = ArchiveNumberingMode.Sequence,
                     ConcurrentWrites = true, // should allow multiple processes to use the same file
                     KeepFileOpen = true,
-                    MaxArchiveFiles = 1 /* MAX 2mb of log data per "action" */,
+                    MaxArchiveFiles = 1,
                 },
                 NLog.LogLevel.Debug
             );
 
             _log = NLog.LogManager.GetLogger("SetupLogLogger");
+        }
+        
+        public static ILogger RegisterLogger(string appId)
+        {
+            var logger = new SetupLogLogger(appId);
+            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(ILogger));
+            return logger;
         }
 
         public void Write(string message, LogLevel logLevel)

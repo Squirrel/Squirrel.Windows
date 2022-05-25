@@ -22,9 +22,11 @@ namespace Squirrel.Update
                 action == UpdateAction.Setup ||
                 action == UpdateAction.Install;
 
-            var logDirectory = logToTemp ? Utility.GetDefaultTempBaseDirectory() : SquirrelRuntimeInfo.BaseDirectory;
+            var logDirectory = logToTemp 
+                ? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) 
+                : SquirrelRuntimeInfo.BaseDirectory;
             var logName = logToTemp ? "Squirrel.log" : $"Squirrel-{action}.log";
-            var logArchiveName = logToTemp ? "Squirrel.archive{###}.log" : $"Squirrel-{action}.archive{{###}}.log";
+            var logArchiveName = logToTemp ? "Squirrel.{###}.log" : $"Squirrel-{action}.{{###}}.log";
             
             // https://gist.github.com/chrisortman/1092889
             SimpleConfigurator.ConfigureForTargetLogging(
@@ -32,11 +34,11 @@ namespace Squirrel.Update
                     FileName = Path.Combine(logDirectory, logName),
                     Layout = new NLog.Layouts.SimpleLayout("${longdate} [${level:uppercase=true}] - ${message}"),
                     ArchiveFileName = Path.Combine(logDirectory, logArchiveName),
-                    ArchiveAboveSize = 1_000_000 /* 2 MB */,
+                    ArchiveAboveSize = 1_000_000,
                     ArchiveNumbering = ArchiveNumberingMode.Sequence,
                     ConcurrentWrites = true, // should allow multiple processes to use the same file
                     KeepFileOpen = true,
-                    MaxArchiveFiles = 1 /* MAX 2mb of log data per "action" */,
+                    MaxArchiveFiles = 1 ,
                 },
                 NLog.LogLevel.Debug
             );

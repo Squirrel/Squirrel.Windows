@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
@@ -257,16 +257,14 @@ namespace Squirrel
 
         public static string GetDefaultTempBaseDirectory()
         {
-            string tempDir = Environment.GetEnvironmentVariable("CLOWD_SQUIRREL_TEMP");
-
-            if (tempDir == null) {
-                if (SquirrelRuntimeInfo.IsOSX) {
-                    tempDir = "/tmp/squirrel";
-                } else if (SquirrelRuntimeInfo.IsWindows) {
-                    tempDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SquirrelClowdTemp");
-                } else {
-                    throw new NotSupportedException();
-                }
+            string tempDir;
+            
+            if (SquirrelRuntimeInfo.IsOSX) {
+                tempDir = "/tmp/clowd.squirrel";
+            } else if (SquirrelRuntimeInfo.IsWindows) {
+                tempDir = Path.Combine(Path.GetTempPath(), "Clowd.Squirrel");
+            } else {
+                throw new NotSupportedException();
             }
 
             var di = new DirectoryInfo(tempDir);
@@ -292,7 +290,7 @@ namespace Squirrel
 
                 // this dir/file exists, but it is old, let's re-use it.
                 // this shouldn't generally happen, but crashes do exist.
-                if (DateTime.UtcNow - info.LastWriteTimeUtc > TimeSpan.FromDays(7)) {
+                if (DateTime.UtcNow - info.LastWriteTimeUtc > TimeSpan.FromDays(1)) {
                     if (DeleteFileOrDirectoryHard(target, false, true)) {
                         // the dir/file was deleted successfully.
                         return target;
@@ -565,8 +563,7 @@ namespace Squirrel
             }
         }
 
-        public static async Task<T> LogIfThrows<T>(this IFullLogger This, LogLevel level, string message,
-            Func<Task<T>> block)
+        public static async Task<T> LogIfThrows<T>(this IFullLogger This, LogLevel level, string message, Func<Task<T>> block)
         {
             try {
                 return await block().ConfigureAwait(false);
