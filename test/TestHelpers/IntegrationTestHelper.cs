@@ -103,6 +103,13 @@ namespace Squirrel.Tests.TestHelpers
             }
         }
 
+        public static void CreateNewVersionInPackageDir(string version, string outputDir, string nuspecFile = null)
+        {
+            var pkgFile = CreateFakeInstalledApp(version, outputDir, nuspecFile);
+            var pkgs = ReleaseEntry.BuildReleasesFile(outputDir);
+            ReleaseEntry.WriteReleaseFile(pkgs, Path.Combine(outputDir, "RELEASES"));
+        }
+
         public static IDisposable WithFakeInstallDirectory(out string path)
         {
             return WithFakeInstallDirectory("SampleUpdatingApp.1.1.0.0.nupkg", out path);

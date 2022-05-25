@@ -65,11 +65,10 @@ namespace Squirrel
             _source = source;
         }
 
-        [SupportedOSPlatform("windows")]
-        internal UpdateManager(string urlOrPath, string appId, string localAppData = null, IFileDownloader downloader = null)
+        internal UpdateManager(IUpdateSource source, AppDesc config)
         {
-            _source = CreateSource(urlOrPath, downloader);
-            _config = new AppDescWindows(Path.Combine(localAppData ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), appId), appId);
+            _source = source;
+            _config = config;
         }
 
         internal UpdateManager() { }

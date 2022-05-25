@@ -15,7 +15,7 @@ namespace Squirrel
 {
     public partial class UpdateManager
     {
-        /// <inheritdoc/>
+        /// <inheritdoc cref="IUpdateManager.ApplyReleases"/> />
         protected async Task<string> ApplyReleases(UpdateInfo updateInfo, bool silentInstall, bool attemptingFullInstall, Action<int> progress = null)
         {
             await acquireUpdateLock().ConfigureAwait(false);

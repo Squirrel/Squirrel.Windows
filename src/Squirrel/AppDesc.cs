@@ -273,7 +273,7 @@ namespace Squirrel
         public override string AppTempDir => CreateSubDirIfDoesNotExist(PackagesDir, "SquirrelClowdTemp");
 
         /// <inheritdoc />
-        public override string VersionStagingDir => CreateSubDirIfDoesNotExist(PackagesDir, "staging");
+        public override string VersionStagingDir => CreateSubDirIfDoesNotExist(RootAppDir, "staging");
 
         /// <inheritdoc />
         public override string CurrentVersionDir => CreateSubDirIfDoesNotExist(RootAppDir, "current");
@@ -292,21 +292,34 @@ namespace Squirrel
         /// <param name="appDir">The location of the application.</param>
         /// <param name="appId">The unique ID of the application.</param>
         /// <param name="createIfNotExist">Create the appDir if it does not already exist.</param>
-        public AppDescWindows(string appDir, string appId, bool createIfNotExist = true)
+        // public AppDescWindows(string appDir, string appId, bool createIfNotExist = true)
+        // {
+        //     if (!SquirrelRuntimeInfo.IsWindows)
+        //         throw new NotSupportedException("Cannot instantiate AppDescWindows on a non-Windows system.");
+        //
+        //     if (!Directory.Exists(appDir) && createIfNotExist)
+        //         Directory.CreateDirectory(appDir);
+        //     
+        //     AppId = appId;
+        //     RootAppDir = appDir;
+        //     var updateExe = Path.Combine(appDir, "Update.exe");
+        //     var ver = GetLatestVersion();
+        //     UpdateExePath = updateExe;
+        //     IsUpdateExe = Utility.FullPathEquals(updateExe, SquirrelRuntimeInfo.EntryExePath);
+        //
+        //     if (File.Exists(updateExe) && ver != null) {
+        //         CurrentlyInstalledVersion = ver.Version;
+        //     }
+        // }
+        internal AppDescWindows(string rootAppDir, string appId)
         {
-            if (!SquirrelRuntimeInfo.IsWindows)
-                throw new NotSupportedException("Cannot instantiate AppDescWindows on a non-Windows system.");
-        
-            if (!Directory.Exists(appDir) && createIfNotExist)
-                Directory.CreateDirectory(appDir);
-            
             AppId = appId;
-            RootAppDir = appDir;
-            var updateExe = Path.Combine(appDir, "Update.exe");
-            var ver = GetLatestVersion();
+            RootAppDir = rootAppDir;
+            var updateExe = Path.Combine(rootAppDir, "Update.exe");
             UpdateExePath = updateExe;
             IsUpdateExe = Utility.FullPathEquals(updateExe, SquirrelRuntimeInfo.EntryExePath);
 
+            var ver = GetLatestVersion();
             if (File.Exists(updateExe) && ver != null) {
                 CurrentlyInstalledVersion = ver.Version;
             }
@@ -332,6 +345,9 @@ namespace Squirrel
                     AppId = ver.Manifest?.Id ?? Path.GetFileName(myDir);
                     CurrentlyInstalledVersion = ver.Version;
                     IsUpdateExe = true;
+                } else {
+                    UpdateExePath = null;
+                    RootAppDir = null;
                 }
             }
 
@@ -349,8 +365,8 @@ namespace Squirrel
                 }
 
                 if (updateLocation != null) {
-                    UpdateExePath = updateLocation;
                     RootAppDir = Path.GetDirectoryName(updateLocation);
+                    UpdateExePath = updateLocation;
                     AppId = info.Manifest?.Id ?? Path.GetFileName(Path.GetDirectoryName(updateLocation));
                     CurrentlyInstalledVersion = info.Version;
                     IsUpdateExe = false;
@@ -380,7 +396,7 @@ namespace Squirrel
 
         /// <inheritdoc />
         public override SemanticVersion CurrentlyInstalledVersion { get; }
-        
+
         /// <inheritdoc />
         public override string CurrentVersionDir => RootAppDir;
 
