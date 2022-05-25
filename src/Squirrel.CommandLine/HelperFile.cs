@@ -102,7 +102,7 @@ namespace Squirrel.CommandLine
 
         protected static void InvokeAndThrowIfNonZero(string exePath, IEnumerable<string> args, string workingDir)
         {
-            var result = ProcessUtil.InvokeProcess(exePath, args, workingDir, CancellationToken.None);
+            var result = PlatformUtil.InvokeProcess(exePath, args, workingDir, CancellationToken.None);
             if (result.ExitCode != 0) {
                 throw new Exception(
                     $"Command failed:\n{result.Command}\n\n" +

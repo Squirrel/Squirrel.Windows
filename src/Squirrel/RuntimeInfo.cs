@@ -92,7 +92,7 @@ namespace Squirrel
                 var args = new string[] { "/passive", "/norestart", "/showrmui" };
                 var quietArgs = new string[] { "/q", "/norestart" };
                 Log.Info($"Running {Id} installer '{pathToInstaller} {string.Join(" ", args)}'");
-                var p = await ProcessUtil.InvokeProcessAsync(pathToInstaller, isQuiet ? quietArgs : args, null, CancellationToken.None).ConfigureAwait(false);
+                var p = await PlatformUtil.InvokeProcessAsync(pathToInstaller, isQuiet ? quietArgs : args, null, CancellationToken.None).ConfigureAwait(false);
 
                 // https://johnkoerner.com/install/windows-installer-error-codes/
 

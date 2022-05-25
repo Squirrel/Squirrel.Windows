@@ -138,8 +138,8 @@ namespace Squirrel.NuGet
                                 Directory.CreateDirectory(fullTargetFile);
                             } else {
                                 reader.WriteEntryToFile(fullTargetFile);
-                                if (Utility.IsMachOImage(fullTargetFile)) {
-                                    NativeMac.ChmodAsExe(fullTargetFile);
+                                if (PlatformUtil.IsMachOImage(fullTargetFile)) {
+                                    PlatformUtil.ChmodFileAsExecutable(fullTargetFile);
                                 }
                             }
                         }, 5);

@@ -319,7 +319,7 @@ namespace Squirrel.Update
 
         static async Task UpdateSelf()
         {
-            waitForParentToExit();
+            PlatformUtil.WaitForParentProcessToExit();
             var src = SquirrelRuntimeInfo.EntryExePath;
             var updateDotExeForOurPackage = Path.Combine(
                 Path.GetDirectoryName(src),
@@ -434,7 +434,7 @@ namespace Squirrel.Update
                 return;
             }
 
-            if (shouldWait) waitForParentToExit();
+            if (shouldWait) PlatformUtil.WaitForParentProcessToExit();
 
             var config = new AppDescWindows();
             var latestAppDir = config.UpdateAndRetrieveCurrentFolder(forceLatest);
@@ -493,28 +493,8 @@ namespace Squirrel.Update
 
         static void ShowHelp()
         {
-            ensureConsole();
+            PlatformUtil.AttachConsole();
             opt.WriteOptionDescriptions();
-        }
-
-        static void waitForParentToExit()
-        {
-            // Grab a handle the parent process
-            var parentPid = NativeMethods.GetParentProcessId();
-            var handle = default(IntPtr);
-
-            // Wait for our parent to exit
-            try {
-                handle = NativeMethods.OpenProcess(ProcessAccess.Synchronize, false, parentPid);
-                if (handle != IntPtr.Zero) {
-                    Log.Info("About to wait for parent PID {0}", parentPid);
-                    NativeMethods.WaitForSingleObject(handle, 0xFFFFFFFF /*INFINITE*/);
-                } else {
-                    Log.Info("Parent PID {0} no longer valid - ignoring", parentPid);
-                }
-            } finally {
-                if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
-            }
         }
 
         static string getMissingRuntimesMessage(string appname, Runtimes.RuntimeInfo[] missingFrameworks)
@@ -601,21 +581,6 @@ namespace Squirrel.Update
             }
 
             return ret;
-        }
-
-        static int consoleCreated = 0;
-        static void ensureConsole()
-        {
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT) return;
-
-            if (Interlocked.CompareExchange(ref consoleCreated, 1, 0) == 1) return;
-
-            if (!NativeMethods.AttachConsole(-1)) {
-                NativeMethods.AllocConsole();
-            }
-
-            NativeMethods.GetStdHandle(StandardHandles.STD_ERROR_HANDLE);
-            NativeMethods.GetStdHandle(StandardHandles.STD_OUTPUT_HANDLE);
         }
     }
 

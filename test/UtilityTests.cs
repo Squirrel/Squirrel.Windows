@@ -178,7 +178,7 @@ namespace Squirrel.Tests
         [Fact]
         public void WeCanFetchAllProcesses()
         {
-            var result = Utility.EnumerateProcesses();
+            var result = PlatformUtil.GetRunningProcesses();
             Assert.True(result.Count > 1);
             Assert.True(result.Count != 2048);
         }

@@ -178,7 +178,7 @@ namespace Squirrel
         /// <inheritdoc/>
         public void KillAllExecutablesBelongingToPackage()
         {
-            Utility.KillProcessesInDirectory(_config.RootAppDir);
+            PlatformUtil.KillProcessesInDirectory(_config.RootAppDir);
         }
 
         /// <inheritdoc/>
@@ -204,12 +204,10 @@ namespace Squirrel
         /// <param name="arguments">Arguments to start the exe with</param>
         /// <remarks>See <see cref="RestartAppWhenExited(string, string)"/> for a version which does not
         /// exit the current process immediately, but instead allows you to exit the current process
-        /// however you'd like.</remarks>
+        /// however you'd like after cleaning up resources.</remarks>
         public static void RestartApp(string exeToStart = null, string arguments = null)
         {
             AppDesc.GetCurrentPlatform().StartRestartingProcess(exeToStart, arguments);
-            // NB: We have to give update.exe some time to grab our PID
-            Thread.Sleep(1000);
             Environment.Exit(0);
         }
 
@@ -224,27 +222,8 @@ namespace Squirrel
         public static Process RestartAppWhenExited(string exeToStart = null, string arguments = null)
         {
             var process = AppDesc.GetCurrentPlatform().StartRestartingProcess(exeToStart, arguments);
-            // NB: We have to give update.exe some time to grab our PID
-            Thread.Sleep(1000);
             return process;
         }
-
-        /// <summary>
-        /// Launch Update.exe and ask it to wait until this process exits before starting
-        /// a new process. Used to re-start your app with the latest version after an update.
-        /// </summary>
-        /// <param name="exeToStart">The file *name* (not full path) of the exe to start, or null to re-launch 
-        /// the current executable. </param>
-        /// <param name="arguments">Arguments to start the exe with</param>
-        /// <returns>The Update.exe process that is waiting for this process to exit</returns>
-        public static async Task<Process> RestartAppWhenExitedAsync(string exeToStart = null, string arguments = null)
-        {
-            var process = AppDesc.GetCurrentPlatform().StartRestartingProcess(exeToStart, arguments);
-            // NB: We have to give update.exe some time to grab our PID
-            await Task.Delay(1000).ConfigureAwait(false);
-            return process;
-        }
-
 
         private static IUpdateSource CreateSource(string urlOrPath, IFileDownloader urlDownloader = null)
         {

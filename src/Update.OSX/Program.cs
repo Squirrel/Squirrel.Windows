@@ -46,7 +46,7 @@ namespace Squirrel.Update
 
         static void ProcessStart(string exeName, string arguments, bool shouldWait, bool forceLatest)
         {
-            if (shouldWait) waitForParentToExit();
+            if (shouldWait) PlatformUtil.WaitForParentProcessToExit();
 
             // todo https://stackoverflow.com/questions/51441576/how-to-run-app-as-sudo
             // https://stackoverflow.com/questions/10283062/getting-sudo-to-ask-for-password-via-the-gui
@@ -62,26 +62,7 @@ namespace Squirrel.Update
                 args.Add(arguments);
             }
             
-            ProcessUtil.StartNonBlocking("/usr/bin/open", args, null);
-        }
-
-        static void waitForParentToExit()
-        {
-            var parentPid = NativeMac.getppid();
-            if (parentPid <= 1) {
-                Log.Warn("Cannot wait for parent to exit, it has already exited.");
-                return;
-            }
-
-            var proc = Process.GetProcessById(parentPid);
-
-            Log.Info($"Waiting for PID {parentPid} to exit (30s timeout)...");
-            var exited = proc.WaitForExit(30_000);
-            if (!exited) {
-                throw new Exception("Parent wait timed out.");
-            }
-
-            Log.Info($"PID {parentPid} has exited.");
+            PlatformUtil.StartProcessNonBlocking("/usr/bin/open", args, null);
         }
     }
 }

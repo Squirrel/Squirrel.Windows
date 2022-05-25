@@ -97,7 +97,7 @@ namespace Squirrel
                                 cts.CancelAfter(10 * 1000);
                                 try {
                                     var args = new string[] { "--squirrel-uninstall", currentVersion.ToString() };
-                                    await ProcessUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
+                                    await PlatformUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
                                 } catch (Exception ex) {
                                     this.Log().ErrorException("Failed to run cleanup hook, continuing: " + exe, ex);
                                 }
@@ -248,7 +248,7 @@ namespace Squirrel
                     cts.CancelAfter(30 * 1000);
 
                     try {
-                        await ProcessUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
+                        await PlatformUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
                     } catch (Exception ex) {
                         this.Log().ErrorException("Couldn't run Squirrel hook, continuing: " + exe, ex);
                     }
@@ -311,7 +311,7 @@ namespace Squirrel
                             using (var cts = new CancellationTokenSource()) {
                                 cts.CancelAfter(10 * 1000);
                                 try {
-                                    await ProcessUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
+                                    await PlatformUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
                                 } catch (Exception ex) {
                                     this.Log().ErrorException("Coudln't run Squirrel hook, continuing: " + exe, ex);
                                 }
@@ -324,7 +324,7 @@ namespace Squirrel
                 markAppFolderAsDead(v.DirectoryPath);
             }
 
-            var runningProcesses = Utility.EnumerateProcesses();
+            var runningProcesses = PlatformUtil.GetRunningProcesses();
 
             foreach (var dir in toDelete) {
                 // skip any directories with running processes

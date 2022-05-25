@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics.Contracts;
@@ -747,92 +747,6 @@ namespace Squirrel
             guid[right] = temp;
         }
 
-        [SupportedOSPlatform("windows")]
-        private static List<(string ProcessExePath, int ProcessId)> EnumerateProcessesWindows()
-        {
-            var pids = new int[2048];
-            var gch = GCHandle.Alloc(pids, GCHandleType.Pinned);
-            try {
-                if (!NativeMethods.EnumProcesses(gch.AddrOfPinnedObject(), sizeof(int) * pids.Length,
-                        out var bytesReturned))
-                    throw new Win32Exception("Failed to enumerate processes");
-
-                if (bytesReturned < 1)
-                    throw new Exception("Failed to enumerate processes");
-
-                List<(string ProcessExePath, int ProcessId)> ret = new();
-
-                for (int i = 0; i < bytesReturned / sizeof(int); i++) {
-                    IntPtr hProcess = IntPtr.Zero;
-                    try {
-                        hProcess = NativeMethods.OpenProcess(ProcessAccess.QueryLimitedInformation, false, pids[i]);
-                        if (hProcess == IntPtr.Zero)
-                            continue;
-
-                        var sb = new StringBuilder(256);
-                        var capacity = sb.Capacity;
-                        if (!NativeMethods.QueryFullProcessImageName(hProcess, 0, sb, ref capacity))
-                            continue;
-
-                        var exePath = sb.ToString();
-                        if (String.IsNullOrWhiteSpace(exePath) || !File.Exists(exePath))
-                            continue;
-
-                        ret.Add((sb.ToString(), pids[i]));
-                    } catch (Exception) {
-                        // don't care
-                    } finally {
-                        if (hProcess != IntPtr.Zero)
-                            NativeMethods.CloseHandle(hProcess);
-                    }
-                }
-
-                return ret;
-            } finally {
-                gch.Free();
-            }
-        }
-
-        public static List<(string ProcessExePath, int ProcessId)> EnumerateProcesses()
-        {
-            IEnumerable<(string ProcessExePath, int ProcessId)> allRunningProcesses = SquirrelRuntimeInfo.IsWindows
-                ? EnumerateProcessesWindows()
-                : Process.GetProcesses().Select(p => (p.MainModule?.FileName, p.Id));
-            
-            return allRunningProcesses
-                .Where(x => !String.IsNullOrWhiteSpace(x.ProcessExePath)) // Processes we can't query will have an empty process name
-                .ToList();
-        }
-
-        public static List<(string ProcessExePath, int ProcessId)> EnumerateProcessesInDirectory(string directory)
-        {
-            return EnumerateProcesses()
-                .Where(x => IsFileInDirectory(x.ProcessExePath, directory))
-                .ToList();
-        }
-
-        public static void KillProcessesInDirectory(string directoryToKill)
-        {
-            EnumerateProcessesInDirectory(directoryToKill)
-                .Where(x => {
-                    // Never kill our own EXE
-                    if (FullPathEquals(SquirrelRuntimeInfo.EntryExePath, x.ProcessExePath))
-                        return false;
-
-                    var name = Path.GetFileName(x.ProcessExePath).ToLowerInvariant();
-                    if (name == "squirrel.exe" || name == "update.exe") return false;
-
-                    return true;
-                })
-                .ForEach(x => {
-                    try {
-                        Process.GetProcessById(x.ProcessId).Kill();
-                    } catch (Exception ex) {
-                        Log().WarnException($"Unable to terminate process (pid.{x.ProcessId})", ex);
-                    }
-                });
-        }
-
         public const string SpecVersionFileName = "sq.version";
 
         public static NuspecManifest ReadManifestFromVersionDir(string appVersionDir)
@@ -857,25 +771,6 @@ namespace Squirrel
                 return manifest;
 
             return null;
-        }
-
-        private enum Magic : uint
-        {
-            MH_MAGIC = 0xfeedface,
-            MH_CIGAM = 0xcefaedfe,
-            MH_MAGIC_64 = 0xfeedfacf,
-            MH_CIGAM_64 = 0xcffaedfe
-        }
-
-        public static bool IsMachOImage(string filePath)
-        {
-            using (BinaryReader reader = new BinaryReader(File.OpenRead(filePath))) {
-                if (reader.BaseStream.Length < 256) // Header size
-                    return false;
-
-                uint magic = reader.ReadUInt32();
-                return Enum.IsDefined(typeof(Magic), magic);
-            }
         }
     }
 }

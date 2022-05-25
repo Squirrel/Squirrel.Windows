@@ -99,7 +99,7 @@ namespace Squirrel.CommandLine.OSX
                     throw new OptionValidationException("--exeName is required when generating a new app bundle.");
 
                 var mainExePath = Path.Combine(options.packDirectory, exeName);
-                if (!File.Exists(mainExePath) || !Utility.IsMachOImage(mainExePath))
+                if (!File.Exists(mainExePath) || !PlatformUtil.IsMachOImage(mainExePath))
                     throw new OptionValidationException($"--exeName '{mainExePath}' does not exist or is not a mach-o executable.");
 
                 var appleId = $"com.{options.packAuthors ?? options.packId}.{options.packId}";

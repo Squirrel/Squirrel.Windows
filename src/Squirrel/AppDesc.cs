@@ -108,8 +108,7 @@ namespace Squirrel
                 }
 
                 if (force) {
-                    this.Log().Info($"Killing running processes in '{RootAppDir}'.");
-                    Utility.KillProcessesInDirectory(RootAppDir);
+                    PlatformUtil.KillProcessesInDirectory(RootAppDir);
                 }
 
                 // 'current' does exist, and it's wrong, so lets get rid of it
@@ -192,7 +191,7 @@ namespace Squirrel
                 args.Add(arguments);
             }
 
-            return ProcessUtil.StartNonBlocking(UpdateExePath, args, Path.GetDirectoryName(UpdateExePath));
+            return PlatformUtil.StartProcessNonBlocking(UpdateExePath, args, Path.GetDirectoryName(UpdateExePath));
         }
 
         internal VersionDirInfo GetLatestVersion()
@@ -376,10 +375,10 @@ namespace Squirrel
         public override bool IsUpdateExe { get; }
 
         /// <inheritdoc />
-        public override string CurrentVersionDir => RootAppDir;
-
-        /// <inheritdoc />
         public override SemanticVersion CurrentlyInstalledVersion { get; }
+        
+        /// <inheritdoc />
+        public override string CurrentVersionDir => RootAppDir;
 
         /// <inheritdoc />
         public override string AppTempDir => CreateSubDirIfDoesNotExist(Utility.GetDefaultTempBaseDirectory(), AppId);

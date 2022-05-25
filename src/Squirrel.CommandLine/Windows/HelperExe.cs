@@ -54,10 +54,10 @@ namespace Squirrel.CommandLine.Windows
 
             List<string> args = new List<string>();
             args.Add("sign");
-            args.AddRange(NativeMethods.CommandLineToArgvW(signArguments));
+            args.AddRange(PlatformUtil.CommandLineToArgvW(signArguments));
             args.Add(filePath);
 
-            var result = ProcessUtil.InvokeProcess(SignToolPath, args, null, CancellationToken.None);
+            var result = PlatformUtil.InvokeProcess(SignToolPath, args, null, CancellationToken.None);
             if (result.ExitCode != 0) {
                 var cmdWithPasswordHidden = new Regex(@"\/p\s+?[^\s]+").Replace(result.Command, "/p ********");
                 throw new Exception(
@@ -74,12 +74,12 @@ namespace Squirrel.CommandLine.Windows
             if (CheckIsAlreadySigned(filePath)) return;
 
             var command = signTemplate.Replace("\"{{file}}\"", "{{file}}").Replace("{{file}}", $"\"{filePath}\"");
-            var args = NativeMethods.CommandLineToArgvW(command);
+            var args = PlatformUtil.CommandLineToArgvW(command);
 
             if (args.Length < 2)
                 throw new OptionValidationException("Invalid signing template");
 
-            var result = ProcessUtil.InvokeProcess(args[0], args.Skip(1), null, CancellationToken.None);
+            var result = PlatformUtil.InvokeProcess(args[0], args.Skip(1), null, CancellationToken.None);
             if (result.ExitCode != 0) {
                 var cmdWithPasswordHidden = new Regex(@"\/p\s+?[^\s]+").Replace(result.Command, "/p ********");
                 throw new Exception(
