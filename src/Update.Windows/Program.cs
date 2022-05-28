@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Squirrel.NuGet;
 using Squirrel.Lib;
+using Squirrel.Sources;
 using static Squirrel.Runtimes.RuntimeInstallResult;
 
 namespace Squirrel.Update
@@ -45,7 +46,7 @@ namespace Squirrel.Update
                 logp.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 throw;
             }
-            
+
             var logger = new SetupLogLogger(opt.updateAction);
             SquirrelLocator.CurrentMutable.Register(() => logger, typeof(ILogger));
 
@@ -93,6 +94,7 @@ namespace Squirrel.Update
                         Windows.User32MessageBox.MessageBoxButtons.OK,
                         Windows.User32MessageBox.MessageBoxIcon.Error);
                 }
+
                 break;
             case UpdateAction.Install:
                 var progressSource = new ProgressSource();
@@ -228,6 +230,7 @@ namespace Squirrel.Update
         {
             sourceDirectory = sourceDirectory ?? SquirrelRuntimeInfo.BaseDirectory;
             var releasesPath = Path.Combine(sourceDirectory, "RELEASES");
+            var sourceDi = new DirectoryInfo(sourceDirectory);
 
             Log.Info("Starting install, writing to {0}", sourceDirectory);
 
@@ -240,7 +243,7 @@ namespace Squirrel.Update
 
             if (!File.Exists(releasesPath)) {
                 Log.Info("RELEASES doesn't exist, creating it at " + releasesPath);
-                var nupkgs = (new DirectoryInfo(sourceDirectory)).GetFiles()
+                var nupkgs = sourceDi.GetFiles()
                     .Where(x => x.Name.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
                     .Select(x => ReleaseEntry.GenerateFromFile(x.FullName));
 
@@ -250,9 +253,9 @@ namespace Squirrel.Update
             var ourAppName = ReleaseEntry.ParseReleaseFile(File.ReadAllText(releasesPath, Encoding.UTF8))
                 .First().PackageName;
 
-
-            using var mgr = new UpdateManager(sourceDirectory, ourAppName);
-            var rootAppDir = mgr.Config.RootAppDir;
+            var rootAppDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ourAppName);
+            var appDesc = new AppDescWindows(rootAppDir, ourAppName);
+            using var mgr = new UpdateManager(new SimpleFileSource(sourceDi), appDesc);
 
             Log.Info("About to install to: " + rootAppDir);
             if (Directory.Exists(rootAppDir)) {
@@ -280,41 +283,39 @@ namespace Squirrel.Update
                 "Failed to create uninstaller registry entry");
         }
 
-        static async Task Update(string updateUrl, string appName = null)
+        static async Task Update(string updateUrl)
         {
-            appName = appName ?? getAppNameFromDirectory();
-
             Log.Info("Starting update, downloading from " + updateUrl);
 
-            using (var mgr = new UpdateManager(updateUrl, appName)) {
-                bool ignoreDeltaUpdates = false;
-                Log.Info("About to update to: " + mgr.Config.RootAppDir);
+            using var mgr = new UpdateManager(updateUrl);
+            bool ignoreDeltaUpdates = false;
+            Log.Info("About to update to: " + mgr.Config.RootAppDir);
 
             retry:
-                try {
-                    // 3 % (3 stages)
-                    var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, ignoreDeltaUpdates: ignoreDeltaUpdates, progress: x => Console.WriteLine(UpdateManager.CalculateProgress(x, 0, 3)));
+            try {
+                // 3 % (3 stages)
+                var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, ignoreDeltaUpdates: ignoreDeltaUpdates,
+                    progress: x => Console.WriteLine(UpdateManager.CalculateProgress(x, 0, 3)));
 
-                    // 3 - 30 %
-                    await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(UpdateManager.CalculateProgress(x, 3, 30)));
+                // 3 - 30 %
+                await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(UpdateManager.CalculateProgress(x, 3, 30)));
 
-                    // 30 - 100 %
-                    await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(UpdateManager.CalculateProgress(x, 30, 100)));
-                } catch (Exception ex) {
-                    if (ignoreDeltaUpdates) {
-                        Log.ErrorException("Really couldn't apply updates!", ex);
-                        throw;
-                    }
-
-                    Log.WarnException("Failed to apply updates, falling back to full updates", ex);
-                    ignoreDeltaUpdates = true;
-                    goto retry;
+                // 30 - 100 %
+                await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(UpdateManager.CalculateProgress(x, 30, 100)));
+            } catch (Exception ex) {
+                if (ignoreDeltaUpdates) {
+                    Log.ErrorException("Really couldn't apply updates!", ex);
+                    throw;
                 }
 
-                using var rk = await Log.ErrorIfThrows(() =>
-                    mgr.CreateUninstallerRegistryEntry(),
-                    "Failed to create uninstaller registry entry");
+                Log.WarnException("Failed to apply updates, falling back to full updates", ex);
+                ignoreDeltaUpdates = true;
+                goto retry;
             }
+
+            using var rk = await Log.ErrorIfThrows(() =>
+                    mgr.CreateUninstallerRegistryEntry(),
+                "Failed to create uninstaller registry entry");
         }
 
         static async Task UpdateSelf()
@@ -330,58 +331,51 @@ namespace Squirrel.Update
             });
         }
 
-        static async Task<string> Download(string updateUrl, string appName = null)
+        static async Task<string> Download(string updateUrl)
         {
-            appName = appName ?? getAppNameFromDirectory();
-
             Log.Info("Fetching update information, downloading from " + updateUrl);
-            using (var mgr = new UpdateManager(updateUrl, appName)) {
-                var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x / 3));
-                await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
+            using var mgr = new UpdateManager(updateUrl);
+            var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x / 3));
+            await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
 
-                var releaseNotes = updateInfo.FetchReleaseNotes();
+            var releaseNotes = updateInfo.FetchReleaseNotes();
 
-                var sanitizedUpdateInfo = new {
-                    currentVersion = updateInfo.LatestLocalReleaseEntry.Version.ToString(),
-                    futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
-                    releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
-                        version = x.Version.ToString(),
-                        releaseNotes = releaseNotes.ContainsKey(x) ? releaseNotes[x] : "",
-                    }).ToArray(),
-                };
+            var sanitizedUpdateInfo = new {
+                currentVersion = updateInfo.LatestLocalReleaseEntry.Version.ToString(),
+                futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
+                releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
+                    version = x.Version.ToString(),
+                    releaseNotes = releaseNotes.ContainsKey(x) ? releaseNotes[x] : "",
+                }).ToArray(),
+            };
 
-                return SimpleJson.SerializeObject(sanitizedUpdateInfo);
-            }
+            return SimpleJson.SerializeObject(sanitizedUpdateInfo);
         }
 
-        static async Task<string> CheckForUpdate(string updateUrl, string appName = null)
+        static async Task<string> CheckForUpdate(string updateUrl)
         {
-            appName = appName ?? getAppNameFromDirectory();
-
             Log.Info("Fetching update information, downloading from " + updateUrl);
-            using (var mgr = new UpdateManager(updateUrl, appName)) {
-                var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x));
-                var releaseNotes = updateInfo.FetchReleaseNotes();
+            using var mgr = new UpdateManager(updateUrl);
+            var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x));
+            var releaseNotes = updateInfo.FetchReleaseNotes();
 
-                var sanitizedUpdateInfo = new {
-                    currentVersion = updateInfo.LatestLocalReleaseEntry.Version.ToString(),
-                    futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
-                    releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
-                        version = x.Version.ToString(),
-                        releaseNotes = releaseNotes.ContainsKey(x) ? releaseNotes[x] : "",
-                    }).ToArray(),
-                };
+            var sanitizedUpdateInfo = new {
+                currentVersion = updateInfo.LatestLocalReleaseEntry.Version.ToString(),
+                futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
+                releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
+                    version = x.Version.ToString(),
+                    releaseNotes = releaseNotes.ContainsKey(x) ? releaseNotes[x] : "",
+                }).ToArray(),
+            };
 
-                return SimpleJson.SerializeObject(sanitizedUpdateInfo);
-            }
+            return SimpleJson.SerializeObject(sanitizedUpdateInfo);
         }
 
         static async Task Uninstall(string appName = null)
         {
             Log.Info("Starting uninstall for app: " + appName);
 
-            appName = appName ?? getAppNameFromDirectory();
-            using (var mgr = new UpdateManager("", appName)) {
+            using (var mgr = new UpdateManager()) {
                 await mgr.FullUninstall();
                 mgr.RemoveUninstallerRegistryEntry();
 
@@ -402,13 +396,11 @@ namespace Squirrel.Update
                 return;
             }
 
-            var appName = getAppNameFromDirectory();
             var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
             var locations = parseShortcutLocations(shortcutArgs);
 
-            using (var mgr = new UpdateManager("", appName)) {
-                mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, onlyUpdate, processStartArgs, icon);
-            }
+            using var mgr = new UpdateManager();
+            mgr.CreateShortcutsForExecutable(exeName, locations ?? defaultLocations, onlyUpdate, processStartArgs, icon);
         }
 
         static void Deshortcut(string exeName, string shortcutArgs)
@@ -418,13 +410,11 @@ namespace Squirrel.Update
                 return;
             }
 
-            var appName = getAppNameFromDirectory();
             var defaultLocations = ShortcutLocation.StartMenu | ShortcutLocation.Desktop;
             var locations = parseShortcutLocations(shortcutArgs);
 
-            using (var mgr = new UpdateManager("", appName)) {
-                mgr.RemoveShortcutsForExecutable(exeName, locations ?? defaultLocations);
-            }
+            using var mgr = new UpdateManager();
+            mgr.RemoveShortcutsForExecutable(exeName, locations ?? defaultLocations);
         }
 
         static void ProcessStart(string exeName, string arguments, bool shouldWait, bool forceLatest)
@@ -501,7 +491,7 @@ namespace Squirrel.Update
         {
             return missingFrameworks.Length > 1
                 ? $"{appname} is missing the following system components: {String.Join(", ", missingFrameworks.Select(s => s.DisplayName))}. " +
-                    $"Would you like to install these now?"
+                  $"Would you like to install these now?"
                 : $"{appname} requires {missingFrameworks.First().DisplayName} installed to continue, would you like to install it now?";
         }
 
@@ -539,7 +529,8 @@ namespace Squirrel.Update
                 } else if (exitcode != InstallSuccess) {
                     string rtmsg = exitcode switch {
                         UserCancelled => $"User cancelled install of {f.DisplayName}. Setup can not continue and will now exit.",
-                        AnotherInstallInProgress => "Another installation is already in progress. Complete that installation before proceeding with this install.",
+                        AnotherInstallInProgress =>
+                            "Another installation is already in progress. Complete that installation before proceeding with this install.",
                         SystemDoesNotMeetRequirements => $"This computer does not meet the system requirements for {f.DisplayName}.",
                         _ => $"{f.DisplayName} installer exited with error code '{exitcode}'.",
                     };
