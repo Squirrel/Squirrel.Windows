@@ -102,13 +102,14 @@ namespace Squirrel.NuGet
             throw new NotSupportedException("Platform not supported.");
         }
 
-        private static readonly Regex libFolderPattern = new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex libFolderPattern =
+            new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         [SupportedOSPlatform("macos")]
         public static Task ExtractZipReleaseForInstallOSX(string zipFilePath, string outFolder, Action<int> progress)
         {
             if (!File.Exists(zipFilePath)) throw new ArgumentException("zipFilePath must exist");
-            
+
             progress ??= ((_) => { });
             Directory.CreateDirectory(outFolder);
             return Task.Run(() => {
@@ -138,11 +139,12 @@ namespace Squirrel.NuGet
                                 Directory.CreateDirectory(fullTargetFile);
                             } else {
                                 reader.WriteEntryToFile(fullTargetFile);
-                                if (PlatformUtil.IsMachOImage(fullTargetFile)) {
-                                    PlatformUtil.ChmodFileAsExecutable(fullTargetFile);
-                                }
                             }
-                        }, 5);
+                        });
+
+                        if (!reader.Entry.IsDirectory && PlatformUtil.IsMachOImage(fullTargetFile)) {
+                            PlatformUtil.ChmodFileAsExecutable(fullTargetFile);
+                        }
                     }
                 }
 
@@ -210,7 +212,7 @@ namespace Squirrel.NuGet
                                 } else {
                                     reader.WriteEntryToFile(fullTargetFile);
                                 }
-                            }, 5);
+                            });
                         } catch (Exception e) {
                             if (!failureIsOkay) throw;
                             LogHost.Default.WarnException("Can't write execution stub, probably in use", e);
