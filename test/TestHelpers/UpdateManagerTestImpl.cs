@@ -13,10 +13,11 @@ namespace Squirrel.Tests.TestHelpers
 
         public static UpdateManagerTestImpl FromLocalPackageTempDir(string updatePackageDir, string appId, string installTempDir)
         {
-            return FromLocalPackageTempDir(new DirectoryInfo(updatePackageDir), appId, installTempDir);
+            var di = String.IsNullOrWhiteSpace(updatePackageDir) ? null : new DirectoryInfo(updatePackageDir);
+            return FromLocalPackageTempDir(di, appId, installTempDir);
         }
         
-        private static UpdateManagerTestImpl FromLocalPackageTempDir(DirectoryInfo updatePackageDir, string appId, string installTempDir)
+        public static UpdateManagerTestImpl FromLocalPackageTempDir(DirectoryInfo updatePackageDir, string appId, string installTempDir)
         {
             var appPath = Path.Combine(installTempDir, appId);
             Directory.CreateDirectory(appPath);

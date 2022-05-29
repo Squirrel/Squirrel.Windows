@@ -222,6 +222,9 @@ namespace Squirrel
 
         private Task<IDisposable> acquireUpdateLock()
         {
+            if (!ModeDetector.InUnitTestRunner() && _config.CurrentlyInstalledVersion == null)
+                throw new InvalidOperationException("Cannot perform this operation in a portable app (must be installed first).");
+            
             lock (_lockobj) {
                 if (_disposed) throw new ObjectDisposedException(nameof(UpdateManager));
                 if (_updateLock != null) return Task.FromResult(_updateLock);

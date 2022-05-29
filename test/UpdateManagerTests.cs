@@ -13,6 +13,7 @@ using System.Net;
 using Squirrel.NuGet;
 using System.Net.Http;
 using NuGet.Versioning;
+using Squirrel.Sources;
 
 namespace Squirrel.Tests
 {
@@ -250,7 +251,7 @@ namespace Squirrel.Tests
                 {
                     using var _1 = Utility.GetTempDirectory(out var tempDir);
                     var directory = Path.Combine(tempDir, "missing-folder");
-                    using var fixture = new UpdateManager(directory);
+                    using var fixture = UpdateManagerTestImpl.FromLocalPackageTempDir(directory, APP_ID, tempDir);
                     await Assert.ThrowsAsync<Exception>(() => fixture.CheckForUpdate());
                 }
 
@@ -258,7 +259,9 @@ namespace Squirrel.Tests
                 public async Task WhenReleasesFileDoesntExistThrowACustomError()
                 {
                     using var _1 = Utility.GetTempDirectory(out var tempDir);
-                    using var fixture = new UpdateManager(tempDir);
+                    var directory = Path.Combine(tempDir, "folder");
+                    Directory.CreateDirectory(directory);
+                    using var fixture = UpdateManagerTestImpl.FromLocalPackageTempDir(directory, APP_ID, tempDir);
                     await Assert.ThrowsAsync<Exception>(() => fixture.CheckForUpdate());
                 }
 
@@ -266,8 +269,10 @@ namespace Squirrel.Tests
                 public async Task WhenReleasesFileIsBlankThrowAnException()
                 {
                     using var _1 = Utility.GetTempDirectory(out var tempDir);
-                    using var fixture = new UpdateManager(tempDir);
-                    File.WriteAllText(Path.Combine(tempDir, "RELEASES"), "");
+                    var directory = Path.Combine(tempDir, "folder");
+                    Directory.CreateDirectory(directory);
+                    using var fixture = UpdateManagerTestImpl.FromLocalPackageTempDir(directory, APP_ID, tempDir);
+                    File.WriteAllText(Path.Combine(directory, "RELEASES"), "");
                     await Assert.ThrowsAsync(typeof(Exception), () => fixture.CheckForUpdate());
                 }
 
@@ -275,7 +280,8 @@ namespace Squirrel.Tests
                 public async Task WhenUrlResultsInWebExceptionWeShouldThrow()
                 {
                     // This should result in a WebException (which gets caught) unless you can actually access http://lol
-                    using var fixture = new UpdateManager("http://lol");
+                    using var _1 = Utility.GetTempDirectory(out var tempDir);
+                    using var fixture = UpdateManagerTestImpl.FromFakeWebSource("http://lol", APP_ID, tempDir);
                     await Assert.ThrowsAsync(typeof(HttpRequestException), () => fixture.CheckForUpdate());
                 }
 
