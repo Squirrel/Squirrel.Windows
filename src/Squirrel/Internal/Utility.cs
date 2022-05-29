@@ -198,9 +198,9 @@ namespace Squirrel
             }
         }
 
-        public static async Task RetryAsync(this Func<Task> block, int retries = 4, int retryDelay = 250)
+        public static Task RetryAsync(this Func<Task> block, int retries = 4, int retryDelay = 250)
         {
-            await RetryAsync(async () => {
+            return RetryAsync(async () => {
                 await block().ConfigureAwait(false);
                 return true;
             }, retries, retryDelay);
