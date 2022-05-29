@@ -106,13 +106,13 @@ namespace Squirrel.NuGet
             new Regex(@"lib[\\\/][^\\\/]*[\\\/]", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         [SupportedOSPlatform("macos")]
-        public static Task ExtractZipReleaseForInstallOSX(string zipFilePath, string outFolder, Action<int> progress)
+        public static Task ExtractZipReleaseForInstallOSX(string zipFilePath, string outFinalFolder, Action<int> progress)
         {
             if (!File.Exists(zipFilePath)) throw new ArgumentException("zipFilePath must exist");
-
             progress ??= ((_) => { });
-            Directory.CreateDirectory(outFolder);
+            
             return Task.Run(() => {
+                using (Utility.GetTempDirectory(out var tmp))
                 using (var za = ZipArchive.Open(zipFilePath))
                 using (var reader = za.ExtractAllEntries()) {
                     var totalItems = za.Entries.Count;
@@ -130,7 +130,7 @@ namespace Squirrel.NuGet
                         if (!libFolderPattern.IsMatch(decoded)) continue;
                         decoded = libFolderPattern.Replace(decoded, "", 1);
 
-                        var fullTargetFile = Path.Combine(outFolder, decoded);
+                        var fullTargetFile = Path.Combine(tmp, decoded);
                         var fullTargetDir = Path.GetDirectoryName(fullTargetFile);
                         Directory.CreateDirectory(fullTargetDir);
 
@@ -146,6 +146,9 @@ namespace Squirrel.NuGet
                             PlatformUtil.ChmodFileAsExecutable(fullTargetFile);
                         }
                     }
+                    
+                    Utility.DeleteFileOrDirectoryHard(outFinalFolder, renameFirst: true);
+                    Directory.Move(tmp, outFinalFolder);
                 }
 
                 progress(100);
@@ -153,14 +156,13 @@ namespace Squirrel.NuGet
         }
 
         [SupportedOSPlatform("windows")]
-        public static Task ExtractZipReleaseForInstallWindows(string zipFilePath, string outFolder, string rootPackageFolder, Action<int> progress)
+        public static Task ExtractZipReleaseForInstallWindows(string zipFilePath, string outFinalFolder, string rootPackageFolder, Action<int> progress)
         {
             if (!File.Exists(zipFilePath)) throw new ArgumentException("zipFilePath must exist");
-
             progress ??= ((_) => { });
-            Directory.CreateDirectory(outFolder);
 
             return Task.Run(() => {
+                using (Utility.GetTempDirectory(out var tmp))
                 using (var za = ZipArchive.Open(zipFilePath))
                 using (var reader = za.ExtractAllEntries()) {
                     var totalItems = za.Entries.Count;
@@ -174,7 +176,7 @@ namespace Squirrel.NuGet
 
                         // extract .nuspec to app directory as '.version'
                         if (Utility.FileHasExtension(reader.Entry.Key, NugetUtil.ManifestExtension)) {
-                            Utility.Retry(() => reader.WriteEntryToFile(Path.Combine(outFolder, Utility.SpecVersionFileName)));
+                            Utility.Retry(() => reader.WriteEntryToFile(Path.Combine(tmp, Utility.SpecVersionFileName)));
                             continue;
                         }
 
@@ -184,7 +186,7 @@ namespace Squirrel.NuGet
                         if (!libFolderPattern.IsMatch(decoded)) continue;
                         decoded = libFolderPattern.Replace(decoded, "", 1);
 
-                        var fullTargetFile = Path.Combine(outFolder, decoded);
+                        var fullTargetFile = Path.Combine(tmp, decoded);
                         var fullTargetDir = Path.GetDirectoryName(fullTargetFile);
                         Directory.CreateDirectory(fullTargetDir);
 
@@ -218,6 +220,9 @@ namespace Squirrel.NuGet
                             LogHost.Default.WarnException("Can't write execution stub, probably in use", e);
                         }
                     }
+                    
+                    Utility.DeleteFileOrDirectoryHard(outFinalFolder, renameFirst: true);
+                    Directory.Move(tmp, outFinalFolder);
                 }
 
                 progress(100);
