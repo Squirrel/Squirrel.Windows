@@ -29,18 +29,21 @@ std::wstring toWide(std::string const& in)
     return out;
 }
 
-std::string toMultiByte(std::wstring const& in)
-{
-    std::string out{};
-    if (in.length() > 0) {
-        int len = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, in.c_str(), in.size(), 0, 0, 0, 0);
-        if (len == 0) throw wstring(L"Invalid character sequence.");
+// we shouldn't really have any reason to use this. Windows functions do not support
+// multi-byte charsets. uncomment with care.
 
-        out.resize(len);
-        WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, in.c_str(), in.size(), out.data(), out.size(), 0, 0);
-    }
-    return out;
-}
+// std::string toMultiByte(std::wstring const& in)
+// {
+//     std::string out{};
+//     if (in.length() > 0) {
+//         int len = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, in.c_str(), in.size(), 0, 0, 0, 0);
+//         if (len == 0) throw wstring(L"Invalid character sequence.");
+//
+//         out.resize(len);
+//         WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, in.c_str(), in.size(), out.data(), out.size(), 0, 0);
+//     }
+//     return out;
+// }
 
 wstring get_filename_from_path(wstring& path)
 {
@@ -149,7 +152,7 @@ void util::wexec(const wchar_t* cmd)
     if (dwExitCode != 0) {
         throw wstring(L"Process exited with error code: "
             + to_wstring((int32_t)dwExitCode)
-            + L". There may be more detailed information in '%localappdata%\\SquirrelClowdTemp\\Squirrel.log'.");
+            + L". There may be more information in '%localappdata%\\Squirrel.log'.");
     }
 }
 
@@ -218,8 +221,7 @@ void throwLastMzError(mz_zip_archive* archive, wstring message)
         throw wstring(L"Error Code: " + to_wstring(errCode) + L". " + message);
 
     string mbmsg = string(errMsg);
-    wstring msg = L"Error Code: " + to_wstring(errCode) + L". " + message + L" " + toWide(mbmsg);
-    throw msg;
+    throw wstring(L"Error Code: " + to_wstring(errCode) + L". " + message + L" " + toWide(mbmsg));
 }
 
 void extractSingleFile(void* zipBuf, size_t cZipBuf, wstring fileLocation, std::function<bool(mz_zip_archive_file_stat&)>& predicate)
