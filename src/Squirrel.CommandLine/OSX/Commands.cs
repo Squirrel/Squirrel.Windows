@@ -11,9 +11,9 @@ using Squirrel.SimpleSplat;
 
 namespace Squirrel.CommandLine.OSX
 {
-    class CommandsOSX
+    class Commands
     {
-        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(CommandsOSX));
+        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Commands));
 
         public static CommandSet GetCommands()
         {
@@ -72,7 +72,7 @@ namespace Squirrel.CommandLine.OSX
                 if (options.icon != null)
                     Log.Warn("--icon is ignored if the pack directory is a '.app' bundle.");
 
-                if (options.exeName != null)
+                if (options.mainExe != null)
                     Log.Warn("--exeName is ignored if the pack directory is a '.app' bundle.");
 
                 appBundlePath = Path.Combine(releaseDir.FullName, options.packId + ".app");
@@ -91,7 +91,7 @@ namespace Squirrel.CommandLine.OSX
                     throw new OptionValidationException("--icon is required when generating a new app bundle.");
 
                 // auto-discover exe if it's the same as packId
-                var exeName = options.exeName;
+                var exeName = options.mainExe;
                 if (exeName == null && File.Exists(Path.Combine(options.packDirectory, options.packId)))
                     exeName = options.packId;
 
@@ -108,7 +108,7 @@ namespace Squirrel.CommandLine.OSX
                 var info = new AppInfo {
                     CFBundleName = options.packTitle ?? options.packId,
                     CFBundleDisplayName = options.packTitle ?? options.packId,
-                    CFBundleExecutable = options.exeName,
+                    CFBundleExecutable = options.mainExe,
                     CFBundleIdentifier = escapedAppleId,
                     CFBundlePackageType = "APPL",
                     CFBundleShortVersionString = options.packVersion,

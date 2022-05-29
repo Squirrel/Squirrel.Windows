@@ -15,9 +15,9 @@ using Squirrel.SimpleSplat;
 
 namespace Squirrel.CommandLine.Windows
 {
-    class CommandsWindows : IEnableLogger
+    class Commands : IEnableLogger
     {
-        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(CommandsWindows));
+        static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Commands));
 
         public static CommandSet GetCommands()
         {

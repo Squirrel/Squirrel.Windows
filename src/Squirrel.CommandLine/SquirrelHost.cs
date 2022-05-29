@@ -43,7 +43,7 @@ namespace Squirrel.CommandLine
                 case "windows":
                     if (!SquirrelRuntimeInfo.IsWindows)
                         logger.Write("Cross-compiling will cause some features of Squirrel to be disabled.", LogLevel.Warn);
-                    packageCommands = Windows.CommandsWindows.GetCommands();
+                    packageCommands = Windows.Commands.GetCommands();
                     break;
 
                 case "mac":
@@ -51,7 +51,7 @@ namespace Squirrel.CommandLine
                 case "macos":
                     if (!SquirrelRuntimeInfo.IsOSX)
                         logger.Write("Cross-compiling will cause some features of Squirrel to be disabled.", LogLevel.Warn);
-                    packageCommands = OSX.CommandsOSX.GetCommands();
+                    packageCommands = OSX.Commands.GetCommands();
                     break;
 
                 default:

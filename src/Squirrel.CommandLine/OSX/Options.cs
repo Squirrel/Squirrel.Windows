@@ -18,7 +18,7 @@ namespace Squirrel.CommandLine.OSX
         public bool includePdb { get; private set; }
         public string releaseNotes { get; private set; }
         public string icon { get; private set; }
-        public string exeName { get; private set; }
+        public string mainExe { get; private set; }
 
         public BundleOptions()
         {
@@ -30,7 +30,7 @@ namespace Squirrel.CommandLine.OSX
             Add("packTitle=", "Optional display/friendly {NAME} for bundle", v => packTitle = v);
             Add("includePdb", "Add *.pdb files to release package", v => includePdb = true);
             Add("releaseNotes=", "{PATH} to file with markdown notes for version", v => releaseNotes = v);
-            Add("e=|exeName=", "The file {NAME} of the main executable", v => exeName = v);
+            Add("e=|mainExe=", "The file {NAME} of the main executable", v => mainExe = v);
             Add("i=|icon=", "{PATH} to the .icns file for this bundle", v => icon = v);
         }
 
