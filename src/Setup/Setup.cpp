@@ -1,5 +1,6 @@
-#include <windows.h>
-#include <versionhelpers.h>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <VersionHelpers.h>
 #include <string>
 #include <fstream>
 #include "bundle_marker.h"
@@ -9,6 +10,11 @@ using namespace std;
 
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow)
 {
+    // https://docs.microsoft.com/en-us/windows/win32/dlls/dynamic-link-library-security
+    SetSearchPathMode(BASE_SEARCH_PATH_ENABLE_SAFE_SEARCHMODE | BASE_SEARCH_PATH_PERMANENT);
+    SetDllDirectory(L"");
+    SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
+
     if (!IsWindows7SP1OrGreater()) {
         util::show_error_dialog(L"This application requires Windows 7 SP1 or later and cannot be installed on this computer.");
         return 0;

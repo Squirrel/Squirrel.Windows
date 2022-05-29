@@ -1,8 +1,8 @@
 #include "platform_util.h"
 #include "miniz.h"
 #include "LzmaDec.h"
-#include <windows.h>
-#include <shlobj_core.h>
+#include <Windows.h>
+#include <ShlObj_core.h>
 #include <tchar.h>
 #include <string>
 #include <functional>
