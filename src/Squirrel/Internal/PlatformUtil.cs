@@ -250,17 +250,20 @@ namespace Squirrel
                 .ToList();
         }
 
+        public static List<(string ProcessExePath, int ProcessId)> GetRunningProcessesInDirectory(string directory)
+        {
+            return GetRunningProcesses()
+                .Where(x => Utility.IsFileInDirectory(x.ProcessExePath, directory))
+                .ToList();
+        }
+
         public static void KillProcessesInDirectory(string directoryToKill)
         {
             Log.Info("Killing all processes in " + directoryToKill);
-
+            var myPid = Process.GetCurrentProcess().Id;
             int c = 0;
-            foreach (var x in GetRunningProcesses()) {
-                if (!Utility.IsFileInDirectory(x.ProcessExePath, directoryToKill)) {
-                    continue;
-                }
-
-                if (Utility.FullPathEquals(SquirrelRuntimeInfo.EntryExePath, x.ProcessExePath)) {
+            foreach (var x in GetRunningProcessesInDirectory(directoryToKill)) {
+                if (myPid == x.ProcessId) {
                     Log.Info($"Skipping '{x.ProcessExePath}' (is current process)");
                     continue;
                 }

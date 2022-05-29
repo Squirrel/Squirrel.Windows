@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.Versioning;
 using NuGet.Versioning;
 using Squirrel.SimpleSplat;
 
@@ -24,7 +26,6 @@ namespace Squirrel
     /// SquirrelAwareApp helps you to handle Squirrel app activation events
     /// correctly.
     /// </summary>
-    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     public static class SquirrelAwareApp
     {
         /// <summary>
@@ -32,7 +33,7 @@ namespace Squirrel
         /// will dispatch to your methods to set up your app. Depending on the
         /// parameter, your app will exit after this method is called, which 
         /// is required by Squirrel. UpdateManager has methods to help you to
-        /// do this, such as CreateShortcutForThisExe.
+        /// do common functions, such as <see cref="IAppTools.CreateShortcutsForExecutable"/>.
         /// </summary>
         /// <param name="onInitialInstall">Called when your app is initially
         /// installed. Set up app shortcuts here as well as file associations.
@@ -87,6 +88,28 @@ namespace Squirrel
                 } catch (Exception ex) {
                     LogHost.Default.ErrorException("Failed to handle Squirrel events", ex);
                     if (!ModeDetector.InUnitTestRunner()) Environment.Exit(-1);
+                }
+            }
+            
+            // now check if there are any pending updates to be applied (and we have not already been restarted)
+            if (!args.Contains("--squirrel-restarted") && um.Config.CurrentlyInstalledVersion != null) {
+                var versions = um.Config.GetVersions();
+                var executing = versions.FirstOrDefault(v => v.IsExecuting);
+                var latest = versions.OrderByDescending(v => v.Version).FirstOrDefault();
+                if (executing != null && executing != latest) {
+                    // there is a local update available, so if there are no other processes running we should restart
+                    var myPid = Process.GetCurrentProcess().Id;
+                    var isOtherProcessRunning = PlatformUtil
+                        .GetRunningProcessesInDirectory(um.Config.RootAppDir)
+                        .Any(x => x.ProcessId != myPid);
+
+                    if (isOtherProcessRunning) {
+                        LogHost.Default.Info("There is a local update available, but there are other processes are running so it will not be applied.");
+                    } else {
+                        LogHost.Default.Info("There is a local update available, app will restart now to apply it.");
+                        um.Config.StartRestartingProcess(arguments: "--squirrel-restarted");
+                        Environment.Exit(0);
+                    }
                 }
             }
 

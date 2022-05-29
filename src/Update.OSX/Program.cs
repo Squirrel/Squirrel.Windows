@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.Versioning;
 using Squirrel.SimpleSplat;
 
@@ -56,15 +57,9 @@ namespace Squirrel.Update
             // /usr/bin/osascript -e 'do shell script "/path/to/myscript args 2>&1 etc" with administrator privileges'
 
             var currentDir = _app.UpdateAndRetrieveCurrentFolder(forceLatest);
-
-            var args = new List<string> { "-n", currentDir, };
+            Log.Info($"Running app at '{currentDir}' using 'open' with arguments '{arguments}'");
             
-            if (!String.IsNullOrEmpty(arguments)) {
-                args.Add("--args");
-                args.Add(arguments);
-            }
-            
-            PlatformUtil.StartProcessNonBlocking("/usr/bin/open", args, null);
+            Process.Start("/usr/bin/open", $" -n '{currentDir}' --args {arguments}");
         }
     }
 }
