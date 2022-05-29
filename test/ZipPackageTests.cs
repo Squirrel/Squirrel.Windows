@@ -18,14 +18,17 @@ namespace Squirrel.Tests
         [Fact]
         public void HasSameFilesAndDependenciesAsPackaging()
         {
+            using var _1 = Utility.GetTempDirectory(out var tempDir);
             var inputPackage = IntegrationTestHelper.GetPath("fixtures", "slack-1.1.8-full.nupkg");
+            var copyPackage = Path.Combine(tempDir, "slack-1.1.8-full.nupkg");
+            File.Copy(inputPackage, copyPackage);
 
             var zp = new ZipPackage(inputPackage);
             var zipfw = zp.Frameworks;
             var zipf = zp.Files.OrderBy(f => f.Path).ToArray();
             var zipfLib = zp.Files.Where(f => f.IsLibFile()).OrderBy(f => f.Path).ToArray();
 
-            using Package package = Package.Open(inputPackage);
+            using Package package = Package.Open(copyPackage);
             var packagingfw = GetSupportedFrameworks(zp, package);
             var packaging = GetFiles(package).OrderBy(f => f.Path).ToArray();
             var packagingLib = GetLibFiles(package).OrderBy(f => f.Path).ToArray();
