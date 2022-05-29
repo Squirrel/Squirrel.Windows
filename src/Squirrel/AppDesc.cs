@@ -287,30 +287,9 @@ namespace Squirrel
         }
 
         /// <summary>
-        /// Creates a new windows application platform at the specified app directory.
+        /// Internal use only. Creates a AppDescWindows from the following rootAppDir and
+        /// does not perform any path auto-detection.
         /// </summary>
-        /// <param name="appDir">The location of the application.</param>
-        /// <param name="appId">The unique ID of the application.</param>
-        /// <param name="createIfNotExist">Create the appDir if it does not already exist.</param>
-        // public AppDescWindows(string appDir, string appId, bool createIfNotExist = true)
-        // {
-        //     if (!SquirrelRuntimeInfo.IsWindows)
-        //         throw new NotSupportedException("Cannot instantiate AppDescWindows on a non-Windows system.");
-        //
-        //     if (!Directory.Exists(appDir) && createIfNotExist)
-        //         Directory.CreateDirectory(appDir);
-        //     
-        //     AppId = appId;
-        //     RootAppDir = appDir;
-        //     var updateExe = Path.Combine(appDir, "Update.exe");
-        //     var ver = GetLatestVersion();
-        //     UpdateExePath = updateExe;
-        //     IsUpdateExe = Utility.FullPathEquals(updateExe, SquirrelRuntimeInfo.EntryExePath);
-        //
-        //     if (File.Exists(updateExe) && ver != null) {
-        //         CurrentlyInstalledVersion = ver.Version;
-        //     }
-        // }
         internal AppDescWindows(string rootAppDir, string appId)
         {
             AppId = appId;
@@ -318,13 +297,12 @@ namespace Squirrel
             var updateExe = Path.Combine(rootAppDir, "Update.exe");
             UpdateExePath = updateExe;
             IsUpdateExe = Utility.FullPathEquals(updateExe, SquirrelRuntimeInfo.EntryExePath);
-
-            var ver = GetLatestVersion();
-            if (File.Exists(updateExe) && ver != null) {
-                CurrentlyInstalledVersion = ver.Version;
-            }
+            CurrentlyInstalledVersion = GetLatestVersion()?.Version;
         }
 
+        /// <summary>
+        /// Internal use only. Auto detect app details from the specified EXE path.
+        /// </summary>
         internal AppDescWindows(string ourExePath)
         {
             if (!SquirrelRuntimeInfo.IsWindows)
@@ -352,6 +330,7 @@ namespace Squirrel
             }
 
             // Am I running from within an app-* or current dir?
+            // 'info' will be null in any portable / non-installed app.
             var info = GetVersionInfoFromDirectory(myDir);
             if (info != null) {
                 var updateExe = Path.Combine(myDir, "..\\Update.exe");
