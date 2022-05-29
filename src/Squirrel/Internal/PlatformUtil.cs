@@ -103,11 +103,11 @@ namespace Squirrel
         }
 
         [SupportedOSPlatform("osx")]
-        [DllImport(OSX_CSTD_LIB, SetLastError = true)]
+        [DllImport(OSX_CSTD_LIB, EntryPoint = "chmod", SetLastError = true)]
         private static extern int osx_chmod(string pathname, int mode);
 
         [SupportedOSPlatform("linux")]
-        [DllImport(NIX_CSTD_LIB, SetLastError = true)]
+        [DllImport(NIX_CSTD_LIB, EntryPoint = "chmod", SetLastError = true)]
         private static extern int nix_chmod(string pathname, int mode);
 
         public static void ChmodFileAsExecutable(string filePath)

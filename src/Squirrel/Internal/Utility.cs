@@ -175,14 +175,10 @@ namespace Squirrel
 
         public static void Retry(this Action block, int retries = 4, int retryDelay = 250)
         {
-            Contract.Requires(retries > 0);
-
-            Func<object> thunk = () => {
+            Retry(() => {
                 block();
-                return null;
-            };
-
-            thunk.Retry(retries, retryDelay);
+                return true;
+            }, retries, retryDelay);
         }
 
         public static T Retry<T>(this Func<T> block, int retries = 4, int retryDelay = 250)
@@ -194,10 +190,8 @@ namespace Squirrel
                     T ret = block();
                     return ret;
                 } catch (Exception ex) {
-                    if (retries == 0) {
-                        throw;
-                    }
-                    Log().InfoException($"Operation failed. Retrying {retries} more times...", ex);
+                    if (retries == 0) throw;
+                    Log().Warn($"Operation failed ({ex.Message}). Retrying {retries} more times...");
                     retries--;
                     Thread.Sleep(retryDelay);
                 }
@@ -206,16 +200,10 @@ namespace Squirrel
 
         public static async Task RetryAsync(this Func<Task> block, int retries = 4, int retryDelay = 250)
         {
-            while (true) {
-                try {
-                    await block().ConfigureAwait(false);
-                } catch (Exception ex) {
-                    if (retries == 0) throw;
-                    Log().InfoException($"Operation failed. Retrying {retries} more times...", ex);
-                    retries--;
-                    await Task.Delay(retryDelay).ConfigureAwait(false);
-                }
-            }
+            await RetryAsync(async () => {
+                await block().ConfigureAwait(false);
+                return true;
+            }, retries, retryDelay);
         }
 
         public static async Task<T> RetryAsync<T>(this Func<Task<T>> block, int retries = 4, int retryDelay = 250)
@@ -225,13 +213,12 @@ namespace Squirrel
                     return await block().ConfigureAwait(false);
                 } catch (Exception ex) {
                     if (retries == 0) throw;
-                    Log().InfoException($"Operation failed. Retrying {retries} more times...", ex);
+                    Log().Warn($"Operation failed ({ex.Message}). Retrying {retries} more times...");
                     retries--;
                     await Task.Delay(retryDelay).ConfigureAwait(false);
                 }
             }
         }
-
 
         public static T GetAwaiterResult<T>(this Task<T> task)
         {
