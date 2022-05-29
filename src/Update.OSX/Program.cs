@@ -59,7 +59,7 @@ namespace Squirrel.Update
             var currentDir = _app.UpdateAndRetrieveCurrentFolder(forceLatest);
 
             var exe = "/usr/bin/open";
-            var args = $" -n '{currentDir}' --args {arguments}";
+            var args = $" -n \"{currentDir}\" --args {arguments}";
             
             Log.Info($"Running: {exe} {args}");
             
