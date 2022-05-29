@@ -193,11 +193,11 @@ namespace Squirrel
                 try {
                     T ret = block();
                     return ret;
-                } catch (Exception) {
+                } catch (Exception ex) {
                     if (retries == 0) {
                         throw;
                     }
-
+                    Log().InfoException($"Operation failed. Retrying {retries} more times...", ex);
                     retries--;
                     Thread.Sleep(retryDelay);
                 }
@@ -209,8 +209,10 @@ namespace Squirrel
             while (true) {
                 try {
                     await block().ConfigureAwait(false);
-                } catch {
-                    if (retries-- == 0) throw;
+                } catch (Exception ex) {
+                    if (retries == 0) throw;
+                    Log().InfoException($"Operation failed. Retrying {retries} more times...", ex);
+                    retries--;
                     await Task.Delay(retryDelay).ConfigureAwait(false);
                 }
             }
@@ -221,8 +223,10 @@ namespace Squirrel
             while (true) {
                 try {
                     return await block().ConfigureAwait(false);
-                } catch {
-                    if (retries-- == 0) throw;
+                } catch (Exception ex) {
+                    if (retries == 0) throw;
+                    Log().InfoException($"Operation failed. Retrying {retries} more times...", ex);
+                    retries--;
                     await Task.Delay(retryDelay).ConfigureAwait(false);
                 }
             }

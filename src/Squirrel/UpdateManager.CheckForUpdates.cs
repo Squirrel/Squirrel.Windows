@@ -29,7 +29,12 @@ namespace Squirrel
 
             if (intention != UpdaterIntention.Install) {
                 try {
-                    localReleases = Utility.LoadLocalReleases(_config.ReleasesFilePath).ToArray();
+                    if (!File.Exists(_config.ReleasesFilePath)) {
+                        this.Log().Error($"File does not exist at '{_config.ReleasesFilePath}'. No local releases.");
+                        shouldInitialize = true;
+                    } else {
+                        localReleases = Utility.LoadLocalReleases(_config.ReleasesFilePath).ToArray();
+                    }
                 } catch (Exception ex) {
                     // Something has gone pear-shaped, let's start from scratch
                     this.Log().WarnException("Failed to load local releases, starting from scratch", ex);
@@ -118,15 +123,19 @@ namespace Squirrel
             var stagedUserIdFile = _config.BetaIdFilePath;
             var ret = default(Guid);
 
-            try {
-                if (!Guid.TryParse(File.ReadAllText(stagedUserIdFile, Encoding.UTF8), out ret)) {
-                    throw new Exception("File was read but contents were invalid");
-                }
+            if (File.Exists(stagedUserIdFile)) {
+                try {
+                    if (!Guid.TryParse(File.ReadAllText(stagedUserIdFile, Encoding.UTF8), out ret)) {
+                        throw new Exception("File was read but contents were invalid");
+                    }
 
-                this.Log().Info("Using existing staging user ID: {0}", ret.ToString());
-                return ret;
-            } catch (Exception ex) {
-                this.Log().DebugException("Couldn't read staging user ID, creating a blank one", ex);
+                    this.Log().Info("Using existing staging user ID: {0}", ret.ToString());
+                    return ret;
+                } catch (Exception ex) {
+                    this.Log().DebugException("Couldn't read staging user ID, creating a new one", ex);
+                }
+            } else {
+                this.Log().Warn($"No userId file exists at '{stagedUserIdFile}', creating a new one.");
             }
 
             var prng = new Random();
