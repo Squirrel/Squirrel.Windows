@@ -103,15 +103,21 @@ namespace Squirrel.CommandLine.Windows
                     var libDir = Directory.GetDirectories(Path.Combine(pkgPath, "lib"))
                         .ContextualSingle("package", "'lib' folder");
 
+                    foreach (var exename in options.mainExes) {
+                        var exepath = Path.GetFullPath(Path.Combine(libDir, exename));
+                        if (!File.Exists(exepath)) {
+                            throw new Exception($"Could not find main exe '{exename}' in package.");
+                        }
+                        File.WriteAllText(exepath + ".squirrel", "1");
+                    }
+
                     var awareExes = SquirrelAwareExecutableDetector.GetAllSquirrelAwareApps(libDir);
 
-                    // unless the validation has been disabled, do not allow the creation of packages
-                    // without a SquirrelAwareApp inside
-                    if (!options.allowUnaware && !awareExes.Any()) {
+                    // do not allow the creation of packages without a SquirrelAwareApp inside
+                    if (!awareExes.Any()) {
                         throw new ArgumentException(
                             "There are no SquirreAwareApp's in the provided package. Please mark an exe " +
-                            "as aware using the assembly manifest, or use the '--allowUnaware' argument " +
-                            "to skip this validation and create a package anyway (not recommended).");
+                            "as aware using the '-e' argument, or the assembly manifest.");
                     }
 
                     // warning if there are long paths (>200 char) in this package. 260 is max path

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 using System.Text.RegularExpressions;
@@ -56,15 +57,16 @@ namespace Squirrel.CommandLine.Windows
         public string icon { get; private set; }
         public string appIcon { get; private set; }
         public bool noDelta { get; private set; }
-        public bool allowUnaware { get; private set; }
         public string msi { get; private set; }
         public string debugSetupExe { get; private set; }
+        public string[] mainExes => _mainExes.ToArray();
+
+        private List<string> _mainExes = new();
 
         public ReleasifyOptions()
         {
             // hidden arguments
             Add("b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true);
-            Add("allowUnaware", "Allows building packages without a SquirrelAwareApp (disabled by default)", v => allowUnaware = true, true);
             Add("addSearchPath=", "Add additional search directories when looking for helper exe's such as Setup.exe, Update.exe, etc",
                 HelperExe.AddSearchPath, true);
             Add("debugSetupExe=", "Uses the Setup.exe at this {PATH} to create the bundle, and then replaces it with the bundle. " +
@@ -76,6 +78,7 @@ namespace Squirrel.CommandLine.Windows
             Add("f=|framework=", "List of required {RUNTIMES} to install during setup\nexample: 'net6,vcredist143'", v => framework = v);
             Add("s=|splashImage=", "{PATH} to image/gif displayed during installation", v => splashImage = v);
             Add("i=|icon=", "{PATH} to .ico for Setup.exe and Update.exe", v => icon = v);
+            Add("e=|mainExe=", "{NAME} of one or more SquirrelAware executables", _mainExes.Add);
             Add("appIcon=", "{PATH} to .ico for 'Apps and Features' list", v => appIcon = v);
             if (SquirrelRuntimeInfo.IsWindows) {
                 Add("msi=", "Compile a .msi machine-wide deployment tool with the specified {BITNESS}. (either 'x86' or 'x64')", v => msi = v.ToLower());
