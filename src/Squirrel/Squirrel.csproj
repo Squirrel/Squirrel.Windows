@@ -9,7 +9,7 @@
     <Title>Squirrel Updater</Title>
     <Description>Quick and easy installer and automatic updates for desktop applications</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Icon>Clowd_200.png</Icon>
+    <PackageIcon>Clowd_200.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
