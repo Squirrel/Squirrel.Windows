@@ -471,6 +471,13 @@ namespace Squirrel
             var (psi, cmd) = CreateProcessStartInfo(fileName, args, workingDirectory);
             return Process.Start(psi);
         }
+        
+        public static Process StartProcessNonBlocking(string fileName, string args, string workingDirectory)
+        {
+            var psi = CreateProcessStartInfo(fileName, workingDirectory);
+            psi.Arguments = args;
+            return Process.Start(psi);
+        }
 
         public static (int ExitCode, string StdOutput, string Command) InvokeProcess(string fileName, IEnumerable<string> args, string workingDirectory, CancellationToken ct)
         {

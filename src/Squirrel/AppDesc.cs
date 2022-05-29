@@ -131,7 +131,7 @@ namespace Squirrel
                 Utility.DeleteFileOrDirectoryHard(latestDir, renameFirst: true, throwOnFailure: false);
                 Utility.Retry(() => Directory.Move(latestVer.DirectoryPath, latestDir));
 
-                this.Log().Info("Running app in: " + latestDir);
+                this.Log().Info("Current app is now: " + latestDir);
                 return latestDir;
             } catch (Exception e) {
                 var releases = GetVersions();

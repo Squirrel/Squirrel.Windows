@@ -57,9 +57,13 @@ namespace Squirrel.Update
             // /usr/bin/osascript -e 'do shell script "/path/to/myscript args 2>&1 etc" with administrator privileges'
 
             var currentDir = _app.UpdateAndRetrieveCurrentFolder(forceLatest);
-            Log.Info($"Running app at '{currentDir}' using 'open' with arguments '{arguments}'");
+
+            var exe = "/usr/bin/open";
+            var args = $" -n '{currentDir}' --args {arguments}";
             
-            Process.Start("/usr/bin/open", $" -n '{currentDir}' --args {arguments}");
+            Log.Info($"Running: {exe} {args}");
+            
+            PlatformUtil.StartProcessNonBlocking(exe, args, null);
         }
     }
 }
