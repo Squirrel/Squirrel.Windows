@@ -1,45 +1,42 @@
-| README.md |
-|:---|
-
 [![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Clowd.Squirrel?style=flat-square)](https://www.nuget.org/packages/Clowd.Squirrel/)
 
 # Clowd.Squirrel
 
-Squirrel is both a set of tools and a library, to completely manage both installation and updating your Desktop Windows application.
+Squirrel is both a set of tools and a library, to completely manage both installation and updating your desktop application. 
 
-This project is a fork of the library [Squirrel.Windows](https://github.com/Squirrel/Squirrel.Windows). The main focus here has been to update to more modern tooling, such as upgrading the main libraries to `netstandard2.0`, upgrading the tools to `net6.0`, and adding lots of fixes for dotnet core support.
-
-This library will help you build a `Setup.exe`, integrated (or standalone `Update.exe`) application updater, and release updates to your users very quickly and easily. The `Setup.exe` and `Update.exe` produced by this library are completely dependency free, and can even help you bootstrap/install any number of runtimes your app needs (such as dotnet 5/6, .net 4.8 or others).
-
-Feel free to join our discord for help or questions:
+Feel free to join our discord to recieve updates or to ask questions:
 
 [![discordimg2](https://user-images.githubusercontent.com/1287295/150318745-cbfcf5d0-3697-4bef-ac1a-b0d751f53b48.png)](https://discord.gg/CjrCrNzd3F)
 
-
-
 ---
 
-## Migrating from Squirrel.Windows?
+## Looking for info on v3.0 / cross-platform?
+Clowd.Squirrel v3.0 is a ground-up re-write and now supports macos (linux in the future?). Documentation for this is very limited but I have started working on this [in the docs-v3 folder](docs-v3). This work is being done in the `develop` branch.
 
-A couple of notes you should be aware of.
- - The command line interface for Squirrel.exe is massively different. Check 'Squirrel.exe -h' for more info.
- - The command line for Update.exe here is compatible with the old Squirrel.
- - Update.exe here is bigger (total 12.5mb) and is included in your packages.
- - Migrating to this library is fully compatible, except for the way we detect SquirrelAware binaries. More info below.
- - There have been a great many other improvements here. To see some of them [have a look at the feature matrix](#feature-matrix).
- - Something detected as a virus? This was an issue at the old Squirrel, and also see [issue #28](https://github.com/clowd/Clowd.Squirrel/issues/28)
+I will continue to support 2.x with critical fixes until further notice. This is currently the `master` branch.
 
 ---
 
 ## What Do We Want?
 
-Windows apps should be as fast and as easy to install and update as apps like Google Chrome. From an app developer's side, it should be really straightforward to create an installer for my app, and publish updates to it, without having to jump through insane hoops. 
+Apps should be as fast easy to install. Update should be seamless like Google Chrome. From a developer's side, it should be really straightforward to create an installer for my app, and publish updates to it, without having to jump through insane hoops. 
 
 * **Integrating** an app to use Squirrel should be extremely easy, provide a client API, and be developer friendly.
 * **Packaging** is really easy, can be automated, and supports delta update packages.
 * **Distributing** should be straightforward, use simple HTTP updates, and provide multiple "channels" (a-la Chrome Dev/Beta/Release).
 * **Installing** is Wizard-Free™, with no UAC dialogs, does not require reboot, and is .NET Framework friendly.
 * **Updating** is in the background, doesn't interrupt the user, and does not require a reboot.
+
+---
+
+## Migrating from Squirrel.Windows?
+
+ - The command line interface for Squirrel.exe is different. Check 'Squirrel.exe -h' for more info.
+ - The command line for Update.exe here is compatible with the old Squirrel.
+ - Update.exe here is bigger and is included in your packages. This means Update.exe will be updated each time you update your app. As long as you build delta packages, this will not impact the size of your updates.
+ - Migrating to this library is fully compatible, except for the way we detect SquirrelAware binaries. Follow the Quick Start guide.
+ - There have been a great many other improvements here. To see some of them [have a look at the feature matrix](#feature-matrix).
+ - Something detected as a virus? This was an issue at the old Squirrel, and also see [issue #28](https://github.com/clowd/Clowd.Squirrel/issues/28)
 
 ---
 
@@ -144,20 +141,6 @@ Windows apps should be as fast and as easy to install and update as apps like Go
       }
    }
    ```
-
----
-
-## Quick Start For Native / Other Apps
-
-This quick start guide is coming soon. Refer to below for complete docs which contains native app instructions.
-
----
-
-## More Documentation
-
-**Note - most of the following documentation is now out of date and updates are also coming soon**
-
-See the documentation [Table of Contents](docs/readme.md) for an overview of the available documentation. 
 
 ---
 
