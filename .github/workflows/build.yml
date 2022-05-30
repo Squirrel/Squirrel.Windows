@@ -31,7 +31,7 @@ jobs:
   # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
   package-macos:
     name: Sign OSX
-    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/cs/xplat' }}
+    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' }}
     runs-on: macos-latest
     needs: [ build-windows ]
     steps:
