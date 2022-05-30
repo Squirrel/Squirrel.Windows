@@ -1,4 +1,6 @@
+[![Nuget](https://img.shields.io/nuget/v/Clowd.Squirrel?style=flat-square)](https://www.nuget.org/packages/Clowd.Squirrel/)
 [![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Clowd.Squirrel?style=flat-square)](https://www.nuget.org/packages/Clowd.Squirrel/)
+
 
 # Clowd.Squirrel
 
