@@ -23,22 +23,26 @@ void PreloadLibs()
 	std::wstring version = (std::wstring(sys32Folder) + L"\\version.dll");
 	std::wstring logoncli = (std::wstring(sys32Folder) + L"\\logoncli.dll");
 	std::wstring sspicli = (std::wstring(sys32Folder) + L"\\sspicli.dll");
+	std::wstring urlmon = (std::wstring(sys32Folder) + L"\\urlmon.dll");
 
 	LoadLibrary(version.c_str());
 	LoadLibrary(logoncli.c_str());
 	LoadLibrary(sspicli.c_str());
+	LoadLibrary(urlmon.c_str());
 }
 
 void MitigateDllHijacking()
 {
 	// Set the default DLL lookup directory to System32 for ourselves and kernel32.dll
-	SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32);
-
 	HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
-	ATLASSERT(hKernel32 != NULL);
-
-	SetDefaultDllDirectoriesFunction pfn = (SetDefaultDllDirectoriesFunction)GetProcAddress(hKernel32, "SetDefaultDllDirectories");
-	if (pfn) { (*pfn)(LOAD_LIBRARY_SEARCH_SYSTEM32); }
+	if (hKernel32)
+	{
+		SetDefaultDllDirectoriesFunction pfn = (SetDefaultDllDirectoriesFunction)GetProcAddress(hKernel32, "SetDefaultDllDirectories");
+		if (pfn)
+		{
+			(*pfn)(LOAD_LIBRARY_SEARCH_SYSTEM32);
+		}
+	}
 
 	PreloadLibs();
 }
