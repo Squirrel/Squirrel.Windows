@@ -1,0 +1,38 @@
+name: Build Squirrel
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  build:
+    name: Build
+    runs-on: windows-2019
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Build Squirrel
+        shell: cmd
+        run: ./src/build_official.cmd
+
+      - name: Save build
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: build/artifacts/
