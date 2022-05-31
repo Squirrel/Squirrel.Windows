@@ -6,7 +6,7 @@
 
     <ProjectName Condition=" '$(ProjectName)' == '' ">$(MSBuildProjectName)</ProjectName>
     <BaseOutputPath>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\build\))</BaseOutputPath>
-    <BaseIntermediateOutputPath>$(BaseOutputPath)obj\$(ProjectName)\</BaseIntermediateOutputPath>
+    <BaseIntermediateOutputPath>$(BaseOutputPath)obj\$(Configuration)\$(ProjectName)\</BaseIntermediateOutputPath>
     <OutputPath>$(BaseOutputPath)$(Configuration)\</OutputPath>
 
     <Company>GitHub</Company>
