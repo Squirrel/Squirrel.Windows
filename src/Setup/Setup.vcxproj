@@ -64,8 +64,8 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;urlmon.lib</AdditionalDependencies>
-      <DelayLoadDLLs>user32.dll;advapi32.dll;shell32.dll;ole32.dll;oleaut32.dll;urlmon.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalDependencies>urlmon.lib</AdditionalDependencies>
+      <DelayLoadDLLs>comctl32.dll;shell32.dll;shlwapi.dll;urlmon.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>compat.manifest</AdditionalManifestFiles>
@@ -91,8 +91,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
-      <AdditionalDependencies>kernel32.lib;user32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;urlmon.lib</AdditionalDependencies>
-      <DelayLoadDLLs>user32.dll;advapi32.dll;shell32.dll;ole32.dll;oleaut32.dll;urlmon.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalDependencies>urlmon.lib</AdditionalDependencies>
+      <DelayLoadDLLs>comctl32.dll;shell32.dll;shlwapi.dll;urlmon.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>compat.manifest</AdditionalManifestFiles>
