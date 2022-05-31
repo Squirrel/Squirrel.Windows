@@ -15,7 +15,7 @@ typedef BOOL(WINAPI *SetDefaultDllDirectoriesFunction)(DWORD DirectoryFlags);
 
 // Some libraries are still loaded from the current directories.
 // If we pre-load them with an absolute path then we are good.
-void PreloadLibs()
+static void PreloadLibs()
 {
 	wchar_t sys32Folder[MAX_PATH];
 	GetSystemDirectory(sys32Folder, MAX_PATH);
@@ -31,7 +31,7 @@ void PreloadLibs()
 	LoadLibrary(urlmon.c_str());
 }
 
-void MitigateDllHijacking()
+static void MitigateDllHijacking()
 {
 	// Set the default DLL lookup directory to System32 for ourselves and kernel32.dll
 	HMODULE hKernel32 = LoadLibrary(L"kernel32.dll");
@@ -52,7 +52,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                       _In_ LPWSTR lpCmdLine,
                       _In_ int nCmdShow)
 {
-	MitigateDllHijacking();	
+	MitigateDllHijacking();
 
 	int exitCode = -1;
 	CString cmdLine(lpCmdLine);
