@@ -4,16 +4,16 @@ setlocal
 pushd %~dp0
 
 :parse_args
-@if not "%1"=="" shift & goto parse_args
+if not "%1"=="" shift & goto parse_args
 
 :: Init
 
-@if "%VCToolsVersion%"=="" call :StartDeveloperCommandPrompt || exit /b
+if "%VCToolsVersion%"=="" call :StartDeveloperCommandPrompt || exit /b
 
 
 :: Clean
 
-rd /s /q ..\build ..\packages ..\test\obj ..\test\bin 2> nul
+rd /s /q ..\build ..\packages 2> nul
 
 
 :: Build

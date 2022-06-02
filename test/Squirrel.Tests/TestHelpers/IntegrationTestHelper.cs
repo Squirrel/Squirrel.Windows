@@ -11,6 +11,7 @@ using System.Text;
 using SharpCompress.Archives.Zip;
 using SharpCompress.Readers;
 using SharpCompress.Common;
+using System.Reflection;
 
 namespace Squirrel.Tests.TestHelpers
 {
@@ -24,13 +25,7 @@ namespace Squirrel.Tests.TestHelpers
 
         public static string GetIntegrationTestRootDirectory()
         {
-            // XXX: This is an evil hack, but it's okay for a unit test
-            // We can't use Assembly.Location because unit test runners love
-            // to move stuff to temp directories
-            var st = new StackFrame(true);
-            var di = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(st.GetFileName()), ".."));
-
-            return di.FullName;
+            return Path.GetDirectoryName(new Uri(Assembly.GetCallingAssembly().CodeBase).LocalPath);
         }
 
         public static bool SkipTestOnXPAndVista()
@@ -76,7 +71,7 @@ namespace Squirrel.Tests.TestHelpers
         {
             var targetDir = default(string);
 
-            var nuget = IntegrationTestHelper.GetPath("..", ".nuget", "nuget.exe");
+            var nuget = IntegrationTestHelper.GetPath("nuget.exe");
             nuspecFile = nuspecFile ?? "SquirrelInstalledApp.nuspec";
 
             using (var clearTemp = Utility.WithTempDirectory(out targetDir)) {

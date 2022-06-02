@@ -9,8 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Squirrel\Squirrel.csproj" />
-    <ProjectReference Include="..\vendor\nuget\src\Core\Core.csproj" />
+    <None Include="fixtures\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\.nuget\nuget.exe" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Squirrel\Squirrel.csproj" />
+    <ProjectReference Include="..\..\vendor\nuget\src\Core\Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
