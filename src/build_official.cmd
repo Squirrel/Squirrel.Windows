@@ -13,7 +13,7 @@ pushd %~dp0
 
 :: Clean
 
-rd /s /q ..\build ..\packages ..\test\obj ..\test\bin 2> nul
+rd /s /q ..\build ..\packages 2> nul
 
 
 :: Build

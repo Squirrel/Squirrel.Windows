@@ -15,11 +15,11 @@ namespace Squirrel.Tests
     public class SquirrelAwareExecutableDetectorTests
     {
 #if DEBUG
-        private const string NativeBuildRootRelativePath = @"..\build\Debug\Win32\";
-        private const string ManagedBuildRootRelativePath = @"..\build\Debug\net45\";
+        private const string NativeBuildRootRelativePath = @"..\..\Win32\";
+        private const string ManagedBuildRootRelativePath = @"..\..\net45\";
 #else
-        private const string NativeBuildRootRelativePath = @"..\build\Release\Win32\";
-        private const string ManagedBuildRootRelativePath = @"..\build\Release\net45\";
+        private const string NativeBuildRootRelativePath = @"..\..\Win32\";
+        private const string ManagedBuildRootRelativePath = @"..\..\net45\";
 #endif
 
         [Fact]
