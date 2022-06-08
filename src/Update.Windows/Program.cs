@@ -21,7 +21,9 @@ namespace Squirrel.Update
 {
     class Program : IEnableLogger
     {
-        static StartupOption opt;
+        private static StartupOption opt;
+        private static SetupLogLogger _log;
+        
         static IFullLogger Log => SquirrelLocator.Current.GetService<ILogManager>().GetLogger(typeof(Program));
 
         [STAThread]
@@ -42,8 +44,8 @@ namespace Squirrel.Update
             try {
                 opt = new StartupOption(args);
             } catch (Exception ex) {
-                var logp = new SetupLogLogger(UpdateAction.Unset);
-                logp.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
+                _log = new SetupLogLogger(UpdateAction.Unset);
+                _log.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 throw;
             }
 
@@ -89,7 +91,7 @@ namespace Squirrel.Update
                     Windows.User32MessageBox.Show(
                         IntPtr.Zero,
                         "Setup encountered fatal error: " + ex.Message + Environment.NewLine
-                        + "There may be more detailed information in '%localappdata%\\SquirrelClowdTemp\\Squirrel.log'.",
+                        + $"There may be more detailed information in '{_log.LogFilePath}'.",
                         "Setup Error",
                         Windows.User32MessageBox.MessageBoxButtons.OK,
                         Windows.User32MessageBox.MessageBoxIcon.Error);

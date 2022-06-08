@@ -10,6 +10,8 @@ namespace Squirrel.Update
     {
         public LogLevel Level { get; set; } = LogLevel.Info;
 
+        public string LogFilePath { get; }
+        
         private readonly NLog.Logger _log;
 
         public SetupLogLogger(UpdateAction action)
@@ -27,11 +29,13 @@ namespace Squirrel.Update
                 : SquirrelRuntimeInfo.BaseDirectory;
             var logName = logToTemp ? "Squirrel.log" : $"Squirrel-{action}.log";
             var logArchiveName = logToTemp ? "Squirrel.{###}.log" : $"Squirrel-{action}.{{###}}.log";
+
+            LogFilePath = Path.Combine(logDirectory, logName);
             
             // https://gist.github.com/chrisortman/1092889
             SimpleConfigurator.ConfigureForTargetLogging(
                 new FileTarget() {
-                    FileName = Path.Combine(logDirectory, logName),
+                    FileName = LogFilePath,
                     Layout = new NLog.Layouts.SimpleLayout("${longdate} [${level:uppercase=true}] - ${message}"),
                     ArchiveFileName = Path.Combine(logDirectory, logArchiveName),
                     ArchiveAboveSize = 1_000_000,

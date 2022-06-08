@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Squirrel.SimpleSplat;
 
 namespace Squirrel.CommandLine
@@ -10,6 +11,7 @@ namespace Squirrel.CommandLine
         private readonly object gate = new object();
 
         private readonly string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        private readonly string localTemp = Path.GetTempPath();
 
         public void Write(string message, LogLevel logLevel)
         {
@@ -17,8 +19,10 @@ namespace Squirrel.CommandLine
                 return;
             }
 
-            if (SquirrelRuntimeInfo.IsWindows)
+            if (SquirrelRuntimeInfo.IsWindows) {
+                message = message.Replace(localTemp, "%temp%", StringComparison.InvariantCultureIgnoreCase);
                 message = message.Replace(localAppData, "%localappdata%", StringComparison.InvariantCultureIgnoreCase);
+            }
 
             lock (gate) {
                 string lvl = logLevel.ToString().Substring(0, 4).ToUpper();
