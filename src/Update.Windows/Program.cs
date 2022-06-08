@@ -1,4 +1,4 @@
-using Squirrel.SimpleSplat;
+﻿using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -256,14 +256,12 @@ namespace Squirrel.Update
                 .First().PackageName;
 
             var rootAppDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ourAppName);
-            var appDesc = new AppDescWindows(rootAppDir, ourAppName, true);
-            using var mgr = new UpdateManager(new SimpleFileSource(sourceDi), appDesc);
-
+  
             Log.Info("About to install to: " + rootAppDir);
             if (Directory.Exists(rootAppDir)) {
                 Log.Warn("Install path {0} already exists, burning it to the ground", rootAppDir);
 
-                mgr.KillAllExecutablesBelongingToPackage();
+                PlatformUtil.KillProcessesInDirectory(rootAppDir);
                 await Task.Delay(500);
 
                 Log.ErrorIfThrows(() => Utility.Retry(() => Utility.DeleteFileOrDirectoryHard(rootAppDir, throwOnFailure: true, renameFirst: true)),
@@ -279,6 +277,8 @@ namespace Squirrel.Update
             Log.ErrorIfThrows(() => File.Copy(SquirrelRuntimeInfo.EntryExePath, updateTarget, true),
                 "Failed to copy Update.exe to " + updateTarget);
 
+            var appDesc = new AppDescWindows(rootAppDir, ourAppName, true);
+            using var mgr = new UpdateManager(new SimpleFileSource(sourceDi), appDesc);
             await mgr.FullInstall(silentInstall, progressSource.Raise);
 
             using var rk = await Log.ErrorIfThrows(() => mgr.CreateUninstallerRegistryEntry(),
