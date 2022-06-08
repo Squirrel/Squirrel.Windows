@@ -1,4 +1,4 @@
-﻿using Squirrel.SimpleSplat;
+using Squirrel.SimpleSplat;
 using Squirrel.Json;
 using System;
 using System.Collections.Generic;
@@ -44,18 +44,18 @@ namespace Squirrel.Update
             try {
                 opt = new StartupOption(args);
             } catch (Exception ex) {
-                _log = new SetupLogLogger(UpdateAction.Unset);
-                _log.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
+                var logger = new SetupLogLogger(UpdateAction.Unset);
+                logger.Write($"Failed to parse command line options. {ex.Message}", LogLevel.Error);
                 throw;
             }
 
-            var logger = new SetupLogLogger(opt.updateAction);
-            SquirrelLocator.CurrentMutable.Register(() => logger, typeof(ILogger));
+            _log = new SetupLogLogger(opt.updateAction);
+            SquirrelLocator.CurrentMutable.Register(() => _log, typeof(ILogger));
 
             try {
                 return executeCommandLine(args);
             } catch (Exception ex) {
-                logger.Write("Finished with unhandled exception: " + ex, LogLevel.Fatal);
+                _log.Write("Finished with unhandled exception: " + ex, LogLevel.Fatal);
                 throw;
             }
         }
