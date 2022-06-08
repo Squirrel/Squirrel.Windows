@@ -32,17 +32,17 @@ namespace Squirrel
             });
         }
 
-        public static void CreateZipFromDirectory(string outputFile, string directoryToCompress, bool nestDirectory = false)
+        public static void CreateZipFromDirectory(string outputFile, string directoryToCompress, bool nestDirectory = false, CompressionLevel level = CompressionLevel.BestSpeed)
         {
             Log.Info($"Compressing '{directoryToCompress}' to '{outputFile}' using SharpCompress (DEFLATE)...");
             using var archive = ZipArchive.Create();
-            archive.DeflateCompressionLevel = CompressionLevel.BestSpeed;
+            archive.DeflateCompressionLevel = level;
             if (nestDirectory) {
                 AddAllFromDirectoryInNestedDir(archive, directoryToCompress);
             } else {
                 archive.AddAllFromDirectory(directoryToCompress);
             }
-            archive.SaveTo(outputFile, CompressionType.Deflate);
+            archive.SaveTo(outputFile, level == CompressionLevel.None ? CompressionType.None : CompressionType.Deflate);
         }
         
         private static void AddAllFromDirectoryInNestedDir(

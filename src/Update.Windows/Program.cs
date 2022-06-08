@@ -297,13 +297,13 @@ namespace Squirrel.Update
             try {
                 // 3 % (3 stages)
                 var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, ignoreDeltaUpdates: ignoreDeltaUpdates,
-                    progress: x => Console.WriteLine(UpdateManager.CalculateProgress(x, 0, 3)));
+                    progress: x => Console.WriteLine(Utility.CalculateProgress(x, 0, 3)));
 
                 // 3 - 30 %
-                await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(UpdateManager.CalculateProgress(x, 3, 30)));
+                await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(Utility.CalculateProgress(x, 3, 30)));
 
                 // 30 - 100 %
-                await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(UpdateManager.CalculateProgress(x, 30, 100)));
+                await mgr.ApplyReleases(updateInfo, x => Console.WriteLine(Utility.CalculateProgress(x, 30, 100)));
             } catch (Exception ex) {
                 if (ignoreDeltaUpdates) {
                     Log.ErrorException("Really couldn't apply updates!", ex);

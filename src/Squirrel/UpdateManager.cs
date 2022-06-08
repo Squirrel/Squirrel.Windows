@@ -110,7 +110,7 @@ namespace Squirrel
                 var currentVersion = CurrentlyInstalledVersion();
 
                 // 0 -> 10%
-                updateInfo = await this.ErrorIfThrows(() => CheckForUpdate(ignoreDeltaUpdates, x => progress(CalculateProgress(x, 0, 10))),
+                updateInfo = await this.ErrorIfThrows(() => CheckForUpdate(ignoreDeltaUpdates, x => progress(Utility.CalculateProgress(x, 0, 10))),
                     "Failed to check for updates").ConfigureAwait(false);
 
                 if (updateInfo == null || updateInfo.FutureReleaseEntry == null) {
@@ -133,12 +133,12 @@ namespace Squirrel
 
                 // 10 -> 50%
                 await this.ErrorIfThrows(() =>
-                        DownloadReleases(updateInfo.ReleasesToApply, x => progress(CalculateProgress(x, 10, 50))),
+                        DownloadReleases(updateInfo.ReleasesToApply, x => progress(Utility.CalculateProgress(x, 10, 50))),
                     "Failed to download updates").ConfigureAwait(false);
 
                 // 50 -> 100%
                 await this.ErrorIfThrows(() =>
-                        ApplyReleases(updateInfo, x => progress(CalculateProgress(x, 50, 100))),
+                        ApplyReleases(updateInfo, x => progress(Utility.CalculateProgress(x, 50, 100))),
                     "Failed to apply updates").ConfigureAwait(false);
 
                 if (SquirrelRuntimeInfo.IsWindows) {
@@ -253,27 +253,6 @@ namespace Squirrel
                 _updateLock = ret;
                 return ret;
             });
-        }
-
-        /// <summary>
-        /// Calculates the total percentage of a specific step that should report within a specific range.
-        /// <para />
-        /// If a step needs to report between 50 -> 75 %, this method should be used as CalculateProgress(percentage, 50, 75). 
-        /// </summary>
-        /// <param name="percentageOfCurrentStep">The percentage of the current step, a value between 0 and 100.</param>
-        /// <param name="stepStartPercentage">The start percentage of the range the current step represents.</param>
-        /// <param name="stepEndPercentage">The end percentage of the range the current step represents.</param>
-        /// <returns>The calculated percentage that can be reported about the total progress.</returns>
-        internal static int CalculateProgress(int percentageOfCurrentStep, int stepStartPercentage, int stepEndPercentage)
-        {
-            // Ensure we are between 0 and 100
-            percentageOfCurrentStep = Math.Max(Math.Min(percentageOfCurrentStep, 100), 0);
-
-            var range = stepEndPercentage - stepStartPercentage;
-            var singleValue = range / 100d;
-            var totalPercentage = (singleValue * percentageOfCurrentStep) + stepStartPercentage;
-
-            return (int) totalPercentage;
         }
     }
 }

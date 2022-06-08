@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -75,6 +76,43 @@ namespace Squirrel.Tests
                     File.Delete(outFile);
                 }
             }
+        }
+        
+        [Fact]
+        public void ApplyMultipleDeltasFast()
+        {
+            var basePackage = IntegrationTestHelper.GetPath("fixtures", "Clowd-3.4.287-full.nupkg");
+            var deltaPackage1 = IntegrationTestHelper.GetPath("fixtures", "Clowd-3.4.288-delta.nupkg");
+            var deltaPackage2 = IntegrationTestHelper.GetPath("fixtures", "Clowd-3.4.291-delta.nupkg");
+            var deltaPackage3 = IntegrationTestHelper.GetPath("fixtures", "Clowd-3.4.292-delta.nupkg");
+
+            using var t1 = Utility.GetTempDirectory(out var appDir);
+            using var t2 = Utility.GetTempDirectory(out var updateDir);
+
+            using var um = UpdateManagerTestImpl.FromLocalPackageTempDir(updateDir, "theApp", appDir);
+            var pkgDir = um.Config.PackagesDir;
+            
+            File.Copy(basePackage, Path.Combine(pkgDir, Path.GetFileName(basePackage)));
+            File.Copy(deltaPackage1, Path.Combine(pkgDir, Path.GetFileName(deltaPackage1)));
+            File.Copy(deltaPackage2, Path.Combine(pkgDir, Path.GetFileName(deltaPackage2)));
+            File.Copy(deltaPackage3, Path.Combine(pkgDir, Path.GetFileName(deltaPackage3)));
+            
+            var baseEntry = ReleaseEntry.GenerateFromFile(basePackage);
+
+            var toApply = new [] {
+                ReleaseEntry.GenerateFromFile(deltaPackage1),
+                ReleaseEntry.GenerateFromFile(deltaPackage2),
+                ReleaseEntry.GenerateFromFile(deltaPackage3),
+            };
+
+            List<int> progress = new List<int>();
+
+            var newEntry = um.createFullPackagesFromDeltas(toApply, baseEntry, progress.Add);
+
+            var outFile = Path.Combine(pkgDir, newEntry.Filename);
+            var result = new ZipPackage(outFile);
+            result.Id.ShouldEqual("Clowd");
+            result.Version.ShouldEqual(SemanticVersion.Parse("3.4.292"));
         }
 
         [Fact(Skip = "Rewrite this test, the original uses too many heavyweight fixtures")]

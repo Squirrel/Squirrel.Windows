@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Squirrel.SimpleSplat;
 using System.Threading;
 using System.Runtime.Versioning;
+using SharpCompress.Compressors.Deflate;
 using Squirrel.NuGet;
 
 namespace Squirrel
@@ -25,7 +26,10 @@ namespace Squirrel
 
             // Progress range: 00 -> 60
             // takes the latest local package, applies a series of delta to get the full package to update to
-            var release = await createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.LatestLocalReleaseEntry, new ApplyReleasesProgress(updateInfo.ReleasesToApply.Count, x => progress(CalculateProgress(x, 0, 60)))).ConfigureAwait(false);
+            var release = await Task.Run(() => {
+                return createFullPackagesFromDeltas(updateInfo.ReleasesToApply, updateInfo.LatestLocalReleaseEntry,
+                    x => progress(Utility.CalculateProgress(x, 0, 60)));
+            }).ConfigureAwait(false);
 
             progress(60);
 
@@ -40,7 +44,7 @@ namespace Squirrel
 
             // Progress range: 60 -> 80
             // extracts the new package to a version dir (app-{ver}) inside VersionStagingDir
-            var newVersionDir = await this.ErrorIfThrows(() => installPackageToStagingDir(updateInfo, release, x => progress(CalculateProgress(x, 60, 80))),
+            var newVersionDir = await this.ErrorIfThrows(() => installPackageToStagingDir(updateInfo, release, x => progress(Utility.CalculateProgress(x, 60, 80))),
                 "Failed to install package to app dir").ConfigureAwait(false);
 
             progress(80);
@@ -156,57 +160,61 @@ namespace Squirrel
             });
         }
 
-        async Task<ReleaseEntry> createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion, ApplyReleasesProgress progress)
+        internal ReleaseEntry createFullPackagesFromDeltas(IEnumerable<ReleaseEntry> releasesToApply, ReleaseEntry currentVersion, Action<int> progress = null)
         {
             Contract.Requires(releasesToApply != null);
 
-            progress = progress ?? new ApplyReleasesProgress(releasesToApply.Count(), x => { });
+            var releases = releasesToApply?.ToArray() ?? new ReleaseEntry[0];
+            progress ??= (x => { });
 
             // If there are no remote releases at all, bail
-            if (!releasesToApply.Any()) {
+            if (!releases.Any()) {
                 return null;
             }
 
             // If there are no deltas in our list, we're already done
-            if (releasesToApply.All(x => !x.IsDelta)) {
-                return releasesToApply.MaxBy(x => x.Version).FirstOrDefault();
+            if (releases.All(x => !x.IsDelta)) {
+                return releases.MaxBy(x => x.Version).FirstOrDefault();
             }
 
-            if (!releasesToApply.All(x => x.IsDelta)) {
+            if (!releases.All(x => x.IsDelta)) {
                 throw new Exception("Cannot apply combinations of delta and full packages");
             }
 
-            // Progress calculation is "complex" here. We need to known how many releases, and then give each release a similar amount of
-            // progress. For example, when applying 5 releases:
-            //
-            // release 1: 00 => 20
-            // release 2: 20 => 40
-            // release 3: 40 => 60
-            // release 4: 60 => 80
-            // release 5: 80 => 100
-            // 
+            using var _1 = Utility.GetTempDirectory(out var workingPath, _config.AppTempDir);
 
-            // Smash together our base full package and the nearest delta
-            var outputPackageZip = await Task.Run(() => {
-                var basePkg = Path.Combine(_config.PackagesDir, currentVersion.Filename);
-                var deltaPkg = Path.Combine(_config.PackagesDir, releasesToApply.First().Filename);
+            // extract the base package (this version) to a directory
+            var basePkg = Path.Combine(_config.PackagesDir, currentVersion.Filename);
+            EasyZip.ExtractZipToDirectory(basePkg, workingPath);
+            progress(10);
 
-                return new DeltaPackage(_config.AppTempDir).ApplyDeltaPackage(basePkg, deltaPkg,
-                    Regex.Replace(deltaPkg, @"-delta.nupkg$", ".nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
-                    x => progress.ReportReleaseProgress(x));
-            }).ConfigureAwait(false);
+            var dp = new DeltaPackage(_config.AppTempDir);
 
-            progress.FinishRelease();
+            // apply every delta to the working directory
+            double progressStepSize = 100d / releases.Length;
+            for (var index = 0; index < releases.Length; index++) {
+                var r = releases[index];
+                double baseProgress = index * progressStepSize;
 
-            if (releasesToApply.Count() == 1) {
-                return ReleaseEntry.GenerateFromFile(outputPackageZip);
+                dp.ApplyDeltaPackageFast(workingPath, Path.Combine(_config.PackagesDir, r.Filename), x => {
+                    double totalProgress = baseProgress + (progressStepSize * (x / 100d));
+                    progress(Utility.CalculateProgress((int) totalProgress, 10, 90));
+                });
             }
 
-            var fi = new FileInfo(outputPackageZip);
-            var entry = ReleaseEntry.GenerateFromFile(fi.OpenRead(), fi.Name);
+            var outputFile = Path.Combine(
+                _config.PackagesDir,
+                Regex.Replace(releases.Last().Filename, @"-delta.nupkg$", "-full.nupkg", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
 
-            // Recursively combine the rest of them
-            return await createFullPackagesFromDeltas(releasesToApply.Skip(1), entry, progress).ConfigureAwait(false);
+            progress(90);
+
+            // re-package working directory into full page
+            this.Log().Info("Repacking into full package: {0}", outputFile);
+            EasyZip.CreateZipFromDirectory(outputFile, workingPath, level: CompressionLevel.None);
+
+            progress(100);
+            
+            return ReleaseEntry.GenerateFromFile(outputFile);
         }
 
         [SupportedOSPlatform("windows")]
@@ -243,17 +251,18 @@ namespace Squirrel
             this.Log().Info("Squirrel Enabled Apps: [{0}]", String.Join(",", squirrelApps));
 
             // For each app, run the install command in-order and wait
-            if (!firstRunOnly) await squirrelApps.ForEachAsync(async exe => {
-                using (var cts = new CancellationTokenSource()) {
-                    cts.CancelAfter(30 * 1000);
+            if (!firstRunOnly)
+                await squirrelApps.ForEachAsync(async exe => {
+                    using (var cts = new CancellationTokenSource()) {
+                        cts.CancelAfter(30 * 1000);
 
-                    try {
-                        await PlatformUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
-                    } catch (Exception ex) {
-                        this.Log().ErrorException("Couldn't run Squirrel hook, continuing: " + exe, ex);
+                        try {
+                            await PlatformUtil.InvokeProcessAsync(exe, args, Path.GetDirectoryName(exe), cts.Token).ConfigureAwait(false);
+                        } catch (Exception ex) {
+                            this.Log().ErrorException("Couldn't run Squirrel hook, continuing: " + exe, ex);
+                        }
                     }
-                }
-            }, 1 /* at a time */).ConfigureAwait(false);
+                }, 1 /* at a time */).ConfigureAwait(false);
 
             // If this is the first run, we run the apps with first-run and 
             // *don't* wait for them, since they're probably the main EXE
