@@ -94,11 +94,17 @@ namespace Squirrel
 
             var newerThanUs = availableReleases
                 .Where(x => x.Version > currentVersion.Version)
-                .OrderBy(v => v.Version);
+                .OrderBy(v => v.Version)
+                .ToArray();
 
             var deltasSize = newerThanUs.Where(x => x.IsDelta).Sum(x => x.Filesize);
+            var deltasCount = newerThanUs.Count(x => x.IsDelta);
 
-            return (deltasSize < latestFull.Filesize && deltasSize > 0) ?
+            // delta's are cheap to download, but really expensive to apply.
+            // full packages are more expensive to download, but really cheap to apply.
+            // this tries to find a good balance of both. we will go for the full if
+            // there are too many delta's or if their file size is too large.
+            return (deltasSize > 0 && (deltasSize * 10) < latestFull.Filesize && deltasCount <= 10) ?
                 new UpdateInfo(currentVersion, newerThanUs.Where(x => x.IsDelta).ToArray(), packageDirectory) :
                 new UpdateInfo(currentVersion, new[] { latestFull }, packageDirectory);
         }
