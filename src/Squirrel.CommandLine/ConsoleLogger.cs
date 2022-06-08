@@ -10,8 +10,8 @@ namespace Squirrel.CommandLine
 
         private readonly object gate = new object();
 
-        private readonly string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        private readonly string localTemp = Path.GetTempPath();
+        private readonly string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData).TrimEnd('/', '\\');
+        private readonly string localTemp = Path.GetTempPath().TrimEnd('/', '\\');
 
         public void Write(string message, LogLevel logLevel)
         {
