@@ -468,10 +468,8 @@ namespace Squirrel.Tests
                 var baseEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, APP_ID, "packages", "Squirrel.Core.1.0.0.0-full.nupkg"));
                 var deltaEntry = ReleaseEntry.GenerateFromFile(Path.Combine(tempDir, APP_ID, "packages", "Squirrel.Core.1.1.0.0-delta.nupkg"));
 
-                var resultObsMethod = typeof(UpdateManager).GetMethod("createFullPackagesFromDeltas", BindingFlags.NonPublic | BindingFlags.Instance);
-                var resultObs = (Task<ReleaseEntry>) resultObsMethod.Invoke(fixture, new object[] { new[] { deltaEntry }, baseEntry, null });
-
-                var result = await resultObs;
+                var result = fixture.createFullPackagesFromDeltas(new[] { deltaEntry }, baseEntry, null);
+                
                 var zp = new ZipPackage(Path.Combine(tempDir, APP_ID, "packages", result.Filename));
                 zp.Version.ToString().ShouldEqual("1.1.0.0");
             }
