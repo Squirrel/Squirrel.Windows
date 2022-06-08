@@ -219,10 +219,15 @@ namespace Squirrel
                 return new SimpleFileSource(new DirectoryInfo(urlOrPath));
             }
         }
-
+        
         private Task<IDisposable> acquireUpdateLock()
         {
-            if (!ModeDetector.InUnitTestRunner() && _config.CurrentlyInstalledVersion == null)
+            bool installing = false;
+            if (SquirrelRuntimeInfo.IsWindows) {
+                installing = (_config as AppDescWindows)?.IsInstalling == true;
+            }
+            
+            if (!installing && !ModeDetector.InUnitTestRunner() && _config.CurrentlyInstalledVersion == null)
                 throw new InvalidOperationException("Cannot perform this operation in a portable app (must be installed first).");
             
             lock (_lockobj) {

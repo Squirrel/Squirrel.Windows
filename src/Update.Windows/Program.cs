@@ -254,7 +254,7 @@ namespace Squirrel.Update
                 .First().PackageName;
 
             var rootAppDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ourAppName);
-            var appDesc = new AppDescWindows(rootAppDir, ourAppName);
+            var appDesc = new AppDescWindows(rootAppDir, ourAppName, true);
             using var mgr = new UpdateManager(new SimpleFileSource(sourceDi), appDesc);
 
             Log.Info("About to install to: " + rootAppDir);

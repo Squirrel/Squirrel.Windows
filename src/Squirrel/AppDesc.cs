@@ -262,6 +262,9 @@ namespace Squirrel
 
         /// <inheritdoc />
         public override bool IsUpdateExe { get; }
+        
+        /// <summary> True if Update.exe is currently performing first app install. </summary>
+        public bool IsInstalling { get; }
 
         /// <inheritdoc />
         public override SemanticVersion CurrentlyInstalledVersion { get; }
@@ -290,7 +293,7 @@ namespace Squirrel
         /// Internal use only. Creates a AppDescWindows from the following rootAppDir and
         /// does not perform any path auto-detection.
         /// </summary>
-        internal AppDescWindows(string rootAppDir, string appId)
+        internal AppDescWindows(string rootAppDir, string appId, bool isInstalling = false)
         {
             AppId = appId;
             RootAppDir = rootAppDir;
@@ -298,6 +301,7 @@ namespace Squirrel
             UpdateExePath = updateExe;
             IsUpdateExe = Utility.FullPathEquals(updateExe, SquirrelRuntimeInfo.EntryExePath);
             CurrentlyInstalledVersion = GetLatestVersion()?.Version;
+            IsInstalling = isInstalling;
         }
 
         /// <summary>
