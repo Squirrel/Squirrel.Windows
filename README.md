@@ -1,6 +1,7 @@
 [![Nuget](https://img.shields.io/nuget/v/Clowd.Squirrel?style=flat-square)](https://www.nuget.org/packages/Clowd.Squirrel/)
 [![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Clowd.Squirrel?style=flat-square)](https://www.nuget.org/packages/Clowd.Squirrel/)
-
+[![Discord](https://img.shields.io/discord/767856501477343282?style=flat-square&color=purple)](https://discord.gg/CjrCrNzd3F)
+[![Build](https://img.shields.io/github/workflow/status/clowd/Clowd.Squirrel/Build%20Squirrel/develop?style=flat-square)](https://github.com/clowd/Clowd.Squirrel/actions)
 
 # Clowd.Squirrel
 
