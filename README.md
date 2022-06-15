@@ -39,8 +39,7 @@ For the impatient:
 ```sh
 git clone --recursive https://github.com/squirrel/squirrel.windows
 cd squirrel.windows
-.\.NuGet\NuGet.exe restore
-msbuild /p:Configuration=Release
+devbuild.cmd
 ```
 See [Contributing](docs/contributing/contributing.md) for additional information on building and contributing to Squirrel.
 
