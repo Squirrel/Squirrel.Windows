@@ -126,8 +126,8 @@ Apps should be as fast easy to install. Update should be seamless like Google Ch
     --packId "YourApp"`                # Application / package name
     --packVersion "1.0.0"`             # Version to build. Should be supplied by your CI
     --packAuthors "YourCompany"`       # Your name, or your company name
-    --packDirectory ".\publish"`       # The directory the application was published to
-    --setupIcon "mySetupIcon.ico"`     # Icon for Setup.exe
+    --packDir ".\publish"`       # The directory the application was published to
+    --icon "mySetupIcon.ico"`     # Icon for Setup.exe and Update.exe
     --splashImage "install.gif"        # The splash artwork (or animation) to be shown during install
    ```
 
