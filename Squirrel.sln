@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31815.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel", "src\Squirrel\Squirrel.csproj", "{1436E22A-FE3C-4D68-9A85-9E74DF2E6A92}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel.Tests", "test\Squirrel.Tests.csproj", "{98AEB048-E27D-42F4-9440-505B7F78BAFD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Squirrel.Tests", "test\Squirrel.Tests\Squirrel.Tests.csproj", "{98AEB048-E27D-42F4-9440-505B7F78BAFD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Update.Windows", "src\Update.Windows\Update.Windows.csproj", "{1EEBACBC-6982-4696-BD4E-899ED0AC6CD2}"
 EndProject
