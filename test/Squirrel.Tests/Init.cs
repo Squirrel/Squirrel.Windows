@@ -15,9 +15,9 @@ namespace Squirrel.Tests
         {
             // Place initialization code here
             var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location.Replace("file:///", ""));
-            HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor"));
-            HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "7zip"));
-            HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "vendor", "wix"));
+            HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "vendor"));
+            HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "vendor", "7zip"));
+            HelperFile.AddSearchPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "vendor", "wix"));
         }
 
         public new void Dispose()
