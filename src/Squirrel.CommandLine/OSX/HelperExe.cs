@@ -37,12 +37,12 @@ namespace Squirrel.CommandLine.OSX
                 "--options", "runtime",
                 "--entitlements", entitlements
             };
-
+            
             args.AddRange(files);
 
-            Log.Info($"Preparing to codesign {files.Length} Mach-O files...");
+            Log.Info($"Preparing to codesign package...");
 
-            InvokeAndThrowIfNonZero("codesign", args, null);
+            Console.WriteLine(InvokeAndThrowIfNonZero("codesign", args, null));
 
             Log.Info("codesign completed successfully");
         }
@@ -135,6 +135,7 @@ namespace Squirrel.CommandLine.OSX
             var args = new List<string> {
                 "-c",
                 "-k",
+                "--rsrc",
                 "--keepParent",
                 "--sequesterRsrc",
                 folder,
@@ -143,6 +144,18 @@ namespace Squirrel.CommandLine.OSX
 
             Log.Info($"Creating ditto bundle '{outputZip}'");
             InvokeAndThrowIfNonZero("ditto", args, null);
+        }
+        
+        [SupportedOSPlatform("osx")]
+        public static void AssessCodeSign(string filePath)
+        {
+            var args = new List<string> {
+                "--assess",
+                "-vvvv",
+                filePath
+            };
+
+            Console.WriteLine(InvokeAndThrowIfNonZero("spctl", args, null));
         }
     }
 }

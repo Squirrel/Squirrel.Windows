@@ -126,11 +126,8 @@ namespace Squirrel.CommandLine.OSX
 
             // code signing all mach-o binaries
             if (SquirrelRuntimeInfo.IsOSX && !String.IsNullOrEmpty(options.signAppIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
-                var machoFiles = Directory.EnumerateFiles(appBundlePath, "*", SearchOption.AllDirectories)
-                    .Where(f => PlatformUtil.IsMachOImage(f))
-                    .ToArray();
-
-                HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, machoFiles);
+                HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, new []{ appBundlePath });
+                HelperExe.AssessCodeSign(appBundlePath);
 
                 // notarize and staple the .app before creating a Squirrel release
                 HelperExe.CreateDittoZip(appBundlePath, zipPath);
