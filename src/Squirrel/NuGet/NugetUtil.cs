@@ -27,15 +27,11 @@ namespace Squirrel.NuGet
                 throw new ArgumentException($"Invalid package Id '{id}', it must contain only alphanumeric characters, underscores, dashes, and dots.");
         }
 
-        public static void ThrowIfVersionNotSemverCompliant(string version, bool allowTags = true)
+        public static void ThrowIfVersionNotSemverCompliant(string version)
         {
             if (SemanticVersion.TryParse(version, out var parsed)) {
                 if (parsed < new SemanticVersion(0, 0, 1)) {
                     throw new Exception($"Invalid package version '{version}', it must be >= 0.0.1.");
-                }
-
-                if (!allowTags && (parsed.HasMetadata || parsed.IsPrerelease)) {
-                    throw new Exception($"Invalid package version '{version}', metadata/pre-release tags are not permitted.");
                 }
             } else {
                 throw new Exception($"Invalid package version '{version}', it must be a 3-part SemVer2 compliant version string.");

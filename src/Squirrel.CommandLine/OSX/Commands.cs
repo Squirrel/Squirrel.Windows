@@ -5,6 +5,8 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.NET.HostModel.AppHost;
+using NuGet.Versioning;
 using Squirrel.NuGet;
 using Squirrel.PropertyList;
 using Squirrel.SimpleSplat;
@@ -19,49 +21,11 @@ namespace Squirrel.CommandLine.OSX
         {
             return new CommandSet {
                 "[ Package Authoring ]",
-                { "bundle", "Convert a build directory into a OSX '.app' bundle", new BundleOptions(), Bundle },
-                { "pack", "Create a Squirrel release from a '.app' bundle", new PackOptions(), Pack },
+                { "pack", "Convert a build or '.app' dir into a Squirrel release", new PackOptions(), Pack },
             };
         }
 
         private static void Pack(PackOptions options)
-        {
-            var releasesDir = options.GetReleaseDirectory();
-            using var _ = Utility.GetTempDirectory(out var tmp);
-
-            var manifest = Utility.ReadManifestFromVersionDir(options.package);
-            if (manifest == null)
-                throw new Exception("Package directory is not a valid Squirrel bundle. Execute 'bundle' command on this app first.");
-
-            var nupkgPath = NugetConsole.CreatePackageFromNuspecPath(tmp, options.package, manifest.FilePath);
-
-            var releaseFilePath = Path.Combine(releasesDir.FullName, "RELEASES");
-            var releases = new List<ReleaseEntry>();
-            if (File.Exists(releaseFilePath)) {
-                releases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
-            }
-
-            Log.Info("Creating Squirrel Release");
-            var rp = new ReleasePackageBuilder(nupkgPath);
-            var newPkgPath = rp.CreateReleasePackage(Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName));
-
-            Log.Info("Creating Delta Packages");
-            var prev = ReleasePackageBuilder.GetPreviousRelease(releases, rp, releasesDir.FullName);
-            if (prev != null && !options.noDelta) {
-                var deltaBuilder = new DeltaPackageBuilder();
-                var deltaFile = Path.Combine(releasesDir.FullName, rp.SuggestedReleaseFileName.Replace("full", "delta"));
-                var dp = deltaBuilder.CreateDeltaPackage(prev, rp, deltaFile);
-                releases.Add(ReleaseEntry.GenerateFromFile(deltaFile));
-            }
-            
-            releases.Add(ReleaseEntry.GenerateFromFile(newPkgPath));
-            ReleaseEntry.WriteReleaseFile(releases, releaseFilePath);
-            // EasyZip.CreateZipFromDirectory(Path.Combine(releasesDir.FullName, $"{rp.Id}.app.zip"), options.package, nestDirectory: true);
-
-            Log.Info("Done");
-        }
-
-        private static void Bundle(BundleOptions options)
         {
             var releaseDir = options.GetReleaseDirectory();
             string appBundlePath;
@@ -105,13 +69,15 @@ namespace Squirrel.CommandLine.OSX
                 var appleId = $"com.{options.packAuthors ?? options.packId}.{options.packId}";
                 var escapedAppleId = Regex.Replace(appleId, @"[^\w\.]", "_");
 
+                var appleSafeVersion = NuGetVersion.Parse(options.packVersion).Version.ToString();
+
                 var info = new AppInfo {
                     CFBundleName = options.packTitle ?? options.packId,
                     CFBundleDisplayName = options.packTitle ?? options.packId,
                     CFBundleExecutable = options.mainExe,
                     CFBundleIdentifier = escapedAppleId,
                     CFBundlePackageType = "APPL",
-                    CFBundleShortVersionString = options.packVersion,
+                    CFBundleShortVersionString = appleSafeVersion,
                     CFBundleVersion = options.packVersion,
                     CFBundleSignature = "????",
                     NSPrincipalClass = "NSApplication",
@@ -149,11 +115,53 @@ namespace Squirrel.CommandLine.OSX
             var nuspecText = NugetConsole.CreateNuspec(
                 options.packId, options.packTitle, options.packAuthors, options.packVersion, options.releaseNotes, options.includePdb, "osx");
 
-            File.WriteAllText(Path.Combine(contentsDir, Utility.SpecVersionFileName), nuspecText);
+            var nuspecPath = Path.Combine(contentsDir, Utility.SpecVersionFileName);
+            
+            // nuspec and UpdateMac need to be in contents dir or this package can't update
+            File.WriteAllText(nuspecPath, nuspecText);
             File.Copy(HelperExe.UpdateMacPath, Path.Combine(contentsDir, "UpdateMac"));
 
-            Log.Info("MacOS '.app' bundle prepared for Squirrel at: " + appBundlePath);
-            Log.Info("CodeSign and Notarize this app bundle before packing a Squirrel release.");
+            // code signing
+            var machoFiles = Directory.EnumerateFiles(appBundlePath, "*", SearchOption.AllDirectories)
+                .Where(f => PlatformUtil.IsMachOImage(f))
+                .ToArray();
+            
+            HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, machoFiles);
+            
+            Log.Info("Creating Squirrel Release");
+
+            using var _ = Utility.GetTempDirectory(out var tmp);
+            var nupkgPath = NugetConsole.CreatePackageFromNuspecPath(tmp, appBundlePath, nuspecPath);
+
+            var releaseFilePath = Path.Combine(releaseDir.FullName, "RELEASES");
+            var releases = new List<ReleaseEntry>();
+            if (File.Exists(releaseFilePath)) {
+                releases.AddRange(ReleaseEntry.ParseReleaseFile(File.ReadAllText(releaseFilePath, Encoding.UTF8)));
+            }
+
+            var rp = new ReleasePackageBuilder(nupkgPath);
+            var newPkgPath = rp.CreateReleasePackage(Path.Combine(releaseDir.FullName, rp.SuggestedReleaseFileName));
+
+            Log.Info("Creating Delta Packages");
+            var prev = ReleasePackageBuilder.GetPreviousRelease(releases, rp, releaseDir.FullName);
+            if (prev != null && !options.noDelta) {
+                var deltaBuilder = new DeltaPackageBuilder();
+                var deltaFile = Path.Combine(releaseDir.FullName, rp.SuggestedReleaseFileName.Replace("-full", "-delta"));
+                var dp = deltaBuilder.CreateDeltaPackage(prev, rp, deltaFile);
+                releases.Add(ReleaseEntry.GenerateFromFile(deltaFile));
+            }
+            
+            releases.Add(ReleaseEntry.GenerateFromFile(newPkgPath));
+            ReleaseEntry.WriteReleaseFile(releases, releaseFilePath);
+            
+            // need to pack as zip using ditto for notarization to succeed
+            // var zipPath = Path.Combine(releaseDir.FullName, options.packId + ".zip");
+
+            var pkgPath = Path.Combine(releaseDir.FullName, options.packId + ".pkg");
+            HelperExe.CreateInstallerPkg(appBundlePath, pkgPath, options.signInstallIdentity);
+
+            HelperExe.NotarizePkg(pkgPath, options.notaryProfile);
+            HelperExe.StapleNotarization(pkgPath);
         }
 
         private static void CopyFiles(DirectoryInfo source, DirectoryInfo target)

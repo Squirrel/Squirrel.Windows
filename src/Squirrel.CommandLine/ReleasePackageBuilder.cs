@@ -68,7 +68,7 @@ namespace Squirrel.CommandLine
             // we don't really care that they aren't valid
             if (!ModeDetector.InUnitTestRunner()) {
                 // verify that the .nuspec version is semver compliant
-                NugetUtil.ThrowIfVersionNotSemverCompliant(package.Version.ToString(), true);
+                NugetUtil.ThrowIfVersionNotSemverCompliant(package.Version.ToString());
 
                 // verify that the suggested filename can be round-tripped as an assurance 
                 // someone won't run across an edge case and install a broken app somehow

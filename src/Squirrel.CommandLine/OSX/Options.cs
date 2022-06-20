@@ -8,7 +8,7 @@ using Microsoft.NET.HostModel.AppHost;
 
 namespace Squirrel.CommandLine.OSX
 {
-    internal class BundleOptions : BaseOptions
+    internal class PackOptions : BaseOptions
     {
         public string packId { get; private set; }
         public string packTitle { get; private set; }
@@ -19,8 +19,13 @@ namespace Squirrel.CommandLine.OSX
         public string releaseNotes { get; private set; }
         public string icon { get; private set; }
         public string mainExe { get; private set; }
+        public bool noDelta { get; private set; }
+        public string signAppIdentity { get; private set; }
+        public string signInstallIdentity { get; private set; }
+        public string signEntitlements { get; private set; }
+        public string notaryProfile { get; private set; }
 
-        public BundleOptions()
+        public PackOptions()
         {
             Add("u=|packId=", "Unique {ID} for bundle", v => packId = v);
             Add("v=|packVersion=", "Current {VERSION} for bundle", v => packVersion = v);
@@ -32,36 +37,20 @@ namespace Squirrel.CommandLine.OSX
             Add("releaseNotes=", "{PATH} to file with markdown notes for version", v => releaseNotes = v);
             Add("e=|mainExe=", "The file {NAME} of the main executable", v => mainExe = v);
             Add("i=|icon=", "{PATH} to the .icns file for this bundle", v => icon = v);
+            Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
+            Add("signAppIdentity=", "The {SUBJECT} name of the cert to use for app code signing", v => signAppIdentity = v);
+            Add("signInstallIdentity=", "The {SUBJECT} name of the cert to use for installation packages", v => signInstallIdentity = v);
+            Add("signEntitlements=", "{PATH} to entitlements file for hardened runtime", v => signEntitlements = v);
+            Add("notaryProfile=", "{NAME} of profile containing Apple credentials stored with notarytool", v => notaryProfile = v);
         }
 
         public override void Validate()
         {
             IsRequired(nameof(packId), nameof(packVersion), nameof(packDirectory));
+            IsValidFile(nameof(signEntitlements), "entitlements");
             NuGet.NugetUtil.ThrowIfInvalidNugetId(packId);
-            NuGet.NugetUtil.ThrowIfVersionNotSemverCompliant(packVersion, false);
+            NuGet.NugetUtil.ThrowIfVersionNotSemverCompliant(packVersion);
             IsValidDirectory(nameof(packDirectory), true);
-        }
-    }
-
-    internal class PackOptions : BaseOptions
-    {
-        public string package { get; set; }
-        public bool noDelta { get; private set; }
-        // public string baseUrl { get; private set; }
-
-        public PackOptions()
-        {
-            // Add("b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true);
-            Add("p=|package=", "{PATH} to a '.app' directory to releasify", v => package = v);
-            Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
-        }
-
-        public override void Validate()
-        {
-            IsRequired(nameof(package));
-            IsValidDirectory(nameof(package), true);
-            if (!Utility.PathPartEndsWith(package, ".app"))
-                throw new OptionValidationException("-p argument must point to a macos bundle directory ending in '.app'.");
         }
     }
 }

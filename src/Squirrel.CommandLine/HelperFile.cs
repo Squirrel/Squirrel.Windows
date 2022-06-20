@@ -100,14 +100,30 @@ namespace Squirrel.CommandLine
             InvokeAndThrowIfNonZero(SevenZipPath, args, inFolder);
         }
 
-        protected static void InvokeAndThrowIfNonZero(string exePath, IEnumerable<string> args, string workingDir)
+        protected static string InvokeAndThrowIfNonZero(string exePath, IEnumerable<string> args, string workingDir)
         {
             var result = PlatformUtil.InvokeProcess(exePath, args, workingDir, CancellationToken.None);
-            if (result.ExitCode != 0) {
-                throw new Exception(
-                    $"Command failed:\n{result.Command}\n\n" +
-                    $"Output was:\n" + result.StdOutput);
-            }
+            ProcessFailedException.ThrowIfNonZero(result);
+            return result.StdOutput;
+        }
+    }
+
+    public class ProcessFailedException : Exception
+    {
+        public string Command { get; }
+        public string StdOutput { get; }
+
+        public ProcessFailedException(string command, string stdOutput) 
+            : base($"Command failed:\n{command}\n\nOutput was:\n{stdOutput}")
+        {
+            Command = command;
+            StdOutput = stdOutput;
+        }
+
+        public static void ThrowIfNonZero((int ExitCode, string StdOutput, string Command) result)
+        {
+            if (result.ExitCode != 0)
+                throw new ProcessFailedException(result.Command, result.StdOutput);
         }
     }
 }
