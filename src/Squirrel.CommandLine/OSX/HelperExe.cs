@@ -72,55 +72,50 @@ namespace Squirrel.CommandLine.OSX
         }
 
         [SupportedOSPlatform("osx")]
-        public static void StapleNotarization(string filePath)
+        public static void Staple(string filePath)
         {
             Log.Info($"Stapling Notarization to '{filePath}'");
             var args = new List<string> {
                 "stapler", "staple", filePath,
             };
-            InvokeAndThrowIfNonZero("xcrun", args, null);
+            Console.WriteLine(InvokeAndThrowIfNonZero("xcrun", args, null));
         }
 
         [SupportedOSPlatform("osx")]
-        public static void NotarizePkg(string pkgPath, string profileName)
+        public static void Notarize(string filePath, string keychainProfileName)
         {
-            Log.Info($"Preparing to Notarize '{pkgPath}'. This will upload to Apple and usually takes minutes, but could take hours.");
+            Log.Info($"Preparing to Notarize '{filePath}'. This will upload to Apple and usually takes minutes, but could take hours.");
             
             var args = new List<string> {
                 "notarytool",
                 "submit",
                 "-f", "json",
-                // "--apple-id", appleId,
-                // "--password", appPwd,
-                // "--team-id", teamId,
-                "--keychain-profile", profileName,
+                "--keychain-profile", keychainProfileName,
                 "--wait",
-                pkgPath
+                filePath
             };
             
             var ntresultjson = PlatformUtil.InvokeProcess("xcrun", args, null, CancellationToken.None);
-            Log.Info(ntresultjson);
-            
-            if (ntresultjson.ExitCode != 0) {
-                try {
-                    var ntresult = JsonConvert.DeserializeObject<NotaryToolResult>(ntresultjson.StdOutput);
-                    // find and report notarization errors if possible
+            Log.Info(ntresultjson.StdOutput);
+
+            // try to catch any notarization errors. if we have a submission id, retrieve notary logs.
+            try {
+                var ntresult = JsonConvert.DeserializeObject<NotaryToolResult>(ntresultjson.StdOutput);
+                if (ntresult?.status != "Accepted" || ntresultjson.ExitCode != 0) {
                     if (ntresult?.id != null) {
                         var logargs = new List<string> {
                             "notarytool",
                             "log",
                             ntresult?.id,
-                            "--keychain-profile", profileName,
-                            // "--apple-id", appleId,
-                            // "--password", appPwd,
-                            // "--team-id", teamId,
+                            "--keychain-profile", keychainProfileName,
                         };
 
                         var result = PlatformUtil.InvokeProcess("xcrun", logargs, null, CancellationToken.None);
                         Log.Warn(result.StdOutput);
                     }
-                } catch { ;}
-                
+                    throw new Exception("Notarization failed: " + ntresultjson.StdOutput);
+                }
+            } catch (JsonReaderException) {
                 throw new Exception("Notarization failed: " + ntresultjson.StdOutput);
             }
             
@@ -141,10 +136,12 @@ namespace Squirrel.CommandLine.OSX
                 "-c",
                 "-k",
                 "--keepParent",
+                "--sequesterRsrc",
                 folder,
                 outputZip
             };
 
+            Log.Info($"Creating ditto bundle '{outputZip}'");
             InvokeAndThrowIfNonZero("ditto", args, null);
         }
     }

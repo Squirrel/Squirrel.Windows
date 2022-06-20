@@ -116,20 +116,37 @@ namespace Squirrel.CommandLine.OSX
                 options.packId, options.packTitle, options.packAuthors, options.packVersion, options.releaseNotes, options.includePdb, "osx");
 
             var nuspecPath = Path.Combine(contentsDir, Utility.SpecVersionFileName);
-            
+
             // nuspec and UpdateMac need to be in contents dir or this package can't update
             File.WriteAllText(nuspecPath, nuspecText);
             File.Copy(HelperExe.UpdateMacPath, Path.Combine(contentsDir, "UpdateMac"));
 
-            // code signing
-            var machoFiles = Directory.EnumerateFiles(appBundlePath, "*", SearchOption.AllDirectories)
-                .Where(f => PlatformUtil.IsMachOImage(f))
-                .ToArray();
-            
-            HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, machoFiles);
-            
-            Log.Info("Creating Squirrel Release");
+            var zipPath = Path.Combine(releaseDir.FullName, options.packId + ".zip");
+            if (File.Exists(zipPath)) File.Delete(zipPath);
 
+            // code signing all mach-o binaries
+            if (SquirrelRuntimeInfo.IsOSX && !String.IsNullOrEmpty(options.signAppIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
+                var machoFiles = Directory.EnumerateFiles(appBundlePath, "*", SearchOption.AllDirectories)
+                    .Where(f => PlatformUtil.IsMachOImage(f))
+                    .ToArray();
+
+                HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, machoFiles);
+
+                // notarize and staple the .app before creating a Squirrel release
+                HelperExe.CreateDittoZip(appBundlePath, zipPath);
+                HelperExe.Notarize(zipPath, options.notaryProfile);
+                HelperExe.Staple(appBundlePath);
+
+                // re-create the zip from the app with the stapled notarization
+                File.Delete(zipPath);
+                HelperExe.CreateDittoZip(appBundlePath, zipPath);
+            } else {
+                Log.Warn("Package will not be signed or notarized. Only supported on OSX with the --signAppIdentity and --notaryProfile options.");
+                EasyZip.CreateZipFromDirectory(zipPath, appBundlePath, nestDirectory: true);
+            }
+
+            // create release / delta from notarized .app
+            Log.Info("Creating Squirrel Release");
             using var _ = Utility.GetTempDirectory(out var tmp);
             var nupkgPath = NugetConsole.CreatePackageFromNuspecPath(tmp, appBundlePath, nuspecPath);
 
@@ -150,18 +167,22 @@ namespace Squirrel.CommandLine.OSX
                 var dp = deltaBuilder.CreateDeltaPackage(prev, rp, deltaFile);
                 releases.Add(ReleaseEntry.GenerateFromFile(deltaFile));
             }
-            
+
             releases.Add(ReleaseEntry.GenerateFromFile(newPkgPath));
             ReleaseEntry.WriteReleaseFile(releases, releaseFilePath);
-            
-            // need to pack as zip using ditto for notarization to succeed
-            // var zipPath = Path.Combine(releaseDir.FullName, options.packId + ".zip");
 
-            var pkgPath = Path.Combine(releaseDir.FullName, options.packId + ".pkg");
-            HelperExe.CreateInstallerPkg(appBundlePath, pkgPath, options.signInstallIdentity);
+            // create installer package and notarize
+            if (SquirrelRuntimeInfo.IsOSX && !String.IsNullOrEmpty(options.signInstallIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
+                var pkgPath = Path.Combine(releaseDir.FullName, options.packId + ".pkg");
+                if (File.Exists(pkgPath)) File.Delete(pkgPath);
+                HelperExe.CreateInstallerPkg(appBundlePath, pkgPath, options.signInstallIdentity);
+                HelperExe.Notarize(pkgPath, options.notaryProfile);
+                HelperExe.Staple(pkgPath);
+            } else {
+                Log.Warn("Package installer (.pkg) will not be created. Only supported on OSX with the --signInstallIdentity and --notaryProfile options.");
+            }
 
-            HelperExe.NotarizePkg(pkgPath, options.notaryProfile);
-            HelperExe.StapleNotarization(pkgPath);
+            Log.Info("Done.");
         }
 
         private static void CopyFiles(DirectoryInfo source, DirectoryInfo target)
