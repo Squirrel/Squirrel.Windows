@@ -47,7 +47,7 @@ namespace Squirrel.CommandLine.OSX
                 Log.Info("Copying app to release directory");
                 if (Directory.Exists(appBundlePath)) Utility.DeleteFileOrDirectoryHard(appBundlePath);
                 Directory.CreateDirectory(appBundlePath);
-                CopyFiles(new DirectoryInfo(options.packDirectory), new DirectoryInfo(appBundlePath));
+                Utility.CopyFiles(new DirectoryInfo(options.packDirectory), new DirectoryInfo(appBundlePath));
             } else {
                 Log.Info("Pack directory is not a bundle. Will generate new '.app' bundle from a directory of application files.");
 
@@ -98,7 +98,7 @@ namespace Squirrel.CommandLine.OSX
                 File.Copy(options.icon, Path.Combine(builder.ResourcesDirectory, Path.GetFileName(options.icon)));
 
                 Log.Info("Copying application files into new '.app' bundle");
-                CopyFiles(new DirectoryInfo(options.packDirectory), new DirectoryInfo(builder.MacosDirectory));
+                Utility.CopyFiles(new DirectoryInfo(options.packDirectory), new DirectoryInfo(builder.MacosDirectory));
 
                 appBundlePath = builder.AppDirectory;
             }
@@ -133,7 +133,7 @@ namespace Squirrel.CommandLine.OSX
                 HelperExe.CreateDittoZip(appBundlePath, zipPath);
                 HelperExe.Notarize(zipPath, options.notaryProfile);
                 HelperExe.Staple(appBundlePath);
-
+                
                 // re-create the zip from the app with the stapled notarization
                 File.Delete(zipPath);
                 HelperExe.CreateDittoZip(appBundlePath, zipPath);
@@ -180,21 +180,6 @@ namespace Squirrel.CommandLine.OSX
             }
 
             Log.Info("Done.");
-        }
-
-        private static void CopyFiles(DirectoryInfo source, DirectoryInfo target)
-        {
-            Directory.CreateDirectory(target.FullName);
-
-            foreach (var fileInfo in source.GetFiles()) {
-                var path = Path.Combine(target.FullName, fileInfo.Name);
-                fileInfo.CopyTo(path, true);
-            }
-
-            foreach (var sourceSubDir in source.GetDirectories()) {
-                var targetSubDir = target.CreateSubdirectory(sourceSubDir.Name);
-                CopyFiles(sourceSubDir, targetSubDir);
-            }
         }
     }
 }

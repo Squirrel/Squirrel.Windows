@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
 using Newtonsoft.Json;
@@ -52,22 +53,54 @@ namespace Squirrel.CommandLine.OSX
         {
             Log.Info($"Creating installer '.pkg' for app at '{appBundlePath}'");
 
-            var args = new List<string> {
-                "--install-location", "~/Applications",
-                "--component", appBundlePath,
-            };
+            using var _1 = Utility.GetTempDirectory(out var tmp);
+            using var _2 = Utility.GetTempDirectory(out var tmpPayload1);
+            using var _3 = Utility.GetTempDirectory(out var tmpPayload2);
 
+            // copy .app to tmp folder
+            var bundleName = Path.GetFileName(appBundlePath);
+            var tmpBundlePath = Path.Combine(tmpPayload1, bundleName);
+            Utility.CopyFiles(new DirectoryInfo(appBundlePath), new DirectoryInfo(tmpBundlePath));
+
+            // generate non-relocatable pkg
+            var pkgPlistPath = Path.Combine(tmp, "tmp.plist");
+            InvokeAndThrowIfNonZero("pkgbuild", new[] { "--analyze", "--root", tmpPayload1, pkgPlistPath }, null);
+            InvokeAndThrowIfNonZero("plutil", new[] { "-replace", "BundleIsRelocatable", "-bool", "NO", pkgPlistPath }, null);
+            
+            var pkg1Path = Path.Combine(tmpPayload2, "1.pkg");
+            string[] args1 = {
+                "--root", tmpPayload1,
+                "--component-plist", pkgPlistPath,
+                "--install-location", "/Applications",
+                pkg1Path,
+            };
+            
+            InvokeAndThrowIfNonZero("pkgbuild", args1, null);
+
+            // create product package that installs to home dir
+            var distributionPath = Path.Combine(tmp, "distribution.xml");
+            InvokeAndThrowIfNonZero("productbuild", new[] { "--synthesize", "--package", pkg1Path, distributionPath }, null);
+            
+            // disable local system installation and build final package
+            var distXml = File.ReadAllLines(distributionPath).ToList();
+            distXml.Insert(2, "<domains enable_anywhere=\"false\" enable_currentUserHome=\"true\" enable_localSystem=\"false\" />");
+            File.WriteAllLines(distributionPath, distXml);
+            
+            List<string> args2 = new () {
+                "--distribution", distributionPath, 
+                "--package-path", tmpPayload2,
+                pkgOutputPath
+            };
+            
             if (!String.IsNullOrEmpty(signIdentity)) {
-                args.Add("--sign");
-                args.Add(signIdentity);
+                args2.Add("--sign");
+                args2.Add(signIdentity);
             } else {
                 Log.Warn("No Installer signing identity provided. The '.pkg' will not be signed.");
             }
-
-            args.Add(pkgOutputPath);
-
-            InvokeAndThrowIfNonZero("pkgbuild", args, null);
-
+            
+            InvokeAndThrowIfNonZero("productbuild", args2, null);
+            
             Log.Info("Installer created successfully");
         }
 

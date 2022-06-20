@@ -781,5 +781,20 @@ namespace Squirrel
 
             return null;
         }
+        
+        public static void CopyFiles(DirectoryInfo source, DirectoryInfo target)
+        {
+            Directory.CreateDirectory(target.FullName);
+
+            foreach (var fileInfo in source.GetFiles()) {
+                var path = Path.Combine(target.FullName, fileInfo.Name);
+                fileInfo.CopyTo(path, true);
+            }
+
+            foreach (var sourceSubDir in source.GetDirectories()) {
+                var targetSubDir = target.CreateSubdirectory(sourceSubDir.Name);
+                CopyFiles(sourceSubDir, targetSubDir);
+            }
+        }
     }
 }
