@@ -18,10 +18,8 @@ namespace Squirrel.CommandLine.OSX
         [SupportedOSPlatform("osx")]
         public static void CodeSign(string identity, string entitlements, string[] files)
         {
-            Log.Info($"Preparing to code-sign {files.Length} Mach-O files.");
-
             if (String.IsNullOrEmpty(entitlements)) {
-                Log.Info("No entitlements provided, using default dotnet entitlements: " +
+                Log.Info("No codesign entitlements provided, using default dotnet entitlements: " +
                          "https://docs.microsoft.com/en-us/dotnet/core/install/macos-notarization-issues");
                 entitlements = SquirrelEntitlements;
             }
@@ -34,6 +32,7 @@ namespace Squirrel.CommandLine.OSX
                 "-s", identity,
                 "-f",
                 "-v",
+                "--deep",
                 "--timestamp",
                 "--options", "runtime",
                 "--entitlements", entitlements
@@ -41,9 +40,11 @@ namespace Squirrel.CommandLine.OSX
 
             args.AddRange(files);
 
+            Log.Info($"Preparing to codesign {files.Length} Mach-O files...");
+
             InvokeAndThrowIfNonZero("codesign", args, null);
 
-            Log.Info("Code-sign completed successfully");
+            Log.Info("codesign completed successfully");
         }
 
         [SupportedOSPlatform("osx")]
@@ -88,11 +89,11 @@ namespace Squirrel.CommandLine.OSX
             var args = new List<string> {
                 "notarytool",
                 "submit",
+                "-f", "json",
                 // "--apple-id", appleId,
                 // "--password", appPwd,
                 // "--team-id", teamId,
                 "--keychain-profile", profileName,
-                "-f", "json",
                 "--wait",
                 pkgPath
             };
@@ -100,26 +101,27 @@ namespace Squirrel.CommandLine.OSX
             var ntresultjson = PlatformUtil.InvokeProcess("xcrun", args, null, CancellationToken.None);
             Log.Info(ntresultjson);
             
-            var ntresult = JsonConvert.DeserializeObject<NotaryToolResult>(ntresultjson.StdOutput);
-
             if (ntresultjson.ExitCode != 0) {
-                // find and report notarization errors
-                if (ntresult?.id != null) {
-                    var logargs = new List<string> {
-                        "notarytool",
-                        "log",
-                        ntresult?.id,
-                        "--keychain-profile", profileName,
-                        // "--apple-id", appleId,
-                        // "--password", appPwd,
-                        // "--team-id", teamId,
-                    };
+                try {
+                    var ntresult = JsonConvert.DeserializeObject<NotaryToolResult>(ntresultjson.StdOutput);
+                    // find and report notarization errors if possible
+                    if (ntresult?.id != null) {
+                        var logargs = new List<string> {
+                            "notarytool",
+                            "log",
+                            ntresult?.id,
+                            "--keychain-profile", profileName,
+                            // "--apple-id", appleId,
+                            // "--password", appPwd,
+                            // "--team-id", teamId,
+                        };
 
-                    var result = PlatformUtil.InvokeProcess("xcrun", logargs, null, CancellationToken.None);
-                    Log.Warn(result.StdOutput);
-                }
-
-                throw new Exception("Notarization failed.");
+                        var result = PlatformUtil.InvokeProcess("xcrun", logargs, null, CancellationToken.None);
+                        Log.Warn(result.StdOutput);
+                    }
+                } catch { ;}
+                
+                throw new Exception("Notarization failed: " + ntresultjson.StdOutput);
             }
             
             Log.Info("Notarization completed successfully");
