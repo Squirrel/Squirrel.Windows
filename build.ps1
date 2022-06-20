@@ -2,17 +2,17 @@
 $ProgressPreference = "SilentlyContinue" # progress bar in powershell is slow af
 $ErrorActionPreference = "Stop"
 
-# search for msbuild, the loaction of vswhere is guarenteed to be consistent
-$MSBuildPath = (&"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe) | Out-String
-Set-Alias msbuild $MSBuildPath.Trim()
-Set-Alias seven "$PSScriptRoot\vendor\7za.exe"
-
 # This variable is null in github actions
 if ($PSScriptRoot -eq $null) {
     $PSScriptRoot = "."
 } else {
     Set-Location $PSScriptRoot
 }
+
+# search for msbuild, the loaction of vswhere is guarenteed to be consistent
+$MSBuildPath = (&"${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe) | Out-String
+Set-Alias msbuild $MSBuildPath.Trim()
+Set-Alias seven "$PSScriptRoot\vendor\7za.exe"
 
 # Ensure a clean state by removing build/package folders
 Write-Host "Cleaning previous build outputs (if any)" -ForegroundColor Magenta
@@ -45,6 +45,7 @@ dotnet publish -v minimal --no-build -c Release --self-contained "$PSScriptRoot\
 dotnet publish -v minimal --no-build -c Release --self-contained "$PSScriptRoot\src\Update.OSX\Update.OSX.csproj" -o "$ToolsDir"
 
 Write-Host "Copying Tools" -ForegroundColor Magenta
+Copy-Item -Path "$PSScriptRoot\Squirrel.entitlements" -Destination "$ToolsDir"
 New-Item -Path "squirrel" -Name "tools" -ItemType "directory"
 Copy-Item -Path "$ToolsDir\*" -Destination "squirrel\tools" -Recurse
 Remove-Item "squirrel\tools\*.xml"
