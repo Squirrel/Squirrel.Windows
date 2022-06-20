@@ -38,10 +38,13 @@ namespace Squirrel.CommandLine.OSX
             Add("e=|mainExe=", "The file {NAME} of the main executable", v => mainExe = v);
             Add("i=|icon=", "{PATH} to the .icns file for this bundle", v => icon = v);
             Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
-            Add("signAppIdentity=", "The {SUBJECT} name of the cert to use for app code signing", v => signAppIdentity = v);
-            Add("signInstallIdentity=", "The {SUBJECT} name of the cert to use for installation packages", v => signInstallIdentity = v);
-            Add("signEntitlements=", "{PATH} to entitlements file for hardened runtime", v => signEntitlements = v);
-            Add("notaryProfile=", "{NAME} of profile containing Apple credentials stored with notarytool", v => notaryProfile = v);
+
+            if (SquirrelRuntimeInfo.IsOSX) {
+                Add("signAppIdentity=", "The {SUBJECT} name of the cert to use for app code signing", v => signAppIdentity = v);
+                Add("signInstallIdentity=", "The {SUBJECT} name of the cert to use for installation packages", v => signInstallIdentity = v);
+                Add("signEntitlements=", "{PATH} to entitlements file for hardened runtime", v => signEntitlements = v);
+                Add("notaryProfile=", "{NAME} of profile containing Apple credentials stored with notarytool", v => notaryProfile = v);
+            }
         }
 
         public override void Validate()

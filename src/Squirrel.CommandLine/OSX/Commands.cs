@@ -126,19 +126,20 @@ namespace Squirrel.CommandLine.OSX
 
             // code signing all mach-o binaries
             if (SquirrelRuntimeInfo.IsOSX && !String.IsNullOrEmpty(options.signAppIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
-                HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, new []{ appBundlePath });
-                HelperExe.AssessCodeSign(appBundlePath);
-
-                // notarize and staple the .app before creating a Squirrel release
+                HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, appBundlePath);
                 HelperExe.CreateDittoZip(appBundlePath, zipPath);
                 HelperExe.Notarize(zipPath, options.notaryProfile);
-                HelperExe.Staple(appBundlePath);
-                
-                // re-create the zip from the app with the stapled notarization
-                File.Delete(zipPath);
-                HelperExe.CreateDittoZip(appBundlePath, zipPath);
+            } else if (SquirrelRuntimeInfo.IsOSX && !String.IsNullOrEmpty(options.signAppIdentity)) {
+                HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, appBundlePath);
+                Log.Warn("Package was signed but will not be notarized. Must supply the --notaryProfile option.");
             } else {
                 Log.Warn("Package will not be signed or notarized. Only supported on OSX with the --signAppIdentity and --notaryProfile options.");
+            }
+
+            // create a portable zip package from signed/notarized bundle
+            if (SquirrelRuntimeInfo.IsOSX) {
+                HelperExe.CreateDittoZip(appBundlePath, zipPath);
+            } else {
                 EasyZip.CreateZipFromDirectory(zipPath, appBundlePath, nestDirectory: true);
             }
 
@@ -168,15 +169,18 @@ namespace Squirrel.CommandLine.OSX
             releases.Add(ReleaseEntry.GenerateFromFile(newPkgPath));
             ReleaseEntry.WriteReleaseFile(releases, releaseFilePath);
 
-            // create installer package and notarize
-            if (SquirrelRuntimeInfo.IsOSX && !String.IsNullOrEmpty(options.signInstallIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
+            // create installer package, sign and notarize
+            if (SquirrelRuntimeInfo.IsOSX) {
                 var pkgPath = Path.Combine(releaseDir.FullName, options.packId + ".pkg");
-                if (File.Exists(pkgPath)) File.Delete(pkgPath);
                 HelperExe.CreateInstallerPkg(appBundlePath, pkgPath, options.signInstallIdentity);
-                HelperExe.Notarize(pkgPath, options.notaryProfile);
-                HelperExe.Staple(pkgPath);
+                if (!String.IsNullOrEmpty(options.signInstallIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
+                    HelperExe.Notarize(pkgPath, options.notaryProfile);
+                } else {
+                    Log.Warn("Package installer (.pkg) will not be Notarized. " +
+                             "This is supported with the --signInstallIdentity and --notaryProfile arguments.");
+                }
             } else {
-                Log.Warn("Package installer (.pkg) will not be created. Only supported on OSX with the --signInstallIdentity and --notaryProfile options.");
+                Log.Warn("Package installer (.pkg) will not be created - this is only supported on OSX.");
             }
 
             Log.Info("Done.");

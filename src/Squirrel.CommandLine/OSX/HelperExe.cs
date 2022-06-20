@@ -17,7 +17,7 @@ namespace Squirrel.CommandLine.OSX
         public static string SquirrelEntitlements => FindHelperFile("Squirrel.entitlements");
 
         [SupportedOSPlatform("osx")]
-        public static void CodeSign(string identity, string entitlements, string[] files)
+        public static void CodeSign(string identity, string entitlements, string filePath)
         {
             if (String.IsNullOrEmpty(entitlements)) {
                 Log.Info("No codesign entitlements provided, using default dotnet entitlements: " +
@@ -36,14 +36,21 @@ namespace Squirrel.CommandLine.OSX
                 "--deep",
                 "--timestamp",
                 "--options", "runtime",
-                "--entitlements", entitlements
+                "--entitlements", entitlements,
+                filePath
             };
-            
-            args.AddRange(files);
 
-            Log.Info($"Preparing to codesign package...");
+            Log.Info($"Beginning codesign for package...");
 
             Console.WriteLine(InvokeAndThrowIfNonZero("codesign", args, null));
+            
+            var args2 = new List<string> {
+                "--assess",
+                "-vvvv",
+                filePath
+            };
+
+            Console.WriteLine(InvokeAndThrowIfNonZero("spctl", args2, null));
 
             Log.Info("codesign completed successfully");
         }
@@ -52,6 +59,8 @@ namespace Squirrel.CommandLine.OSX
         public static void CreateInstallerPkg(string appBundlePath, string pkgOutputPath, string signIdentity)
         {
             Log.Info($"Creating installer '.pkg' for app at '{appBundlePath}'");
+            
+            if (File.Exists(pkgOutputPath)) File.Delete(pkgOutputPath);
 
             using var _1 = Utility.GetTempDirectory(out var tmp);
             using var _2 = Utility.GetTempDirectory(out var tmpPayload1);
@@ -66,7 +75,7 @@ namespace Squirrel.CommandLine.OSX
             var pkgPlistPath = Path.Combine(tmp, "tmp.plist");
             InvokeAndThrowIfNonZero("pkgbuild", new[] { "--analyze", "--root", tmpPayload1, pkgPlistPath }, null);
             InvokeAndThrowIfNonZero("plutil", new[] { "-replace", "BundleIsRelocatable", "-bool", "NO", pkgPlistPath }, null);
-            
+
             var pkg1Path = Path.Combine(tmpPayload2, "1.pkg");
             string[] args1 = {
                 "--root", tmpPayload1,
@@ -74,51 +83,41 @@ namespace Squirrel.CommandLine.OSX
                 "--install-location", "/Applications",
                 pkg1Path,
             };
-            
+
             InvokeAndThrowIfNonZero("pkgbuild", args1, null);
 
             // create product package that installs to home dir
             var distributionPath = Path.Combine(tmp, "distribution.xml");
             InvokeAndThrowIfNonZero("productbuild", new[] { "--synthesize", "--package", pkg1Path, distributionPath }, null);
-            
+
             // disable local system installation and build final package
             var distXml = File.ReadAllLines(distributionPath).ToList();
             distXml.Insert(2, "<domains enable_anywhere=\"false\" enable_currentUserHome=\"true\" enable_localSystem=\"false\" />");
             File.WriteAllLines(distributionPath, distXml);
-            
-            List<string> args2 = new () {
-                "--distribution", distributionPath, 
+
+            List<string> args2 = new() {
+                "--distribution", distributionPath,
                 "--package-path", tmpPayload2,
                 pkgOutputPath
             };
-            
+
             if (!String.IsNullOrEmpty(signIdentity)) {
                 args2.Add("--sign");
                 args2.Add(signIdentity);
             } else {
                 Log.Warn("No Installer signing identity provided. The '.pkg' will not be signed.");
             }
-            
-            InvokeAndThrowIfNonZero("productbuild", args2, null);
-            
-            Log.Info("Installer created successfully");
-        }
 
-        [SupportedOSPlatform("osx")]
-        public static void Staple(string filePath)
-        {
-            Log.Info($"Stapling Notarization to '{filePath}'");
-            var args = new List<string> {
-                "stapler", "staple", filePath,
-            };
-            Console.WriteLine(InvokeAndThrowIfNonZero("xcrun", args, null));
+            InvokeAndThrowIfNonZero("productbuild", args2, null);
+
+            Log.Info("Installer created successfully");
         }
 
         [SupportedOSPlatform("osx")]
         public static void Notarize(string filePath, string keychainProfileName)
         {
             Log.Info($"Preparing to Notarize '{filePath}'. This will upload to Apple and usually takes minutes, but could take hours.");
-            
+
             var args = new List<string> {
                 "notarytool",
                 "submit",
@@ -127,7 +126,7 @@ namespace Squirrel.CommandLine.OSX
                 "--wait",
                 filePath
             };
-            
+
             var ntresultjson = PlatformUtil.InvokeProcess("xcrun", args, null, CancellationToken.None);
             Log.Info(ntresultjson.StdOutput);
 
@@ -146,13 +145,17 @@ namespace Squirrel.CommandLine.OSX
                         var result = PlatformUtil.InvokeProcess("xcrun", logargs, null, CancellationToken.None);
                         Log.Warn(result.StdOutput);
                     }
+
                     throw new Exception("Notarization failed: " + ntresultjson.StdOutput);
                 }
             } catch (JsonReaderException) {
                 throw new Exception("Notarization failed: " + ntresultjson.StdOutput);
             }
-            
+
             Log.Info("Notarization completed successfully");
+
+            Log.Info($"Stapling Notarization to '{filePath}'");
+            Console.WriteLine(InvokeAndThrowIfNonZero("xcrun", new[] { "stapler", "staple", filePath }, null));
         }
 
         private class NotaryToolResult
@@ -165,6 +168,8 @@ namespace Squirrel.CommandLine.OSX
         [SupportedOSPlatform("osx")]
         public static void CreateDittoZip(string folder, string outputZip)
         {
+            if (File.Exists(outputZip)) File.Delete(outputZip);
+
             var args = new List<string> {
                 "-c",
                 "-k",
@@ -177,18 +182,6 @@ namespace Squirrel.CommandLine.OSX
 
             Log.Info($"Creating ditto bundle '{outputZip}'");
             InvokeAndThrowIfNonZero("ditto", args, null);
-        }
-        
-        [SupportedOSPlatform("osx")]
-        public static void AssessCodeSign(string filePath)
-        {
-            var args = new List<string> {
-                "--assess",
-                "-vvvv",
-                filePath
-            };
-
-            Console.WriteLine(InvokeAndThrowIfNonZero("spctl", args, null));
         }
     }
 }
