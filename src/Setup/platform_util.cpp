@@ -16,35 +16,6 @@ static ISzAlloc SzAllocForLzma = { &AllocForLzma, &FreeForLzma };
 
 using namespace std;
 
-std::wstring toWide(std::string const& in)
-{
-    std::wstring out{};
-    if (in.length() > 0) {
-        int len = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, in.c_str(), in.size(), NULL, 0);
-        if (len == 0) throw wstring(L"Invalid character sequence.");
-
-        out.resize(len);
-        MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, in.c_str(), in.size(), out.data(), out.size());
-    }
-    return out;
-}
-
-// we shouldn't really have any reason to use this. Windows functions do not support
-// multi-byte charsets. uncomment with care.
-
-// std::string toMultiByte(std::wstring const& in)
-// {
-//     std::string out{};
-//     if (in.length() > 0) {
-//         int len = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, in.c_str(), in.size(), 0, 0, 0, 0);
-//         if (len == 0) throw wstring(L"Invalid character sequence.");
-//
-//         out.resize(len);
-//         WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, in.c_str(), in.size(), out.data(), out.size(), 0, 0);
-//     }
-//     return out;
-// }
-
 wstring get_filename_from_path(wstring& path)
 {
     auto idx = path.find_last_of('\\');
@@ -215,13 +186,11 @@ bool util::munmap(uint8_t* addr)
 
 void throwLastMzError(mz_zip_archive* archive, wstring message)
 {
-    auto errCode = mz_zip_get_last_error(archive);
-    const char* errMsg = mz_zip_get_error_string(errCode);
-    if (!errMsg)
-        throw wstring(L"Error Code: " + to_wstring(errCode) + L". " + message);
-
-    string mbmsg = string(errMsg);
-    throw wstring(L"Error Code: " + to_wstring(errCode) + L". " + message + L" " + toWide(mbmsg));
+    int errCode = mz_zip_get_last_error(archive);
+    if (errCode == MZ_ZIP_NO_ERROR)
+        return;
+    
+    throw wstring(L"MZ Error Code: " + to_wstring(errCode) + L". " + message);
 }
 
 void extractSingleFile(void* zipBuf, size_t cZipBuf, wstring fileLocation, std::function<bool(mz_zip_archive_file_stat&)>& predicate)
@@ -231,7 +200,7 @@ void extractSingleFile(void* zipBuf, size_t cZipBuf, wstring fileLocation, std::
 
     try {
         memset(&zip_archive, 0, sizeof(zip_archive));
-
+        
         if (!mz_zip_reader_init_mem(&zip_archive, zipBuf, cZipBuf, 0))
             throwLastMzError(&zip_archive, L"Unable to open archive.");
 
@@ -304,7 +273,7 @@ void extractSingleFile(void* zipBuf, size_t cZipBuf, wstring fileLocation, std::
 }
 
 // https://stackoverflow.com/a/874160/184746
-bool hasEnding(std::wstring const& fullString, std::wstring const& ending)
+bool hasEnding(std::string const& fullString, std::string const& ending)
 {
     if (fullString.length() >= ending.length()) {
         return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
@@ -315,8 +284,7 @@ bool hasEnding(std::wstring const& fullString, std::wstring const& ending)
 void util::extractUpdateExe(void* zipBuf, size_t cZipBuf, wstring fileLocation)
 {
     std::function<bool(mz_zip_archive_file_stat&)> endsWithSquirrel([](mz_zip_archive_file_stat& z) {
-        wstring fn = toWide(string(z.m_filename));
-        return hasEnding(fn, L"Squirrel.exe");
+        return hasEnding(z.m_filename, "Squirrel.exe");
     });
     extractSingleFile(zipBuf, cZipBuf, fileLocation, endsWithSquirrel);
 }
