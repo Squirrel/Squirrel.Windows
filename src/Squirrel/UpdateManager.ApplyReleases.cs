@@ -210,7 +210,7 @@ namespace Squirrel
 
             // re-package working directory into full page
             this.Log().Info("Repacking into full package: {0}", outputFile);
-            EasyZip.CreateZipFromDirectory(outputFile, workingPath, level: CompressionLevel.None);
+            EasyZip.CreateZipFromDirectory(outputFile, workingPath);
 
             progress(100);
             
