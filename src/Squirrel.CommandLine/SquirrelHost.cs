@@ -25,10 +25,8 @@ namespace Squirrel.CommandLine
                 { "verbose", "Print all diagnostic messages", _ => verbose = true },
             };
 
-            var exeName = Path.GetFileName(SquirrelRuntimeInfo.EntryExePath);
-            string sqUsage =
-                $"Squirrel {SquirrelRuntimeInfo.SquirrelDisplayVersion}, tool for creating Squirrel releases" + Environment.NewLine +
-                $"Usage: {exeName} [verb] [--option=value]";
+            string sqUsage = $"Squirrel {SquirrelRuntimeInfo.SquirrelDisplayVersion} for creating and distributing Squirrel releases.";
+            Console.WriteLine(sqUsage);
 
             try {
                 var restArgs = globalOptions.Parse(args);
@@ -59,8 +57,6 @@ namespace Squirrel.CommandLine
                 }
 
                 var commands = new CommandSet {
-                    "",
-                    sqUsage,
                     "",
                     "[ Global Options ]",
                     globalOptions.GetHelpText().TrimEnd(),
@@ -102,7 +98,7 @@ namespace Squirrel.CommandLine
                 logger.Write(ex.ToString(), LogLevel.Error);
                 Console.WriteLine();
                 Console.WriteLine(sqUsage);
-                Console.WriteLine($" > '{exeName} -h' to see program help.");
+                Console.WriteLine($" > 'csq -h' to see program help.");
                 return -1;
             }
         }

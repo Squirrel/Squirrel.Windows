@@ -1,0 +1,1 @@
+dotnet nuget push .\build\Release\*.nupkg -k %1 -s https://nuget.pkg.github.com/clowd/index.json --skip-duplicate
