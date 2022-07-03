@@ -30,5 +30,6 @@ jobs:
       - name: Publish to GitHub Packages
         shell: pwsh
         run: |
-          nuget push csq.*.nupkg -ApiKey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
-          nuget push Clowd.Squirrel.*.nupkg -ApiKey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
+          nuget setapikey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          nuget push csq.*.nupkg -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
+          nuget push Clowd.Squirrel.*.nupkg -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
