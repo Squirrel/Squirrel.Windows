@@ -13,19 +13,13 @@ namespace Squirrel.CommandLine
 {
     internal class HelperFile
     {
-        private static string SevenZipPath {
-            get {
-                if (SquirrelRuntimeInfo.IsWindows) return FindHelperFile("7za.exe");
-                if (SquirrelRuntimeInfo.IsOSX) return FindHelperFile("7zz");
-                throw new NotImplementedException("Unsupported OS");
-            }
-        }
-
         private static List<string> _searchPaths = new List<string>();
         protected static IFullLogger Log = SquirrelLocator.CurrentMutable.GetService<ILogManager>().GetLogger(typeof(HelperFile));
 
         static HelperFile()
         {
+            AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "wix");
+            
 #if DEBUG
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "build", "publish");
             AddSearchPath(SquirrelRuntimeInfo.BaseDirectory, "..", "..", "..", "build", "Release", "squirrel", "tools");
@@ -91,13 +85,6 @@ namespace Squirrel.CommandLine
                 throw new Exception($"Could not find '{toFind}'.");
 
             return result;
-        }
-
-        public static void CompressLzma7z(string zipFilePath, string inFolder)
-        {
-            Log.Info($"Compressing '{inFolder}' to '{zipFilePath}' using 7z (LZMA)...");
-            var args = new string[] { "a", zipFilePath, "-tzip", "-m0=LZMA", "-aoa", "-y", "*" };
-            InvokeAndThrowIfNonZero(SevenZipPath, args, inFolder);
         }
 
         protected static string InvokeAndThrowIfNonZero(string exePath, IEnumerable<string> args, string workingDir)

@@ -27,80 +27,8 @@ jobs:
         with:
           name: packages
           path: .\build\Release\*.nupkg
-  
-  # https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
-  package-macos:
-    name: Sign OSX
-    if: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop' }}
-    runs-on: macos-latest
-    needs: [ build-windows ]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v1
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-      - name: Install NGBV
-        run: dotnet tool install --tool-path . nbgv
-      - name: Download Artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages
-      - name: Extract Artifacts
+      - name: Publish to GitHub Packages
+        shell: pwsh
         run: |
-          unzip Clowd.Squirrel*.nupkg -d ./squirrel/
-          unzip csq*.nupkg -d ./csq/
-      - name: Install mitchellh/gon
-        run: brew install mitchellh/gon/gon
-      - name: Install Apple Certificate
-        env:
-          BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_BUILD_CERTIFICATE_BASE64 }}
-          P12_PASSWORD: ${{ secrets.APPLE_BUILD_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-        run: |
-          # write certificate to file
-          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
-          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode --output $CERTIFICATE_PATH
-
-          # create temporary keychain
-          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-
-          # import certificate to keychain
-          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-          security list-keychain -d user -s $KEYCHAIN_PATH
-      - name: Sign and Notarize
-        env:
-          AC_USERNAME: ${{ secrets.NOTARIZATION_USERNAME }}
-          AC_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
-        run: gon ./gon.config.json
-      - name: Clean up KeyChain
-        if: ${{ always() }}
-        run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-      - name: Fix Packages
-        run: |
-          export NUGET_VERSION=$(./nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
-          echo $NUGET_VERSION
-          unzip ./signed.zip -d ./bsigned/
-          cp ./bsigned/UpdateMac ./squirrel/tools/
-          cp ./bsigned/UpdateMac ./csq/tools/net6.0/any/
-          cp ./bsigned/7zz ./squirrel/tools/
-          cp ./bsigned/7zz ./csq/tools/net6.0/any/
-          rm -rf *.nupkg
-          chmod 755 ./vendor/7zz
-          ./vendor/7zz a csq.${NUGET_VERSION}.nupkg -tzip -mx9 "${GITHUB_WORKSPACE}/csq/*" 
-          ./vendor/7zz a Clowd.Squirrel.${NUGET_VERSION}.nupkg -tzip -mx9 "${GITHUB_WORKSPACE}/squirrel/*" 
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: packages-final
-          path: "*.nupkg"
-      - name: Publish Dev NuGet Package
-        run: |
-          export NUGET_VERSION=$(./nbgv get-version -f json | python3 -c "import sys, json; print(json.load(sys.stdin)['NuGetPackageVersion'])")
-          nuget push csq.${NUGET_VERSION}.nupkg -ApiKey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
-          nuget push Clowd.Squirrel.${NUGET_VERSION}.nupkg -ApiKey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
+          nuget push csq.*.nupkg -ApiKey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
+          nuget push Clowd.Squirrel.*.nupkg -ApiKey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate

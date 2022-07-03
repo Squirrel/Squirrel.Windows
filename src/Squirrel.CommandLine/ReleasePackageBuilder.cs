@@ -99,10 +99,8 @@ namespace Squirrel.CommandLine
                      "The input package file {0} must have no dependencies.", InputPackageFile));
             }
 
-            //var targetFramework = frameworks.Single();
 
             this.Log().Info("Creating release package: {0} => {1}", InputPackageFile, outputFile);
-
 
             using (Utility.GetTempDirectory(out var tempPath)) {
                 var tempDir = new DirectoryInfo(tempPath);
@@ -122,7 +120,7 @@ namespace Squirrel.CommandLine
 
                 contentsPostProcessHook?.Invoke(tempPath, package);
 
-                HelperFile.CompressLzma7z(outputFile, tempPath);
+                EasyZip.CreateZipFromDirectory(outputFile, tempPath);
 
                 ReleasePackageFile = outputFile;
                 return ReleasePackageFile;

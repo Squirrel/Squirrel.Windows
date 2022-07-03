@@ -45,7 +45,14 @@ dotnet publish -v minimal --no-build -c Release --self-contained "$PSScriptRoot\
 dotnet publish -v minimal --no-build -c Release --self-contained "$PSScriptRoot\src\Update.OSX\Update.OSX.csproj" -o "$ToolsDir"
 
 Write-Host "Copying Tools" -ForegroundColor Magenta
+# First, copy all the tools into the 'csq' package
+Copy-Item -Path "$PSScriptRoot\vendor\*" -Destination $ToolsDir -Recurse 
+Copy-Item -Path "Win32\*" -Destination $ToolsDir 
 Copy-Item -Path "$PSScriptRoot\Squirrel.entitlements" -Destination "$ToolsDir"
+Remove-Item "$ToolsDir\*.pdb"
+Remove-Item "$ToolsDir\7za.exe"
+
+# Second, copy all the csq files into the 'squirrel' package
 New-Item -Path "squirrel" -Name "tools" -ItemType "directory"
 Copy-Item -Path "$ToolsDir\*" -Destination "squirrel\tools" -Recurse
 Remove-Item "squirrel\tools\*.xml"

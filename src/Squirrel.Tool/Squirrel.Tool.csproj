@@ -13,14 +13,9 @@
     <PackAsTool>true</PackAsTool>
     <Description>A .NET Core Tool that uses the Squirrel framework to create installers and update packages for dotnet applications.</Description>
     <PackageIcon>Clowd_200.png</PackageIcon>
-    <PackageVendor>tools\net6.0\any\</PackageVendor>
   </PropertyGroup>
   
   <ItemGroup>
-    <None Include="..\..\vendor\wix\*" Pack="true" PackagePath="$(PackageVendor)" />
-    <None Include="..\..\vendor\*" Pack="true" PackagePath="$(PackageVendor)" />
-    <None Include="..\..\build\$(Configuration)\Win32\Setup.exe" Pack="true" PackagePath="$(PackageVendor)" />
-    <None Include="..\..\build\$(Configuration)\Win32\StubExecutable.exe" Pack="true" PackagePath="$(PackageVendor)" />
     <None Include="..\..\docs\artwork\Clowd_200.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
