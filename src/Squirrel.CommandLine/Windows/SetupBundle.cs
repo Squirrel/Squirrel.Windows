@@ -21,6 +21,7 @@ namespace Squirrel.CommandLine.Windows
 
             long offset = 0;
             long length = 0;
+
             void FindBundleHeader()
             {
                 using (var memoryMappedFile = MemoryMappedFile.CreateFromFile(setupPath, FileMode.Open, null, 0, MemoryMappedFileAccess.Read))
@@ -46,11 +47,17 @@ namespace Squirrel.CommandLine.Windows
         public static long CreatePackageBundle(string setupPath, string packagePath)
         {
             long bundleOffset, bundleLength;
-            using (var pkgStream = File.OpenRead(packagePath))
-            using (var setupStream = File.Open(setupPath, FileMode.Append, FileAccess.Write)) {
+            Stream pkgStream = null, setupStream = null;
+
+            try {
+                pkgStream = Utility.Retry(() => File.OpenRead(packagePath), retries: 10);
+                setupStream = Utility.Retry(() => File.Open(setupPath, FileMode.Append, FileAccess.Write), retries: 10);
                 bundleOffset = setupStream.Position;
                 bundleLength = pkgStream.Length;
                 pkgStream.CopyTo(setupStream);
+            } finally {
+                if (pkgStream != null) pkgStream.Dispose();
+                if (setupStream != null) setupStream.Dispose();
             }
 
             byte[] placeholder = {
