@@ -29,6 +29,4 @@ jobs:
           path: .\build\Release\*.nupkg
       - name: Publish to GitHub Packages
         shell: pwsh
-        run: |
-          dotnet nuget push csq.*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
-          dotnet nuget push Clowd.Squirrel.*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
+        run: dotnet nuget push .\build\Release\*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
