@@ -30,7 +30,5 @@ jobs:
       - name: Publish to GitHub Packages
         shell: pwsh
         run: |
-          nuget setapikey ${{ secrets.GITHUB_TOKEN }} -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
-          nuget source add -Name "gh" -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -Username $GITHUB_ACTOR -Password ${{ secrets.GITHUB_TOKEN }}
-          nuget push csq.*.nupkg -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
-          nuget push Clowd.Squirrel.*.nupkg -Source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json -SkipDuplicate
+          dotnet nuget push csq.*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
+          dotnet nuget push Clowd.Squirrel.*.nupkg -k ${{ secrets.GITHUB_TOKEN }} -s https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
