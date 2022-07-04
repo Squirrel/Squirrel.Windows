@@ -13,6 +13,8 @@
 *.png 	binary
 *.gif 	binary
 
+*.entitlements text eol=lf
+
 *.cs text diff=csharp
 *.vb text
 *.c text
