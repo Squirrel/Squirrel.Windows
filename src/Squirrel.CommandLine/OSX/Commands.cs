@@ -131,9 +131,11 @@ namespace Squirrel.CommandLine.OSX
                 HelperExe.Notarize(zipPath, options.notaryProfile);
             } else if (SquirrelRuntimeInfo.IsOSX && !String.IsNullOrEmpty(options.signAppIdentity)) {
                 HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, appBundlePath);
-                Log.Warn("Package was signed but will not be notarized. Must supply the --notaryProfile option.");
+                Log.Warn("Package was signed but will not be notarized or verified. Must supply the --notaryProfile option.");
+            } else if (SquirrelRuntimeInfo.IsOSX) {
+                Log.Warn("Package will not be signed or notarized. Requires the --signAppIdentity and --notaryProfile options.");
             } else {
-                Log.Warn("Package will not be signed or notarized. Only supported on OSX with the --signAppIdentity and --notaryProfile options.");
+                Log.Warn("Package will not be signed or notarized. Only supported on OSX.");
             }
 
             // create a portable zip package from signed/notarized bundle

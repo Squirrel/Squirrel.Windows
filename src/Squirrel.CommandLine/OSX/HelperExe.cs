@@ -44,6 +44,11 @@ namespace Squirrel.CommandLine.OSX
 
             Console.WriteLine(InvokeAndThrowIfNonZero("codesign", args, null));
             
+            Log.Info("codesign completed successfully");
+        }
+
+        public static void SpctlAssess(string filePath)
+        {
             var args2 = new List<string> {
                 "--assess",
                 "-vvvv",
@@ -51,8 +56,6 @@ namespace Squirrel.CommandLine.OSX
             };
 
             Console.WriteLine(InvokeAndThrowIfNonZero("spctl", args2, null));
-
-            Log.Info("codesign completed successfully");
         }
 
         [SupportedOSPlatform("osx")]
