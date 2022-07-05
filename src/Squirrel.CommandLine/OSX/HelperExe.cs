@@ -94,7 +94,7 @@ namespace Squirrel.CommandLine.OSX
             // create postinstall scripts to open app after install
             // https://stackoverflow.com/questions/35619036/open-app-after-installation-from-pkg-file-in-mac
             var postinstall = Path.Combine(tmpScripts, "postinstall");
-            File.WriteAllText(postinstall, $"#!/bin/sh\nopen \"$2/{bundleName}/\"\nexit0");
+            File.WriteAllText(postinstall, $"#!/bin/sh\nopen \"$2/{bundleName}/\"\nexit 0");
             PlatformUtil.ChmodFileAsExecutable(postinstall);
 
             // create product package that installs to home dir
