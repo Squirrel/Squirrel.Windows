@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -132,6 +132,7 @@ namespace Squirrel.CommandLine.OSX
                 HelperExe.CreateDittoZip(appBundlePath, zipPath);
                 HelperExe.Notarize(zipPath, options.notaryProfile);
                 HelperExe.Staple(appBundlePath);
+                HelperExe.SpctlAssess(appBundlePath);
                 File.Delete(zipPath);
             } else if (SquirrelRuntimeInfo.IsOSX && !String.IsNullOrEmpty(options.signAppIdentity)) {
                 HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, appBundlePath);
