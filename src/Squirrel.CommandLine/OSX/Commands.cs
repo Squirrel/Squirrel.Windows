@@ -129,6 +129,8 @@ namespace Squirrel.CommandLine.OSX
                 HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, appBundlePath);
                 HelperExe.CreateDittoZip(appBundlePath, zipPath);
                 HelperExe.Notarize(zipPath, options.notaryProfile);
+                HelperExe.Staple(appBundlePath);
+                File.Delete(zipPath);
             } else if (SquirrelRuntimeInfo.IsOSX && !String.IsNullOrEmpty(options.signAppIdentity)) {
                 HelperExe.CodeSign(options.signAppIdentity, options.signEntitlements, appBundlePath);
                 Log.Warn("Package was signed but will not be notarized or verified. Must supply the --notaryProfile option.");
@@ -177,6 +179,7 @@ namespace Squirrel.CommandLine.OSX
                 HelperExe.CreateInstallerPkg(appBundlePath, pkgPath, options.signInstallIdentity);
                 if (!String.IsNullOrEmpty(options.signInstallIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
                     HelperExe.Notarize(pkgPath, options.notaryProfile);
+                    HelperExe.Staple(pkgPath);
                 } else {
                     Log.Warn("Package installer (.pkg) will not be Notarized. " +
                              "This is supported with the --signInstallIdentity and --notaryProfile arguments.");

@@ -156,7 +156,11 @@ namespace Squirrel.CommandLine.OSX
             }
 
             Log.Info("Notarization completed successfully");
-
+        }
+        
+        [SupportedOSPlatform("osx")]
+        public static void Staple(string filePath)
+        {
             Log.Info($"Stapling Notarization to '{filePath}'");
             Console.WriteLine(InvokeAndThrowIfNonZero("xcrun", new[] { "stapler", "staple", filePath }, null));
         }
