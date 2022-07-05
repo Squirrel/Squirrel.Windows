@@ -24,6 +24,7 @@ namespace Squirrel.CommandLine.OSX
         public string signInstallIdentity { get; private set; }
         public string signEntitlements { get; private set; }
         public string notaryProfile { get; private set; }
+        public string appleId { get; private set; }
 
         public PackOptions()
         {
@@ -38,6 +39,7 @@ namespace Squirrel.CommandLine.OSX
             Add("e=|mainExe=", "The file {NAME} of the main executable", v => mainExe = v);
             Add("i=|icon=", "{PATH} to the .icns file for this bundle", v => icon = v);
             Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
+            Add("appleId", "Override the apple bundle ID for generated bundles", v => appleId = v);
 
             if (SquirrelRuntimeInfo.IsOSX) {
                 Add("signAppIdentity=", "The {SUBJECT} name of the cert to use for app code signing", v => signAppIdentity = v);

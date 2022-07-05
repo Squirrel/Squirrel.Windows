@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -38,6 +38,9 @@ namespace Squirrel.CommandLine.OSX
 
                 if (options.mainExe != null)
                     Log.Warn("--exeName is ignored if the pack directory is a '.app' bundle.");
+                
+                if (options.appleId != null)
+                    Log.Warn("--appleId is ignored if the pack directory is a '.app' bundle.");
 
                 appBundlePath = Path.Combine(releaseDir.FullName, options.packId + ".app");
 
@@ -68,14 +71,13 @@ namespace Squirrel.CommandLine.OSX
 
                 var appleId = $"com.{options.packAuthors ?? options.packId}.{options.packId}";
                 var escapedAppleId = Regex.Replace(appleId, @"[^\w\.]", "_");
-
                 var appleSafeVersion = NuGetVersion.Parse(options.packVersion).Version.ToString();
 
                 var info = new AppInfo {
                     CFBundleName = options.packTitle ?? options.packId,
                     CFBundleDisplayName = options.packTitle ?? options.packId,
                     CFBundleExecutable = options.mainExe,
-                    CFBundleIdentifier = escapedAppleId,
+                    CFBundleIdentifier = options.appleId ?? escapedAppleId,
                     CFBundlePackageType = "APPL",
                     CFBundleShortVersionString = appleSafeVersion,
                     CFBundleVersion = options.packVersion,
