@@ -38,7 +38,7 @@ namespace Squirrel.CommandLine.OSX
 
                 if (options.mainExe != null)
                     Log.Warn("--exeName is ignored if the pack directory is a '.app' bundle.");
-                
+
                 if (options.appleId != null)
                     Log.Warn("--appleId is ignored if the pack directory is a '.app' bundle.");
 

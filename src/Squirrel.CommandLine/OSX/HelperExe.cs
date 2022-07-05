@@ -5,7 +5,6 @@ using System.Linq;
 using System.Runtime.Versioning;
 using System.Threading;
 using Newtonsoft.Json;
-using Squirrel.SimpleSplat;
 
 namespace Squirrel.CommandLine.OSX
 {
@@ -43,7 +42,7 @@ namespace Squirrel.CommandLine.OSX
             Log.Info($"Beginning codesign for package...");
 
             Console.WriteLine(InvokeAndThrowIfNonZero("codesign", args, null));
-            
+
             Log.Info("codesign completed successfully");
         }
 
@@ -61,20 +60,23 @@ namespace Squirrel.CommandLine.OSX
         [SupportedOSPlatform("osx")]
         public static void CreateInstallerPkg(string appBundlePath, string pkgOutputPath, string signIdentity)
         {
-            Log.Info($"Creating installer '.pkg' for app at '{appBundlePath}'");
+            // https://matthew-brett.github.io/docosx/flat_packages.html
             
+            Log.Info($"Creating installer '.pkg' for app at '{appBundlePath}'");
+
             if (File.Exists(pkgOutputPath)) File.Delete(pkgOutputPath);
 
             using var _1 = Utility.GetTempDirectory(out var tmp);
             using var _2 = Utility.GetTempDirectory(out var tmpPayload1);
             using var _3 = Utility.GetTempDirectory(out var tmpPayload2);
+            using var _4 = Utility.GetTempDirectory(out var tmpScripts);
 
             // copy .app to tmp folder
             var bundleName = Path.GetFileName(appBundlePath);
             var tmpBundlePath = Path.Combine(tmpPayload1, bundleName);
             Utility.CopyFiles(new DirectoryInfo(appBundlePath), new DirectoryInfo(tmpBundlePath));
 
-            // generate non-relocatable pkg
+            // generate non-relocatable component pkg. this will be included into a product archive
             var pkgPlistPath = Path.Combine(tmp, "tmp.plist");
             InvokeAndThrowIfNonZero("pkgbuild", new[] { "--analyze", "--root", tmpPayload1, pkgPlistPath }, null);
             InvokeAndThrowIfNonZero("plutil", new[] { "-replace", "BundleIsRelocatable", "-bool", "NO", pkgPlistPath }, null);
@@ -88,6 +90,12 @@ namespace Squirrel.CommandLine.OSX
             };
 
             InvokeAndThrowIfNonZero("pkgbuild", args1, null);
+            
+            // create postinstall scripts to open app after install
+            // https://stackoverflow.com/questions/35619036/open-app-after-installation-from-pkg-file-in-mac
+            var postinstall = Path.Combine(tmpScripts, "postinstall");
+            File.WriteAllText(postinstall, $"#!/bin/sh\nopen \"$2/{bundleName}/\"\nexit0");
+            PlatformUtil.ChmodFileAsExecutable(postinstall);
 
             // create product package that installs to home dir
             var distributionPath = Path.Combine(tmp, "distribution.xml");
@@ -101,6 +109,7 @@ namespace Squirrel.CommandLine.OSX
             List<string> args2 = new() {
                 "--distribution", distributionPath,
                 "--package-path", tmpPayload2,
+                "--scripts", tmpScripts,
                 pkgOutputPath
             };
 
@@ -157,7 +166,7 @@ namespace Squirrel.CommandLine.OSX
 
             Log.Info("Notarization completed successfully");
         }
-        
+
         [SupportedOSPlatform("osx")]
         public static void Staple(string filePath)
         {
