@@ -39,8 +39,8 @@ namespace Squirrel.CommandLine.OSX
                 if (options.mainExe != null)
                     Log.Warn("--exeName is ignored if the pack directory is a '.app' bundle.");
 
-                if (options.appleId != null)
-                    Log.Warn("--appleId is ignored if the pack directory is a '.app' bundle.");
+                if (options.bundleId != null)
+                    Log.Warn("--bundleId is ignored if the pack directory is a '.app' bundle.");
 
                 appBundlePath = Path.Combine(releaseDir.FullName, options.packId + ".app");
 
@@ -77,7 +77,7 @@ namespace Squirrel.CommandLine.OSX
                     CFBundleName = options.packTitle ?? options.packId,
                     CFBundleDisplayName = options.packTitle ?? options.packId,
                     CFBundleExecutable = options.mainExe,
-                    CFBundleIdentifier = options.appleId ?? escapedAppleId,
+                    CFBundleIdentifier = options.bundleId ?? escapedAppleId,
                     CFBundlePackageType = "APPL",
                     CFBundleShortVersionString = appleSafeVersion,
                     CFBundleVersion = options.packVersion,
@@ -177,18 +177,20 @@ namespace Squirrel.CommandLine.OSX
             ReleaseEntry.WriteReleaseFile(releases, releaseFilePath);
 
             // create installer package, sign and notarize
-            if (SquirrelRuntimeInfo.IsOSX) {
-                var pkgPath = Path.Combine(releaseDir.FullName, options.packId + ".pkg");
-                HelperExe.CreateInstallerPkg(appBundlePath, pkgTitle, options.pkgContent, pkgPath, options.signInstallIdentity);
-                if (!String.IsNullOrEmpty(options.signInstallIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
-                    HelperExe.Notarize(pkgPath, options.notaryProfile);
-                    HelperExe.Staple(pkgPath);
+            if (!options.noPkg) {
+                if (SquirrelRuntimeInfo.IsOSX) {
+                    var pkgPath = Path.Combine(releaseDir.FullName, options.packId + ".pkg");
+                    HelperExe.CreateInstallerPkg(appBundlePath, pkgTitle, options.pkgContent, pkgPath, options.signInstallIdentity);
+                    if (!String.IsNullOrEmpty(options.signInstallIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
+                        HelperExe.Notarize(pkgPath, options.notaryProfile);
+                        HelperExe.Staple(pkgPath);
+                    } else {
+                        Log.Warn("Package installer (.pkg) will not be Notarized. " +
+                                 "This is supported with the --signInstallIdentity and --notaryProfile arguments.");
+                    }
                 } else {
-                    Log.Warn("Package installer (.pkg) will not be Notarized. " +
-                             "This is supported with the --signInstallIdentity and --notaryProfile arguments.");
+                    Log.Warn("Package installer (.pkg) will not be created - this is only supported on OSX.");
                 }
-            } else {
-                Log.Warn("Package installer (.pkg) will not be created - this is only supported on OSX.");
             }
 
             Log.Info("Done.");

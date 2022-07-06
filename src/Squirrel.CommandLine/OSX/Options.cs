@@ -24,7 +24,8 @@ namespace Squirrel.CommandLine.OSX
         public string signInstallIdentity { get; private set; }
         public string signEntitlements { get; private set; }
         public string notaryProfile { get; private set; }
-        public string appleId { get; private set; }
+        public string bundleId { get; private set; }
+        public bool noPkg { get; private set; }
         public KeyValuePair<string, string>[] pkgContent => _pkgContent.ToArray();
 
         private Dictionary<string, string> _pkgContent = new Dictionary<string, string>();
@@ -41,9 +42,9 @@ namespace Squirrel.CommandLine.OSX
             Add("releaseNotes=", "{PATH} to file with markdown notes for version", v => releaseNotes = v);
             Add("e=|mainExe=", "The file {NAME} of the main executable", v => mainExe = v);
             Add("i=|icon=", "{PATH} to the .icns file for this bundle", v => icon = v);
+            Add("bundleId=", "Override the apple unique {ID} when generating bundles", v => bundleId = v);
             Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
-            Add("appleId", "Override the apple bundle ID for generated bundles", v => appleId = v);
-            Add("noPkg", "Skip generating a .pkg installer", v => appleId = v);
+            Add("noPkg", "Skip generating a .pkg installer", v => noPkg = true);
             Add("pkgContent=", "Add content files (eg. readme, license) to pkg installer.", (v1, v2) => _pkgContent.Add(v1, v2));
 
             if (SquirrelRuntimeInfo.IsOSX) {
