@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Versioning;
+using System.Security;
 using System.Threading;
 using Newtonsoft.Json;
 
@@ -58,10 +59,11 @@ namespace Squirrel.CommandLine.OSX
         }
 
         [SupportedOSPlatform("osx")]
-        public static void CreateInstallerPkg(string appBundlePath, string pkgOutputPath, string signIdentity)
+        public static void CreateInstallerPkg(string appBundlePath, string appTitle, KeyValuePair<string, string>[] extraContent,
+            string pkgOutputPath, string signIdentity)
         {
             // https://matthew-brett.github.io/docosx/flat_packages.html
-            
+
             Log.Info($"Creating installer '.pkg' for app at '{appBundlePath}'");
 
             if (File.Exists(pkgOutputPath)) File.Delete(pkgOutputPath);
@@ -70,12 +72,13 @@ namespace Squirrel.CommandLine.OSX
             using var _2 = Utility.GetTempDirectory(out var tmpPayload1);
             using var _3 = Utility.GetTempDirectory(out var tmpPayload2);
             using var _4 = Utility.GetTempDirectory(out var tmpScripts);
+            using var _5 = Utility.GetTempDirectory(out var tmpResources);
 
             // copy .app to tmp folder
             var bundleName = Path.GetFileName(appBundlePath);
             var tmpBundlePath = Path.Combine(tmpPayload1, bundleName);
             Utility.CopyFiles(new DirectoryInfo(appBundlePath), new DirectoryInfo(tmpBundlePath));
-            
+
             // create postinstall scripts to open app after install
             // https://stackoverflow.com/questions/35619036/open-app-after-installation-from-pkg-file-in-mac
             var postinstall = Path.Combine(tmpScripts, "postinstall");
@@ -97,19 +100,31 @@ namespace Squirrel.CommandLine.OSX
             };
 
             InvokeAndThrowIfNonZero("pkgbuild", args1, null);
-            
-            // create product package that installs to home dir
+
+            // create final product package that contains app component
             var distributionPath = Path.Combine(tmp, "distribution.xml");
             InvokeAndThrowIfNonZero("productbuild", new[] { "--synthesize", "--package", pkg1Path, distributionPath }, null);
 
-            // disable local system installation and build final package
+            // https://developer.apple.com/library/archive/documentation/DeveloperTools/Reference/DistributionDefinitionRef/Chapters/Distribution_XML_Ref.html
             var distXml = File.ReadAllLines(distributionPath).ToList();
+
+            distXml.Insert(2, $"<title>{SecurityElement.Escape(appTitle)}</title>");
+
+            // disable local system installation (install to home dir)
             distXml.Insert(2, "<domains enable_anywhere=\"false\" enable_currentUserHome=\"true\" enable_localSystem=\"false\" />");
             File.WriteAllLines(distributionPath, distXml);
+            
+            // add extra landing content (eg. license, readme)
+            foreach (var kvp in extraContent) {
+                var fileName = Path.GetFileName(kvp.Value);
+                File.Copy(kvp.Value, Path.Combine(tmpResources, fileName));
+                distXml.Insert(2, $"<{kvp.Key} file=\"{fileName}\" />");
+            }
 
             List<string> args2 = new() {
                 "--distribution", distributionPath,
                 "--package-path", tmpPayload2,
+                "--resources", tmpResources,
                 pkgOutputPath
             };
 

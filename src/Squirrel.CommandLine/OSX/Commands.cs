@@ -114,9 +114,9 @@ namespace Squirrel.CommandLine.OSX
             if (!File.Exists(Path.Combine(contentsDir, "Info.plist")))
                 throw new Exception("Invalid bundle structure (missing Info.plist)");
 
+            var pkgTitle = options.packTitle ?? options.packId;
             var nuspecText = NugetConsole.CreateNuspec(
-                options.packId, options.packTitle, options.packAuthors, options.packVersion, options.releaseNotes, options.includePdb, "osx");
-
+                options.packId, pkgTitle, options.packAuthors, options.packVersion, options.releaseNotes, options.includePdb, "osx");
             var nuspecPath = Path.Combine(contentsDir, Utility.SpecVersionFileName);
 
             // nuspec and UpdateMac need to be in contents dir or this package can't update
@@ -179,7 +179,7 @@ namespace Squirrel.CommandLine.OSX
             // create installer package, sign and notarize
             if (SquirrelRuntimeInfo.IsOSX) {
                 var pkgPath = Path.Combine(releaseDir.FullName, options.packId + ".pkg");
-                HelperExe.CreateInstallerPkg(appBundlePath, pkgPath, options.signInstallIdentity);
+                HelperExe.CreateInstallerPkg(appBundlePath, pkgTitle, options.pkgContent, pkgPath, options.signInstallIdentity);
                 if (!String.IsNullOrEmpty(options.signInstallIdentity) && !String.IsNullOrEmpty(options.notaryProfile)) {
                     HelperExe.Notarize(pkgPath, options.notaryProfile);
                     HelperExe.Staple(pkgPath);

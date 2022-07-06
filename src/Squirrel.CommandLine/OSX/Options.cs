@@ -25,6 +25,9 @@ namespace Squirrel.CommandLine.OSX
         public string signEntitlements { get; private set; }
         public string notaryProfile { get; private set; }
         public string appleId { get; private set; }
+        public KeyValuePair<string, string>[] pkgContent => _pkgContent.ToArray();
+
+        private Dictionary<string, string> _pkgContent = new Dictionary<string, string>();
 
         public PackOptions()
         {
@@ -40,6 +43,8 @@ namespace Squirrel.CommandLine.OSX
             Add("i=|icon=", "{PATH} to the .icns file for this bundle", v => icon = v);
             Add("noDelta", "Skip the generation of delta packages", v => noDelta = true);
             Add("appleId", "Override the apple bundle ID for generated bundles", v => appleId = v);
+            Add("noPkg", "Skip generating a .pkg installer", v => appleId = v);
+            Add("pkgContent=", "Add content files (eg. readme, license) to pkg installer.", (v1, v2) => _pkgContent.Add(v1, v2));
 
             if (SquirrelRuntimeInfo.IsOSX) {
                 Add("signAppIdentity=", "The {SUBJECT} name of the cert to use for app code signing", v => signAppIdentity = v);
@@ -56,6 +61,23 @@ namespace Squirrel.CommandLine.OSX
             NuGet.NugetUtil.ThrowIfInvalidNugetId(packId);
             NuGet.NugetUtil.ThrowIfVersionNotSemverCompliant(packVersion);
             IsValidDirectory(nameof(packDirectory), true);
+
+            var validContentKeys = new string[] {
+                "welcome",
+                "readme",
+                "license",
+                "conclusion",
+            };
+
+            foreach (var kvp in _pkgContent) {
+                if (!validContentKeys.Contains(kvp.Key)) {
+                    throw new OptionValidationException($"Invalid pkgContent key: {kvp.Key}. Must be one of: " + string.Join(", ", validContentKeys));
+                }
+
+                if (!File.Exists(kvp.Value)) {
+                    throw new OptionValidationException("pkgContent file not found: " + kvp.Value);
+                }
+            }
         }
     }
 }
