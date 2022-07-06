@@ -75,6 +75,12 @@ namespace Squirrel.CommandLine.OSX
             var bundleName = Path.GetFileName(appBundlePath);
             var tmpBundlePath = Path.Combine(tmpPayload1, bundleName);
             Utility.CopyFiles(new DirectoryInfo(appBundlePath), new DirectoryInfo(tmpBundlePath));
+            
+            // create postinstall scripts to open app after install
+            // https://stackoverflow.com/questions/35619036/open-app-after-installation-from-pkg-file-in-mac
+            var postinstall = Path.Combine(tmpScripts, "postinstall");
+            File.WriteAllText(postinstall, $"#!/bin/sh\nsudo -u \"$USER\" open \"$2/{bundleName}/\"\nexit 0");
+            PlatformUtil.ChmodFileAsExecutable(postinstall);
 
             // generate non-relocatable component pkg. this will be included into a product archive
             var pkgPlistPath = Path.Combine(tmp, "tmp.plist");
@@ -85,18 +91,13 @@ namespace Squirrel.CommandLine.OSX
             string[] args1 = {
                 "--root", tmpPayload1,
                 "--component-plist", pkgPlistPath,
+                "--scripts", tmpScripts,
                 "--install-location", "/Applications",
                 pkg1Path,
             };
 
             InvokeAndThrowIfNonZero("pkgbuild", args1, null);
             
-            // create postinstall scripts to open app after install
-            // https://stackoverflow.com/questions/35619036/open-app-after-installation-from-pkg-file-in-mac
-            var postinstall = Path.Combine(tmpScripts, "postinstall");
-            File.WriteAllText(postinstall, $"#!/bin/sh\nopen \"$2/{bundleName}/\"\nexit 0");
-            PlatformUtil.ChmodFileAsExecutable(postinstall);
-
             // create product package that installs to home dir
             var distributionPath = Path.Combine(tmp, "distribution.xml");
             InvokeAndThrowIfNonZero("productbuild", new[] { "--synthesize", "--package", pkg1Path, distributionPath }, null);
@@ -109,7 +110,6 @@ namespace Squirrel.CommandLine.OSX
             List<string> args2 = new() {
                 "--distribution", distributionPath,
                 "--package-path", tmpPayload2,
-                "--scripts", tmpScripts,
                 pkgOutputPath
             };
 
