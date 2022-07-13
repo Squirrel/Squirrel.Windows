@@ -104,8 +104,15 @@ namespace Squirrel
 
         public static WebClient CreateWebClient()
         {
-            // WHY DOESNT IT JUST DO THISSSSSSSS
-            System.Net.ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+            // enable TLS support
+            // TLS 1.0 and 1.1 are enabled for backward compatibility and should be disabled in the future
+            // for security reasons
+            ServicePointManager.SecurityProtocol |=
+                SecurityProtocolType.Tls12 |
+                SecurityProtocolType.Tls11 |
+                SecurityProtocolType.Tls;
+            // disable SSLv3 support for security reasons
+            ServicePointManager.SecurityProtocol &= ~SecurityProtocolType.Ssl3;
 
             var ret = new WebClient();
             var wp = WebRequest.DefaultWebProxy;
