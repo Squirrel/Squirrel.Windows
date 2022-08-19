@@ -20,11 +20,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Squirrel.CommandLine\Squirrel.CommandLine.csproj" />
-  </ItemGroup>
-  
-  <ItemGroup>
     <PackageReference Include="Microsoft.Build" Version="17.2.0" />
+    <PackageReference Include="NuGet.Protocol" Version="6.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Squirrel\Squirrel.csproj" />
   </ItemGroup>
 
 </Project>

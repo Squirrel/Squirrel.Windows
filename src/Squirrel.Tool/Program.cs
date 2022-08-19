@@ -3,17 +3,27 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Build.Construction;
 using Mono.Options;
+using NuGet.Common;
 using NuGet.Versioning;
 
 namespace Squirrel.Tool
 {
-    class Program
+    class Program : ILogger
     {
         private static bool Verbose { get; set; }
+
+#pragma warning disable CS0436
+        public static string SquirrelDisplayVersion => ThisAssembly.AssemblyInformationalVersion + (ThisAssembly.IsPublicRelease ? "" : " (prerelease)");
+        public static NuGetVersion SquirrelNugetVersion => NuGetVersion.Parse(ThisAssembly.AssemblyInformationalVersion);
+#pragma warning restore CS0436
+
+        const string CLOWD_PACKAGE_NAME = "Clowd.Squirrel";
 
         static int Main(string[] inargs)
         {
@@ -27,132 +37,162 @@ namespace Squirrel.Tool
 
         static int MainInner(string[] inargs)
         {
-            string explicitSquirrelPath = null;
             string explicitSolutionPath = null;
-            bool useEmbedded = false;
-
+            string explicitSquirrelVersion = null;
             var toolOptions = new OptionSet() {
-                { "q|csq-embedded", _ => useEmbedded = true },
-                { "csq-path=", v => explicitSquirrelPath = v },
+                { "csq-version=", v => explicitSquirrelVersion = v },
                 { "csq-sln=", v => explicitSolutionPath = v },
                 { "csq-verbose", _ => Verbose = true },
             };
 
             var restArgs = toolOptions.Parse(inargs).ToArray();
 
-            Write(SquirrelRuntimeInfo.SquirrelDisplayVersion, true);
+            Console.WriteLine($"Squirrel Locator 'csq' {SquirrelDisplayVersion}");
+            Write($"Entry EXE: {SquirrelRuntimeInfo.EntryExePath}", true);
 
-            // explicitly told to execute embedded version
-            if (useEmbedded) {
-                Write("using embedded (--csq-embedded)", true);
-                return CommandLine.SquirrelHost.Main(restArgs);
-            }
+            CheckForUpdates();
 
-            // explicitly told to use specific version at this directory
-            if (explicitSquirrelPath != null) {
-                return RunCsqFromPath(explicitSquirrelPath, restArgs);
-            }
+            var solutionDir = FindSolutionDirectory(explicitSolutionPath);
+            var nugetPackagesDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
+            var cacheDir = Path.GetFullPath(solutionDir == null ? ".squirrel" : Path.Combine(solutionDir, ".squirrel"));
 
-            // try to find the solution directory from cwd
-            string slnDir;
-            if (File.Exists(explicitSolutionPath) && explicitSolutionPath.EndsWith(".sln", StringComparison.InvariantCultureIgnoreCase)) {
-                slnDir = Path.GetDirectoryName(Path.GetFullPath(explicitSolutionPath));
-            } else {
-                var cwd = Environment.CurrentDirectory;
-                var slnSearchDirs = new string[] {
-                    cwd,
-                    Path.Combine(cwd, ".."),
-                    Path.Combine(cwd, "..", ".."),
-                };
+            Dictionary<string, string> packageSearchPaths = new();
+            packageSearchPaths.Add("nuget user profile cache", Path.Combine(nugetPackagesDir, CLOWD_PACKAGE_NAME.ToLower(), "{0}", "tools"));
+            if (solutionDir != null)
+                packageSearchPaths.Add("visual studio packages cache", Path.Combine(solutionDir, "packages", CLOWD_PACKAGE_NAME + ".{0}", "tools"));
+            packageSearchPaths.Add("squirrel cache", Path.Combine(cacheDir, "{0}", "tools"));
 
-                slnDir = slnSearchDirs.FirstOrDefault(d => Directory.EnumerateFiles(d, "*.sln").Any());
-                if (slnDir == null) {
-                    throw new Exception("Could not find '.sln'. Specify solution file with '--csq-sln=', provide " +
-                                        "Squirrel tools path with '--csq-path=' argument, or use embedded version with '--csq-embedded'.");
+            int runSquirrel(string version)
+            {
+                foreach (var kvp in packageSearchPaths) {
+                    var path = String.Format(kvp.Value, version);
+                    if (Directory.Exists(path)) {
+                        Write($"Running {CLOWD_PACKAGE_NAME} {version} from {kvp.Key}", false);
+                        return RunCsqFromPath(path, restArgs);
+                    }
                 }
+
+                // we did not find it locally on first pass, search for the package online
+                var dl = new NugetDownloader(new Program());
+                var package = dl.GetPackageMetadata(CLOWD_PACKAGE_NAME, version);
+
+                // search one more time now that we've potentially resolved the nuget version
+                foreach (var kvp in packageSearchPaths) {
+                    var path = String.Format(kvp.Value, package.Identity.Version);
+                    if (Directory.Exists(path)) {
+                        Write($"Running {CLOWD_PACKAGE_NAME} {package.Identity.Version} from {kvp.Key}", false);
+                        return RunCsqFromPath(path, restArgs);
+                    }
+                }
+
+                // let's try to download it from NuGet.org
+                var versionDir = Path.Combine(cacheDir, package.Identity.Version.ToString());
+                if (!Directory.Exists(cacheDir)) Directory.CreateDirectory(cacheDir);
+                if (!Directory.Exists(versionDir)) Directory.CreateDirectory(versionDir);
+
+                Write($"Downloading {package.Identity} from NuGet.", false);
+
+                var filePath = Path.Combine(versionDir, package.Identity + ".nupkg");
+                using (var fs = File.Create(filePath))
+                    dl.DownloadPackageToStream(package, fs);
+
+                EasyZip.ExtractZipToDirectory(filePath, versionDir);
+
+                var toolsPath = Path.Combine(versionDir, "tools");
+                return RunCsqFromPath(toolsPath, restArgs);
             }
 
-            slnDir = Path.GetFullPath(slnDir);
-            Write("solution dir " + slnDir, true);
+            if (explicitSquirrelVersion != null) {
+                return runSquirrel(explicitSquirrelVersion);
+            }
 
-            const string packageName = "Clowd.Squirrel";
-            var dependencies = GetPackageVersionsFromDir(slnDir, packageName).Distinct().ToArray();
+            if (solutionDir == null) {
+                throw new Exception("Could not find '.sln'. Specify solution with '--csq-sln=', or specify version of squirrel to use with '--csq-version='.");
+            }
+
+            Write("Solution dir found at: " + solutionDir, true);
+
+            // TODO actually read the SLN file rather than just searching for all .csproj files
+            var dependencies = GetPackageVersionsFromDir(solutionDir, CLOWD_PACKAGE_NAME).Distinct().ToArray();
 
             if (dependencies.Length == 0) {
-                throw new Exception("Clowd.Squirrel nuget package was not found in solution.");
+                throw new Exception("Clowd.Squirrel nuget package was not found installed in solution.");
             }
 
             if (dependencies.Length > 1) {
-                throw new Exception("Found multiple versions of Clowd.Squirrel installed in solution. " +
-                                    "Please consolidate the following to a single version: " + string.Join(", ", dependencies));
+                throw new Exception($"Found multiple versions of Clowd.Squirrel installed in solution ({string.Join(", ", dependencies)}). " +
+                                    "Please consolidate the following to a single version, or specify the version to use with '--csq-version='");
             }
 
             var targetVersion = dependencies.Single();
-            var toolsDir = GetToolPathFromUserCache(targetVersion, packageName);
 
-            var localpath = Path.Combine(slnDir, "packages", packageName + "." + targetVersion, "tools");
-            if (Directory.Exists(localpath))
-                toolsDir = localpath;
-
-            if (!Directory.Exists(toolsDir)) {
-                throw new Exception($"Unable to find Squirrel tools for '{targetVersion}'. " +
-                                    $"Please specify path to tools directory with '--csq-path=' argument, " +
-                                    $"or use embedded version with '--csq-embedded'.");
-            }
-
-            return RunCsqFromPath(toolsDir, restArgs);
+            return runSquirrel(targetVersion);
         }
 
-        static string GetToolPathFromUserCache(string targetVersion, string packageName)
+        static void CheckForUpdates()
         {
-            var packages = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
-            var toolRootPath = Path.Combine(packages, packageName.ToLower(), targetVersion, "tools");
-            if (Directory.Exists(toolRootPath))
-                return toolRootPath;
+            try {
+                var myVer = SquirrelNugetVersion;
+                var dl = new NugetDownloader(new Program());
+                var package = dl.GetPackageMetadata("csq", (myVer.IsPrerelease || myVer.HasMetadata) ? "pre" : "latest");
+                if (package.Identity.Version > myVer)
+                    Write($"There is a new version of csq available ({package.Identity.Version})", false);
+            } catch { ; }
+        }
 
-            // resolve wildcards. we should probably rely on the dotnet tooling for this in the future
-            // so we can be more certain we are using precisely the same version as dotnet.
-            if (targetVersion.Contains("*")) {
-                Write($"Project version is '{targetVersion}'. Attempting to resolve wildcard...", false);
-                var packageDir = Path.Combine(packages, packageName.ToLower());
-                var vdir = Directory.EnumerateDirectories(packageDir, targetVersion, SearchOption.TopDirectoryOnly)
-                    .Select(d => new DirectoryInfo(d).Name)
-                    .Select(NuGetVersion.Parse)
-                    .Max();
+        static string FindSolutionDirectory(string slnArgument)
+        {
+            if (!String.IsNullOrWhiteSpace(slnArgument)) {
+                if (File.Exists(slnArgument) && slnArgument.EndsWith(".sln", StringComparison.InvariantCultureIgnoreCase)) {
+                    // we were given a sln file as argument
+                    return Path.GetDirectoryName(Path.GetFullPath(slnArgument));
+                }
 
-                if (vdir != null) {
-                    return Path.Combine(packageDir, vdir.OriginalVersion, "tools");
+                if (Directory.Exists(slnArgument) && Directory.EnumerateFiles(slnArgument, "*.sln").Any()) {
+                    return Path.GetFullPath(slnArgument);
                 }
             }
 
-            return null;
+            // try to find the solution directory from cwd
+            var cwd = Environment.CurrentDirectory;
+            var slnSearchDirs = new string[] {
+                cwd,
+                Path.Combine(cwd, ".."),
+                Path.Combine(cwd, "..", ".."),
+            };
+
+            return slnSearchDirs.FirstOrDefault(d => Directory.EnumerateFiles(d, "*.sln").Any());
         }
 
         static int RunCsqFromPath(string toolRootPath, string[] args)
         {
-            var dllName = "csq.dll";
-            var exeName = "Squirrel.exe";
-            var toolDllPath = Path.Combine(toolRootPath, dllName);
-            var toolExePath = Path.Combine(toolRootPath, exeName);
+            // > v3.0.170
+            if (File.Exists(Path.Combine(toolRootPath, "Squirrel.CommandLine.runtimeconfig.json"))) {
+                var cliPath = Path.Combine(toolRootPath, "Squirrel.CommandLine.dll");
+                var dnargs = new[] { cliPath }.Concat(args).ToArray();
+                Write("running dotnet " + String.Join(" ", dnargs), true);
+                return PlatformUtil.InvokeProcess("dotnet", dnargs, Environment.CurrentDirectory, CancellationToken.None).ExitCode;
+            }
 
-            Process p;
-
+            // v3.0 - v3.0.170
+            var toolDllPath = Path.Combine(toolRootPath, "csq.dll");
             if (File.Exists(toolDllPath)) {
                 var dnargs = new[] { toolDllPath, "--csq-embedded" }.Concat(args).ToArray();
                 Write("running dotnet " + String.Join(" ", dnargs), true);
-                p = Process.Start("dotnet", dnargs);
-            } else if (File.Exists(toolExePath)) {
-                if (!OperatingSystem.IsWindows())
+                return PlatformUtil.InvokeProcess("dotnet", dnargs, Environment.CurrentDirectory, CancellationToken.None).ExitCode;
+            }
+
+            // < v3.0
+            var toolExePath = Path.Combine(toolRootPath, "Squirrel.exe");
+            if (File.Exists(toolExePath)) {
+                if (!SquirrelRuntimeInfo.IsWindows)
                     throw new NotSupportedException(
                         $"Squirrel at '{toolRootPath}' does not support this operating system. Please update the package version to >= 3.0");
                 Write("running " + toolExePath + " " + String.Join(" ", args), true);
-                p = Process.Start(toolExePath, args);
-            } else {
-                throw new Exception("Unable to locate Squirrel at: " + toolRootPath);
+                return PlatformUtil.InvokeProcess(toolExePath, args, Environment.CurrentDirectory, CancellationToken.None).ExitCode;
             }
 
-            p.WaitForExit();
-            return p.ExitCode;
+            throw new Exception("Unable to locate Squirrel at: " + toolRootPath);
         }
 
         static IEnumerable<string> GetPackageVersionsFromDir(string rootDir, string packageName)
@@ -171,7 +211,7 @@ namespace Squirrel.Tool
 
                 if (ver.Value.Contains("*"))
                     throw new Exception(
-                        "Wildcard versions are not supported in packages.config. Remove wildcard or upgrade csproj format to use PackageReference.");
+                        $"Wildcard versions are not supported in packages.config. Remove wildcard or upgrade csproj format to use PackageReference.");
 
                 yield return ver.Value;
             }
@@ -211,8 +251,70 @@ namespace Squirrel.Tool
 
         static void Write(string message, bool isDebugMessage)
         {
+            // TODO use Squirrel logging proper... 
             if (Verbose || !isDebugMessage)
                 Console.WriteLine("csq: " + message);
         }
+
+        #region NuGet.Common.ILogger
+
+        public void LogDebug(string data)
+        {
+            Write(data, true);
+        }
+
+        public void LogVerbose(string data)
+        {
+            Write(data, true);
+        }
+
+        public void LogInformation(string data)
+        {
+            Write(data, true);
+        }
+
+        public void LogMinimal(string data)
+        {
+            Write(data, false);
+        }
+
+        public void LogWarning(string data)
+        {
+            Write(data, false);
+        }
+
+        public void LogError(string data)
+        {
+            Write(data, false);
+        }
+
+        public void LogInformationSummary(string data)
+        {
+            Write(data, true);
+        }
+
+        public void Log(LogLevel level, string data)
+        {
+            Write(data, level <= LogLevel.Information);
+        }
+
+        public Task LogAsync(LogLevel level, string data)
+        {
+            Write(data, level <= LogLevel.Information);
+            return Task.CompletedTask;
+        }
+
+        public void Log(ILogMessage message)
+        {
+            Write(message.Message, message.Level <= LogLevel.Information);
+        }
+
+        public Task LogAsync(ILogMessage message)
+        {
+            Write(message.Message, message.Level <= LogLevel.Information);
+            return Task.CompletedTask;
+        }
+
+        #endregion
     }
 }

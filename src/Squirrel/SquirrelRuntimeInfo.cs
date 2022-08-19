@@ -111,8 +111,7 @@ namespace Squirrel
 
         static SquirrelRuntimeInfo()
         {
-            var entryProcess = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
-            EntryExePath = Path.GetFileNameWithoutExtension(entryProcess) == "dotnet" ? "csq" : entryProcess;
+            EntryExePath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
             BaseDirectory = AppContext.BaseDirectory;
 
             // if Assembly.Location does not exist, we're almost certainly bundled into a dotnet SingleFile

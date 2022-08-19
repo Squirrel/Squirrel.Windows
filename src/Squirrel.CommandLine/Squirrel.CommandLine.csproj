@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <UseAppHost>false</UseAppHost>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>$(NoWarn);CA2007</NoWarn>
   </PropertyGroup>

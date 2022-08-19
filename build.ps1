@@ -35,30 +35,24 @@ msbuild /verbosity:minimal /restore /p:Configuration=Release
 # Build single-exe packaged projects and drop into nupkg
 Write-Host "Extracting Generated Packages" -ForegroundColor Magenta
 Set-Location "$PSScriptRoot\build\Release"
-seven x csq*.nupkg -ocsq
 seven x Clowd.Squirrel*.nupkg -osquirrel
-Remove-Item *.nupkg
+Remove-Item Clowd.Squirrel*.nupkg
 
 Write-Host "Publishing SingleFile Projects" -ForegroundColor Magenta
-$ToolsDir = "csq\tools\net6.0\any"
+$ToolsDir = "squirrel\tools"
+dotnet publish -v minimal --no-build -c Release --no-self-contained "$PSScriptRoot\src\Squirrel.CommandLine\Squirrel.CommandLine.csproj" -o "$ToolsDir"
 dotnet publish -v minimal --no-build -c Release --self-contained "$PSScriptRoot\src\Update.Windows\Update.Windows.csproj" -o "$ToolsDir"
 dotnet publish -v minimal --no-build -c Release --self-contained "$PSScriptRoot\src\Update.OSX\Update.OSX.csproj" -o "$ToolsDir"
 
 Write-Host "Copying Tools" -ForegroundColor Magenta
-# First, copy all the tools into the 'csq' package
+# Copy all the tools into the 'csq' package
 Copy-Item -Path "$PSScriptRoot\vendor\*" -Destination $ToolsDir -Recurse 
 Copy-Item -Path "Win32\*" -Destination $ToolsDir 
 Copy-Item -Path "$PSScriptRoot\Squirrel.entitlements" -Destination "$ToolsDir"
 Remove-Item "$ToolsDir\*.pdb"
 Remove-Item "$ToolsDir\7za.exe"
 
-# Second, copy all the csq files into the 'squirrel' package
-New-Item -Path "squirrel" -Name "tools" -ItemType "directory"
-Copy-Item -Path "$ToolsDir\*" -Destination "squirrel\tools" -Recurse
-Remove-Item "squirrel\tools\*.xml"
-
 Write-Host "Re-assembling Packages" -ForegroundColor Magenta
-seven a "csq.$version.nupkg" -tzip -mx9 "$PSScriptRoot\build\Release\csq\*"
 seven a "Clowd.Squirrel.$version.nupkg" -tzip -mx9 "$PSScriptRoot\build\Release\squirrel\*"
 
 Write-Host "Done." -ForegroundColor Magenta
