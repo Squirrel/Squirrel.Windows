@@ -17,6 +17,7 @@
   
   <ItemGroup>
     <None Include="..\..\docs\artwork\Clowd_200.png" Pack="true" PackagePath="\" />
+    <Compile Include="..\Squirrel.CommandLine\ConsoleLogger.cs" />
   </ItemGroup>
 
   <ItemGroup>
