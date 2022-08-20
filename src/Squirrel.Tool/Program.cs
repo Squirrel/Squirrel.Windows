@@ -3,14 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Build.Construction;
 using Mono.Options;
-using NuGet.Common;
-using NuGet.Versioning;
 using Squirrel.CommandLine;
 using LogLevel = Squirrel.SimpleSplat.LogLevel;
 
@@ -18,11 +14,6 @@ namespace Squirrel.Tool
 {
     class Program
     {
-#pragma warning disable CS0436
-        public static string SquirrelDisplayVersion => ThisAssembly.AssemblyInformationalVersion + (ThisAssembly.IsPublicRelease ? "" : " (prerelease)");
-        public static NuGetVersion SquirrelNugetVersion => NuGetVersion.Parse(ThisAssembly.AssemblyInformationalVersion);
-#pragma warning restore CS0436
-
         const string CLOWD_PACKAGE_NAME = "Clowd.Squirrel";
 
         private static ConsoleLogger _logger;
@@ -57,7 +48,7 @@ namespace Squirrel.Tool
                 _logger.Level = LogLevel.Debug;
             }
 
-            Console.WriteLine($"Squirrel Locator 'csq' {SquirrelDisplayVersion}");
+            Console.WriteLine($"Squirrel Locator 'csq' {SquirrelRuntimeInfo.SquirrelDisplayVersion}");
             _logger.Write($"Entry EXE: {SquirrelRuntimeInfo.EntryExePath}", LogLevel.Debug);
 
             CheckForUpdates();
@@ -142,7 +133,7 @@ namespace Squirrel.Tool
         static void CheckForUpdates()
         {
             try {
-                var myVer = SquirrelNugetVersion;
+                var myVer = SquirrelRuntimeInfo.SquirrelNugetVersion;
                 var dl = new NugetDownloader(_logger);
                 var package = dl.GetPackageMetadata("csq", (myVer.IsPrerelease || myVer.HasMetadata) ? "pre" : "latest");
                 if (package.Identity.Version > myVer)

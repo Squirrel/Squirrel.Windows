@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using NuGet.Versioning;
 using Squirrel.SimpleSplat;
 
 #if !NETFRAMEWORK
@@ -65,6 +66,9 @@ namespace Squirrel
     {
         /// <summary> The current compiled Squirrel display version. </summary>
         public static string SquirrelDisplayVersion => ThisAssembly.AssemblyInformationalVersion + (ThisAssembly.IsPublicRelease ? "" : " (prerelease)");
+
+        /// <summary> The current compiled Squirrel NuGetVersion. </summary>
+        public static NuGetVersion SquirrelNugetVersion => NuGetVersion.Parse(ThisAssembly.AssemblyInformationalVersion);
 
         /// <summary> The current compiled Squirrel assembly file version. </summary>
         public static string SquirrelFileVersion => ThisAssembly.AssemblyFileVersion;
