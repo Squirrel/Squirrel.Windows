@@ -171,7 +171,7 @@ namespace Squirrel.Tool
                 var cliPath = Path.Combine(toolRootPath, "Squirrel.CommandLine.dll");
                 var dnargs = new[] { cliPath }.Concat(args).ToArray();
                 Write("running dotnet " + String.Join(" ", dnargs), true);
-                return PlatformUtil.InvokeProcess("dotnet", dnargs, Environment.CurrentDirectory, CancellationToken.None).ExitCode;
+                return RunProcess("dotnet", dnargs);
             }
 
             // v3.0 - v3.0.170
@@ -179,7 +179,7 @@ namespace Squirrel.Tool
             if (File.Exists(toolDllPath)) {
                 var dnargs = new[] { toolDllPath, "--csq-embedded" }.Concat(args).ToArray();
                 Write("running dotnet " + String.Join(" ", dnargs), true);
-                return PlatformUtil.InvokeProcess("dotnet", dnargs, Environment.CurrentDirectory, CancellationToken.None).ExitCode;
+                return RunProcess("dotnet", dnargs);
             }
 
             // < v3.0
@@ -189,10 +189,17 @@ namespace Squirrel.Tool
                     throw new NotSupportedException(
                         $"Squirrel at '{toolRootPath}' does not support this operating system. Please update the package version to >= 3.0");
                 Write("running " + toolExePath + " " + String.Join(" ", args), true);
-                return PlatformUtil.InvokeProcess(toolExePath, args, Environment.CurrentDirectory, CancellationToken.None).ExitCode;
+                return RunProcess(toolExePath, args);
             }
 
             throw new Exception("Unable to locate Squirrel at: " + toolRootPath);
+        }
+
+        static int RunProcess(string path, string[] args)
+        {
+            var p = Process.Start(path, args);
+            p.WaitForExit();
+            return p.ExitCode;
         }
 
         static IEnumerable<string> GetPackageVersionsFromDir(string rootDir, string packageName)
