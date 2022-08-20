@@ -64,10 +64,10 @@ namespace Squirrel.CommandLine
                     packageCommands,
                     "",
                     "[ Package Deployment / Syncing ]",
-                    { "s3-down", "Download releases from S3 compatible API", new SyncS3Options(), o => Download(new S3Repository(o)) },
-                    { "s3-up", "Upload releases to S3 compatible API", new SyncS3Options(), o => Upload(new S3Repository(o)) },
-                    { "http-down", "Download releases from an HTTP source", new SyncHttpOptions(), o => Download(new SimpleWebRepository(o)) },
-                    { "github-down", "Download releases from GitHub", new SyncGithubOptions(), o => Download(new GitHubRepository(o)) },
+                    { "http-down", "Download latest release from HTTP", new SyncHttpOptions(), o => Download(new SimpleWebRepository(o)) },
+                    { "s3-down", "Download latest release from S3 API", new SyncS3Options(), o => Download(new S3Repository(o)) },
+                    { "s3-up", "Upload releases to S3 API", new SyncS3Options(), o => Upload(new S3Repository(o)) },
+                    { "github-down", "Download latest release from GitHub", new SyncGithubOptions(), o => Download(new GitHubRepository(o)) },
                 };
 
                 if (verbose) {

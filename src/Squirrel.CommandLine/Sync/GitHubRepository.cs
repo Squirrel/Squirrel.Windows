@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Squirrel.SimpleSplat;
 using Squirrel.Sources;
@@ -33,16 +34,26 @@ namespace Squirrel.CommandLine.Sync
                 return;
             }
 
-            Log.Info($"Found {latestReleaseEntries.Length} assets in latest release ({source.Release.Name}).");
+            Log.Info($"Found {latestReleaseEntries.Length} assets in RELEASES file for GitHub version {source.Release.Name}.");
 
-            foreach (var entry in latestReleaseEntries) {
-                var localFile = Path.Combine(releaseDirectoryInfo.FullName, entry.Filename);
-                if (File.Exists(localFile)) {
-                    Log.Info($"File '{entry.Filename}' exists on disk, skipping download.");
+            var releasesToDownload = latestReleaseEntries
+                .Where(x => !x.IsDelta)
+                .OrderByDescending(x => x.Version)
+                .Take(1)
+                .Select(x => new {
+                    Obj = x,
+                    LocalPath = Path.Combine(releaseDirectoryInfo.FullName, x.Filename),
+                    Filename = x.Filename,
+                });
+
+            foreach (var entry in releasesToDownload) {
+                if (File.Exists(entry.LocalPath)) {
+                    Log.Warn($"File '{entry.Filename}' exists on disk, skipping download.");
                     continue;
                 }
+
                 Log.Info($"Downloading {entry.Filename}...");
-                await source.DownloadReleaseEntry(entry, localFile, (p) => { });
+                await source.DownloadReleaseEntry(entry.Obj, entry.LocalPath, (p) => { });
             }
 
             ReleaseEntry.BuildReleasesFile(releaseDirectoryInfo.FullName);
