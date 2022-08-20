@@ -42,10 +42,12 @@ namespace Squirrel.Tool
             var toolOptions = new OptionSet() {
                 { "csq-version=", v => explicitSquirrelVersion = v },
                 { "csq-sln=", v => explicitSolutionPath = v },
-                { "csq-verbose", _ => Verbose = true },
+                { "verbose", _ => Verbose = true },
             };
 
-            var restArgs = toolOptions.Parse(inargs).ToArray();
+            // we want to forward the --verbose argument to Squirrel, too.
+            var verboseArgs = Verbose ? new string[] { "--verbose" } : new string[0];
+            string[] restArgs = toolOptions.Parse(inargs).Concat(verboseArgs).ToArray();
 
             Console.WriteLine($"Squirrel Locator 'csq' {SquirrelDisplayVersion}");
             Write($"Entry EXE: {SquirrelRuntimeInfo.EntryExePath}", true);
