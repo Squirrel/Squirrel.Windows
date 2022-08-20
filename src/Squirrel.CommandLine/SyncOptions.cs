@@ -90,7 +90,7 @@ namespace Squirrel.CommandLine
         {
             Add("repoUrl=", "Full url to the github repository\nexample: 'https://github.com/myname/myrepo'", v => repoUrl = v);
             Add("token=", "OAuth token to use as login credentials", v => token = v);
-            Add("pre", "Fetch the latest pre-release instead of stable", v => pre = true);
+            Add("pre", "Download pre-release instead of stable", v => pre = true);
         }
 
         public override void Validate()

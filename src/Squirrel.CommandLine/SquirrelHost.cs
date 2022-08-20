@@ -68,6 +68,7 @@ namespace Squirrel.CommandLine
                     { "s3-down", "Download latest release from S3 API", new SyncS3Options(), o => Download(new S3Repository(o)) },
                     { "s3-up", "Upload releases to S3 API", new SyncS3Options(), o => Upload(new S3Repository(o)) },
                     { "github-down", "Download latest release from GitHub", new SyncGithubOptions(), o => Download(new GitHubRepository(o)) },
+                    { "github-up", "Upload latest release to GitHub", new SyncGithubOptions(), o => Upload(new GitHubRepository(o)) },
                 };
 
                 if (verbose) {
