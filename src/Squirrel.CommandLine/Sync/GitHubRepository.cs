@@ -89,35 +89,39 @@ namespace Squirrel.CommandLine.Sync
             if (releases.Length == 0)
                 throw new Exception("There are no nupkg's in the releases directory to upload");
 
-            var ver = releases.Select(r => r.Version).Max();
-            if (ver == null)
+            var ver = Enumerable.MaxBy(releases, x => x.Version);
+            if(ver == null)
                 throw new Exception("There are no nupkg's in the releases directory to upload");
+            var semVer = ver.Version;
 
             Log.Info($"Preparing to upload latest local release to GitHub");
 
-            var newReleaseReq = new NewRelease(ver.ToString()) {
-                Body = "TODO", // TODO, this should use the release notes from the release, if they exist
-                Draft = true,
-                Prerelease = ver.HasMetadata || ver.IsPrerelease,
-                Name = ver.ToString(),
+
+            var newReleaseReq = new NewRelease(semVer.ToString()) {
+                Body = _options.body + "\r\n" + ver.GetReleaseNotes(releaseDirectoryInfo.FullName),
+                Draft = _options.draft,
+                Prerelease = semVer.HasMetadata || semVer.IsPrerelease,
+                Name = string.IsNullOrWhiteSpace(_options.name) 
+                    ? semVer.ToString() 
+                    : _options.name,
             };
 
-            Log.Info($"Creating draft release titled '{ver.ToString()}'");
+            Log.Info($"Creating draft release titled '{semVer.ToString()}'");
 
             var existingReleases = await client.Repository.Release.GetAll(repoOwner, repoName);
-            if (existingReleases.Any(r => r.Name == ver.ToString())) {
-                throw new Exception($"There is already an existing release titled '{ver}'. Please delete this release or choose a new version number.");
+            if (existingReleases.Any(r => r.TagName == semVer.ToString())) {
+                throw new Exception($"There is already an existing release titled '{semVer}'. Please delete this release or choose a new version number.");
             }
 
             var release = await client.Repository.Release.Create(repoOwner, repoName, newReleaseReq);
 
             // locate files to upload
             var files = releaseDirectoryInfo.GetFiles("*", SearchOption.TopDirectoryOnly);
-            var msiFile = files.Where(f => f.FullName.EndsWith(".msi", StringComparison.InvariantCultureIgnoreCase)).SingleOrDefault();
+            var msiFile = files.SingleOrDefault(f => f.FullName.EndsWith(".msi", StringComparison.InvariantCultureIgnoreCase));
             var setupFile = files.Where(f => f.FullName.EndsWith("Setup.exe", StringComparison.InvariantCultureIgnoreCase))
                 .ContextualSingle("release directory", "Setup.exe file");
 
-            var releasesToUpload = releases.Where(x => x.Version == ver).ToArray();
+            var releasesToUpload = releases.Where(x => x.Version == semVer).ToArray();
             MemoryStream releasesFileToUpload = new MemoryStream();
             ReleaseEntry.WriteReleaseFile(releasesToUpload, releasesFileToUpload);
             var releasesBytes = releasesFileToUpload.ToArray();

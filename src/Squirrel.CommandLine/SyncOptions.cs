@@ -85,12 +85,18 @@ namespace Squirrel.CommandLine
         public string repoUrl { get; private set; }
         public string token { get; private set; }
         public bool pre { get; private set; }
+        public bool draft { get; private set; }
+        public string name { get; private set; }
+        public string body { get; private set; }
 
         public SyncGithubOptions()
         {
             Add("repoUrl=", "Full url to the github repository\nexample: 'https://github.com/myname/myrepo'", v => repoUrl = v);
             Add("token=", "OAuth token to use as login credentials", v => token = v);
-            Add("pre", "Download pre-release instead of stable", v => pre = true);
+            Add("pre", "Download pre-release instead of stable", _ => pre = true);
+            Add("draft", "(up only) Mark release as draft", _ => draft = true);
+            Add("name=", "(up only) Name of the release", v => name = v);
+            Add("body=", "(up only) Body of the release, will be written before the release notes.", v => body = v);
         }
 
         public override void Validate()
