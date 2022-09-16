@@ -601,7 +601,13 @@ namespace Squirrel.Update
                 String.Format("sign {0} \"{1}\"", signingOpts, exePath), CancellationToken.None);
 
             if (processResult.Item1 != 0) {
-                var optsWithPasswordHidden = new Regex(@"/p\s+\S+").Replace(signingOpts, "/p ********");
+                var optsWithPasswordHidden = new Regex(@"(?x)                    #ignore pattern white space so we can leave comments
+                    (?i)                #ignore case
+                    (?<=/p\s+)          #positive look behind for /p that is followed by white space(s)
+                    .*?                 #get everything lazy way 
+                    (?=\s+)             #positive look ahead for white space(s) 
+                "
+                ).Replace(signingOpts, "/p ********");
                 var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}'",
                     exe, optsWithPasswordHidden, exePath);
 
