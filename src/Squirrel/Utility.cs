@@ -74,7 +74,14 @@ namespace Squirrel
         {
             Contract.Requires(rootPath != null);
 
-            return rootPath.EnumerateFiles("*", SearchOption.AllDirectories);
+            return rootPath.GetAllFilesRecursively("*");
+        }
+
+        public static IEnumerable<FileInfo> GetAllFilesRecursively(this DirectoryInfo rootPath, string searchPattern)
+        {
+            Contract.Requires(rootPath != null);
+
+            return rootPath.EnumerateFiles(searchPattern, SearchOption.AllDirectories);
         }
 
         public static IEnumerable<string> GetAllFilePathsRecursively(string rootPath)
