@@ -497,8 +497,9 @@ namespace Squirrel.Update
             if (shouldWait) waitForParentToExit();
 
             try {
-                this.Log().Info("About to launch: '{0}': {1}", targetExe.FullName, arguments ?? "");
-                Process.Start(new ProcessStartInfo(targetExe.FullName, arguments ?? "") { WorkingDirectory = Path.GetDirectoryName(targetExe.FullName) });
+                arguments = string.IsNullOrEmpty(arguments) ? $"--squirrel-cwd=\"{Environment.CurrentDirectory}\"" : $"{arguments} --squirrel-cwd=\"{Environment.CurrentDirectory}\"";
+                this.Log().Info("About to launch: '{0}': {1}", targetExe.FullName, arguments);
+                Process.Start(new ProcessStartInfo(targetExe.FullName, arguments) { WorkingDirectory = Path.GetDirectoryName(targetExe.FullName) });
             } catch (Exception ex) {
                 this.Log().ErrorException("Failed to start process", ex);
             }
