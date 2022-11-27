@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -110,13 +111,13 @@ namespace Squirrel.Update
                     Uninstall().Wait();
                     break;
                 case UpdateAction.Download:
-                    Console.WriteLine(Download(opt.target).Result);
+                    Console.WriteLine(Download(opt.target, proxyUrl: opt.proxyUrl, proxyUser: opt.proxyUser, proxyPassword: opt.proxyPassword).Result);
                     break;
                 case UpdateAction.Update:
-                    Update(opt.target).Wait();
+                    Update(opt.target, proxyUrl: opt.proxyUrl, proxyUser: opt.proxyUser, proxyPassword: opt.proxyPassword).Wait();
                     break;
                 case UpdateAction.CheckForUpdate:
-                    Console.WriteLine(CheckForUpdate(opt.target).Result);
+                    Console.WriteLine(CheckForUpdate(opt.target, proxyUrl: opt.proxyUrl, proxyUser: opt.proxyUser, proxyPassword: opt.proxyPassword).Result);
                     break;
                 case UpdateAction.UpdateSelf:
                     UpdateSelf().Wait();
@@ -187,13 +188,20 @@ namespace Squirrel.Update
             }
         }
 
-        public async Task Update(string updateUrl, string appName = null)
+        public async Task Update(string updateUrl, string appName = null, string proxyUrl = null, string proxyUser = null, string proxyPassword = null)
         {
+            FileDownloader fileDownloader = null;
             appName = appName ?? getAppNameFromDirectory();
 
             this.Log().Info("Starting update, downloading from " + updateUrl);
 
-            using (var mgr = new UpdateManager(updateUrl, appName)) {
+            if (!string.IsNullOrEmpty(proxyUrl))
+            {
+                var webClient = generateProxyWebClient(proxyUrl, proxyUser, proxyPassword);
+                fileDownloader = new FileDownloader(webClient);
+            }
+
+            using (var mgr = new UpdateManager(updateUrl, appName, urlDownloader: fileDownloader)) {
                 bool ignoreDeltaUpdates = false;
                 this.Log().Info("About to update to: " + mgr.RootAppDirectory);
 
@@ -234,12 +242,20 @@ namespace Squirrel.Update
             });
         }
 
-        public async Task<string> Download(string updateUrl, string appName = null)
+        public async Task<string> Download(string updateUrl, string appName = null, string proxyUrl = null, string proxyUser = null, string proxyPassword = null)
         {
+            FileDownloader fileDownloader = null;
             appName = appName ?? getAppNameFromDirectory();
 
             this.Log().Info("Fetching update information, downloading from " + updateUrl);
-            using (var mgr = new UpdateManager(updateUrl, appName)) {
+
+            if (!string.IsNullOrEmpty(proxyUrl))
+            {
+                var webClient = generateProxyWebClient(proxyUrl, proxyUser, proxyPassword);
+                fileDownloader = new FileDownloader(webClient);
+            }
+
+            using (var mgr = new UpdateManager(updateUrl, appName, urlDownloader: fileDownloader)) {
                 var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
 
@@ -258,12 +274,20 @@ namespace Squirrel.Update
             }
         }
 
-        public async Task<string> CheckForUpdate(string updateUrl, string appName = null)
+        public async Task<string> CheckForUpdate(string updateUrl, string appName = null, string proxyUrl = null, string proxyUser = null, string proxyPassword = null)
         {
+            FileDownloader fileDownloader = null;
             appName = appName ?? getAppNameFromDirectory();
 
             this.Log().Info("Fetching update information, downloading from " + updateUrl);
-            using (var mgr = new UpdateManager(updateUrl, appName)) {
+
+            if (!string.IsNullOrEmpty(proxyUrl))
+            {
+                var webClient = generateProxyWebClient(proxyUrl, proxyUser, proxyPassword);
+                fileDownloader = new FileDownloader(webClient);
+            }
+
+            using (var mgr = new UpdateManager(updateUrl, appName, urlDownloader: fileDownloader)) {
                 var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x));
                 var releaseNotes = updateInfo.FetchReleaseNotes();
 
@@ -528,6 +552,20 @@ namespace Squirrel.Update
             } finally {
                 if (handle != IntPtr.Zero) NativeMethods.CloseHandle(handle);
             }
+        }
+
+        WebClient generateProxyWebClient(string proxyUrl, string proxyUser, string proxyPassword)
+        {
+            var webClient = new WebClient();
+            var webProxy = new WebProxy(proxyUrl);
+            
+            if (!string.IsNullOrEmpty(proxyUser) && !string.IsNullOrEmpty(proxyPassword))
+            {
+                webProxy.Credentials = new NetworkCredential(proxyUser, proxyPassword);
+            }
+
+            webClient.Proxy = webProxy;
+            return webClient;
         }
 
         async Task<string> createSetupEmbeddedZip(string fullPackage, string releasesDir, string backgroundGif, string signingOpts, string setupIcon)
