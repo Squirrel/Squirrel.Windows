@@ -259,8 +259,12 @@ gotADir:
 		lpCommandLine = L"";
 	}
 
-	wchar_t cmd[MAX_PATH];
-	swprintf_s(cmd, L"\"%s\" --install . %s", updateExePath, lpCommandLine);
+	// append the full path of this installer executable to the next stage of the process
+	wchar_t setupExePath[MAX_PATH];
+	GetModuleFileName(NULL, setupExePath, MAX_PATH);
+
+	wchar_t cmd[MAX_PATH * 2];
+	swprintf_s(cmd, L"\"%s\" --install . %s --installer-path \"%s\"", updateExePath, lpCommandLine, setupExePath);
 
 	if (!CreateProcess(NULL, cmd, NULL, NULL, false, 0, NULL, targetDir, &si, &pi)) {
 		goto failedExtract;
