@@ -680,7 +680,7 @@ namespace Squirrel.Update
             var templateText = File.ReadAllText(Path.Combine(pathToWix, "template.wxs"));
             var templateData = new Dictionary<string, string> {
                 { "Id", package.Id },
-                { "Title", package.Title },
+                { "Title", package.Title ?? package.Id },
                 { "Author", company },
                 { "Version", Regex.Replace(package.Version.ToString(), @"-.*$", "") },
                 { "Summary", package.Summary ?? package.Description ?? package.Id },
