@@ -299,21 +299,30 @@ namespace Squirrel
             {
                 return Task.Run(async () => {
                     var target = getDirectoryForRelease(release.Version);
+                    var tempTarget = getTempDirectoryForRelease(release.Version);
 
                     // NB: This might happen if we got killed partially through applying the release
+                    if (tempTarget.Exists) {
+                        this.Log().Warn("Found partially applied temp release folder, killing it: " + tempTarget.FullName);
+                        await Utility.DeleteDirectory(tempTarget.FullName);
+                    }
+
+                    tempTarget.Create();
+
+                    this.Log().Info("Writing files to temp app directory: {0}", tempTarget.FullName);
+                    await ReleasePackage.ExtractZipForInstall(
+                        Path.Combine(updateInfo.PackageDirectory, release.Filename),
+                        tempTarget.FullName,
+                        rootAppDirectory,
+                        progressCallback);
+                    
                     if (target.Exists) {
                         this.Log().Warn("Found partially applied release folder, killing it: " + target.FullName);
                         await Utility.DeleteDirectory(target.FullName);
                     }
 
-                    target.Create();
-
-                    this.Log().Info("Writing files to app directory: {0}", target.FullName);
-                    await ReleasePackage.ExtractZipForInstall(
-                        Path.Combine(updateInfo.PackageDirectory, release.Filename),
-                        target.FullName,
-                        rootAppDirectory,
-                        progressCallback);
+                    this.Log().Info("Rename directory {0} to {1}", tempTarget.FullName, target.FullName);
+                    tempTarget.MoveTo(target.FullName);
 
                     return target.FullName;
                 });
@@ -695,6 +704,11 @@ namespace Squirrel
             DirectoryInfo getDirectoryForRelease(SemanticVersion releaseVersion)
             {
                 return new DirectoryInfo(Path.Combine(rootAppDirectory, "app-" + releaseVersion));
+            }
+
+            DirectoryInfo getTempDirectoryForRelease(SemanticVersion releaseVersion)
+            {
+                return new DirectoryInfo(Path.Combine(rootAppDirectory, "temp-app-" + releaseVersion));
             }
 
             string linkTargetForVersionInfo(ShortcutLocation location, IPackage package, FileVersionInfo versionInfo)
