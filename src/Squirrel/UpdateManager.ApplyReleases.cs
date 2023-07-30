@@ -320,9 +320,9 @@ namespace Squirrel
                         progressCallback);
 
                     // Delete the .not-finished file after extraction is completed
-                    if (File.Exists(notFinishedFilePath)) {
+                    this.ErrorIfThrows(() => {
                         File.Delete(notFinishedFilePath);
-                    }
+                    }, "Couldn't delete file: " + notFinishedFilePath);
 
                     return target.FullName;
                 });
