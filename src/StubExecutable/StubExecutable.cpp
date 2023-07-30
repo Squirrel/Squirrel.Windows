@@ -74,10 +74,10 @@ std::wstring FindLatestAppDir()
 
 		// Skip the directory which contains a .not-finished file
 		std::wstring appFolder = fileInfo.cFileName;
-        std::wstring dirPath = ourDir.substr(0, ourDir.size() - 5) + appFolder;
-        if (FileExists(dirPath + L"\\.not-finished")) {
-            continue;
-        }
+		std::wstring dirPath = ourDir.substr(0, ourDir.size() - 5) + appFolder;
+		if (FileExists(dirPath + L"\\.not-finished")) {
+			continue;
+		}
 
 		if (thisVer > acc) {
 			acc = thisVer;
