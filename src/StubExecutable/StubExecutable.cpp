@@ -8,6 +8,11 @@
 
 using namespace std;
 
+bool FileExists(const std::wstring& filePath) {
+    DWORD fileAttributes = GetFileAttributes(filePath.c_str());
+    return (fileAttributes != INVALID_FILE_ATTRIBUTES) && !(fileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
 wchar_t* FindRootAppDir() 
 {
 	wchar_t* ourDirectory = new wchar_t[MAX_PATH];
@@ -66,6 +71,13 @@ std::wstring FindLatestAppDir()
 		std::string s(appVer.begin(), appVer.end());
 
 		version::Semver200_version thisVer(s);
+
+		// Skip the directory which contains a .not-finished file
+		std::wstring appFolder = fileInfo.cFileName;
+		std::wstring dirPath = ourDir.substr(0, ourDir.size() - 5) + appFolder;
+		if (FileExists(dirPath + L"\\.not-finished")) {
+			continue;
+		}
 
 		if (thisVer > acc) {
 			acc = thisVer;

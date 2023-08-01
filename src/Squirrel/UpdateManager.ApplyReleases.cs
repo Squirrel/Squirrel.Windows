@@ -308,12 +308,21 @@ namespace Squirrel
 
                     target.Create();
 
+                    // Create the .not-finished file before extraction is started
+                    var notFinishedFilePath = Path.Combine(target.FullName, ".not-finished");
+                    File.WriteAllText(notFinishedFilePath, "");
+
                     this.Log().Info("Writing files to app directory: {0}", target.FullName);
                     await ReleasePackage.ExtractZipForInstall(
                         Path.Combine(updateInfo.PackageDirectory, release.Filename),
                         target.FullName,
                         rootAppDirectory,
                         progressCallback);
+
+                    // Delete the .not-finished file after extraction is completed
+                    this.ErrorIfThrows(() => {
+                        File.Delete(notFinishedFilePath);
+                    }, "Couldn't delete file: " + notFinishedFilePath);
 
                     return target.FullName;
                 });
