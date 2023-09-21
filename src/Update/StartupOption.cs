@@ -59,7 +59,7 @@ namespace Squirrel.Update
                 { "i=|icon", "Path to an ICO file that will be used for icon shortcuts", v => icon = v},
                 { "setupIcon=", "Path to an ICO file that will be used for the Setup executable's icon", v => setupIcon = v},
                 { "n=|signWithParams=", "Sign the installer via SignTool.exe with the parameters given", v => signingParameters = v},
-                { "s|silent", "Silent install", _ => silentInstall = true},
+                { "s|silent", "Silent install. Also disables starting the app after install", _ => silentInstall = true},
                 { "b=|baseUrl=", "Provides a base URL to prefix the RELEASES file packages with", v => baseUrl = v, true},
                 { "a=|process-start-args=", "Arguments that will be used when starting executable", v => processStartArgs = v, true},
                 { "l=|shortcut-locations=", "Comma-separated string of shortcut locations, e.g. 'Desktop,StartMenu'", v => shortcutArgs = v},
