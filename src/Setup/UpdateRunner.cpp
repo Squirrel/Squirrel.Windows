@@ -34,6 +34,20 @@ void CUpdateRunner::DisplayErrorMessage(CString& errorMessage, wchar_t* logFile)
 	}
 }
 
+HRESULT CUpdateRunner::AreWeInWine()
+{
+	// NB: Behaving differently in Wine is *usually* discouraged
+	// https://wiki.winehq.org/Developer_FAQ#How_can_I_detect_Wine.3F
+	HMODULE hntdll = GetModuleHandle(L"ntdll.dll");
+	if (!hntdll) {
+		return S_FALSE;
+	}
+	if (!GetProcAddress(hntdll, L"wine_get_version")) {
+		return S_FALSE;
+	}
+	return S_OK;
+}
+
 HRESULT CUpdateRunner::AreWeUACElevated()
 {
 	HANDLE hProcess = GetCurrentProcess();
