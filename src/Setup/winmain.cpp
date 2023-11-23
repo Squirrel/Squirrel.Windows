@@ -110,7 +110,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 	// If we're UAC-elevated, we shouldn't be because it will give us permissions
 	// problems later. Just silently rerun ourselves.
-	if (weAreUACElevated) {
+	// (Skip this check in Wine, which always reports admin privileges)
+	if (weAreUACElevated && CUpdateRunner::AreWeInWine() != S_OK) {
 		wchar_t buf[4096];
 		HMODULE hMod = GetModuleHandle(NULL);
 		GetModuleFileNameW(hMod, buf, 4096);
