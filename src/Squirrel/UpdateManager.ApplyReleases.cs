@@ -223,46 +223,52 @@ namespace Squirrel
                 foreach (var f in (ShortcutLocation[]) Enum.GetValues(typeof(ShortcutLocation))) {
                     if (!locations.HasFlag(f)) continue;
 
-                    var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
-                    var fileExists = File.Exists(file);
+                    string file = "";
+                    try {
+                        file = linkTargetForVersionInfo(f, zf, fileVerInfo);
+                        var fileExists = File.Exists(file);
 
-                    // NB: If we've already installed the app, but the shortcut
-                    // is no longer there, we have to assume that the user didn't
-                    // want it there and explicitly deleted it, so we shouldn't
-                    // annoy them by recreating it.
-                    if (!fileExists && updateOnly) {
-                        this.Log().Warn("Wanted to update shortcut {0} but it appears user deleted it", file);
-                        continue;
-                    }
-
-                    this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
-
-                    ShellLink sl;
-                    this.ErrorIfThrows(() => Utility.Retry(() => {
-                        File.Delete(file);
-
-                        var target = Path.Combine(rootAppDirectory, exeName);
-                        sl = new ShellLink {
-                            Target = target,
-                            IconPath = icon ?? target,
-                            IconIndex = 0,
-                            WorkingDirectory = Path.GetDirectoryName(exePath),
-                            Description = zf.Description,
-                        };
-
-                        if (!String.IsNullOrWhiteSpace(programArguments)) {
-                            sl.Arguments += String.Format(" -a \"{0}\"", programArguments);
+                        // NB: If we've already installed the app, but the shortcut
+                        // is no longer there, we have to assume that the user didn't
+                        // want it there and explicitly deleted it, so we shouldn't
+                        // annoy them by recreating it.
+                        if (!fileExists && updateOnly) {
+                            this.Log().Warn("Wanted to update shortcut {0} but it appears user deleted it", file);
+                            continue;
                         }
 
-                        var appUserModelId = String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
-                        var toastActivatorCLSID = Utility.CreateGuidFromHash(appUserModelId).ToString();
+                        this.Log().Info("Creating shortcut for {0} => {1}", exeName, file);
 
-                        sl.SetAppUserModelId(appUserModelId);
-                        sl.SetToastActivatorCLSID(toastActivatorCLSID);
+                        ShellLink sl;
+                        Utility.Retry(() => {
+                            File.Delete(file);
 
-                        this.Log().Info("About to save shortcut: {0} (target {1}, workingDir {2}, args {3}, toastActivatorCSLID {4})", file, sl.Target, sl.WorkingDirectory, sl.Arguments, toastActivatorCLSID);
-                        if (ModeDetector.InUnitTestRunner() == false) sl.Save(file);
-                    }, 4), "Can't write shortcut: " + file);
+                            var target = Path.Combine(rootAppDirectory, exeName);
+                            sl = new ShellLink {
+                                Target = target,
+                                IconPath = icon ?? target,
+                                IconIndex = 0,
+                                WorkingDirectory = Path.GetDirectoryName(exePath),
+                                Description = zf.Description,
+                            };
+
+                            if (!String.IsNullOrWhiteSpace(programArguments)) {
+                                sl.Arguments += String.Format(" -a \"{0}\"", programArguments);
+                            }
+
+                            var appUserModelId = String.Format("com.squirrel.{0}.{1}", zf.Id.Replace(" ", ""), exeName.Replace(".exe", "").Replace(" ", ""));
+                            var toastActivatorCLSID = Utility.CreateGuidFromHash(appUserModelId).ToString();
+
+                            sl.SetAppUserModelId(appUserModelId);
+                            sl.SetToastActivatorCLSID(toastActivatorCLSID);
+
+                            this.Log().Info("About to save shortcut: {0} (target {1}, workingDir {2}, args {3}, toastActivatorCSLID {4})", file, sl.Target, sl.WorkingDirectory, sl.Arguments, toastActivatorCLSID);
+                            if (ModeDetector.InUnitTestRunner() == false) sl.Save(file);
+                        }, 4);
+                    } catch (Exception ex) {
+                        this.Log().WarnException("Can't write shortcut: " + file, ex);
+                        continue;
+                    }
                 }
 
                 fixPinnedExecutables(zf.Version);
@@ -283,13 +289,17 @@ namespace Squirrel
                 foreach (var f in (ShortcutLocation[]) Enum.GetValues(typeof(ShortcutLocation))) {
                     if (!locations.HasFlag(f)) continue;
 
-                    var file = linkTargetForVersionInfo(f, zf, fileVerInfo);
+                    string file = "";
+                    try {
+                        file = linkTargetForVersionInfo(f, zf, fileVerInfo);
 
-                    this.Log().Info("Removing shortcut for {0} => {1}", exeName, file);
+                        this.Log().Info("Removing shortcut for {0} => {1}", exeName, file);
 
-                    this.ErrorIfThrows(() => {
                         if (File.Exists(file)) File.Delete(file);
-                    }, "Couldn't delete shortcut: " + file);
+                    } catch (Exception ex) {
+                        this.Log().WarnException("Couldn't delete shortcut: " + file, ex);
+                        continue;
+                    }
                 }
 
                 fixPinnedExecutables(zf.Version);
