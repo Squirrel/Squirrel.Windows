@@ -783,7 +783,7 @@ namespace Squirrel
         public static List<Tuple<string, int>> EnumerateProcesses()
         {
             int bytesReturned = 0;
-            var pids = new int[2048];
+            var pids = new int[16384];
 
             fixed(int* p = pids) {
                 if (!NativeMethods.EnumProcesses((IntPtr)p, sizeof(int) * pids.Length, out bytesReturned)) {
