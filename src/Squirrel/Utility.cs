@@ -352,9 +352,10 @@ namespace Squirrel
         {
             additionalDirs = additionalDirs ?? Enumerable.Empty<string>();
             var dirs = (new[] { Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) })
+                .Concat(Environment.OSVersion.Platform != PlatformID.MacOSX ? Environment.GetEnvironmentVariable("PATH")?.Split(';') ?? Enumerable.Empty<string>() : Enumerable.Empty<string>())
                 .Concat(additionalDirs ?? Enumerable.Empty<string>());
 
-            var exe = @".\" + toFind;
+            var exe = Path.Combine(@".", toFind);
             return dirs
                 .Select(x => Path.Combine(x, toFind))
                 .FirstOrDefault(x => File.Exists(x)) ?? exe;
@@ -368,9 +369,9 @@ namespace Squirrel
                     "..", "..", "..", "..",
                     "vendor", "7zip"
                 );
-                return FindHelperExecutable("7z.exe", new[] { vendorDir });
+                return FindHelperExecutable(Environment.OSVersion.Platform != PlatformID.MacOSX ? "7z" : "7z.exe", new[] { vendorDir });
             } else {
-                return FindHelperExecutable("7z.exe");
+                return FindHelperExecutable(Environment.OSVersion.Platform != PlatformID.MacOSX ? "7z" : "7z.exe");
             }
         }
 
@@ -382,7 +383,7 @@ namespace Squirrel
             try {
                 var cmd = sevenZip;
                 var args = String.Format("x \"{0}\" -tzip -mmt on -aoa -y -o\"{1}\" *", zipFilePath, outFolder);
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
+                if (Environment.OSVersion.Platform != PlatformID.MacOSX && Environment.OSVersion.Platform != PlatformID.Win32NT) {
                     cmd = "wine";
                     args = sevenZip + " " + args;
                 }
@@ -403,7 +404,7 @@ namespace Squirrel
             try {
                 var cmd = sevenZip;
                 var args = String.Format("a \"{0}\" -tzip -aoa -y -mmt on *", zipFilePath);
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT) {
+                if (Environment.OSVersion.Platform != PlatformID.MacOSX && Environment.OSVersion.Platform != PlatformID.Win32NT) {
                     cmd = "wine";
                     args = sevenZip + " " + args;
                 }
