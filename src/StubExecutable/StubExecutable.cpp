@@ -55,7 +55,7 @@ std::wstring FindLatestAppDir()
 	WIN32_FIND_DATA fileInfo = { 0 };
 	HANDLE hFile = FindFirstFile(ourDir.c_str(), &fileInfo);
 	if (hFile == INVALID_HANDLE_VALUE) {
-		return NULL;
+		return std::wstring();
 	}
 
 	version::Semver200_version acc("0.0.0");
@@ -86,7 +86,7 @@ std::wstring FindLatestAppDir()
 	} while (FindNextFile(hFile, &fileInfo));
 
 	if (acc == version::Semver200_version("0.0.0")) {
-		return NULL;
+		return std::wstring();
 	}
 
 	ourDir.assign(FindRootAppDir());
