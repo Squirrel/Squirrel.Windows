@@ -15,7 +15,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>WriteZipToSetup</RootNamespace>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
