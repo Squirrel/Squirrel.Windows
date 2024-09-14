@@ -608,8 +608,8 @@ namespace Squirrel.Update
                     (?=\s+)             #positive look ahead for white space(s) 
                 "
                 ).Replace(signingOpts, "/p ********");
-                var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}'",
-                    exe, optsWithPasswordHidden, exePath);
+                var msg = String.Format("Failed to sign, command invoked was: '{0} sign {1} {2}' \n\nOutput from signtool.exe was:\n{3}",
+                    exe, optsWithPasswordHidden, exePath, processResult.Item2);
 
                 throw new Exception(msg);
             } else {
