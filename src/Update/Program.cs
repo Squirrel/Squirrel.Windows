@@ -243,17 +243,29 @@ namespace Squirrel.Update
         {
             appName = appName ?? getAppNameFromDirectory();
 
+            // URL validation: Ensure the update URL starts with the allowed base URL
+            const string allowedBaseUrl = "https://gk8-da-upgrade.s3.amazonaws.com";
+            if (!updateUrl.StartsWith(allowedBaseUrl, StringComparison.OrdinalIgnoreCase))
+            {
+                this.Log().Warn("Invalid update URL. Updates must be fetched from the authorized domain: " + allowedBaseUrl);
+                throw new InvalidOperationException("Unauthorized update URL.");
+            }
+
             this.Log().Info("Fetching update information, downloading from " + updateUrl);
-            using (var mgr = new UpdateManager(updateUrl, appName)) {
+
+            using (var mgr = new UpdateManager(updateUrl, appName))
+            {
                 var updateInfo = await mgr.CheckForUpdate(intention: UpdaterIntention.Update, progress: x => Console.WriteLine(x / 3));
                 await mgr.DownloadReleases(updateInfo.ReleasesToApply, x => Console.WriteLine(33 + x / 3));
 
                 var releaseNotes = updateInfo.FetchReleaseNotes();
 
-                var sanitizedUpdateInfo = new {
+                var sanitizedUpdateInfo = new
+                {
                     currentVersion = updateInfo.CurrentlyInstalledVersion.Version.ToString(),
                     futureVersion = updateInfo.FutureReleaseEntry.Version.ToString(),
-                    releasesToApply = updateInfo.ReleasesToApply.Select(x => new {
+                    releasesToApply = updateInfo.ReleasesToApply.Select(x => new
+                    {
                         version = x.Version.ToString(),
                         releaseNotes = releaseNotes.ContainsKey(x) ? releaseNotes[x] : "",
                     }).ToArray(),
