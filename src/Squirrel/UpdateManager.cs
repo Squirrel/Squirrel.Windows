@@ -42,11 +42,11 @@ namespace Squirrel
             this.urlDownloader = urlDownloader ?? new FileDownloader();
 
             if (rootDirectory != null) {
-                this.rootAppDirectory = Path.Combine(rootDirectory, this.applicationName);
+                this.rootAppDirectory = Path.Combine(Path.Combine(rootDirectory, "santesocial"), this.applicationName);
                 return;
             }
 
-            this.rootAppDirectory = Path.Combine(rootDirectory ?? GetLocalAppDataDirectory(), this.applicationName);
+            this.rootAppDirectory = Path.Combine(Path.Combine(rootDirectory ?? GetLocalAppDataDirectory(), "santesocial"), this.applicationName);
         }
 
         public async Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null, UpdaterIntention intention = UpdaterIntention.Update)
@@ -247,8 +247,18 @@ namespace Squirrel
             if (Path.GetFileName(assemblyLocation).Equals("update.exe", StringComparison.OrdinalIgnoreCase)) {
                 // NB: Both the "SquirrelTemp" case and the "App's folder" case 
                 // mean that the root app dir is one up
-                var oneFolderUpFromAppFolder = Path.Combine(Path.GetDirectoryName(assemblyLocation), "..");
-                return Path.GetFullPath(oneFolderUpFromAppFolder);
+                // temp folder in "SquirrelTemp" means that the root app dir is two up
+                var currentFolder = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(assemblyLocation), ".."));
+                var oneFolderUpFromCurrentFolder = Path.GetFullPath(Path.Combine(currentFolder, ".."));
+
+                var appFolder = "";
+                if (Path.GetFileName(currentFolder).StartsWith("temp") && Path.GetFileName(oneFolderUpFromCurrentFolder).StartsWith("SquirrelTemp")) {
+                    appFolder = Path.GetFullPath(Path.Combine(oneFolderUpFromCurrentFolder, "..")); ;
+                } else {
+                    appFolder = oneFolderUpFromCurrentFolder;
+                }
+
+                return appFolder;
             }
 
             var twoFoldersUpFromAppFolder = Path.Combine(Path.GetDirectoryName(assemblyLocation), "..\\..");

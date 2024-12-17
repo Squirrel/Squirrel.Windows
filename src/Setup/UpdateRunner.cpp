@@ -165,7 +165,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	PROCESS_INFORMATION pi = { 0 };
 	STARTUPINFO si = { 0 };
 	CResource zipResource;
-	wchar_t targetDir[MAX_PATH] = { 0 };
+	wchar_t targetDir[MAX_PATH + 1] = { 0 };
 	wchar_t logFile[MAX_PATH];
 
 	std::vector<CString> to_delete;
@@ -175,7 +175,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 		DirectoryExists(envSquirrelTemp) &&
 		DirectoryIsWritable(envSquirrelTemp) &&
 		!PathIsUNCW(envSquirrelTemp)) {
-		_swprintf_c(targetDir, _countof(targetDir), L"%s", envSquirrelTemp);
+		_swprintf_c(targetDir, _countof(targetDir) - 1, L"%s", envSquirrelTemp);
 		goto gotADir;
 	}
 
@@ -191,7 +191,7 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 	SHGetFolderPath(NULL, CSIDL_COMMON_APPDATA, NULL, SHGFP_TYPE_CURRENT, appDataDir);
 	GetUserName(username, &unameSize);
 
-	_swprintf_c(targetDir, _countof(targetDir), L"%s\\%s", appDataDir, username);
+	_swprintf_c(targetDir, _countof(targetDir) - 1, L"%s\\%s", appDataDir, username);
 
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
 		wchar_t err[4096];
@@ -203,9 +203,38 @@ int CUpdateRunner::ExtractUpdaterAndRun(wchar_t* lpCommandLine, bool useFallback
 
 gotADir:
 
-	wcscat_s(targetDir, _countof(targetDir), L"\\SquirrelTemp");
+	wcscat_s(targetDir, _countof(targetDir) - 1, L"\\SquirrelTemp");
 
 	if (!CreateDirectory(targetDir, NULL) && GetLastError() != ERROR_ALREADY_EXISTS) {
+		wchar_t err[4096];
+		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
+
+		if (useFallbackDir) {
+			DisplayErrorMessage(CString(err), NULL);
+		}
+
+		goto failedExtract;
+	}
+
+	const char tempDirValues[] = "\0abcdefghijklmnopqrstuvwxyz";
+	int tempDirValuesCount = sizeof(tempDirValues) - 1;
+	bool tempDirCreated = false;
+	for (int i = 1; i < (tempDirValuesCount * tempDirValuesCount * tempDirValuesCount * tempDirValuesCount); i++) {
+		int c0 = i % tempDirValuesCount;
+		int c1 = (i / tempDirValuesCount) % tempDirValuesCount;
+		int c2 = (i / (tempDirValuesCount * tempDirValuesCount)) % tempDirValuesCount;
+		int c3 = (i / (tempDirValuesCount * tempDirValuesCount * tempDirValuesCount)) % tempDirValuesCount;
+
+		wchar_t tempDir[MAX_PATH] = { 0 };
+		_swprintf_c(tempDir, _countof(tempDir), L"%s\\temp%c%c%c%c", targetDir, tempDirValues[c3], tempDirValues[c2], tempDirValues[c1], tempDirValues[c0]);
+
+		if (CreateDirectory(tempDir, NULL)) {
+			_swprintf_c(targetDir, _countof(targetDir) - 1, L"%s", tempDir);
+			tempDirCreated = true;
+			break;
+		}
+	}
+	if (!tempDirCreated) {
 		wchar_t err[4096];
 		_swprintf_c(err, _countof(err), L"Unable to write to %s - IT policies may be restricting access to this folder", targetDir);
 
@@ -294,6 +323,48 @@ gotADir:
 
 	for (unsigned int i = 0; i < to_delete.size(); i++) {
 		DeleteFile(to_delete[i]);
+	}
+
+	if (tempDirCreated) {
+		// Dump Squirrel-Install.log's content out of temp folder before removal
+		wchar_t tempSquirrelInstallLog[MAX_PATH] = { 0 };
+		_swprintf_c(tempSquirrelInstallLog, _countof(tempSquirrelInstallLog), L"%s\\Squirrel-Install.log", targetDir);
+
+		wchar_t squirrelInstallLog[MAX_PATH] = { 0 };
+		_swprintf_c(squirrelInstallLog, _countof(squirrelInstallLog), L"%s\\..\\Squirrel-Install.log", targetDir);
+
+		if (GetFileAttributes(squirrelInstallLog) == INVALID_FILE_ATTRIBUTES) {
+			MoveFile(tempSquirrelInstallLog, squirrelInstallLog);
+		} else {
+			HANDLE hTempSquirrelInstallLog = CreateFile(tempSquirrelInstallLog, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			HANDLE hSquirrelInstallLog = CreateFile(squirrelInstallLog, FILE_APPEND_DATA | FILE_GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+			if(hTempSquirrelInstallLog != INVALID_HANDLE_VALUE && hSquirrelInstallLog != INVALID_HANDLE_VALUE) {
+				DWORD dwBytesRead;
+				BYTE copyBuffer[4096];
+				while (ReadFile(hTempSquirrelInstallLog, copyBuffer, sizeof(copyBuffer), &dwBytesRead, NULL) && dwBytesRead > 0) {
+					WriteFile(hSquirrelInstallLog, copyBuffer, dwBytesRead, NULL, NULL);
+				}
+			}
+
+			CloseHandle(hTempSquirrelInstallLog);
+			CloseHandle(hSquirrelInstallLog);
+		}
+
+		DeleteFile(tempSquirrelInstallLog);
+
+		// Remove temporary directory. RemoveDirectory fails even if targetDir is empty at this point
+		// RemoveDirectory(targetDir);
+		SHFILEOPSTRUCT sFileOp;
+		sFileOp.hwnd = NULL;
+		sFileOp.wFunc = FO_DELETE;
+		sFileOp.pFrom = targetDir;
+		sFileOp.pTo = NULL;
+		sFileOp.fFlags = FOF_NOCONFIRMATION|FOF_SILENT;
+		sFileOp.fAnyOperationsAborted = FALSE;
+		sFileOp.lpszProgressTitle = NULL;
+		sFileOp.hNameMappings = NULL;
+		SHFileOperation(&sFileOp);
 	}
 
 	CloseHandle(pi.hProcess);
