@@ -632,12 +632,20 @@ namespace Squirrel.Update
 
         async Task createExecutableStubForExe(string fullName)
         {
-            var exe = Utility.FindHelperExecutable(@"StubExecutable.exe");
+            if(fullName.EndsWith("_ExecutionStub.exe")) {
+                return;
+            }
 
             var target = Path.Combine(
                 Path.GetDirectoryName(fullName),
                 Path.GetFileNameWithoutExtension(fullName) + "_ExecutionStub.exe");
 
+            // Return early if the target already exists
+            if (File.Exists(target)) {
+                return;
+            }
+
+            var exe = Utility.FindHelperExecutable(@"StubExecutable.exe");
             await Utility.CopyToAsync(exe, target);
 
             await Utility.InvokeProcessAsync(

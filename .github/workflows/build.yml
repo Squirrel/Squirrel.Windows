@@ -36,7 +36,7 @@ jobs:
         run: ./test/test_official.cmd
 
       - name: Save build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: artifacts
           path: build/artifacts/
