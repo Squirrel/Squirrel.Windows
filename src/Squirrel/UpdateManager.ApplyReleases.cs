@@ -735,7 +735,7 @@ namespace Squirrel
                     dir = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                     break;
                 case ShortcutLocation.StartMenu:
-                    dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs", applicationName);
+                    dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs");
                     break;
                 case ShortcutLocation.Startup:
                     dir = Environment.GetFolderPath (Environment.SpecialFolder.Startup);
