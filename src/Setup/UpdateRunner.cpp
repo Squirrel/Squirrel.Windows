@@ -216,7 +216,7 @@ gotADir:
 		goto failedExtract;
 	}
 
-	swprintf_s(logFile, L"%s\\SquirrelSetup.log", targetDir);
+	swprintf_s(logFile, L"%s\\Squirrel-Install.log", targetDir);
 
 	
 	// New code to write the path of the currently running executable
