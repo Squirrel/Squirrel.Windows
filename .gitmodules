@@ -1,3 +1,4 @@
 [submodule "vendor/nuget"]
 	path = vendor/nuget
 	url = https://github.com/paulcbetts/NuGet
+	branch = fix-prerelease-comparison

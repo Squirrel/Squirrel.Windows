@@ -103,7 +103,7 @@ namespace Squirrel
                         var path = item.ExePath.ToLowerInvariant();
 
                         // Someone completely unrelated? Keep it!
-                        if (!executablesInPackage.Any(exe => path.Contains(exe))) {
+                        if (!executablesInPackage.Any(exe => path.Contains(exe.ToLowerInvariant()))) {
                             goto keepItem;
                         }
                         

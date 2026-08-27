@@ -23,12 +23,19 @@ namespace Squirrel
         AppRoot = 1 << 3
     }
 
+    public enum UpdaterIntention {
+        Install,
+        Update
+    }
+
     public interface IUpdateManager : IDisposable, IEnableLogger
     {
         /// <summary>
         /// Fetch the remote store for updates and compare against the current 
         /// version to determine what updates to download.
         /// </summary>
+        /// <param name="intention">Indicates whether the UpdateManager is used
+        /// in a Install or Update scenario.</param>
         /// <param name="ignoreDeltaUpdates">Set this flag if applying a release
         /// fails to fall back to a full release, which takes longer to download
         /// but is less error-prone.</param>
@@ -36,7 +43,7 @@ namespace Squirrel
         /// will return values from 0-100 and Complete, or Throw</param>
         /// <returns>An UpdateInfo object representing the updates to install.
         /// </returns>
-        Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null);
+        Task<UpdateInfo> CheckForUpdate(bool ignoreDeltaUpdates = false, Action<int> progress = null, UpdaterIntention intention = UpdaterIntention.Update);
 
         /// <summary>
         /// Download a list of releases into the local package directory.

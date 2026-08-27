@@ -23,6 +23,16 @@ Options:
                                installation
   -n, --signWithParams=VALUE Sign the installer via SignTool.exe with the
                                parameters given
+      --setupIcon=VALUE       Path to an ICO file that will be used for the 
+                               Setup executable's icon
+  -b  --baseUrl=VALUE         Provides a base URL to prefix the RELEASES file 
+                               packages with
+      --no-msi                Don't generate an MSI package
+      --msi-win64             Mark the MSI as 64-bit, which is useful in
+                               Enterprise deployment scenarios
+      --no-delta              Don't generate delta packages to save time
+      --framework-version=VALUE 
+                              Set the required .NET framework version, e.g. net461
 ```
 
 ## See Also

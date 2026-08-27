@@ -13,7 +13,7 @@ namespace Squirrel.Tests
 {
     public class DownloadReleasesTests : IEnableLogger
     {
-        [Fact]
+        [Fact(Skip = "Rewrite this to be an integration test")]
         public void ChecksumShouldFailIfFilesAreMissing()
         {
             Assert.False(true, "Rewrite this to be an integration test");
@@ -51,7 +51,7 @@ namespace Squirrel.Tests
             */
         }
 
-        [Fact]
+        [Fact(Skip = "Rewrite this to be an integration test")]
         public void ChecksumShouldFailIfFilesAreBogus()
         {
             Assert.False(true, "Rewrite this to be an integration test");
@@ -91,7 +91,7 @@ namespace Squirrel.Tests
             */
         }
 
-        [Fact]
+        [Fact(Skip = "Rewrite this to be an integration test")]
         public async Task DownloadReleasesFromHttpServerIntegrationTest()
         {
             Assert.False(true, "Rewrite this to not use the SampleUpdatingApp");
@@ -145,7 +145,7 @@ namespace Squirrel.Tests
             */
         }
 
-        [Fact]
+        [Fact(Skip = "Rewrite this to be an integration test")]
         public async Task DownloadReleasesFromFileDirectoryIntegrationTest()
         {
             Assert.False(true, "Rewrite this to not use the SampleUpdatingApp");
