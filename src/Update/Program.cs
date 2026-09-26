@@ -199,7 +199,9 @@ namespace Squirrel.Update
             using (var mgr = new UpdateManager(updateUrl, appName)) {
                 bool ignoreDeltaUpdates = false;
                 this.Log().Info("About to update to: " + mgr.RootAppDirectory);
-                grantAppPackagesReadAccess(mgr.RootAppDirectory);
+                if (mgr.IsInstalledApp) {
+                    grantAppPackagesReadAccess(mgr.RootAppDirectory);
+                }
 
             retry:
                 try {
