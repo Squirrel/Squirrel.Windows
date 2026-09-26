@@ -9,6 +9,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Security.AccessControl;
+using System.Security.Principal;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -175,6 +177,7 @@ namespace Squirrel.Update
                 }
 
                 Directory.CreateDirectory(mgr.RootAppDirectory);
+                grantAppPackagesReadAccess(mgr.RootAppDirectory);
 
                 var updateTarget = Path.Combine(mgr.RootAppDirectory, "Update.exe");
                 this.ErrorIfThrows(() => File.Copy(Assembly.GetExecutingAssembly().Location, updateTarget, true),
@@ -196,6 +199,9 @@ namespace Squirrel.Update
             using (var mgr = new UpdateManager(updateUrl, appName)) {
                 bool ignoreDeltaUpdates = false;
                 this.Log().Info("About to update to: " + mgr.RootAppDirectory);
+                if (mgr.IsInstalledApp) {
+                    grantAppPackagesReadAccess(mgr.RootAppDirectory);
+                }
 
             retry:
                 try {
@@ -223,6 +229,27 @@ namespace Squirrel.Update
                 await this.ErrorIfThrows(() =>
                     mgr.CreateUninstallerRegistryEntry(),
                     "Failed to create uninstaller registry entry");
+            }
+        }
+
+        // Restricted-token sandbox processes (Chromium/Electron/CEF children) are
+        // denied access to a directory whose ACL has an AppContainer package ACE but
+        // no ALL APPLICATION PACKAGES entry; %LocalAppData% installs can inherit the
+        // former from other software, Program Files installs always have the latter.
+        void grantAppPackagesReadAccess(string directory)
+        {
+            try {
+                var info = new DirectoryInfo(directory);
+                var security = info.GetAccessControl();
+                security.AddAccessRule(new FileSystemAccessRule(
+                    new SecurityIdentifier("S-1-15-2-1"),
+                    FileSystemRights.ReadAndExecute,
+                    InheritanceFlags.ContainerInherit | InheritanceFlags.ObjectInherit,
+                    PropagationFlags.None,
+                    AccessControlType.Allow));
+                info.SetAccessControl(security);
+            } catch (Exception ex) {
+                this.Log().WarnException("Couldn't grant ALL APPLICATION PACKAGES read access to " + directory, ex);
             }
         }
 
